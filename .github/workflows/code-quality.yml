@@ -1,1 +1,37 @@
-# Inside this file we will define the code quality checks to run on the project.
+name: CI
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  lint-and-type-check:
+    runs-on: ubuntu-22.04
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run Ruff linting
+      run: |
+        ruff check src
+        ruff check tests
+
+    - name: Run Mypy type checking
+      run: | 
+        mypy src
+        mypy tests
+
+      continue-on-error: false
