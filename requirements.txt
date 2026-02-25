@@ -1,0 +1,7 @@
+# Data processing
+polars>=0.20.0
+# YAML
+types-PyYAML>=6.0.0
+pyyaml==6.0.2
+# Pydantic
+pydantic>=2.11.7
