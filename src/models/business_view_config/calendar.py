@@ -16,7 +16,7 @@ class Calendar:
     calendar_dataframe: pl.DataFrame
 
     def abs_time_index_to_block(self, abs_time_index: int) -> int:
-        pass
+        raise NotImplementedError()
 
     def abs_time_index_to_date(self, abs_time_index: int) -> datetime:
-        pass
+        raise NotImplementedError()

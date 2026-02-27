@@ -1,8 +1,8 @@
-from gemspy.gems.input_system import InputSystem
+from gemspy.gems.input_system import InputSystem  # type: ignore[import-not-found]
 
 from models.business_view_config.business_view_configuration import BusinessViewConfiguration
 from models.business_view_config.calendar import Calendar
-from models.common.simulation_table import SimulationTable
+from models.simulation_table import SimulationTable
 
 
 class BusinessViewBuilder:
@@ -18,5 +18,5 @@ class BusinessViewBuilder:
         self.simulation_table = simulation_table
         self.business_view_configuration = business_view_configuration
 
-    def build_view(self):
+    def build_view(self) -> None:
         pass

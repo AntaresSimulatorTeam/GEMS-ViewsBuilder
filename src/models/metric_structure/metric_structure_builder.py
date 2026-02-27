@@ -1,4 +1,4 @@
-from gemspy.gems.input_system import InputSystem
+from gemspy.gems.input_system import InputSystem  # type: ignore[import-not-found]
 
 from models.business_view_config.business_view_configuration import BusinessViewConfiguration
 
