@@ -104,7 +104,7 @@ class BusinessViewConfig:
     """
     In memory representation of the business-view-config.yml file.
     Id: id of the view.
-    Scope: scope of the view. -> Which callendar and which taxonomy category are used.
+    Scope: scope of the view. -> Which calendar and which taxonomy category are used.
     Catalogs: set of catalogs that are used to build the view.
     Aggregation: aggregation of the view. -> Which time and which terms are used.
     Metrics: list of metrics that are used to build the view. -> Which metrics are used.(id : catalog1.OVERALL_COST, id: catalog2.PRICE...)
