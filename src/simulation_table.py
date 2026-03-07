@@ -10,31 +10,32 @@
 #
 # This file is part of the Antares project.
 
-from calendar import Calendar
 from pathlib import Path
 from typing import Optional
 
 import polars as pl
 
+from src.calendar import Calendar
+
 # Columns of the SIMULATION_TABLE:
-# simulation_id       (str)   – identifies the simulation
-# block_id            (str)   – identifies the timeblock in the simulation
-# component_id        (str)   – identifies the component
-# output_id           (str)   – variable, port_field, or extra-output of the component
+# block               (str)   – identifies the timeblock in the simulation
+# component           (str)   – identifies the component
+# output              (str)   – variable, port_field, or extra-output of the component
 # absolute_time_index (int | None) – None if output is not time-dependent
 # block_time_index    (int | None) – time index within the block; None if not time-dependent
 # scenario_index      (int | None) – None if output is not scenario-dependent
-# value               (float) – value of output_id at (absolute_time_index, scenario_index)
+# value               (float) – value of output at (absolute_time_index, scenario_index)
+# basis_status        (str)   – basis status of the output
 SIMULATION_TABLE_COLUMNS: frozenset[str] = frozenset(
     {
-        "simulation_id",
-        "block_id",
-        "component_id",
-        "output_id",
+        "block",
+        "component",
+        "output",
         "absolute_time_index",
         "block_time_index",
         "scenario_index",
         "value",
+        "basis_status",
     }
 )
 
@@ -50,7 +51,10 @@ class SimulationTable:
         simulation_table_file: Path to the simulation_table.csv file
         """
         self.id = simulation_table_file.stem
-        self.dataframe = pl.read_csv(simulation_table_file)
+        self.dataframe = pl.read_csv(
+            simulation_table_file,
+            null_values=["None"],
+        )
         self._check_simulation_table_file_content()
 
     def _check_simulation_table_file_content(self) -> None:
@@ -70,4 +74,10 @@ class SimulationTable:
         Filter the simulation table based on the calendar.
         If output_path is provided, save the filtered simulation table to the output path.
         """
-        raise NotImplementedError()
+        calendar_blocks = calendar.dataframe.select(
+            pl.col("absolute_time_index"),
+        )
+        filtered_table = self.dataframe.join(calendar_blocks, on="absolute_time_index", how="left")
+        if output_path is not None:
+            filtered_table.write_csv(output_path)
+        return filtered_table

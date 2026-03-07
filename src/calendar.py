@@ -45,6 +45,10 @@ class Calendar:
         if self.dataframe.columns != ["absolute_time_index", "block", "granular_date"]:
             raise ValueError(f"Calendar file {self.id} has invalid columns")
 
+    """
+    # probably we don't need this 2 methods, we can use the dataframe directly
+    """
+
     def abs_time_index_to_block(self, abs_time_index: int) -> int:
         if abs_time_index < 0 or abs_time_index >= self.dataframe.height:
             raise ValueError(f"Absolute time index {abs_time_index} is out of range")

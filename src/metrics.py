@@ -12,13 +12,13 @@
 
 """Metric operators, BusinessMetricTerm, BusinessMetric, BusinessCatalog, BusinessViewConfiguration."""
 
-from calendar import Calendar
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from location import LocationPorts
-from taxonomy import Taxonomy
+from src.calendar import Calendar
+from src.location import LocationPorts
+from src.taxonomy import Taxonomy
 
 
 class TimeAggregation(Enum):
