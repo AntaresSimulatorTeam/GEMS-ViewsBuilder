@@ -10,13 +10,13 @@
 #
 # This file is part of the Antares project.
 
-from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import cast
 
 import polars as pl
 
 
-@dataclass
 class Calendar:
     """
     In memory representation of the calendar.csv file.
@@ -26,11 +26,31 @@ class Calendar:
     3rd col: granular date
     """
 
-    id: str
-    dataframe: pl.DataFrame
+    def __init__(self, calendar_file_path: Path) -> None:
+        """
+        calendar_file: Path to the calendar.csv file
+        """
+        self.id = calendar_file_path.stem
+        self.dataframe = self._read_calendar_file(calendar_file_path)
+        self._check_calendar_file_content()
+
+    def _read_calendar_file(self, calendar_file_path: Path) -> pl.DataFrame:
+        if not calendar_file_path.exists():
+            raise FileNotFoundError(f"Calendar file {calendar_file_path} not found")
+        if calendar_file_path.suffix.lower() != ".csv":
+            raise ValueError(f"Calendar file {calendar_file_path} is not a CSV file")
+        return pl.read_csv(calendar_file_path)
+
+    def _check_calendar_file_content(self) -> None:
+        if self.dataframe.columns != ["absolute_time_index", "block", "granular_date"]:
+            raise ValueError(f"Calendar file {self.id} has invalid columns")
 
     def abs_time_index_to_block(self, abs_time_index: int) -> int:
-        raise NotImplementedError()
+        if abs_time_index < 0 or abs_time_index >= self.dataframe.height:
+            raise ValueError(f"Absolute time index {abs_time_index} is out of range")
+        return cast(int, self.dataframe.row(abs_time_index).item(1))
 
     def abs_time_index_to_date(self, abs_time_index: int) -> datetime:
-        raise NotImplementedError()
+        if abs_time_index < 0 or abs_time_index >= self.dataframe.height:
+            raise ValueError(f"Absolute time index {abs_time_index} is out of range")
+        return cast(datetime, self.dataframe.row(abs_time_index).item(2))

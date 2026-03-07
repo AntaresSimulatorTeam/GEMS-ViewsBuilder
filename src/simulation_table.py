@@ -1,0 +1,73 @@
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+#
+# See AUTHORS.txt
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# This file is part of the Antares project.
+
+from calendar import Calendar
+from pathlib import Path
+from typing import Optional
+
+import polars as pl
+
+# Columns of the SIMULATION_TABLE:
+# simulation_id       (str)   – identifies the simulation
+# block_id            (str)   – identifies the timeblock in the simulation
+# component_id        (str)   – identifies the component
+# output_id           (str)   – variable, port_field, or extra-output of the component
+# absolute_time_index (int | None) – None if output is not time-dependent
+# block_time_index    (int | None) – time index within the block; None if not time-dependent
+# scenario_index      (int | None) – None if output is not scenario-dependent
+# value               (float) – value of output_id at (absolute_time_index, scenario_index)
+SIMULATION_TABLE_COLUMNS: frozenset[str] = frozenset(
+    {
+        "simulation_id",
+        "block_id",
+        "component_id",
+        "output_id",
+        "absolute_time_index",
+        "block_time_index",
+        "scenario_index",
+        "value",
+    }
+)
+
+
+class SimulationTable:
+    """
+    In memory representation of the SIMULATION_TABLE
+    Expected columns: see SIMULATION_TABLE_COLUMNS.
+    """
+
+    def __init__(self, simulation_table_file: Path) -> None:
+        """
+        simulation_table_file: Path to the simulation_table.csv file
+        """
+        self.id = simulation_table_file.stem
+        self.dataframe = pl.read_csv(simulation_table_file)
+        self._check_simulation_table_file_content()
+
+    def _check_simulation_table_file_content(self) -> None:
+        actual = frozenset(self.dataframe.columns)
+        missing = SIMULATION_TABLE_COLUMNS - actual
+        extra = actual - SIMULATION_TABLE_COLUMNS
+        errors: list[str] = []
+        if missing:
+            errors.append(f"Missing columns: {missing}")
+        if extra:
+            errors.append(f"Unexpected columns: {extra}")
+        if errors:
+            raise ValueError(f"SimulationTable '{self.id}' has invalid columns: {'; '.join(errors)}")
+
+    def filter_simulation_table(self, calendar: Calendar, output_path: Optional[Path] = None) -> pl.DataFrame:
+        """
+        Filter the simulation table based on the calendar.
+        If output_path is provided, save the filtered simulation table to the output path.
+        """
+        raise NotImplementedError()

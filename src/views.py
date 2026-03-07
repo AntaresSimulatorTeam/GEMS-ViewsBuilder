@@ -20,7 +20,7 @@ from gemspy.gems.input_system import InputSystem  # type: ignore[import-not-foun
 
 from location import LocationPorts
 from metrics import BusinessViewConfiguration
-from simulation import SimulationTable
+from simulation_table import SimulationTable
 
 
 class MetricStructureBuilder:
