@@ -74,10 +74,10 @@ class SimulationTable:
         Filter the simulation table based on the calendar.
         If output_path is provided, save the filtered simulation table to the output path.
         """
-        calendar_blocks = calendar.dataframe.select(
-            pl.col("absolute_time_index"),
-        )
-        filtered_table = self.dataframe.join(calendar_blocks, on="absolute_time_index", how="left")
+        filtered_table = self.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
+        # right is appended by the join(polars)
+        # drop block_right in order to save memory
+        filtered_table = filtered_table.filter(pl.col("block") == pl.col("block_right")).drop("block_right")
         if output_path is not None:
             filtered_table.write_csv(output_path)
         return filtered_table
