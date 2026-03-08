@@ -14,16 +14,20 @@ CALENDARS_DIR = ROOT_DIR / "resources" / "test_files" / "calendars"
 SIMULATION_TABLES_DIR = ROOT_DIR / "resources" / "test_files" / "simulation_tables"
 
 
+# Calendar + simulation table pairs to run the same tests on
+FILTER_TEST_CASES = [
+    (CALENDARS_DIR / "calendar_daily_block1.csv", SIMULATION_TABLES_DIR / "simulation_table_daily_one_year.csv"),
+    (CALENDARS_DIR / "calendar_daily_random_blocks.csv", SIMULATION_TABLES_DIR / "simulation_table_daily_one_year.csv"),
+    (CALENDARS_DIR / "calendar_hourly_block1.csv", SIMULATION_TABLES_DIR / "simulation_table_hourly_one_week.csv"),
+    (
+        CALENDARS_DIR / "calendar_hourly_random_blocks.csv",
+        SIMULATION_TABLES_DIR / "simulation_table_hourly_one_week.csv",
+    ),
+]
+
+
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
-@pytest.mark.parametrize(
-    "calendar_file, simulation_table_file",
-    [
-        (
-            CALENDARS_DIR / "calendar_daily_block1.csv",
-            SIMULATION_TABLES_DIR / "simulation_table_daily_one_year.csv",
-        ),
-    ],
-)
+@pytest.mark.parametrize("calendar_file, simulation_table_file", FILTER_TEST_CASES)
 def test_filter_simulation_table_logical(calendar_file: Path, simulation_table_file: Path) -> None:
     """Filtered result must satisfy: every row (absolute_time_index, block) in calendar, correct count, rows from sim table."""
     calendar = Calendar(calendar_file)
@@ -48,12 +52,13 @@ def test_filter_simulation_table_logical(calendar_file: Path, simulation_table_f
     )
 
 
-def test_filter_simulation_table_writes_csv() -> None:
+@pytest.mark.parametrize("calendar_file, simulation_table_file", FILTER_TEST_CASES)
+def test_filter_simulation_table_writes_csv(calendar_file: Path, simulation_table_file: Path) -> None:
     """When output_path is set, the filtered table is written to CSV and matches the returned DataFrame.
     Output is written under SIMULATION_TABLES_DIR and removed at the end of the test."""
-    calendar = Calendar(CALENDARS_DIR / "calendar_daily_block1.csv")
-    simulation_table = SimulationTable(SIMULATION_TABLES_DIR / "simulation_table_daily_one_year.csv")
-    out_file = SIMULATION_TABLES_DIR / "filtered.csv"
+    calendar = Calendar(calendar_file)
+    simulation_table = SimulationTable(simulation_table_file)
+    out_file = SIMULATION_TABLES_DIR / f"filtered_{calendar_file.stem}.csv"
     try:
         result = simulation_table.filter_simulation_table(calendar, output_path=out_file)
         assert out_file.exists(), "Output CSV should be created"
