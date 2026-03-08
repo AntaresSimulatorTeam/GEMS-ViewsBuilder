@@ -15,18 +15,18 @@
 from dataclasses import dataclass
 
 import polars as pl
-from gemspy.gems.input_system import InputSystem  # type: ignore[import-not-found]
+from gems.study.parsing import InputSystem  # type: ignore[import-untyped]
 
 from src.calendar import Calendar
 from src.location import LocationPorts
-from src.metrics import BusinessViewConfiguration
+from src.metrics import BusinessViewConfig
 from src.simulation_table import SimulationTable
 
 
 class MetricStructureBuilder:
     """InputSystem from GemsPy. LIST_OF_COMPONENTS_IN_TAXONOMY_CATEGORY, LOCATING_FUNCTION, build_tables (spec 2.1)."""
 
-    def __init__(self, system: InputSystem, view_configuration: BusinessViewConfiguration) -> None:
+    def __init__(self, system: InputSystem, view_configuration: BusinessViewConfig) -> None:
         self.system = system
         self.view_configuration = view_configuration
 
@@ -41,13 +41,13 @@ class MetricStructureBuilder:
 
 
 class BusinessViewBuilder:
-    """__init__(InputSystem, Calendar, BusinessViewConfiguration, SimulationTable). build_view()."""
+    """__init__(InputSystem, Calendar, BusinessViewConfig, SimulationTable). build_view()."""
 
     def __init__(
         self,
         system: InputSystem,
         calendar: Calendar,
-        view_configuration: BusinessViewConfiguration,
+        view_configuration: BusinessViewConfig,
         simulation_table: SimulationTable,
     ) -> None:
         self.system = system
