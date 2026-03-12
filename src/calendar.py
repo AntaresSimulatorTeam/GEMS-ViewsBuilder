@@ -39,7 +39,7 @@ class Calendar:
             raise FileNotFoundError(f"Calendar file {calendar_file_path} not found")
         if calendar_file_path.suffix.lower() != ".csv":
             raise ValueError(f"Calendar file {calendar_file_path} is not a CSV file")
-        return pl.read_csv(calendar_file_path)
+        return pl.read_csv(calendar_file_path, try_parse_dates=True)
 
     def _check_calendar_columns(self) -> None:
         if self.dataframe.columns != ["absolute_time_index", "block", "granular_date"]:
