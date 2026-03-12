@@ -13,7 +13,7 @@
 from pathlib import Path
 
 import pytest
-from gems.study.parsing import InputSystem, parse_yaml_components
+from gems.study.parsing import InputSystem, parse_yaml_components  # type: ignore[import-untyped]
 
 SYSTEMS_DIR = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files" / "systems"
 
@@ -25,7 +25,7 @@ SYSTEMS_DIR = Path(__file__).resolve().parent.parent.parent / "resources" / "tes
         Path(SYSTEMS_DIR / "system_france_clusters_80_snapshots_168_period_one_week.yml"),
     ],
 )
-def test_input_system_using(input_system_path: Path):
+def test_input_system_using(input_system_path: Path) -> None:
     assert input_system_path.exists(), f"System file not found: {input_system_path}"
     with open(input_system_path) as file:
         input_system = parse_yaml_components(file)
