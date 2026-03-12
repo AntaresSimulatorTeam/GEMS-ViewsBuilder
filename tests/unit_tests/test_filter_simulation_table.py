@@ -13,7 +13,6 @@
 import sys
 from pathlib import Path
 
-# Project root on path so "from src import ..." works
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT_DIR))
 
@@ -64,6 +63,30 @@ def test_filter_simulation_table_logical(calendar_file: Path, simulation_table_f
     )
 
 
+def test_filter_simulation_table_drops_mismatched_block() -> None:
+    """Rows whose block does not match the calendar's block for a given absolute_time_index are dropped."""
+    calendar_file = CALENDARS_DIR / "calendar_daily_block1.csv"
+    base_sim_table_file = SIMULATION_TABLES_DIR / "simulation_table_daily_one_year.csv"
+
+    calendar = Calendar(calendar_file)
+    base_sim_table = SimulationTable(base_sim_table_file)
+
+    # Duplicate all rows but change block to 2 (numeric) so they should all be filtered out
+    block_dtype = base_sim_table.dataframe["block"].dtype
+    duplicated = base_sim_table.dataframe.with_columns(pl.lit(2).cast(block_dtype).alias("block"))
+
+    # Build a SimulationTable that contains only entries that should be dropped
+    simulation_table = SimulationTable.__new__(SimulationTable)
+    simulation_table.id = base_sim_table.id + "_block2_only"
+    simulation_table.dataframe = duplicated
+
+    filtered = simulation_table.filter_simulation_table(calendar)
+
+    # Since calendar_daily_block1.csv has block=1 everywhere and the table has block=2 everywhere,
+    # all rows must be dropped by the filter.
+    assert filtered.height == 0
+
+
 @pytest.mark.parametrize("calendar_file, simulation_table_file", FILTER_TEST_CASES)
 def test_filter_simulation_table_writes_csv(calendar_file: Path, simulation_table_file: Path) -> None:
     """When output_path is set, the filtered table is written to CSV and matches the returned DataFrame.
@@ -74,7 +97,7 @@ def test_filter_simulation_table_writes_csv(calendar_file: Path, simulation_tabl
     try:
         result = simulation_table.filter_simulation_table(calendar, output_path=out_file)
         assert out_file.exists(), "Output CSV should be created"
-        written = pl.read_csv(out_file, null_values=["None"])
+        written = pl.read_csv(out_file, null_values=["None"], try_parse_dates=True)
         assert result.equals(written), "Written CSV content should match returned DataFrame"
     finally:
         if out_file.exists():

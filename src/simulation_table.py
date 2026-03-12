@@ -55,9 +55,9 @@ class SimulationTable:
             simulation_table_file,
             null_values=["None"],
         )
-        self._check_simulation_table_file_content()
+        self._check_simulation_table_columns()
 
-    def _check_simulation_table_file_content(self) -> None:
+    def _check_simulation_table_columns(self) -> None:
         actual = frozenset(self.dataframe.columns)
         missing = SIMULATION_TABLE_COLUMNS - actual
         extra = actual - SIMULATION_TABLE_COLUMNS

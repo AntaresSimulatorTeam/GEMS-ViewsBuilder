@@ -32,22 +32,43 @@ class Calendar:
         """
         self.id = calendar_file_path.stem
         self.dataframe = self._read_calendar_file(calendar_file_path)
-        self._check_calendar_file_content()
+        self._check_calendar_columns()
 
     def _read_calendar_file(self, calendar_file_path: Path) -> pl.DataFrame:
         if not calendar_file_path.exists():
             raise FileNotFoundError(f"Calendar file {calendar_file_path} not found")
         if calendar_file_path.suffix.lower() != ".csv":
             raise ValueError(f"Calendar file {calendar_file_path} is not a CSV file")
-        return pl.read_csv(calendar_file_path)
+        return pl.read_csv(calendar_file_path, try_parse_dates=True)
 
-    def _check_calendar_file_content(self) -> None:
+    def _check_calendar_columns(self) -> None:
         if self.dataframe.columns != ["absolute_time_index", "block", "granular_date"]:
-            raise ValueError(f"Calendar file {self.id} has invalid columns")
+            raise ValueError(f"Calendar '{self.id}' has invalid columns")
 
-    """
-    # probably we don't need this 2 methods, we can use the dataframe directly
-    """
+        if self.dataframe.is_empty():
+            return
+
+        # absolute_time_index must equal row index (contiguous 0..N-1, no misses)
+        abs_idx = self.dataframe.get_column("absolute_time_index")
+        expected = pl.arange(0, self.dataframe.height, eager=True).cast(abs_idx.dtype)
+        if not (abs_idx == expected).all():
+            raise ValueError(f"Calendar '{self.id}' has non-contiguous or mismatched absolute_time_index values")
+
+        # granular_date difference between adjacent rows must be constant
+        dates = self.dataframe.get_column("granular_date")
+        if dates.len() <= 1:
+            return
+
+        diffs = dates.diff()
+        diffs_non_null = diffs.drop_nulls()
+        if diffs_non_null.is_empty():
+            return
+
+        first_diff = diffs_non_null[0]
+        if not (diffs_non_null == first_diff).all():
+            raise ValueError(
+                f"Calendar '{self.id}' has non-constant differences between consecutive granular_date values"
+            )
 
     def abs_time_index_to_block(self, abs_time_index: int) -> int:
         if abs_time_index < 0 or abs_time_index >= self.dataframe.height:
