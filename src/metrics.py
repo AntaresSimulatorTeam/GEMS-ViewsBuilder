@@ -114,4 +114,4 @@ class BusinessViewConfig:
     scope: Scope
     catalogs: list[Catalog]
     aggregation: Aggregation
-    metrics: list[tuple[str, str]]
+    metrics: set[tuple[str, str]]  # id : catalog.metric, id : catalog.metric_2

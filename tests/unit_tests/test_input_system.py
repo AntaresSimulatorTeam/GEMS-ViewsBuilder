@@ -15,14 +15,14 @@ from pathlib import Path
 import pytest
 from gems.study.parsing import InputSystem, parse_yaml_components  # type: ignore[import-untyped]
 
-SYSTEMS_DIR = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files" / "systems"
+TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 
 
 @pytest.mark.parametrize(
     "input_system_path",
     [
-        Path(SYSTEMS_DIR / "system_france_clusters_50_snapshots_365_period_one_year.yml"),
-        Path(SYSTEMS_DIR / "system_france_clusters_80_snapshots_168_period_one_week.yml"),
+        TEST_FILES_ROOT / "input_one_daily" / "system_france_clusters_50_snapshots_365_period_one_year.yml",
+        TEST_FILES_ROOT / "input_two_hourly" / "system_france_clusters_80_snapshots_168_period_one_week.yml",
     ],
 )
 def test_input_system_using(input_system_path: Path) -> None:
