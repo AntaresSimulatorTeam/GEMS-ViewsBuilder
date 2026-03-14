@@ -17,10 +17,7 @@ from dataclasses import dataclass
 import polars as pl
 from gems.study.parsing import InputSystem  # type: ignore[import-untyped]
 
-from src.calendar import Calendar
-from src.location import LocationPorts
 from src.metrics import BusinessViewConfig
-from src.simulation_table import SimulationTable
 
 
 class MetricStructureBuilder:
@@ -33,29 +30,10 @@ class MetricStructureBuilder:
     def components_in_taxonomy_category(self, taxonomy_category: str) -> list[str]:
         raise NotImplementedError()
 
-    def locating_function(self, component_id: str, location_ports: LocationPorts) -> str | tuple[str, ...]:
+    def locating_function(self, component_id: str, location_ports: str | None) -> str | tuple[str, ...]:
         raise NotImplementedError()
 
     def build_tables(self) -> dict[str, pl.DataFrame]:
-        raise NotImplementedError()
-
-
-class BusinessViewBuilder:
-    """__init__(InputSystem, Calendar, BusinessViewConfig, SimulationTable). build_view()."""
-
-    def __init__(
-        self,
-        system: InputSystem,
-        calendar: Calendar,
-        view_configuration: BusinessViewConfig,
-        simulation_table: SimulationTable,
-    ) -> None:
-        self.system = system
-        self.calendar = calendar
-        self.view_configuration = view_configuration
-        self.simulation_table = simulation_table
-
-    def build_view(self) -> None:
         raise NotImplementedError()
 
 

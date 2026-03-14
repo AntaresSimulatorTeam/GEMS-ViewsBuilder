@@ -10,108 +10,65 @@
 #
 # This file is part of the Antares project.
 
-"""Metric operators, BusinessMetricTerm, BusinessMetric, BusinessCatalog, BusinessViewConfiguration."""
+"""BusinessViewConfig: in memory representation of a business_view_config.yml file."""
 
-from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from pathlib import Path
 
-from src.calendar import Calendar
-from src.location import LocationPorts
-from src.taxonomy import Taxonomy
+import yaml
+from pydantic import Field
+
+from src.base_model import GEMSViewBuilderBaseModel
 
 
 class TimeAggregation(Enum):
-    """
-    Time aggregation.
-    """
-
-    HOURS = "hours"  # from example it will be used in future
+    HOURS = "hours"
 
 
-@dataclass
-class Aggregation:
-    time: Optional[TimeAggregation] = None  # for now it will be used in future
+class Scope(GEMSViewBuilderBaseModel):
+    taxonomy_category: str | None = Field(None, alias="taxonomy-category")
+    calendar: str | None = None
 
 
-"""Operator for time && terms aggregation. Kept separate from Operator for future flexibility."""
+class Aggregation(GEMSViewBuilderBaseModel):
+    time: TimeAggregation | None = None
 
 
-class TermsOperator(Enum):
-    """
-    Operator for terms.
-    """
-
-    SUM = "sum"
-    AVG = "avg"
-
-
-class TimeOperator(Enum):
-    """
-    Operator for time.
-    """
-
-    SUM = "sum"
-    AVG = "avg"
-
-
-@dataclass
-class Term:
-    taxonomy_category: str
-    output_id: str
-    location_ports: LocationPorts
-    weight_output_id: Optional[str] = None
-
-
-@dataclass
-class Metric:
+class CatalogRef(GEMSViewBuilderBaseModel):
     id: str
-    terms: list[Term]
-    terms_operator: TermsOperator
-    time_operator: TimeOperator
-    breakdown_property: Optional[str] = None
-    filter: Optional[tuple[str, str]] = None
 
 
-@dataclass
-class Catalog:
-    """
-    In memory representation of the catalog.yml file
-    id: id of the catalog
-    taxonomy: taxonomy id
-    location_taxonomy_category: Taxonomy set of taxonomy categories that are used as localization elements, e.g. balance is taxonomy for area,zones ... etc
-    metrics_definition: dict[str, Metric] dictionary of metrics definitions
-    """
-
+class MetricRef(GEMSViewBuilderBaseModel):
     id: str
-    taxonomy: str
-    location_taxonomy_category: Taxonomy
-    metrics_definition: dict[str, Metric]
 
 
-@dataclass
-class Scope:
-    """
-    Scope of the view.
-    """
-
-    location_taxonomy_category: str
-    calendar: Calendar
+class BusinessViewData(GEMSViewBuilderBaseModel):
+    id: str
+    scope: list[Scope]
+    aggregation: list[Aggregation]
+    catalog: list[CatalogRef]
+    metrics: list[MetricRef]
 
 
-@dataclass
 class BusinessViewConfig:
     """
-    In memory representation of the business-view-config.yml file.
-    Id: id of the view.
-    Scope: scope of the view. -> Which calendar and which taxonomy category are used.
-    Catalogs: set of catalogs that are used to build the view.
-    Aggregation: aggregation of the view. -> Which time and which terms are used.
-    Metrics: list of metrics that are used to build the view. -> Which metrics are used.(id : catalog1.OVERALL_COST, id: catalog2.PRICE...)
+    In memory representation of the business_view_config.yml file.
     """
 
-    id: str
-    scope: Scope
-    catalogs: list[Catalog]
-    aggregation: Aggregation
-    metrics: set[tuple[str, str]]  # id : catalog.metric, id : catalog.metric_2
+    def __init__(self, config_file_path: Path) -> None:
+        parsed = self._load_business_view_file(config_file_path)
+        self.id = parsed.id
+        self.location_taxonomy_category: str = next(
+            item.taxonomy_category for item in parsed.scope if item.taxonomy_category
+        )
+        self.calendar_id: str = next(item.calendar for item in parsed.scope if item.calendar)
+        self.catalog_ids: list[str] = [c.id for c in parsed.catalog]
+        self.time_aggregation: TimeAggregation | None = parsed.aggregation[0].time if parsed.aggregation else None
+        self.metrics: set[tuple[str, str]] = {
+            (parts[0], parts[1]) for m in parsed.metrics if len(parts := m.id.split(".", 1)) == 2
+        }
+
+    def _load_business_view_file(self, business_view_file_path: Path) -> BusinessViewData:
+        with open(business_view_file_path) as f:
+            raw = yaml.safe_load(f)
+        return BusinessViewData.model_validate(raw["view"])

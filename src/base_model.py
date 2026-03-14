@@ -10,13 +10,10 @@
 #
 # This file is part of the Antares project.
 
-from dataclasses import dataclass
+"""Shared Pydantic base model for all GEMS ViewsBuilder models."""
+
+from pydantic import BaseModel, ConfigDict
 
 
-@dataclass
-class LocationPorts:
-    """
-    Location/ports: set of str or None
-    """
-
-    location_ports: frozenset[str] | None
+class GEMSViewBuilderBaseModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)

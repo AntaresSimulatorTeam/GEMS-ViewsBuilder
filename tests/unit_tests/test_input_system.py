@@ -19,7 +19,7 @@ TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / 
 
 # Exact relative paths that must exist in every input_* directory.
 REQUIRED_FILES = [
-    "business_config.yml",
+    "business_view_config.yml",
     "taxonomy.yml",
     "catalogs/catalog_1.yml",
 ]
