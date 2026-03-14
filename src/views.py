@@ -12,15 +12,15 @@
 
 """MetricStructureBuilder, BusinessViewBuilder, BusinessView (spec views.py)."""
 
-from calendar import Calendar
 from dataclasses import dataclass
 
 import polars as pl
 from gemspy.gems.input_system import InputSystem  # type: ignore[import-not-found]
 
-from location import LocationPorts
-from metrics import BusinessViewConfiguration
-from simulation import SimulationTable
+from src.calendar import Calendar
+from src.location import LocationPorts
+from src.metrics import BusinessViewConfiguration
+from src.simulation_table import SimulationTable
 
 
 class MetricStructureBuilder:
