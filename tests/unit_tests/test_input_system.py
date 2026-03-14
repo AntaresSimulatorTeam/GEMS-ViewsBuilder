@@ -17,6 +17,22 @@ from gems.study.parsing import InputSystem, parse_yaml_components  # type: ignor
 
 TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 
+# Exact relative paths that must exist in every input_* directory.
+REQUIRED_FILES = [
+    "business_config.yml",
+    "taxonomy.yml",
+    "catalogs/catalog_1.yml",
+]
+
+
+def test_input_folders_have_required_files() -> None:
+    """Every input_* directory must contain the required files with exact names."""
+    input_dirs = sorted(p for p in TEST_FILES_ROOT.iterdir() if p.is_dir() and p.name.startswith("input_"))
+    for input_dir in input_dirs:
+        for rel in REQUIRED_FILES:
+            path = input_dir / rel
+            assert path.is_file(), f"Missing required file in {input_dir.name}: {rel}"
+
 
 @pytest.mark.parametrize(
     "input_system_path",
