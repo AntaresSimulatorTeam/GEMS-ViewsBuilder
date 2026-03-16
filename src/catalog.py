@@ -18,7 +18,7 @@ from pathlib import Path
 import yaml
 from pydantic import Field
 
-from src.base_model import GEMSViewBuilderBaseModel
+from src.base_model import ViewBuilderBasedModel
 
 
 class TermsOperator(Enum):
@@ -31,14 +31,14 @@ class TimeOperator(Enum):
     AVG = "avg"
 
 
-class Term(GEMSViewBuilderBaseModel):
+class Term(ViewBuilderBasedModel):
     taxonomy_category: str = Field(alias="taxonomy-category")
     output_id: str = Field(alias="output-id")
     location_ports: str | None = Field(alias="location-ports")
     weight_output_id: str | None = Field(None, alias="weight-output-id")
 
 
-class Metric(GEMSViewBuilderBaseModel):
+class Metric(ViewBuilderBasedModel):
     id: str
     terms: list[Term]
     terms_operator: TermsOperator = Field(alias="terms-operator")
@@ -47,11 +47,11 @@ class Metric(GEMSViewBuilderBaseModel):
     filter: tuple[str, str] | None = None
 
 
-class CatalogLocation(GEMSViewBuilderBaseModel):
+class CatalogLocation(ViewBuilderBasedModel):
     taxonomy_category: str = Field(alias="taxonomy-category")
 
 
-class CatalogData(GEMSViewBuilderBaseModel):
+class CatalogData(ViewBuilderBasedModel):
     id: str
     taxonomy: str
     location: CatalogLocation

@@ -15,14 +15,14 @@ from pathlib import Path
 import yaml
 from pydantic import Field
 
-from src.base_model import GEMSViewBuilderBaseModel
+from src.base_model import ViewBuilderBasedModel
 
 
-class TaxonomyItem(GEMSViewBuilderBaseModel):
+class TaxonomyItem(ViewBuilderBasedModel):
     id: str
 
 
-class TaxonomyCategory(GEMSViewBuilderBaseModel):
+class TaxonomyCategory(ViewBuilderBasedModel):
     id: str
     parent_category: str | None = Field(
         None, alias="parent-category"
@@ -35,7 +35,7 @@ class TaxonomyCategory(GEMSViewBuilderBaseModel):
     properties: list[TaxonomyItem] = []
 
 
-class TaxonomyData(GEMSViewBuilderBaseModel):
+class TaxonomyData(ViewBuilderBasedModel):
     id: str
     description: str = ""
     categories: list[TaxonomyCategory] = []

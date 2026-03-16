@@ -10,7 +10,7 @@
 #
 # This file is part of the Antares project.
 
-"""BusinessViewConfig: in memory representation of a business_view_config.yml file."""
+"""ViewConfig: in memory representation of a view_config.yml file."""
 
 from enum import Enum
 from pathlib import Path
@@ -18,31 +18,31 @@ from pathlib import Path
 import yaml
 from pydantic import Field
 
-from src.base_model import GEMSViewBuilderBaseModel
+from src.base_model import ViewBuilderBasedModel
 
 
 class TimeAggregation(Enum):
     HOURS = "hours"
 
 
-class Scope(GEMSViewBuilderBaseModel):
+class Scope(ViewBuilderBasedModel):
     taxonomy_category: str | None = Field(None, alias="taxonomy-category")
     calendar: str | None = None
 
 
-class Aggregation(GEMSViewBuilderBaseModel):
+class Aggregation(ViewBuilderBasedModel):
     time: TimeAggregation | None = None
 
 
-class CatalogRef(GEMSViewBuilderBaseModel):
+class CatalogRef(ViewBuilderBasedModel):
     id: str
 
 
-class MetricRef(GEMSViewBuilderBaseModel):
+class MetricRef(ViewBuilderBasedModel):
     id: str
 
 
-class BusinessViewData(GEMSViewBuilderBaseModel):
+class ViewData(ViewBuilderBasedModel):
     id: str
     scope: list[Scope]
     aggregation: list[Aggregation]
@@ -50,13 +50,13 @@ class BusinessViewData(GEMSViewBuilderBaseModel):
     metrics: list[MetricRef]
 
 
-class BusinessViewConfig:
+class ViewConfig:
     """
-    In memory representation of the business_view_config.yml file.
+    In memory representation of the view_config.yml file.
     """
 
     def __init__(self, config_file_path: Path) -> None:
-        parsed = self._load_business_view_file(config_file_path)
+        parsed = self._load_view_file(config_file_path)
         self.id = parsed.id
         self.location_taxonomy_category: str = next(
             item.taxonomy_category for item in parsed.scope if item.taxonomy_category
@@ -68,7 +68,7 @@ class BusinessViewConfig:
             (parts[0], parts[1]) for m in parsed.metrics if len(parts := m.id.split(".", 1)) == 2
         }
 
-    def _load_business_view_file(self, business_view_file_path: Path) -> BusinessViewData:
-        with open(business_view_file_path) as f:
+    def _load_view_file(self, view_file_path: Path) -> ViewData:
+        with open(view_file_path) as f:
             raw = yaml.safe_load(f)
-        return BusinessViewData.model_validate(raw["view"])
+        return ViewData.model_validate(raw["view"])
