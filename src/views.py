@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import polars as pl
-from gems.study.parsing import InputSystem, parse_yaml_components  # type: ignore[import-not-found]
+from gems.study.parsing import InputSystem, parse_yaml_components  # type: ignore
 
 from src.catalog import Catalog
 from src.metrics import ViewConfig
