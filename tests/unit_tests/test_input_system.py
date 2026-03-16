@@ -13,7 +13,7 @@
 from pathlib import Path
 
 import pytest
-from gems.study.parsing import InputSystem, parse_yaml_components  # type: ignore[import-not-found]
+from gems.study.parsing import InputSystem, parse_yaml_components  # type: ignore
 
 TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 
