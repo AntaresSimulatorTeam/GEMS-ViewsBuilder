@@ -18,7 +18,7 @@ from pathlib import Path
 
 import polars as pl
 import yaml
-from gems.study.parsing import InputSystem  # type: ignore[import-not-found]
+from gems.study.parsing import InputSystem  # type: ignore
 from pydantic import Field
 
 from src.base_model import ViewBuilderBasedModel

@@ -29,13 +29,13 @@ def test_catalog_loads(catalog_path: Path) -> None:
     assert isinstance(catalog.id, str)
     assert isinstance(catalog.taxonomy, str)
     assert isinstance(catalog.location_taxonomy_category, str)
-    assert len(catalog.metrics_definition) > 0
+    assert len(catalog.metrics) > 0
 
 
 @pytest.mark.parametrize("catalog_path", CATALOG_PATH)
 def test_catalog_metrics_are_typed(catalog_path: Path) -> None:
     catalog = Catalog(catalog_path)
-    for metric in catalog.metrics_definition:
+    for metric in catalog.metrics.values():
         assert isinstance(metric, Metric)
         assert isinstance(metric.id, str)
         assert isinstance(metric.terms_operator, TermsOperator)
@@ -46,7 +46,7 @@ def test_catalog_metrics_are_typed(catalog_path: Path) -> None:
 @pytest.mark.parametrize("catalog_path", CATALOG_PATH)
 def test_catalog_terms_are_typed(catalog_path: Path) -> None:
     catalog = Catalog(catalog_path)
-    for metric in catalog.metrics_definition:
+    for metric in catalog.metrics.values():
         for term in metric.terms:
             assert isinstance(term, Term)
             assert isinstance(term.taxonomy_category, str)
@@ -56,7 +56,7 @@ def test_catalog_terms_are_typed(catalog_path: Path) -> None:
 
 def test_catalog_known_metrics() -> None:
     catalog = Catalog(TEST_FILES_ROOT / "input_one_daily" / "catalogs" / "catalog_1.yml")
-    metric_ids = {m.id for m in catalog.metrics_definition}
+    metric_ids = set(catalog.metrics.keys())
     assert "OVERALL_COST" in metric_ids
     assert "MRG_PRICE" in metric_ids
     assert "UNSP_ENRG" in metric_ids
@@ -64,6 +64,6 @@ def test_catalog_known_metrics() -> None:
 
 def test_catalog_operators_valid_values() -> None:
     catalog = Catalog(TEST_FILES_ROOT / "input_one_daily" / "catalogs" / "catalog_1.yml")
-    for metric in catalog.metrics_definition:
+    for metric in catalog.metrics.values():
         assert metric.terms_operator in (TermsOperator.SUM, TermsOperator.AVG)
         assert metric.time_operator in (TimeOperator.SUM, TimeOperator.AVG)

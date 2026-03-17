@@ -40,9 +40,7 @@ class ViewBuilder:
         self.taxonomy = Taxonomy(input_data_path / "taxonomy.yml")
         self.view_config = ViewConfig(input_data_path / "view_config.yml")
         simulation_table_path = next(input_data_path.glob("simulation_table*"))
-        self.simulation_table = SimulationTable(
-            simulation_table_path
-        )  # this file could be really heavy, something like 10-100GB
+        self.simulation_table = SimulationTable(simulation_table_path)
 
     def _check_input_data_structure(self, input_data_path: Path) -> None:
         if not input_data_path.is_dir():
@@ -74,7 +72,7 @@ class ViewBuilder:
 
     def execute(self) -> None:
         # # 1. Filter simulation table
-        self.simulation_table = self.simulation_table.filter_simulation_table(
+        filtered_simulation_table = self.simulation_table.filter_simulation_table(  # noqa: F841
             self.calendar, self.input_data_path / "simulation_table_filtered.csv"
         )
 
