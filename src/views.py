@@ -18,26 +18,16 @@ from pathlib import Path
 import polars as pl
 from gems.study.parsing import InputSystem, parse_yaml_components  # type: ignore
 
-from src.catalog import Catalog
-from src.metrics import ViewConfig
+from src.catalog import Catalog, Metric
+from src.metrics import MetricStructureBuilder, ViewConfig
+from src.simulation_table import SimulationTable
 from src.taxonomy import Taxonomy
 
-
-class MetricStructureBuilder:
-    """InputSystem from GemsPy. LIST_OF_COMPONENTS_IN_TAXONOMY_CATEGORY, LOCATING_FUNCTION, build_tables (spec 2.1)."""
-
-    def __init__(self, system: InputSystem, view_configuration: ViewConfig) -> None:
-        self.system = system
-        self.view_configuration = view_configuration
-
-    def components_in_taxonomy_category(self, taxonomy_category: str) -> list[str]:
-        raise NotImplementedError()
-
-    def locating_function(self, component_id: str, location_ports: str | None) -> str | tuple[str, ...]:
-        raise NotImplementedError()
-
-    def build_tables(self) -> dict[str, pl.DataFrame]:
-        raise NotImplementedError()
+"""
+# ViewConfig -> representation of the view_config.yml file and it references the catalogs and calendar
+# System -> representation of the system.yml file
+# Taxonomy -> representation of the taxonomy.yml file
+"""
 
 
 class ViewBuilder:
@@ -49,9 +39,10 @@ class ViewBuilder:
         self.system = self._load_system(input_data_path)
         self.taxonomy = Taxonomy(input_data_path / "taxonomy.yml")
         self.view_config = ViewConfig(input_data_path / "view_config.yml")
-        self.catalogs: list[Catalog] = [
-            Catalog(input_data_path / "catalogs" / f"{catalog_id}.yml") for catalog_id in self.view_config.catalog_ids
-        ]
+        simulation_table_path = next(input_data_path.glob("simulation_table*"))
+        self.simulation_table = SimulationTable(
+            simulation_table_path
+        )  # this file could be really heavy, something like 10-100GB
 
     def _check_input_data_structure(self, input_data_path: Path) -> None:
         if not input_data_path.is_dir():
@@ -80,6 +71,29 @@ class ViewBuilder:
         system_path = next(input_data_path.glob("system*"))
         with open(system_path) as f:
             return parse_yaml_components(f)
+
+    def execute(self) -> None:
+        # # 1. Filter simulation table
+        self.simulation_table = self.simulation_table.filter_simulation_table(
+            self.calendar, self.input_data_path / "simulation_table_filtered.csv"
+        )
+
+        # # 2. Create metric structure table
+        # # Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
+        for catalog_id, metrics in self.view_config.metrics.items():
+            # # 2.1 Load catalog
+            catalog: Catalog = self.view_config._load_current_catalog(catalog_id)
+            # # 2.2 Iterate over all metrics for this catalog
+            for metric_id in metrics:
+                try:
+                    metric: Metric = catalog.get_metric_by_id(metric_id)
+                except ValueError:
+                    continue  # # We should decide do we want to break process fully or continue with the next metric
+
+                # # 2.3 Build metric structure table
+                metric_structure_table = MetricStructureBuilder(  # noqa: F841
+                    self.system, catalog, metric, self.taxonomy
+                ).build_table()
 
 
 @dataclass

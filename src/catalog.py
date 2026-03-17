@@ -64,9 +64,14 @@ class Catalog:
         self.id = parsed.id
         self.taxonomy = parsed.taxonomy
         self.location_taxonomy_category = parsed.location.taxonomy_category
-        self.metrics_definition: list[Metric] = parsed.metrics_definition
+        self.metrics: dict[str, Metric] = {metric.id: metric for metric in parsed.metrics_definition}
 
     def _load_catalog_file(self, catalog_file_path: Path) -> CatalogData:
         with open(catalog_file_path) as f:
             raw = yaml.safe_load(f)
         return CatalogData.model_validate(raw["catalog"])
+
+    def get_metric_by_id(self, metric_id: str) -> Metric:
+        if metric_id not in self.metrics:
+            raise ValueError(f"Metric {metric_id} not found in catalog {self.id}")
+        return self.metrics[metric_id]

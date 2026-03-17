@@ -38,15 +38,18 @@ FILTER_TEST_CASES = [
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 @pytest.mark.parametrize("calendar_file, simulation_table_file", FILTER_TEST_CASES)
-def test_filter_simulation_table_logical(calendar_file: Path, simulation_table_file: Path) -> None:
+def test_filter_simulation_table_logical(tmp_path: Path, calendar_file: Path, simulation_table_file: Path) -> None:
     """Filtered result must satisfy: every row (absolute_time_index, block) in calendar, correct count, rows from sim table."""
     calendar = Calendar(calendar_file)
     simulation_table = SimulationTable(simulation_table_file)
+    out_file = tmp_path / "filtered_logical.csv"
 
-    filtered = simulation_table.filter_simulation_table(calendar, output_path=None)
+    filtered_sim_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
+    filtered = filtered_sim_table.dataframe.collect(engine="streaming")
 
     # 1. Every row in the result has (absolute_time_index, block) present in the calendar
-    in_calendar = filtered.join(calendar.dataframe, on=["absolute_time_index", "block"], how="semi")
+    calendar_df = calendar.dataframe.collect()
+    in_calendar = filtered.join(calendar_df, on=["absolute_time_index", "block"], how="semi")
     assert in_calendar.height == filtered.height, (
         "Every filtered row must have (absolute_time_index, block) in the calendar"
     )
@@ -55,6 +58,7 @@ def test_filter_simulation_table_logical(calendar_file: Path, simulation_table_f
     expected_count = (
         simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
+        .collect(engine="streaming")
         .height
     )
     assert filtered.height == expected_count, (
@@ -72,13 +76,16 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path) -> None:
     base_sim_table = SimulationTable(base_sim_table_file)
 
     # Duplicate rows with block=2 so they do not match calendar (block=1)
-    block_dtype = base_sim_table.dataframe["block"].dtype
-    duplicated = base_sim_table.dataframe.with_columns(pl.lit(2).cast(block_dtype).alias("block"))
+    base_df = base_sim_table.dataframe.collect(engine="streaming")
+    block_dtype = base_df["block"].dtype
+    duplicated = base_df.with_columns(pl.lit(2).cast(block_dtype).alias("block"))
     sim_path_block2 = tmp_path / "simulation_table_block2_only.csv"
     duplicated.write_csv(sim_path_block2)
     simulation_table = SimulationTable(sim_path_block2)
 
-    filtered = simulation_table.filter_simulation_table(calendar)
+    out_file = tmp_path / "filtered_empty.csv"
+    filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
+    filtered = filtered_table.dataframe.collect(engine="streaming")
 
     assert filtered.height == 0
 
@@ -94,8 +101,9 @@ def test_filter_simulation_table_writes_csv(
     simulation_table = SimulationTable(simulation_table_file)
     out_file = tmp_path / f"filtered_{calendar_file.stem}.csv"
 
-    result = simulation_table.filter_simulation_table(calendar, output_path=out_file)
+    filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
 
     assert out_file.exists(), "Output CSV should be created"
     written = pl.read_csv(out_file, null_values=["None"], try_parse_dates=True)
-    assert result.equals(written), "Written CSV content should match returned DataFrame"
+    result_df = filtered_table.dataframe.collect(engine="streaming")
+    assert result_df.equals(written), "Written CSV content should match returned DataFrame"

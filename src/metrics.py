@@ -12,13 +12,19 @@
 
 """ViewConfig: in memory representation of a view_config.yml file."""
 
+from collections import defaultdict
 from enum import Enum
 from pathlib import Path
 
+import polars as pl
 import yaml
+from gems.study.parsing import InputSystem  # type: ignore[import-not-found]
 from pydantic import Field
 
 from src.base_model import ViewBuilderBasedModel
+from src.calendar import Calendar
+from src.catalog import Catalog, Metric
+from src.taxonomy import Taxonomy
 
 
 class TimeAggregation(Enum):
@@ -64,11 +70,79 @@ class ViewConfig:
         self.calendar_id: str = next(item.calendar for item in parsed.scope if item.calendar)
         self.catalog_ids: list[str] = [c.id for c in parsed.catalog]
         self.time_aggregation: TimeAggregation | None = parsed.aggregation[0].time if parsed.aggregation else None
-        self.metrics: set[tuple[str, str]] = {
-            (parts[0], parts[1]) for m in parsed.metrics if len(parts := m.id.split(".", 1)) == 2
-        }
+        # Public API: list of (catalog_id, metric_id) pairs
+        self.metrics: list[tuple[str, str]] = self._extract_metric_pairs(parsed.metrics)
+        # Internal helper: grouped by catalog
+        self.metrics_by_catalog: dict[str, list[str]] = self._group_metrics_by_catalog(self.metrics)
+
+    def _extract_metric_pairs(self, metrics: list[MetricRef]) -> list[tuple[str, str]]:
+        pairs: list[tuple[str, str]] = []
+        for metric in metrics:
+            catalog_id, metric_id = metric.id.split(".", 1)
+            pairs.append((catalog_id, metric_id))
+        return pairs
+
+    def _group_metrics_by_catalog(self, metrics: list[tuple[str, str]]) -> dict[str, list[str]]:
+        metrics_for_catalog: dict[str, list[str]] = defaultdict(list)
+        for catalog_id, metric_id in metrics:
+            metrics_for_catalog[catalog_id].append(metric_id)
+        return metrics_for_catalog
 
     def _load_view_file(self, view_file_path: Path) -> ViewData:
         with open(view_file_path) as f:
             raw = yaml.safe_load(f)
         return ViewData.model_validate(raw["view"])
+
+    def _load_current_catalog(self, catalog_id: str) -> Catalog:
+        """
+        This method prevents us from having all catalogs in memory at once
+        Just load when that is needed
+        """
+        if not (self.input_data_path / "catalogs" / f"{catalog_id}.yml").exists():
+            raise FileNotFoundError(f"Catalog file {self.input_data_path / 'catalogs' / f'{catalog_id}.yml'} not found")
+        return Catalog(self.input_data_path / "catalogs" / f"{catalog_id}.yml")
+
+    def _load_calendar(self) -> Calendar:
+        """
+        This method prevents calendars in memory
+        Just load when that is needed,(e.g. when we're filtering simulation table)
+        """
+        if not (self.input_data_path / "calendars" / f"{self.calendar_id}.csv").exists():
+            raise FileNotFoundError(
+                f"Calendar file {self.input_data_path / 'calendars' / f'{self.calendar_id}.csv'} not found"
+            )
+        return Calendar(self.input_data_path / "calendars" / f"{self.calendar_id}.csv")
+
+
+class MetricStructureBuilder:
+    """InputSystem from GemsPy. LIST_OF_COMPONENTS_IN_TAXONOMY_CATEGORY, LOCATING_FUNCTION, build_tables (spec 2.1)."""
+
+    def __init__(self, system: InputSystem, catalog: Catalog, metric: Metric, taxonomy: Taxonomy) -> None:
+        self.system = system
+        self.catalog = catalog
+        self.metric = metric
+        self.taxonomy = taxonomy
+        self.current_schema: pl.DataFrame = pl.DataFrame(
+            schema={
+                "metric_id": pl.Utf8,
+                "component_id": pl.Utf8,
+                "metric_location": pl.Utf8,
+                "breakdown_properties": pl.Utf8,
+                "output_id": pl.Utf8,
+                "weight_output_id": pl.Int64,
+            }
+        )
+
+    def components_in_taxonomy_category(self, taxonomy_category: str) -> list[str]:
+        raise NotImplementedError()
+
+    def locating_function(self, component_id: str, location_ports: str | None) -> str | tuple[str, ...]:
+        raise NotImplementedError()
+
+    def build_table(self) -> dict[str, pl.DataFrame]:
+        # Placeholder until the full implementation is provided.
+        # Ensure return type matches the annotation for mypy.
+        tables: dict[str, pl.DataFrame] = {}
+        for _ in self.metric.terms:
+            continue
+        return tables
