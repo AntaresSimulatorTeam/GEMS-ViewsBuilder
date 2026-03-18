@@ -21,17 +21,23 @@ TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / 
 REQUIRED_FILES = [
     "view_config.yml",
     "taxonomy.yml",
-    "catalogs/catalog_1.yml",
 ]
+
+# Catalogs dir must exist and contain at least one .yml file (catalog.yml or catalog_1.yml, etc.)
+CATALOGS_DIR = "catalogs"
 
 
 def test_input_folders_have_required_files() -> None:
-    """Every input_* directory must contain the required files with exact names."""
+    """Every input_* directory must contain the required files and at least one catalog."""
     input_dirs = sorted(p for p in TEST_FILES_ROOT.iterdir() if p.is_dir() and p.name.startswith("input_"))
     for input_dir in input_dirs:
         for rel in REQUIRED_FILES:
             path = input_dir / rel
             assert path.is_file(), f"Missing required file in {input_dir.name}: {rel}"
+        catalogs_path = input_dir / CATALOGS_DIR
+        assert catalogs_path.is_dir(), f"Missing catalogs directory in {input_dir.name}"
+        catalog_files = list(catalogs_path.glob("*.yml"))
+        assert len(catalog_files) > 0, f"No catalog .yml file in {input_dir.name}/{CATALOGS_DIR}"
 
 
 @pytest.mark.parametrize(

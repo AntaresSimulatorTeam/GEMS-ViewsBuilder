@@ -1,0 +1,31 @@
+taxonomy:
+  id: my_taxonomy
+  description: Minimal taxonomy for input_three.
+
+  categories:
+    - id: balance
+      ports:
+        - id: p_balance_port
+        - id: q_balance_port
+
+    - id: consumption
+      ports:
+        - id: p_balance_port
+        - id: q_balance_port
+
+    - id: production
+      ports:
+        - id: p_balance_port
+
+    - id: storage
+      ports:
+        - id: p_balance_port
+
+    - id: link
+      ports:
+        - id: p0_port
+        - id: p1_port
+
+    - id: coupling
+      ports:
+        - id: emission_port

@@ -20,6 +20,7 @@ TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / 
 
 TAXONOMY_PATH = [
     TEST_FILES_ROOT / "input_one_daily" / "taxonomy.yml",
+    TEST_FILES_ROOT / "input_three" / "taxonomy.yml",
 ]
 
 
