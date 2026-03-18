@@ -18,12 +18,13 @@ from pathlib import Path
 
 import polars as pl
 import yaml
-from gems.study.parsing import InputSystem  # type: ignore
 from pydantic import Field
 
 from src.base_model import ViewBuilderBasedModel
 from src.calendar import Calendar
 from src.catalog import Catalog, Metric
+from src.input_system import InputSystem
+from src.model_library import ModelLibrary
 from src.taxonomy import Taxonomy
 
 
@@ -117,11 +118,21 @@ class ViewConfig:
 class MetricStructureBuilder:
     """InputSystem from GemsPy. LIST_OF_COMPONENTS_IN_TAXONOMY_CATEGORY, LOCATING_FUNCTION, build_tables (spec 2.1)."""
 
-    def __init__(self, system: InputSystem, catalog: Catalog, metric: Metric, taxonomy: Taxonomy) -> None:
+    def __init__(
+        self,
+        system: InputSystem,
+        catalog: Catalog,
+        metric: Metric,
+        taxonomy: Taxonomy,
+        model_library: ModelLibrary,
+        path_to_output_table: Path,
+    ) -> None:
         self.system = system
         self.catalog = catalog
         self.metric = metric
         self.taxonomy = taxonomy
+        self.model_library = model_library
+        self.path_to_output_table = path_to_output_table
         self.current_schema: pl.DataFrame = pl.DataFrame(
             schema={
                 "metric_id": pl.Utf8,
@@ -129,20 +140,45 @@ class MetricStructureBuilder:
                 "metric_location": pl.Utf8,
                 "breakdown_properties": pl.Utf8,
                 "output_id": pl.Utf8,
-                "weight_output_id": pl.Int64,
+                "weight_output_id": pl.Int64,  # # What will be value range here, probably we could use Int8 to save memory?
             }
         )
 
-    def components_in_taxonomy_category(self, taxonomy_category: str) -> list[str]:
-        raise NotImplementedError()
+    def build_table(self) -> None:
+        """
+        # Idea is to write table at the provided output path
+        # then when we perform SQL operation we could do lazy loading and avoid loading in memory
+        """
+        self.path_to_output_table.parent.mkdir(parents=True, exist_ok=True)
+        schema = self.current_schema.schema
+        # Create the file with header once; then always append without header.
+        if (not self.path_to_output_table.exists()) or self.path_to_output_table.stat().st_size == 0:
+            pl.DataFrame(schema=schema).write_csv(self.path_to_output_table)
 
-    def locating_function(self, component_id: str, location_ports: str | None) -> str | tuple[str, ...]:
-        raise NotImplementedError()
+        def append_row_polars(row: dict[str, object]) -> None:
+            row_df = pl.DataFrame([row], schema=schema)
+            with self.path_to_output_table.open("a") as f:
+                row_df.write_csv(f, include_header=False)
 
-    def build_table(self) -> dict[str, pl.DataFrame]:
-        # Placeholder until the full implementation is provided.
-        # Ensure return type matches the annotation for mypy.
-        tables: dict[str, pl.DataFrame] = {}
-        for _ in self.metric.terms:
-            continue
-        return tables
+        for term in self.metric.terms:
+            # # Pick components whih belongs to the taxonomy category, from model library
+            components_in_taxonomy_category = self.model_library.get_components_in_taxonomy_category(
+                term.taxonomy_category
+            )  # # O(1) access insted of O(n) from pseudo code
+            for component_id in components_in_taxonomy_category:
+                # # Here will be applied filter with respect to properties of the component
+                # # Breakdown properties will be applied here
+
+                # # locating function
+                metric_location = self.system.locating_function(component_id, term.location_ports)
+                # # append to the output csv on disk (polars write)
+                append_row_polars(
+                    {
+                        "metric_id": self.metric.id,
+                        "component_id": component_id,
+                        "metric_location": metric_location,  # # We should force users to have names for example fr_battery, then we could parse easy component id
+                        "breakdown_properties": "",
+                        "output_id": term.output_id,
+                        "weight_output_id": 1,  # # Default value
+                    }
+                )

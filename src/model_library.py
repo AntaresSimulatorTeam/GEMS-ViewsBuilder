@@ -130,6 +130,12 @@ class ModelLibrary:
         self.description = parsed.description
         self.port_types: list[PortTypeDef] = parsed.port_types
         self.models: dict[str, ModelDefinition] = {m.id: m for m in parsed.models}
+        # Index: taxonomy_category -> [model_id, ...]
+        self.models_by_taxonomy_category: dict[str, list[str]] = {}
+        for m in parsed.models:
+            if not m.taxonomy_category:
+                continue
+            self.models_by_taxonomy_category.setdefault(m.taxonomy_category, []).append(m.id)
 
     def _load_library_file(self, library_file_path: Path) -> LibraryData:
         with open(library_file_path) as f:
@@ -141,6 +147,10 @@ class ModelLibrary:
         return self.models.get(model_id)
 
     def get_taxonomy_category(self, model_id: str) -> str | None:
-        """Return the taxonomy-category for a model, or None if not found or not defined."""
+        """Return the taxonomy category for a given model id, or None if unknown."""
         model = self.get_model(model_id)
         return model.taxonomy_category if model else None
+
+    def get_components_in_taxonomy_category(self, taxonomy_category: str) -> list[str]:
+        # Return all model ids that belong to this taxonomy category.
+        return self.models_by_taxonomy_category.get(taxonomy_category, [])

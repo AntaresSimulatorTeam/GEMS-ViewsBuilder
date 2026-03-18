@@ -12,14 +12,12 @@
 
 """MetricStructureBuilder, ViewBuilder, View (spec views.py)."""
 
-from dataclasses import dataclass
 from pathlib import Path
 
-import polars as pl
-from gems.study.parsing import InputSystem, parse_yaml_components  # type: ignore
-
 from src.catalog import Catalog, Metric
+from src.input_system import InputSystem
 from src.metrics import MetricStructureBuilder, ViewConfig
+from src.model_library import ModelLibrary
 from src.simulation_table import SimulationTable
 from src.taxonomy import Taxonomy
 
@@ -41,6 +39,8 @@ class ViewBuilder:
         self.view_config = ViewConfig(input_data_path / "view_config.yml")
         simulation_table_path = next(input_data_path.glob("simulation_table*"))
         self.simulation_table = SimulationTable(simulation_table_path)
+        self.model_library = ModelLibrary(input_data_path / "pypsa_models.yml")
+        self.input_data_path = input_data_path
 
     def _check_input_data_structure(self, input_data_path: Path) -> None:
         if not input_data_path.is_dir():
@@ -67,15 +67,14 @@ class ViewBuilder:
 
     def _load_system(self, input_data_path: Path) -> InputSystem:
         system_path = next(input_data_path.glob("system*"))
-        with open(system_path) as f:
-            return parse_yaml_components(f)
+        return InputSystem.from_file(system_path)
 
     def execute(self) -> None:
         # # 1. Filter simulation table
         filtered_simulation_table = self.simulation_table.filter_simulation_table(  # noqa: F841
             self.calendar, self.input_data_path / "simulation_table_filtered.csv"
         )
-
+        print(filtered_simulation_table)  # to avoid copilot unnecessary warnings
         # # 2. Create metric structure table
         # # Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
         for catalog_id, metrics in self.view_config.metrics.items():
@@ -89,11 +88,17 @@ class ViewBuilder:
                     continue  # # We should decide do we want to break process fully or continue with the next metric
 
                 # # 2.3 Build metric structure table
-                metric_structure_table = MetricStructureBuilder(  # noqa: F841
-                    self.system, catalog, metric, self.taxonomy
+                MetricStructureBuilder(
+                    self.system,
+                    catalog,
+                    metric,
+                    self.taxonomy,
+                    self.model_library,
+                    self.input_data_path / f"metric_structure_table_{metric_id}.csv",
                 ).build_table()
+                # # Right join
+                # # Group by
+                # # Group by
 
-
-@dataclass
-class View:
-    dataframe: pl.DataFrame
+            # Delete metric structure table after use
+            (self.input_data_path / f"metric_structure_table_{metric_id}.csv").unlink()

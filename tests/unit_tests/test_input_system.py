@@ -53,3 +53,23 @@ def test_input_system_using(input_system_path: Path) -> None:
         input_system = parse_yaml_components(file)
     assert input_system is not None
     assert isinstance(input_system, InputSystem)
+
+
+def test_locating_function() -> None:
+    """LOCATING_FUNCTION: None -> component_id, string -> peer id, tuple -> tuple of peer ids."""
+    from src.input_system import InputSystem as GemsViewsInputSystem
+
+    system_path = TEST_FILES_ROOT / "input_three" / "system.yml"
+    assert system_path.exists(), f"System file not found: {system_path}"
+    system = GemsViewsInputSystem.from_file(system_path)
+
+    # location_port is None -> return component_id
+    assert system.locating_function("generator_A1", None) == "generator_A1"
+
+    # location_port is string -> return peer component id
+    assert system.locating_function("generator_A1", "p_balance_port") == "busA"
+    assert system.locating_function("link_link_AB", "p0_port") == "busA"
+    assert system.locating_function("link_link_AB", "p1_port") == "busB"
+
+    # location_port is tuple -> return tuple of peer ids
+    assert system.locating_function("link_link_AB", ("p0_port", "p1_port")) == ("busA", "busB")
