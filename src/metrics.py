@@ -64,6 +64,7 @@ class ViewConfig:
 
     def __init__(self, config_file_path: Path) -> None:
         parsed = self._load_view_file(config_file_path)
+        self.input_data_path = config_file_path.parent
         self.id = parsed.id
         self.location_taxonomy_category: str = next(
             item.taxonomy_category for item in parsed.scope if item.taxonomy_category
@@ -108,11 +109,9 @@ class ViewConfig:
         This method prevents calendars in memory
         Just load when that is needed,(e.g. when we're filtering simulation table)
         """
-        if not (self.input_data_path / "calendars" / f"{self.calendar_id}.csv").exists():
-            raise FileNotFoundError(
-                f"Calendar file {self.input_data_path / 'calendars' / f'{self.calendar_id}.csv'} not found"
-            )
-        return Calendar(self.input_data_path / "calendars" / f"{self.calendar_id}.csv")
+        if not (self.input_data_path / f"{self.calendar_id}.csv").exists():
+            raise FileNotFoundError(f"Calendar file {self.input_data_path / f'{self.calendar_id}.csv'} not found")
+        return Calendar(self.input_data_path / f"{self.calendar_id}.csv")
 
 
 class MetricStructureBuilder:
