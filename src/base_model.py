@@ -16,4 +16,4 @@ from pydantic import BaseModel, ConfigDict
 
 
 class ViewBuilderBasedModel(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(validate_by_name=True, validate_by_alias=True)
