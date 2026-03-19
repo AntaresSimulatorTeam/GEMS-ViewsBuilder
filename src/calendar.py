@@ -14,6 +14,13 @@ from pathlib import Path
 
 import polars as pl
 
+# Expected CSV columns (name and order)
+EXPECTED_CALENDAR_COLUMNS: tuple[str, ...] = (
+    "absolute_time_index",
+    "block",
+    "granular_date",
+)
+
 
 class Calendar:
     """
@@ -29,6 +36,7 @@ class Calendar:
         calendar_file: Path to the calendar.csv file
         """
         self.id = calendar_file_path.stem
+        self._calendar_file_path = calendar_file_path
         self.dataframe = self._read_calendar_file(calendar_file_path)
         self._check_calendar_columns()
 
@@ -40,18 +48,38 @@ class Calendar:
         return pl.scan_csv(calendar_file_path, try_parse_dates=True)
 
     def _check_calendar_columns(self) -> None:
+        # Header only: column names/order do not require scanning the full file.
+        header = pl.read_csv(
+            self._calendar_file_path,
+            n_rows=0,
+            try_parse_dates=True,
+        )
+        actual = list(header.columns)
+        expected_columns = list(EXPECTED_CALENDAR_COLUMNS)
+        if actual != expected_columns:
+            actual_set = set(actual)
+            expected_set = set(expected_columns)
+            missing = sorted(expected_set - actual_set)
+            unexpected = sorted(actual_set - expected_set)
+            parts: list[str] = []
+            if missing:
+                parts.append(f"missing columns: {missing}")
+            if unexpected:
+                parts.append(f"unexpected columns: {unexpected}")
+            if not missing and not unexpected:
+                parts.append(f"wrong column order: expected {expected_columns}, got {actual}")
+            else:
+                parts.append(f"actual columns: {actual}")
+            raise ValueError(f"Calendar '{self.id}' has invalid columns: {'; '.join(parts)}")
+
         df = self.dataframe.collect()
-
-        if df.columns != ["absolute_time_index", "block", "granular_date"]:
-            raise ValueError(f"Calendar '{self.id}' has invalid columns")
-
         if df.is_empty():
             return
 
         # absolute_time_index must equal row index (contiguous 0..N-1, no misses)
         abs_idx = df.get_column("absolute_time_index")
-        expected = pl.arange(0, df.height, eager=True).cast(abs_idx.dtype)
-        if not (abs_idx == expected).all():
+        expected_abs_idx = pl.arange(0, df.height, eager=True).cast(abs_idx.dtype)
+        if not (abs_idx == expected_abs_idx).all():
             raise ValueError(f"Calendar '{self.id}' has non-contiguous or mismatched absolute_time_index values")
 
         # granular_date difference between adjacent rows must be constant
