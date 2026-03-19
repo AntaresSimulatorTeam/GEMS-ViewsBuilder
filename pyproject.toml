@@ -7,7 +7,13 @@ name = "GEMS-ViewsBuilder"
 version = "0.0.1"
 readme = "README.md"
 license = {file = "LICENSE"}
-dependencies = ["polars>=0.20.0","pyyaml==6.0.2", "pydantic>=2.11.7","PyYAML>=6.0.2",]
+dependencies = [
+    "polars>=0.20.0",
+    "pyyaml==6.0.2",
+    "pydantic>=2.11.7",
+    "PyYAML>=6.0.2",
+    "gemspy>=0.0.4",
+]
 authors = [
     { name = "Antoine Oustry" },
     { name = "Dusan Paripovic" },
@@ -62,4 +68,8 @@ plugins = ["pydantic.mypy"]
 disable_error_code = ["attr-defined"]
 
 [[tool.mypy.overrides]]
-module = ["pydantic.*", "pytest.*","polars.*"]
+module = ["pydantic.*", "pytest.*", "polars.*"]
+
+[[tool.mypy.overrides]]
+module = "src.model_library"
+disable_error_code = ["import-untyped"]
