@@ -29,16 +29,15 @@ class InputSystem(GemsInputSystem):  # type: ignore[misc]
 
     def model_post_init(self, __context: object) -> None:
         super().model_post_init(__context)
-        self._components_by_model: dict[str, list[str]] = self._build_components_by_model()
+        self._components_by_model: dict[str, list[str]] = self.models_to_components()
 
-    def _build_components_by_model(self) -> dict[str, list[str]]:
+    def models_to_components(self) -> dict[str, list[str]]:
         groups: defaultdict[str, list[str]] = defaultdict(list)
         for component in self.components:
             model_ref = getattr(component, "model", None)
             if not model_ref or "." not in model_ref:
                 continue
-            model_id = model_ref.split(".", 1)[1]
-            groups[model_id].append(component.id)
+            groups[model_ref].append(component.id)
         return groups
 
     def get_components(self, model_id: str) -> list[str]:

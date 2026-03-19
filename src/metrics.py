@@ -23,8 +23,8 @@ from pydantic import Field
 from src.base_model import ViewBuilderBasedModel
 from src.calendar import Calendar
 from src.catalog import Catalog, Metric
-from src.input_system import InputSystem
 from src.model_library import ModelLibrary
+from src.system import InputSystem
 from src.taxonomy import Taxonomy
 
 

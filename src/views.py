@@ -15,10 +15,10 @@
 from pathlib import Path
 
 from src.catalog import Catalog, Metric
-from src.input_system import InputSystem
 from src.metrics import MetricStructureBuilder, ViewConfig
 from src.model_library import ModelLibrary
 from src.simulation_table import SimulationTable
+from src.system import InputSystem
 from src.taxonomy import Taxonomy
 
 """
