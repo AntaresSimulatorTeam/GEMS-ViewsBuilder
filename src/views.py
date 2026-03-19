@@ -10,7 +10,7 @@
 #
 # This file is part of the Antares project.
 
-"""MetricStructureBuilder, ViewBuilder, View (spec views.py)."""
+"""ViewBuilder."""
 
 from pathlib import Path
 

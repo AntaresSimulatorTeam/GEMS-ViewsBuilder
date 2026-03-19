@@ -71,7 +71,7 @@ class InputSystem(GemsInputSystem):  # type: ignore[misc]
                 return c1
         return None
 
-    def locating_function(
+    def get_location(
         self,
         component_0_id: str,
         location_port: str | tuple[str, ...] | None,
