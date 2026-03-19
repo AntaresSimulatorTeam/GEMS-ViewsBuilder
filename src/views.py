@@ -83,7 +83,7 @@ class ViewBuilder:
             # # 2.2 Iterate over all metrics for this catalog
             for metric_id in metrics:
                 try:
-                    metric: Metric = catalog.get_metric_by_id(metric_id)
+                    metric: Metric = catalog.get_metric(metric_id)
                 except ValueError:
                     continue  # # We should decide do we want to break process fully or continue with the next metric
 
