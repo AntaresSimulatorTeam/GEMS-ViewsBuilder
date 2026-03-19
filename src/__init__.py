@@ -2,7 +2,6 @@
 
 from src.calendar import Calendar
 from src.catalog import Catalog, Metric, Term, TermsOperator, TimeOperator
-from src.metrics import ViewConfig
 from src.library import (
     BindingConstraintDef,
     ConstraintDef,
@@ -17,6 +16,7 @@ from src.library import (
     PortTypeDef,
     VariableDef,
 )
+from src.metrics import ViewConfig
 from src.simulation_table import FilteredSimulationTable, SimulationTable
 from src.taxonomy import Taxonomy
 
