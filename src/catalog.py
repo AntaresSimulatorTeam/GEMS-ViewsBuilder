@@ -71,7 +71,7 @@ class Catalog:
             raw = yaml.safe_load(f)
         return CatalogData.model_validate(raw["catalog"])
 
-    def get_metric_by_id(self, metric_id: str) -> Metric:
+    def get_metric(self, metric_id: str) -> Metric:
         if metric_id not in self.metrics:
             raise ValueError(f"Metric {metric_id} not found in catalog {self.id}")
         return self.metrics[metric_id]
