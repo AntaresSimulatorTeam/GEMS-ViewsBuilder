@@ -16,7 +16,6 @@ from enum import Enum
 from pathlib import Path
 
 import yaml
-from pydantic import Field
 
 from src.base_model import ViewBuilderBasedModel
 
@@ -32,30 +31,30 @@ class TimeOperator(Enum):
 
 
 class Term(ViewBuilderBasedModel):
-    taxonomy_category: str = Field(alias="taxonomy-category")
-    output_id: str = Field(alias="output-id")
-    location_ports: str | None = Field(alias="location-ports")
-    weight_output_id: str | None = Field(None, alias="weight-output-id")
+    taxonomy_category: str
+    output_id: str
+    location_ports: str | None
+    weight_output_id: str | None = None
 
 
 class Metric(ViewBuilderBasedModel):
     id: str
     terms: list[Term]
-    terms_operator: TermsOperator = Field(alias="terms-operator")
-    time_operator: TimeOperator = Field(alias="time-operator")
+    terms_operator: TermsOperator
+    time_operator: TimeOperator
     breakdown_property: str | None = None
     filter: tuple[str, str] | None = None
 
 
 class CatalogLocation(ViewBuilderBasedModel):
-    taxonomy_category: str = Field(alias="taxonomy-category")
+    taxonomy_category: str
 
 
 class CatalogData(ViewBuilderBasedModel):
     id: str
     taxonomy: str
     location: CatalogLocation
-    metrics_definition: list[Metric] = Field(alias="metrics-definition")
+    metrics_definition: list[Metric]
 
 
 class Catalog:
