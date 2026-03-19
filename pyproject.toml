@@ -71,5 +71,5 @@ disable_error_code = ["attr-defined"]
 module = ["pydantic.*", "pytest.*", "polars.*"]
 
 [[tool.mypy.overrides]]
-module = "src.model_library"
+module = "src.library"
 disable_error_code = ["import-untyped"]

@@ -3,7 +3,7 @@
 from src.calendar import Calendar
 from src.catalog import Catalog, Metric, Term, TermsOperator, TimeOperator
 from src.metrics import ViewConfig
-from src.model_library import (
+from src.library import (
     BindingConstraintDef,
     ConstraintDef,
     ExtraOutputDef,

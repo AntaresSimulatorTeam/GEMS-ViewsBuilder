@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from src.model_library import (
+from src.library import (
     ModelDefinition,
     ModelLibrary,
     ParameterDef,
