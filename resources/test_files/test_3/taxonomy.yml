@@ -1,6 +1,6 @@
 taxonomy:
   id: my_taxonomy
-  description: Minimal taxonomy for input_three.
+  description: Minimal taxonomy for test_3.
 
   categories:
     - id: balance

@@ -25,7 +25,7 @@ from src.model_library import (
 TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 
 LIBRARY_PATHS = [
-    TEST_FILES_ROOT / "input_three" / "pypsa_models.yml",
+    TEST_FILES_ROOT / "test_3" / "pypsa_models.yml",
 ]
 
 
@@ -45,7 +45,7 @@ def test_model_library_models_are_typed(library_path: Path) -> None:
 
 
 def test_model_library_taxonomy_categories() -> None:
-    library = ModelLibrary(TEST_FILES_ROOT / "input_three" / "pypsa_models.yml")
+    library = ModelLibrary(TEST_FILES_ROOT / "test_3" / "pypsa_models.yml")
     assert library.get_taxonomy_category("bus") == "balance"
     assert library.get_taxonomy_category("load") == "consumption"
     assert library.get_taxonomy_category("link") == "link"
@@ -54,13 +54,13 @@ def test_model_library_taxonomy_categories() -> None:
 
 
 def test_model_library_get_taxonomy_category_unknown_model() -> None:
-    library = ModelLibrary(TEST_FILES_ROOT / "input_three" / "pypsa_models.yml")
+    library = ModelLibrary(TEST_FILES_ROOT / "test_3" / "pypsa_models.yml")
     assert library.get_taxonomy_category("unknown_model") is None
 
 
 def test_model_library_full_model_loaded() -> None:
     """Full model definition with parameters, variables, ports is loaded."""
-    library = ModelLibrary(TEST_FILES_ROOT / "input_three" / "pypsa_models.yml")
+    library = ModelLibrary(TEST_FILES_ROOT / "test_3" / "pypsa_models.yml")
     generator = library.get_model("generator")
     assert generator is not None
     assert len(generator.parameters) > 0
@@ -76,7 +76,7 @@ def test_model_library_full_model_loaded() -> None:
 
 def test_model_library_port_types_loaded() -> None:
     """Port types at library level are loaded."""
-    library = ModelLibrary(TEST_FILES_ROOT / "input_three" / "pypsa_models.yml")
+    library = ModelLibrary(TEST_FILES_ROOT / "test_3" / "pypsa_models.yml")
     assert len(library.port_types) > 0
     flow_port = next((p for p in library.port_types if p.id == "flow"), None)
     assert flow_port is not None

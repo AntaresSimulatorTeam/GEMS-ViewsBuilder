@@ -19,8 +19,8 @@ from src.metrics import TimeAggregation, ViewConfig
 TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 
 CONFIG_PATHS = [
-    TEST_FILES_ROOT / "input_one_daily" / "view_config.yml",
-    TEST_FILES_ROOT / "input_two_hourly" / "view_config.yml",
+    TEST_FILES_ROOT / "test_1" / "view_config.yml",
+    TEST_FILES_ROOT / "test_2" / "view_config.yml",
 ]
 
 
@@ -50,7 +50,7 @@ def test_view_config_metrics_are_pairs(config_path: Path) -> None:
 
 
 def test_view_config_known_values() -> None:
-    config = ViewConfig(TEST_FILES_ROOT / "input_two_hourly" / "view_config.yml")
+    config = ViewConfig(TEST_FILES_ROOT / "test_2" / "view_config.yml")
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.catalog_ids == ["catalog_1"]
@@ -60,5 +60,5 @@ def test_view_config_known_values() -> None:
 
 
 def test_view_config_time_aggregation() -> None:
-    config = ViewConfig(TEST_FILES_ROOT / "input_two_hourly" / "view_config.yml")
+    config = ViewConfig(TEST_FILES_ROOT / "test_2" / "view_config.yml")
     assert config.time_aggregation == TimeAggregation.HOURS

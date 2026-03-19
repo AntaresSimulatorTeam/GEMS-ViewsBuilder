@@ -19,8 +19,8 @@ from src.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem
 TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 
 TAXONOMY_PATH = [
-    TEST_FILES_ROOT / "input_one_daily" / "taxonomy.yml",
-    TEST_FILES_ROOT / "input_three" / "taxonomy.yml",
+    TEST_FILES_ROOT / "test_1" / "taxonomy.yml",
+    TEST_FILES_ROOT / "test_3" / "taxonomy.yml",
 ]
 
 
@@ -59,7 +59,7 @@ def test_taxonomy_items_are_typed(taxonomy_path: Path) -> None:
 
 
 def test_taxonomy_known_categories() -> None:
-    taxonomy = Taxonomy(TEST_FILES_ROOT / "input_two_hourly" / "taxonomy.yml")
+    taxonomy = Taxonomy(TEST_FILES_ROOT / "test_2" / "taxonomy.yml")
     category_ids = set([c.id for c in taxonomy.categories])
     assert "balance" in category_ids
     assert "production" in category_ids

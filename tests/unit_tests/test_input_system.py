@@ -43,8 +43,8 @@ def test_input_folders_have_required_files() -> None:
 @pytest.mark.parametrize(
     "input_system_path",
     [
-        TEST_FILES_ROOT / "input_one_daily" / "system_france_clusters_50_snapshots_365_period_one_year.yml",
-        TEST_FILES_ROOT / "input_two_hourly" / "system_france_clusters_80_snapshots_168_period_one_week.yml",
+        TEST_FILES_ROOT / "test_1" / "system_france_clusters_50_snapshots_365_period_one_year.yml",
+        TEST_FILES_ROOT / "test_2" / "system_france_clusters_80_snapshots_168_period_one_week.yml",
     ],
 )
 def test_input_system_using(input_system_path: Path) -> None:
@@ -59,17 +59,17 @@ def test_locating_function() -> None:
     """LOCATING_FUNCTION: None -> component_id, string -> peer id, tuple -> tuple of peer ids."""
     from src.input_system import InputSystem as GemsViewsInputSystem
 
-    system_path = TEST_FILES_ROOT / "input_three" / "system.yml"
+    system_path = TEST_FILES_ROOT / "test_3" / "system.yml"
     assert system_path.exists(), f"System file not found: {system_path}"
     system = GemsViewsInputSystem.from_file(system_path)
 
     # location_port is None -> return component_id
-    assert system.locating_function("generator_A1", None) == "generator_A1"
+    assert system.get_location("generator_A1", None) == "generator_A1"
 
     # location_port is string -> return peer component id
-    assert system.locating_function("generator_A1", "p_balance_port") == "busA"
-    assert system.locating_function("link_link_AB", "p0_port") == "busA"
-    assert system.locating_function("link_link_AB", "p1_port") == "busB"
+    assert system.get_location("generator_A1", "p_balance_port") == "busA"
+    assert system.get_location("link_link_AB", "p0_port") == "busA"
+    assert system.get_location("link_link_AB", "p1_port") == "busB"
 
     # location_port is tuple -> return tuple of peer ids
-    assert system.locating_function("link_link_AB", ("p0_port", "p1_port")) == ("busA", "busB")
+    assert system.get_location("link_link_AB", ("p0_port", "p1_port")) == ("busA", "busB")

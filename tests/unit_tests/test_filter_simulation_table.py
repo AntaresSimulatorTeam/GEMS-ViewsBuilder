@@ -23,15 +23,15 @@ from src import Calendar, FilteredSimulationTable, SimulationTable  # noqa: E402
 
 TEST_FILES_ROOT = ROOT_DIR / "resources" / "test_files"
 
-# Existing calendar + simulation table pairs (input_one_daily, input_two_hourly)
+# Existing calendar + simulation table pairs (test_1, test_2)
 FILTER_TEST_CASES = [
     (
-        TEST_FILES_ROOT / "input_one_daily" / "calendar_daily_block1.csv",
-        TEST_FILES_ROOT / "input_one_daily" / "simulation_table_daily_one_year.csv",
+        TEST_FILES_ROOT / "test_1" / "calendar_daily_block1.csv",
+        TEST_FILES_ROOT / "test_1" / "simulation_table_daily_one_year.csv",
     ),
     (
-        TEST_FILES_ROOT / "input_two_hourly" / "calendar_hourly_block1.csv",
-        TEST_FILES_ROOT / "input_two_hourly" / "simulation_table_hourly_one_week.csv",
+        TEST_FILES_ROOT / "test_2" / "calendar_hourly_block1.csv",
+        TEST_FILES_ROOT / "test_2" / "simulation_table_hourly_one_week.csv",
     ),
 ]
 
@@ -72,8 +72,8 @@ def test_filter_simulation_table_logical(tmp_path: Path, calendar_file: Path, si
 @pytest.mark.parametrize("tmp_path", [None], indirect=True)
 def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path) -> None:
     """Rows whose block does not match the calendar's block for a given absolute_time_index are dropped."""
-    calendar_file = TEST_FILES_ROOT / "input_one_daily" / "calendar_daily_block1.csv"
-    base_sim_table_file = TEST_FILES_ROOT / "input_one_daily" / "simulation_table_daily_one_year.csv"
+    calendar_file = TEST_FILES_ROOT / "test_1" / "calendar_daily_block1.csv"
+    base_sim_table_file = TEST_FILES_ROOT / "test_1" / "simulation_table_daily_one_year.csv"
 
     calendar = Calendar(calendar_file)
     base_sim_table = SimulationTable(base_sim_table_file)
