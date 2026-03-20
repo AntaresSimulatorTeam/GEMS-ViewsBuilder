@@ -13,6 +13,7 @@
 """ViewConfig: in memory representation of a view_config.yml file."""
 
 from collections import defaultdict
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
@@ -104,14 +105,33 @@ class ViewConfig:
             raise FileNotFoundError(f"Catalog file {self.input_data_path / 'catalogs' / f'{catalog_id}.yml'} not found")
         return Catalog(self.input_data_path / "catalogs" / f"{catalog_id}.yml")
 
-    def _load_calendar(self) -> Calendar:
+    def load_calendar(self) -> Calendar:
         """
-        This method prevents calendars in memory
-        Just load when that is needed,(e.g. when we're filtering simulation table)
+        Load the calendar referenced by view_config (by calendar_id).
+        Call when needed (e.g. filtering the simulation table) to avoid keeping it in memory earlier.
         """
         if not (self.input_data_path / f"{self.calendar_id}.csv").exists():
             raise FileNotFoundError(f"Calendar file {self.input_data_path / f'{self.calendar_id}.csv'} not found")
         return Calendar(self.input_data_path / f"{self.calendar_id}.csv")
+
+
+_METRIC_STRUCTURE_SCHEMA = pl.Schema(
+    {
+        "metric_id": pl.Utf8,
+        "component_id": pl.Utf8,
+        "metric_location": pl.Utf8,
+        "breakdown_properties": pl.Utf8,
+        "output_id": pl.Utf8,
+        "weight_output_id": pl.Int64,  # # What will be value range here, probably we could use Int8 to save memory?
+    }
+)
+
+
+@dataclass(frozen=True)
+class MetricStructureTable:
+    """In-memory metric structure table (spec 2.1)."""
+
+    dataframe: pl.DataFrame
 
 
 class MetricStructureBuilder:
@@ -124,41 +144,15 @@ class MetricStructureBuilder:
         metric: Metric,
         taxonomy: Taxonomy,
         model_library: ModelLibrary,
-        path_to_output_table: Path,
     ) -> None:
         self.system = system
         self.catalog = catalog
         self.metric = metric
         self.taxonomy = taxonomy
         self.model_library = model_library
-        self.path_to_output_table = path_to_output_table
-        self.current_schema: pl.DataFrame = pl.DataFrame(
-            schema={
-                "metric_id": pl.Utf8,
-                "component_id": pl.Utf8,
-                "metric_location": pl.Utf8,
-                "breakdown_properties": pl.Utf8,
-                "output_id": pl.Utf8,
-                "weight_output_id": pl.Int64,  # # What will be value range here, probably we could use Int8 to save memory?
-            }
-        )
 
-    def build_table(self) -> None:
-        """
-        # Idea is to write table at the provided output path
-        # then when we perform SQL operation we could do lazy loading and avoid loading in memory
-        """
-        self.path_to_output_table.parent.mkdir(parents=True, exist_ok=True)
-        schema = self.current_schema.schema
-        # Create the file with header once; then always append without header.
-        if (not self.path_to_output_table.exists()) or self.path_to_output_table.stat().st_size == 0:
-            pl.DataFrame(schema=schema).write_csv(self.path_to_output_table)
-
-        def append_row_polars(row: dict[str, object]) -> None:
-            row_df = pl.DataFrame([row], schema=schema)
-            with self.path_to_output_table.open("a") as f:
-                row_df.write_csv(f, include_header=False)
-
+    def build(self) -> MetricStructureTable:
+        rows: list[dict[str, object]] = []
         for term in self.metric.terms:
             # # Pick components whih belongs to the taxonomy category, from model library
             components_in_taxonomy_category = self.model_library.get_components_in_taxonomy_category(
@@ -169,15 +163,18 @@ class MetricStructureBuilder:
                 # # Breakdown properties will be applied here
 
                 # # locating function
-                metric_location = self.system.locating_function(component_id, term.location_ports)
-                # # append to the output csv on disk (polars write)
-                append_row_polars(
+                metric_location = self.system.get_location(component_id, term.location_ports)
+                loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
+                rows.append(
                     {
                         "metric_id": self.metric.id,
                         "component_id": component_id,
-                        "metric_location": metric_location,  # # We should force users to have names for example fr_battery, then we could parse easy component id
+                        "metric_location": loc_str,  # # We should force users to have names for example fr_battery, then we could parse easy component id
                         "breakdown_properties": "",
                         "output_id": term.output_id,
                         "weight_output_id": 1,  # # Default value
                     }
                 )
+        if not rows:
+            return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
+        return MetricStructureTable(pl.DataFrame(rows, schema=_METRIC_STRUCTURE_SCHEMA))

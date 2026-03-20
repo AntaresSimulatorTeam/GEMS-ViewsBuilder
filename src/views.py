@@ -72,10 +72,10 @@ class ViewBuilder:
     def execute(self) -> None:
         # # 1. Filter simulation table
         filtered_simulation_table = self.simulation_table.filter_simulation_table(  # noqa: F841
-            self.calendar, self.input_data_path / "simulation_table_filtered.csv"
+            self.view_config.load_calendar(), self.input_data_path / "simulation_table_filtered.csv"
         )
         print(filtered_simulation_table)  # to avoid copilot unnecessary warnings
-        # # 2. Create metric structure table
+        # # 2. Create metric structure table and perform SQL operations on it
         # # Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
         for catalog_id, metrics in self.view_config.metrics.items():
             # # 2.1 Load catalog
@@ -88,17 +88,14 @@ class ViewBuilder:
                     continue  # # We should decide do we want to break process fully or continue with the next metric
 
                 # # 2.3 Build metric structure table
-                MetricStructureBuilder(
+                metric_structure_table = MetricStructureBuilder(
                     self.system,
                     catalog,
                     metric,
                     self.taxonomy,
                     self.model_library,
-                    self.input_data_path / f"metric_structure_table_{metric_id}.csv",
-                ).build_table()
+                ).build()
+                print(metric_structure_table)  # to avoid copilot unnecessary warnings
                 # # Right join
                 # # Group by
                 # # Group by
-
-            # Delete metric structure table after use
-            (self.input_data_path / f"metric_structure_table_{metric_id}.csv").unlink()

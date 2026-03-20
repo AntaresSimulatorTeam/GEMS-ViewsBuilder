@@ -83,9 +83,7 @@ class SimulationTable:
             .filter(pl.col("block") == pl.col("block_right"))
             .drop("block_right")
         )
-
-        filtered_table = filtered_lazy.collect(engine="streaming")
-        filtered_table.write_csv(output_path)
+        filtered_lazy.sink_csv(output_path)
         return FilteredSimulationTable(output_path)
 
 
