@@ -8,10 +8,10 @@ version = "0.0.1"
 readme = "README.md"
 license = {file = "LICENSE"}
 dependencies = [
-    "polars>=0.20.0",
+    "polars>=1.39.2",
     "pyyaml==6.0.2",
+    "types-PyYAML>=6.0.0",
     "pydantic>=2.11.7",
-    "PyYAML>=6.0.2",
     "gemspy>=0.0.4",
 ]
 authors = [
