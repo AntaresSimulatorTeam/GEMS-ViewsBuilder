@@ -56,7 +56,7 @@ def test_input_system_using(input_system_path: Path) -> None:
 
 def test_locating_function() -> None:
     """LOCATING_FUNCTION: None -> component_id, string -> peer id, tuple -> tuple of peer ids."""
-    from src.system import InputSystem as GemsViewsInputSystem
+    from gems_views_builder import InputSystem as GemsViewsInputSystem
 
     system_path = TEST_FILES_ROOT / "test_3" / "system.yml"
     assert system_path.exists(), f"System file not found: {system_path}"

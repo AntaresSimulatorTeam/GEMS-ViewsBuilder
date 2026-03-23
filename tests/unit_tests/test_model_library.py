@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from src.library import (
+from gems_views_builder import (
     ModelDefinition,
     ModelLibrary,
     ParameterDef,

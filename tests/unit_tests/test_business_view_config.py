@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from src.metrics import TimeAggregation, ViewConfig
+from gems_views_builder import TimeAggregation, ViewConfig
 
 TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 

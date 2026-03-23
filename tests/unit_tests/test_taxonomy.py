@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from src.taxonomy import TaxonomyCategory, TaxonomyItem, load_taxonomy
+from gems_views_builder import TaxonomyCategory, TaxonomyItem, load_taxonomy
 
 TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 
@@ -59,7 +59,7 @@ def test_taxonomy_items_are_typed(taxonomy_path: Path) -> None:
 
 def test_taxonomy_known_categories() -> None:
     taxonomy = load_taxonomy(TEST_FILES_ROOT / "test_3" / "taxonomy.yml")
-    category_ids = set([c.id for c in taxonomy.categories])
+    category_ids = {c.id for c in taxonomy.categories}
     assert "balance" in category_ids
     assert "production" in category_ids
     assert "consumption" in category_ids
