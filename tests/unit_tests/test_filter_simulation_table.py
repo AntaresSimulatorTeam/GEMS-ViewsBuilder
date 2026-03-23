@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Copyright (c) 2026, RTE (https://www.rte-france.com)
 #
 # See AUTHORS.txt
@@ -11,8 +10,6 @@
 #
 # This file is part of the Antares project.
 
-=======
->>>>>>> main
 import sys
 from pathlib import Path
 
@@ -22,7 +19,6 @@ sys.path.insert(0, str(ROOT_DIR))
 import polars as pl  # noqa: E402
 import pytest  # noqa: E402
 
-<<<<<<< HEAD
 from src import FilteredSimulationTable, SimulationTable, load_calendar  # noqa: E402
 
 TEST_FILES_ROOT = ROOT_DIR / "resources" / "test_files"
@@ -32,28 +28,11 @@ FILTER_TEST_CASES = [
     (
         TEST_FILES_ROOT / "test_3" / "calendar_file.csv",
         TEST_FILES_ROOT / "test_3" / "simulation_table--20260318-0623.csv",
-=======
-from src import Calendar, SimulationTable  # noqa: E402
-
-CALENDARS_DIR = ROOT_DIR / "resources" / "test_files" / "calendars"
-SIMULATION_TABLES_DIR = ROOT_DIR / "resources" / "test_files" / "simulation_tables"
-
-
-# Calendar + simulation table pairs to run the same tests on
-FILTER_TEST_CASES = [
-    (CALENDARS_DIR / "calendar_daily_block1.csv", SIMULATION_TABLES_DIR / "simulation_table_daily_one_year.csv"),
-    (CALENDARS_DIR / "calendar_daily_random_blocks.csv", SIMULATION_TABLES_DIR / "simulation_table_daily_one_year.csv"),
-    (CALENDARS_DIR / "calendar_hourly_block1.csv", SIMULATION_TABLES_DIR / "simulation_table_hourly_one_week.csv"),
-    (
-        CALENDARS_DIR / "calendar_hourly_random_blocks.csv",
-        SIMULATION_TABLES_DIR / "simulation_table_hourly_one_week.csv",
->>>>>>> main
     ),
 ]
 
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
-<<<<<<< HEAD
 
 
 @pytest.mark.parametrize("calendar_file, simulation_table_file", FILTER_TEST_CASES)
@@ -70,18 +49,6 @@ def test_filter_simulation_table_logical(tmp_path: Path, calendar_file: Path, si
     # 1. Every row in the result has (absolute_time_index, block) present in the calendar
     calendar_df = calendar.dataframe.collect()
     in_calendar = filtered.join(calendar_df, on=["absolute_time_index", "block"], how="semi")
-=======
-@pytest.mark.parametrize("calendar_file, simulation_table_file", FILTER_TEST_CASES)
-def test_filter_simulation_table_logical(calendar_file: Path, simulation_table_file: Path) -> None:
-    """Filtered result must satisfy: every row (absolute_time_index, block) in calendar, correct count, rows from sim table."""
-    calendar = Calendar(calendar_file)
-    simulation_table = SimulationTable(simulation_table_file)
-
-    filtered = simulation_table.filter_simulation_table(calendar, output_path=None)
-
-    # 1. Every row in the result has (absolute_time_index, block) present in the calendar
-    in_calendar = filtered.join(calendar.dataframe, on=["absolute_time_index", "block"], how="semi")
->>>>>>> main
     assert in_calendar.height == filtered.height, (
         "Every filtered row must have (absolute_time_index, block) in the calendar"
     )
@@ -90,10 +57,7 @@ def test_filter_simulation_table_logical(calendar_file: Path, simulation_table_f
     expected_count = (
         simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
-<<<<<<< HEAD
         .collect(engine="streaming")
-=======
->>>>>>> main
         .height
     )
     assert filtered.height == expected_count, (
@@ -101,7 +65,6 @@ def test_filter_simulation_table_logical(calendar_file: Path, simulation_table_f
     )
 
 
-<<<<<<< HEAD
 def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path) -> None:
     """Rows whose block does not match the calendar's block for a given absolute_time_index are dropped."""
     calendar_file = TEST_FILES_ROOT / "test_3" / "calendar_file.csv"
@@ -122,34 +85,10 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path) -> None:
     filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
     assert isinstance(filtered_table, FilteredSimulationTable)
     filtered = pl.read_csv(out_file, null_values=["None"], try_parse_dates=True)
-=======
-def test_filter_simulation_table_drops_mismatched_block() -> None:
-    """Rows whose block does not match the calendar's block for a given absolute_time_index are dropped."""
-    calendar_file = CALENDARS_DIR / "calendar_daily_block1.csv"
-    base_sim_table_file = SIMULATION_TABLES_DIR / "simulation_table_daily_one_year.csv"
-
-    calendar = Calendar(calendar_file)
-    base_sim_table = SimulationTable(base_sim_table_file)
-
-    # Duplicate all rows but change block to 2 (numeric) so they should all be filtered out
-    block_dtype = base_sim_table.dataframe["block"].dtype
-    duplicated = base_sim_table.dataframe.with_columns(pl.lit(2).cast(block_dtype).alias("block"))
-
-    # Build a SimulationTable that contains only entries that should be dropped
-    simulation_table = SimulationTable.__new__(SimulationTable)
-    simulation_table.id = base_sim_table.id + "_block2_only"
-    simulation_table.dataframe = duplicated
-
-    filtered = simulation_table.filter_simulation_table(calendar)
-
-    # Since calendar_daily_block1.csv has block=1 everywhere and the table has block=2 everywhere,
-    # all rows must be dropped by the filter.
->>>>>>> main
     assert filtered.height == 0
 
 
 @pytest.mark.parametrize("calendar_file, simulation_table_file", FILTER_TEST_CASES)
-<<<<<<< HEAD
 def test_filter_simulation_table_writes_csv(
     tmp_path: Path,
     calendar_file: Path,
@@ -175,19 +114,3 @@ def test_filter_simulation_table_writes_csv(
     written_sorted = written.select(expected.columns).sort(sort_cols)
     expected_sorted = expected.sort(sort_cols)
     assert written_sorted.equals(expected_sorted), "Written CSV sim-table columns should match expected"
-=======
-def test_filter_simulation_table_writes_csv(calendar_file: Path, simulation_table_file: Path) -> None:
-    """When output_path is set, the filtered table is written to CSV and matches the returned DataFrame.
-    Output is written under SIMULATION_TABLES_DIR and removed at the end of the test."""
-    calendar = Calendar(calendar_file)
-    simulation_table = SimulationTable(simulation_table_file)
-    out_file = SIMULATION_TABLES_DIR / f"filtered_{calendar_file.stem}.csv"
-    try:
-        result = simulation_table.filter_simulation_table(calendar, output_path=out_file)
-        assert out_file.exists(), "Output CSV should be created"
-        written = pl.read_csv(out_file, null_values=["None"], try_parse_dates=True)
-        assert result.equals(written), "Written CSV content should match returned DataFrame"
-    finally:
-        if out_file.exists():
-            out_file.unlink()
->>>>>>> main

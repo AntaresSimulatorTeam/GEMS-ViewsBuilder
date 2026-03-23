@@ -16,7 +16,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, cast
 
-from gems.study.parsing import InputComponent as GemsInputComponent  # type: ignore[import-untyped]
+from gems.study.parsing import InputComponent as GemsInputComponent
 from gems.study.parsing import InputSystem as GemsInputSystem
 from gems.study.parsing import parse_yaml_components
 

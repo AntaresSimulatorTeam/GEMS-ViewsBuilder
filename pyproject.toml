@@ -65,4 +65,8 @@ plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 module = "src.library"
-disable_error_code = ["import-untyped"]
+disable_error_code = ["import-untyped", "import-not-found"]
+
+[[tool.mypy.overrides]]
+module = "src.system"
+disable_error_code = ["import-not-found"]

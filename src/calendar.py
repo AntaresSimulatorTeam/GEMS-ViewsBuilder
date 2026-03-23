@@ -22,13 +22,6 @@ EXPECTED_CALENDAR_COLUMNS: tuple[str, ...] = (
     "granular_date",
 )
 
-# Expected CSV columns (name and order)
-EXPECTED_CALENDAR_COLUMNS: tuple[str, ...] = (
-    "absolute_time_index",
-    "block",
-    "granular_date",
-)
-
 
 @dataclass
 class Calendar:
