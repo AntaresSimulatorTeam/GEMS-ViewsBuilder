@@ -15,7 +15,7 @@
 from pathlib import Path
 
 import yaml
-from gems.model.parsing import (
+from gems.model.parsing import (  # type: ignore
     InputConstraint,
     InputExtraOutput,
     InputField,

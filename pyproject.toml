@@ -62,11 +62,3 @@ skip-magic-trailing-comma = false
 files = "src"
 strict = true
 plugins = ["pydantic.mypy"]
-
-[[tool.mypy.overrides]]
-module = "src.library"
-disable_error_code = ["import-untyped", "import-not-found"]
-
-[[tool.mypy.overrides]]
-module = "src.system"
-disable_error_code = ["import-not-found"]
