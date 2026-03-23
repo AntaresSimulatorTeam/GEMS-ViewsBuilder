@@ -26,7 +26,7 @@ EXPECTED_CALENDAR_COLUMNS: tuple[str, ...] = (
 @dataclass
 class Calendar:
     """
-    In memory representation of the calendar.csv file.
+    Calendar.csv representation backed by a lazy Polars frame.
     Id: calendar filename.
     1st col: absolute time index.
     2nd col: block

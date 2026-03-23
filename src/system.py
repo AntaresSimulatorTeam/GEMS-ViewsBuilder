@@ -10,7 +10,7 @@
 #
 # This file is part of the Antares project.
 
-"""InputSystem: extends gems InputSystem with component grouping by model type."""
+"""InputSystem wrapper with helper methods for component lookup."""
 
 from collections import defaultdict
 from pathlib import Path
@@ -21,15 +21,22 @@ from gems.study.parsing import InputSystem as GemsInputSystem
 from gems.study.parsing import parse_yaml_components
 
 
-class InputSystem(GemsInputSystem):  # type: ignore[misc]
+class InputSystem:
     """
-    Extends gems.study.parsing.InputSystem with component grouping by model type.
-    # We should consider to update InputSystem directly in GemsPy to avoid this class.
+    Compose a Gems InputSystem and expose ViewsBuilder-specific helpers.
     """
 
-    def model_post_init(self, __context: object) -> None:
-        super().model_post_init(__context)
+    def __init__(self, system: GemsInputSystem) -> None:
+        self._system = system
         self._components_by_model: dict[str, list[str]] = self.models_to_components()
+
+    @property
+    def components(self) -> list[GemsInputComponent]:
+        return cast(list[GemsInputComponent], self._system.components)
+
+    @property
+    def connections(self) -> list[Any]:
+        return cast(list[Any], getattr(self._system, "connections", None) or [])
 
     def models_to_components(self) -> dict[str, list[str]]:
         groups: defaultdict[str, list[str]] = defaultdict(list)
@@ -42,7 +49,7 @@ class InputSystem(GemsInputSystem):  # type: ignore[misc]
 
     def get_components(self, model_id: str) -> list[str]:
         """Return all component ids for the given model type (e.g. 'generator' -> ['generator_A1', ...])."""
-        return self._components_by_model[model_id]
+        return self._components_by_model.get(model_id, [])
 
     def get_component_by_id(self, component_id: str) -> GemsInputComponent:
         for component in self.components:
@@ -58,8 +65,7 @@ class InputSystem(GemsInputSystem):  # type: ignore[misc]
         """
         # GemsPy exposes `connections` as a list of pydantic objects (e.g. InputPortConnections),
         # so we must use attribute access (not dict `.get()`).
-        connections: list[Any] = cast(list[Any], getattr(self, "connections", None) or [])
-        for conn in connections:
+        for conn in self.connections:
             c1 = cast(str | None, getattr(conn, "component1", None))
             p1 = cast(str | None, getattr(conn, "port1", None))
             c2 = cast(str | None, getattr(conn, "component2", None))
@@ -98,4 +104,4 @@ class InputSystem(GemsInputSystem):  # type: ignore[misc]
         """Load InputSystem from a system yml file."""
         with open(path) as f:
             parsed = parse_yaml_components(f)
-        return cast(InputSystem, cls.model_validate(parsed.model_dump()))
+        return cls(cast(GemsInputSystem, parsed))

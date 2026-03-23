@@ -43,7 +43,7 @@ class TaxonomyData(ViewBuilderBasedModel):
 
 class Taxonomy:
     """
-    In memory representation of the taxonomy.yml file.
+    Parsed taxonomy.yml representation used by the view builder.
     """
 
     def __init__(self, taxonomy_file_path: Path) -> None:

@@ -10,9 +10,9 @@
 #
 # This file is part of the Antares project.
 
-"""In memory representation of a catalog .yml file."""
+"""Catalog .yml parsing models and typed representation."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
@@ -36,14 +36,43 @@ class TimeOperator(Enum):
     AVG = "avg"
 
 
-class Term(ViewBuilderBasedModel):
+class TermData(ViewBuilderBasedModel):
     taxonomy_category: str
     output_id: str
     location_ports: str | tuple[str, ...] | None
     weight_output_id: str | None = None
 
 
-class Metric(ViewBuilderBasedModel):
+class MetricData(ViewBuilderBasedModel):
+    id: str
+    terms: list[TermData]
+    terms_operator: TermsOperator
+    time_operator: TimeOperator
+    breakdown_property: str | None = None
+    filter: tuple[str, str] | None = None
+
+
+class CatalogLocationData(ViewBuilderBasedModel):
+    taxonomy_category: str
+
+
+class CatalogData(ViewBuilderBasedModel):
+    id: str
+    taxonomy: str
+    location: CatalogLocationData
+    metrics_definition: list[MetricData]
+
+
+@dataclass
+class Term:
+    taxonomy_category: str
+    output_id: str
+    location_ports: str | tuple[str, ...] | None
+    weight_output_id: str | None = None
+
+
+@dataclass
+class Metric:
     id: str
     terms: list[Term]
     terms_operator: TermsOperator
@@ -52,23 +81,32 @@ class Metric(ViewBuilderBasedModel):
     filter: tuple[str, str] | None = None
 
 
-class CatalogLocation(ViewBuilderBasedModel):
-    taxonomy_category: str
-
-
-class CatalogData(ViewBuilderBasedModel):
-    id: str
-    taxonomy: str
-    location: CatalogLocation
-    metrics_definition: list[Metric]
-
-
 @dataclass
 class Catalog:
     id: str
     taxonomy: str
     location_taxonomy_category: str
-    metrics: dict[str, Metric]
+    metrics: dict[str, Metric] = field(default_factory=dict)
+
+
+def _to_term(term_data: TermData) -> Term:
+    return Term(
+        taxonomy_category=term_data.taxonomy_category,
+        output_id=term_data.output_id,
+        location_ports=term_data.location_ports,
+        weight_output_id=term_data.weight_output_id,
+    )
+
+
+def _to_metric(metric_data: MetricData) -> Metric:
+    return Metric(
+        id=metric_data.id,
+        terms=[_to_term(term) for term in metric_data.terms],
+        terms_operator=metric_data.terms_operator,
+        time_operator=metric_data.time_operator,
+        breakdown_property=metric_data.breakdown_property,
+        filter=metric_data.filter,
+    )
 
 
 def load_catalog(catalog_file_path: Path) -> Catalog:
@@ -77,7 +115,7 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
         id=parsed.id,
         taxonomy=parsed.taxonomy,
         location_taxonomy_category=parsed.location.taxonomy_category,
-        metrics={metric.id: metric for metric in parsed.metrics_definition},
+        metrics={metric.id: _to_metric(metric) for metric in parsed.metrics_definition},
     )
 
 

@@ -71,7 +71,7 @@ class LibraryData(ViewBuilderBasedModel):
 
 class ModelLibrary:
     """
-    In memory representation of a model library .yml file.
+    Model library .yml representation with taxonomy indexes.
 
     Loads via GemsPy parsing types; builds taxonomy indexes for metric structure tables.
     """

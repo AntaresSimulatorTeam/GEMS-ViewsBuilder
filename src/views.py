@@ -75,12 +75,12 @@ class ViewBuilder:
         filtered_simulation_table = self.simulation_table.filter_simulation_table(  # noqa: F841
             self.view_config.load_calendar(), self.input_data_path / "simulation_table_filtered.csv"
         )
-        print(filtered_simulation_table)  # to avoid copilot unnecessary warnings
+        _ = filtered_simulation_table  # to avoid copilot unnecessary warnings
         # # 2. Create metric structure table and perform SQL operations on it
         # # Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
-        for catalog_id, metrics in self.view_config.metrics.items():
+        for catalog_id, metrics in self.view_config.metrics_by_catalog.items():
             # # 2.1 Load catalog
-            catalog: Catalog = self.view_config._load_current_catalog(catalog_id)
+            catalog: Catalog = self.view_config.load_catalog(catalog_id)
             # # 2.2 Iterate over all metrics for this catalog
             for metric_id in metrics:
                 try:
@@ -96,7 +96,7 @@ class ViewBuilder:
                     self.taxonomy,
                     self.model_library,
                 ).build()
-                print(metric_structure_table)  # to avoid copilot unnecessary warnings
+                _ = metric_structure_table  # to avoid copilot unnecessary warnings
                 # # Right join
                 # # Group by
                 # # Group by

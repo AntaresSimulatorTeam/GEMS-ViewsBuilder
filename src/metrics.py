@@ -102,7 +102,7 @@ class ViewConfig:
             raw = yaml.safe_load(f)
         return ViewData.model_validate(raw["view"])
 
-    def _load_current_catalog(self, catalog_id: str) -> Catalog:
+    def load_catalog(self, catalog_id: str) -> Catalog:
         """
         Load only the requested catalog when needed instead of preloading all catalogs.
         """
