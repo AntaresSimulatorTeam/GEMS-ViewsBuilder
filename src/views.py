@@ -20,7 +20,7 @@ from src.metrics import ViewConfig
 from src.metrics_builder import MetricStructureBuilder
 from src.simulation_table import SimulationTable
 from src.system import InputSystem
-from src.taxonomy import Taxonomy
+from src.taxonomy import load_taxonomy
 
 """
 # ViewConfig -> representation of the view_config.yml file and it references the catalogs and calendar
@@ -36,7 +36,7 @@ class ViewBuilder:
     ) -> None:
         self._check_input_data_structure(input_data_path)
         self.system = self._load_system(input_data_path)
-        self.taxonomy = Taxonomy(input_data_path / "taxonomy.yml")
+        self.taxonomy = load_taxonomy(input_data_path / "taxonomy.yml")
         self.view_config = ViewConfig(input_data_path / "view_config.yml")
         simulation_table_path = next(input_data_path.glob("simulation_table*"))
         self.simulation_table = SimulationTable(simulation_table_path)

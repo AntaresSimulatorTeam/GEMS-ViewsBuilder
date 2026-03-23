@@ -10,6 +10,7 @@
 #
 # This file is part of the Antares project.
 
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -27,29 +28,41 @@ class TaxonomyCategory(ViewBuilderBasedModel):
     parent_category: str | None = Field(
         None, alias="parent-category"
     )  # for now keep like this because taxonomy.yml used for testing isn't completed
-    variables: list[TaxonomyItem] = []
-    parameters: list[TaxonomyItem] = []
-    ports: list[TaxonomyItem] = []
-    constraints: list[TaxonomyItem] = []
-    extra_outputs: list[TaxonomyItem] = Field(default=[], alias="extra-outputs")
-    properties: list[TaxonomyItem] = []
+    variables: list[TaxonomyItem] = Field(default_factory=list)
+    parameters: list[TaxonomyItem] = Field(default_factory=list)
+    ports: list[TaxonomyItem] = Field(default_factory=list)
+    constraints: list[TaxonomyItem] = Field(default_factory=list)
+    extra_outputs: list[TaxonomyItem] = Field(default_factory=list, alias="extra-outputs")
+    properties: list[TaxonomyItem] = Field(default_factory=list)
 
 
 class TaxonomyData(ViewBuilderBasedModel):
     id: str
     description: str = ""
-    categories: list[TaxonomyCategory] = []
+    categories: list[TaxonomyCategory] = Field(default_factory=list)
 
 
+@dataclass
 class Taxonomy:
     """
     Parsed taxonomy.yml representation used by the view builder.
     """
 
-    def __init__(self, taxonomy_file_path: Path) -> None:
-        with open(taxonomy_file_path) as f:
-            raw = yaml.safe_load(f)
-        parsed = TaxonomyData.model_validate(raw["taxonomy"])
-        self.id = parsed.id
-        self.description = parsed.description
-        self.categories: list[TaxonomyCategory] = parsed.categories
+    id: str
+    description: str = ""
+    categories: list[TaxonomyCategory] = field(default_factory=list)
+
+
+def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
+    parsed = _load_taxonomy_file(taxonomy_file_path)
+    return Taxonomy(
+        id=parsed.id,
+        description=parsed.description,
+        categories=parsed.categories,
+    )
+
+
+def _load_taxonomy_file(taxonomy_file_path: Path) -> TaxonomyData:
+    with open(taxonomy_file_path) as f:
+        raw = yaml.safe_load(f)
+    return TaxonomyData.model_validate(raw["taxonomy"])

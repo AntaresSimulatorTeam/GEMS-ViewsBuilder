@@ -10,7 +10,6 @@ license = {file = "LICENSE"}
 dependencies = [
     "polars>=1.39.2",
     "pyyaml==6.0.2",
-    "types-PyYAML>=6.0.0",
     "pydantic>=2.11.7",
     "gemspy>=0.0.4",
 ]
@@ -65,10 +64,6 @@ skip-magic-trailing-comma = false
 files = "src"
 strict = true
 plugins = ["pydantic.mypy"]
-disable_error_code = ["attr-defined"]
-
-[[tool.mypy.overrides]]
-module = ["pydantic.*", "pytest.*", "polars.*"]
 
 [[tool.mypy.overrides]]
 module = "src.library"

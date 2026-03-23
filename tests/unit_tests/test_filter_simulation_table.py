@@ -65,7 +65,6 @@ def test_filter_simulation_table_logical(tmp_path: Path, calendar_file: Path, si
     )
 
 
-@pytest.mark.parametrize("tmp_path", [None], indirect=True)
 def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path) -> None:
     """Rows whose block does not match the calendar's block for a given absolute_time_index are dropped."""
     calendar_file = TEST_FILES_ROOT / "test_3" / "calendar_file.csv"

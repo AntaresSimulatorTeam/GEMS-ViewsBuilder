@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from src.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem
+from src.taxonomy import TaxonomyCategory, TaxonomyItem, load_taxonomy
 
 TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 
@@ -25,7 +25,7 @@ TAXONOMY_PATH = [
 
 @pytest.mark.parametrize("taxonomy_path", TAXONOMY_PATH)
 def test_taxonomy_loads(taxonomy_path: Path) -> None:
-    taxonomy = Taxonomy(taxonomy_path)
+    taxonomy = load_taxonomy(taxonomy_path)
     assert taxonomy.id == "my_taxonomy"
     assert taxonomy.description != ""
     assert len(taxonomy.categories) > 0
@@ -33,7 +33,7 @@ def test_taxonomy_loads(taxonomy_path: Path) -> None:
 
 @pytest.mark.parametrize("taxonomy_path", TAXONOMY_PATH)
 def test_taxonomy_categories_are_typed(taxonomy_path: Path) -> None:
-    taxonomy = Taxonomy(taxonomy_path)
+    taxonomy = load_taxonomy(taxonomy_path)
     for category in taxonomy.categories:
         assert isinstance(category, TaxonomyCategory)
         assert isinstance(category.id, str)
@@ -42,7 +42,7 @@ def test_taxonomy_categories_are_typed(taxonomy_path: Path) -> None:
 
 @pytest.mark.parametrize("taxonomy_path", TAXONOMY_PATH)
 def test_taxonomy_items_are_typed(taxonomy_path: Path) -> None:
-    taxonomy = Taxonomy(taxonomy_path)
+    taxonomy = load_taxonomy(taxonomy_path)
     for category in taxonomy.categories:
         for field in (
             category.variables,
@@ -58,7 +58,7 @@ def test_taxonomy_items_are_typed(taxonomy_path: Path) -> None:
 
 
 def test_taxonomy_known_categories() -> None:
-    taxonomy = Taxonomy(TEST_FILES_ROOT / "test_3" / "taxonomy.yml")
+    taxonomy = load_taxonomy(TEST_FILES_ROOT / "test_3" / "taxonomy.yml")
     category_ids = set([c.id for c in taxonomy.categories])
     assert "balance" in category_ids
     assert "production" in category_ids
