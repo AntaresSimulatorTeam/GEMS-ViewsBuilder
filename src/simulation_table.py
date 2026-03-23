@@ -11,6 +11,10 @@
 # This file is part of the Antares project.
 
 from pathlib import Path
+<<<<<<< HEAD
+=======
+from typing import Optional
+>>>>>>> main
 
 import polars as pl
 
@@ -38,6 +42,7 @@ SIMULATION_TABLE_COLUMNS: frozenset[str] = frozenset(
     }
 )
 
+<<<<<<< HEAD
 # Filtered simulation table has all SIMULATION_TABLE columns plus granular_date from the calendar join
 FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {"granular_date"}
 
@@ -45,6 +50,12 @@ FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {
 class SimulationTable:
     """
     Lazy representation of the SIMULATION_TABLE CSV.
+=======
+
+class SimulationTable:
+    """
+    In memory representation of the SIMULATION_TABLE
+>>>>>>> main
     Expected columns: see SIMULATION_TABLE_COLUMNS.
     """
 
@@ -53,15 +64,23 @@ class SimulationTable:
         simulation_table_file: Path to the simulation_table.csv file
         """
         self.id = simulation_table_file.stem
+<<<<<<< HEAD
         # # scan csv for memory efficiency
         self.dataframe = pl.scan_csv(
+=======
+        self.dataframe = pl.read_csv(
+>>>>>>> main
             simulation_table_file,
             null_values=["None"],
         )
         self._check_simulation_table_columns()
 
     def _check_simulation_table_columns(self) -> None:
+<<<<<<< HEAD
         actual = frozenset(self.dataframe.collect_schema().names())
+=======
+        actual = frozenset(self.dataframe.columns)
+>>>>>>> main
         missing = SIMULATION_TABLE_COLUMNS - actual
         extra = actual - SIMULATION_TABLE_COLUMNS
         errors: list[str] = []
@@ -72,6 +91,7 @@ class SimulationTable:
         if errors:
             raise ValueError(f"SimulationTable '{self.id}' has invalid columns: {'; '.join(errors)}")
 
+<<<<<<< HEAD
     def filter_simulation_table(self, calendar: Calendar, output_path: Path) -> "FilteredSimulationTable":
         """
         Filter the simulation table based on the calendar and write the result to output_path.
@@ -116,3 +136,17 @@ class FilteredSimulationTable:
             errors.append(f"Unexpected columns: {extra}")
         if errors:
             raise ValueError(f"FilteredSimulationTable '{self.id}' has invalid columns: {'; '.join(errors)}")
+=======
+    def filter_simulation_table(self, calendar: Calendar, output_path: Optional[Path] = None) -> pl.DataFrame:
+        """
+        Filter the simulation table based on the calendar.
+        If output_path is provided, save the filtered simulation table to the output path.
+        """
+        filtered_table = self.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
+        # right is appended by the join(polars)
+        # drop block_right in order to save memory
+        filtered_table = filtered_table.filter(pl.col("block") == pl.col("block_right")).drop("block_right")
+        if output_path is not None:
+            filtered_table.write_csv(output_path)
+        return filtered_table
+>>>>>>> main
