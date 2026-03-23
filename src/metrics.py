@@ -10,23 +10,18 @@
 #
 # This file is part of the Antares project.
 
-"""ViewConfig: in memory representation of a view_config.yml file."""
+"""ViewConfig models and lazy loaders for view_config.yml."""
 
 from collections import defaultdict
-from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-import polars as pl
 import yaml
 from pydantic import Field
 
 from src.base_model import ViewBuilderBasedModel
-from src.calendar import Calendar
-from src.catalog import Catalog, Metric
-from src.library import ModelLibrary
-from src.system import InputSystem
-from src.taxonomy import Taxonomy
+from src.calendar import Calendar, load_calendar
+from src.catalog import Catalog, load_catalog
 
 
 class TimeAggregation(Enum):
@@ -60,16 +55,22 @@ class ViewData(ViewBuilderBasedModel):
 
 class ViewConfig:
     """
-    In memory representation of the view_config.yml file.
+    Parsed view configuration with on-demand loading of referenced files.
     """
 
     def __init__(self, config_file_path: Path) -> None:
         parsed = self._load_view_file(config_file_path)
         self.input_data_path = config_file_path.parent
         self.id = parsed.id
-        self.location_taxonomy_category: str = next(
-            item.taxonomy_category for item in parsed.scope if item.taxonomy_category
+        self.location_taxonomy_category = next(
+            (item.taxonomy_category for item in parsed.scope if item.taxonomy_category),
+            None,
         )
+        if self.location_taxonomy_category is None:
+            raise ValueError(
+                f"view_config.yml '{parsed.id}': no 'taxonomy-category' found in scope. "
+                f"At least one scope entry must define a taxonomy-category"
+            )
         self.calendar_id: str = next(item.calendar for item in parsed.scope if item.calendar)
         self.catalog_ids: list[str] = [c.id for c in parsed.catalog]
         self.time_aggregation: TimeAggregation | None = parsed.aggregation[0].time if parsed.aggregation else None
@@ -81,6 +82,11 @@ class ViewConfig:
     def _extract_metric_pairs(self, metrics: list[MetricRef]) -> list[tuple[str, str]]:
         pairs: list[tuple[str, str]] = []
         for metric in metrics:
+            if "." not in metric.id or metric.id.startswith(".") or metric.id.endswith("."):
+                raise ValueError(
+                    f"view_config.yml '{self.id}': invalid metric id '{metric.id}'. "
+                    "Expected format '<catalog_id>.<metric_id>'"
+                )
             catalog_id, metric_id = metric.id.split(".", 1)
             pairs.append((catalog_id, metric_id))
         return pairs
@@ -98,83 +104,17 @@ class ViewConfig:
 
     def _load_current_catalog(self, catalog_id: str) -> Catalog:
         """
-        This method prevents us from having all catalogs in memory at once
-        Just load when that is needed
+        Load only the requested catalog when needed instead of preloading all catalogs.
         """
         if not (self.input_data_path / "catalogs" / f"{catalog_id}.yml").exists():
             raise FileNotFoundError(f"Catalog file {self.input_data_path / 'catalogs' / f'{catalog_id}.yml'} not found")
-        return Catalog(self.input_data_path / "catalogs" / f"{catalog_id}.yml")
+        return load_catalog(self.input_data_path / "catalogs" / f"{catalog_id}.yml")
 
     def load_calendar(self) -> Calendar:
         """
-        Load the calendar referenced by view_config (by calendar_id).
-        Call when needed (e.g. filtering the simulation table) to avoid keeping it in memory earlier.
+        Load only the referenced calendar when needed.
         """
-        if not (self.input_data_path / f"{self.calendar_id}.csv").exists():
-            raise FileNotFoundError(f"Calendar file {self.input_data_path / f'{self.calendar_id}.csv'} not found")
-        return Calendar(self.input_data_path / f"{self.calendar_id}.csv")
-
-
-_METRIC_STRUCTURE_SCHEMA = pl.Schema(
-    {
-        "metric_id": pl.Utf8,
-        "component_id": pl.Utf8,
-        "metric_location": pl.Utf8,
-        "breakdown_properties": pl.Utf8,
-        "output_id": pl.Utf8,
-        "weight_output_id": pl.Int64,  # # What will be value range here, probably we could use Int8 to save memory?
-    }
-)
-
-
-@dataclass(frozen=True)
-class MetricStructureTable:
-    """In-memory metric structure table (spec 2.1)."""
-
-    dataframe: pl.DataFrame
-
-
-class MetricStructureBuilder:
-    """InputSystem from GemsPy. LIST_OF_COMPONENTS_IN_TAXONOMY_CATEGORY, LOCATING_FUNCTION, build_tables (spec 2.1)."""
-
-    def __init__(
-        self,
-        system: InputSystem,
-        catalog: Catalog,
-        metric: Metric,
-        taxonomy: Taxonomy,
-        model_library: ModelLibrary,
-    ) -> None:
-        self.system = system
-        self.catalog = catalog
-        self.metric = metric
-        self.taxonomy = taxonomy
-        self.model_library = model_library
-
-    def build(self) -> MetricStructureTable:
-        rows: list[dict[str, object]] = []
-        for term in self.metric.terms:
-            # # Pick components whih belongs to the taxonomy category, from model library
-            components_in_taxonomy_category = self.model_library.get_components_in_taxonomy_category(
-                term.taxonomy_category
-            )  # # O(1) access insted of O(n) from pseudo code
-            for component_id in components_in_taxonomy_category:
-                # # Here will be applied filter with respect to properties of the component
-                # # Breakdown properties will be applied here
-
-                # # locating function
-                metric_location = self.system.get_location(component_id, term.location_ports)
-                loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
-                rows.append(
-                    {
-                        "metric_id": self.metric.id,
-                        "component_id": component_id,
-                        "metric_location": loc_str,  # # We should force users to have names for example fr_battery, then we could parse easy component id
-                        "breakdown_properties": "",
-                        "output_id": term.output_id,
-                        "weight_output_id": 1,  # # Default value
-                    }
-                )
-        if not rows:
-            return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
-        return MetricStructureTable(pl.DataFrame(rows, schema=_METRIC_STRUCTURE_SCHEMA))
+        calendar_file = self.input_data_path / f"{self.calendar_id}.csv"
+        if not calendar_file.exists():
+            raise FileNotFoundError(f"Calendar file {calendar_file} not found")
+        return load_calendar(calendar_file)

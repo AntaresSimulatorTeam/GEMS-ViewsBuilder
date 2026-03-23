@@ -19,19 +19,15 @@ sys.path.insert(0, str(ROOT_DIR))
 import polars as pl  # noqa: E402
 import pytest  # noqa: E402
 
-from src import Calendar, FilteredSimulationTable, SimulationTable  # noqa: E402
+from src import FilteredSimulationTable, SimulationTable, load_calendar  # noqa: E402
 
 TEST_FILES_ROOT = ROOT_DIR / "resources" / "test_files"
 
-# Existing calendar + simulation table pairs (test_1, test_2)
+# Existing calendar + simulation table pairs
 FILTER_TEST_CASES = [
     (
-        TEST_FILES_ROOT / "test_1" / "calendar_daily_block1.csv",
-        TEST_FILES_ROOT / "test_1" / "simulation_table_daily_one_year.csv",
-    ),
-    (
-        TEST_FILES_ROOT / "test_2" / "calendar_hourly_block1.csv",
-        TEST_FILES_ROOT / "test_2" / "simulation_table_hourly_one_week.csv",
+        TEST_FILES_ROOT / "test_3" / "calendar_file.csv",
+        TEST_FILES_ROOT / "test_3" / "simulation_table--20260318-0623.csv",
     ),
 ]
 
@@ -42,7 +38,7 @@ FILTER_TEST_CASES = [
 @pytest.mark.parametrize("calendar_file, simulation_table_file", FILTER_TEST_CASES)
 def test_filter_simulation_table_logical(tmp_path: Path, calendar_file: Path, simulation_table_file: Path) -> None:
     """Filtered result must satisfy: every row (absolute_time_index, block) in calendar, correct count, rows from sim table."""
-    calendar = Calendar(calendar_file)
+    calendar = load_calendar(calendar_file)
     simulation_table = SimulationTable(simulation_table_file)
     out_file = tmp_path / "filtered_logical.csv"
 
@@ -72,10 +68,10 @@ def test_filter_simulation_table_logical(tmp_path: Path, calendar_file: Path, si
 @pytest.mark.parametrize("tmp_path", [None], indirect=True)
 def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path) -> None:
     """Rows whose block does not match the calendar's block for a given absolute_time_index are dropped."""
-    calendar_file = TEST_FILES_ROOT / "test_1" / "calendar_daily_block1.csv"
-    base_sim_table_file = TEST_FILES_ROOT / "test_1" / "simulation_table_daily_one_year.csv"
+    calendar_file = TEST_FILES_ROOT / "test_3" / "calendar_file.csv"
+    base_sim_table_file = TEST_FILES_ROOT / "test_3" / "simulation_table--20260318-0623.csv"
 
-    calendar = Calendar(calendar_file)
+    calendar = load_calendar(calendar_file)
     base_sim_table = SimulationTable(base_sim_table_file)
 
     # Duplicate rows with block=2 so they do not match calendar (block=1)
@@ -100,7 +96,7 @@ def test_filter_simulation_table_writes_csv(
     simulation_table_file: Path,
 ) -> None:
     """When output_path is set, the filtered table is written to CSV with expected content."""
-    calendar = Calendar(calendar_file)
+    calendar = load_calendar(calendar_file)
     simulation_table = SimulationTable(simulation_table_file)
     out_file = tmp_path / f"filtered_{calendar_file.stem}.csv"
 

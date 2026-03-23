@@ -14,9 +14,10 @@
 
 from pathlib import Path
 
-from src.catalog import Catalog, Metric
+from src.catalog import Catalog, Metric, get_catalog_metric
 from src.library import ModelLibrary
-from src.metrics import MetricStructureBuilder, ViewConfig
+from src.metrics import ViewConfig
+from src.metrics_builder import MetricStructureBuilder
 from src.simulation_table import SimulationTable
 from src.system import InputSystem
 from src.taxonomy import Taxonomy
@@ -83,7 +84,7 @@ class ViewBuilder:
             # # 2.2 Iterate over all metrics for this catalog
             for metric_id in metrics:
                 try:
-                    metric: Metric = catalog.get_metric(metric_id)
+                    metric: Metric = get_catalog_metric(catalog, metric_id)
                 except ValueError:
                     continue  # # We should decide do we want to break process fully or continue with the next metric
 

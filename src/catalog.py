@@ -12,12 +12,18 @@
 
 """In memory representation of a catalog .yml file."""
 
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
 import yaml
 
 from src.base_model import ViewBuilderBasedModel
+
+"""
+They are the same for now but we could keep them separated for future use.
+In fact they represent the different operators
+"""
 
 
 class TermsOperator(Enum):
@@ -33,7 +39,7 @@ class TimeOperator(Enum):
 class Term(ViewBuilderBasedModel):
     taxonomy_category: str
     output_id: str
-    location_ports: str | None
+    location_ports: str | tuple[str, ...] | None
     weight_output_id: str | None = None
 
 
@@ -57,20 +63,31 @@ class CatalogData(ViewBuilderBasedModel):
     metrics_definition: list[Metric]
 
 
+@dataclass
 class Catalog:
-    def __init__(self, catalog_file_path: Path) -> None:
-        parsed = self._load_catalog_file(catalog_file_path)
-        self.id = parsed.id
-        self.taxonomy = parsed.taxonomy
-        self.location_taxonomy_category = parsed.location.taxonomy_category
-        self.metrics: dict[str, Metric] = {metric.id: metric for metric in parsed.metrics_definition}
+    id: str
+    taxonomy: str
+    location_taxonomy_category: str
+    metrics: dict[str, Metric]
 
-    def _load_catalog_file(self, catalog_file_path: Path) -> CatalogData:
-        with open(catalog_file_path) as f:
-            raw = yaml.safe_load(f)
-        return CatalogData.model_validate(raw["catalog"])
 
-    def get_metric(self, metric_id: str) -> Metric:
-        if metric_id not in self.metrics:
-            raise ValueError(f"Metric {metric_id} not found in catalog {self.id}")
-        return self.metrics[metric_id]
+def load_catalog(catalog_file_path: Path) -> Catalog:
+    parsed = _load_catalog_file(catalog_file_path)
+    return Catalog(
+        id=parsed.id,
+        taxonomy=parsed.taxonomy,
+        location_taxonomy_category=parsed.location.taxonomy_category,
+        metrics={metric.id: metric for metric in parsed.metrics_definition},
+    )
+
+
+def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
+    with open(catalog_file_path) as f:
+        raw = yaml.safe_load(f)
+    return CatalogData.model_validate(raw["catalog"])
+
+
+def get_catalog_metric(catalog: Catalog, metric_id: str) -> Metric:
+    if metric_id not in catalog.metrics:
+        raise ValueError(f"Metric {metric_id} not found in catalog {catalog.id}")
+    return catalog.metrics[metric_id]

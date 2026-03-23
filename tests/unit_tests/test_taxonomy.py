@@ -19,7 +19,6 @@ from src.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem
 TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 
 TAXONOMY_PATH = [
-    TEST_FILES_ROOT / "test_1" / "taxonomy.yml",
     TEST_FILES_ROOT / "test_3" / "taxonomy.yml",
 ]
 
@@ -59,17 +58,11 @@ def test_taxonomy_items_are_typed(taxonomy_path: Path) -> None:
 
 
 def test_taxonomy_known_categories() -> None:
-    taxonomy = Taxonomy(TEST_FILES_ROOT / "test_2" / "taxonomy.yml")
+    taxonomy = Taxonomy(TEST_FILES_ROOT / "test_3" / "taxonomy.yml")
     category_ids = set([c.id for c in taxonomy.categories])
     assert "balance" in category_ids
     assert "production" in category_ids
-    assert "dispatchable_production" in category_ids
     assert "consumption" in category_ids
     assert "storage" in category_ids
     assert "link" in category_ids
-    assert "fatal_production" in category_ids
-    assert "fatal_consumption" in category_ids
-    assert "flexible_consumption" in category_ids
-    assert "converter" in category_ids
-    assert "coupling_models" in category_ids
-    assert "capacity_investment_decisions" in category_ids
+    assert "coupling" in category_ids

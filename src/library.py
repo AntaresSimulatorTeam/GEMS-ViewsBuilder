@@ -10,10 +10,9 @@
 #
 # This file is part of the Antares project.
 
-"""Model library YAML: parsed with GemsPy (gems.model.parsing) plus taxonomy-category on models."""
+"""Model library YAML with explicit local models"""
 
 from pathlib import Path
-from typing import List, cast
 
 import yaml
 from gems.model.parsing import (
@@ -27,13 +26,9 @@ from gems.model.parsing import (
     InputPortType,
     InputVariable,
 )
-from gems.model.parsing import (
-    InputLibrary as GemsInputLibrary,
-)
-from gems.model.parsing import (
-    InputModel as GemsInputModel,
-)
 from pydantic import Field
+
+from src.base_model import ViewBuilderBasedModel
 
 # Public aliases — same names as the previous local Pydantic models.
 ParameterDef = InputParameter
@@ -48,16 +43,30 @@ PortTypeDef = InputPortType
 ExtraOutputDef = InputExtraOutput
 
 
-class ModelDefinition(GemsInputModel):  # type: ignore[misc]
-    """GemsPy `InputModel` plus optional `taxonomy-category` for ViewsBuilder indexing."""
+class ModelDefinition(ViewBuilderBasedModel):
+    """Local model definition used by ViewsBuilder."""
+
+    id: str
+    description: str | None = None
+    parameters: list[InputParameter] = Field(default_factory=list)
+    variables: list[InputVariable] = Field(default_factory=list)
+    ports: list[InputModelPort] = Field(default_factory=list)
+    port_field_definitions: list[InputPortFieldDefinition] = Field(default_factory=list)
+    constraints: list[InputConstraint] = Field(default_factory=list)
+    binding_constraints: list[InputConstraint] = Field(default_factory=list)
+    objective_contributions: list[InputObjectiveContribution] = Field(default_factory=list)
+    extra_outputs: list[InputExtraOutput] = Field(default_factory=list)
 
     taxonomy_category: str | None = Field(default=None, alias="taxonomy-category")
 
 
-class LibraryData(GemsInputLibrary):  # type: ignore[misc]
-    """Library root: GemsPy shape with extended model type."""
+class LibraryData(ViewBuilderBasedModel):
+    """Library root model for `library` yaml section."""
 
-    models: List[ModelDefinition] = Field(default_factory=list)
+    id: str
+    description: str | None = None
+    port_types: list[InputPortType] = Field(default_factory=list)
+    models: list[ModelDefinition] = Field(default_factory=list)
 
 
 class ModelLibrary:
@@ -82,7 +91,7 @@ class ModelLibrary:
     def _load_library_file(self, library_file_path: Path) -> LibraryData:
         with open(library_file_path) as f:
             raw = yaml.safe_load(f)
-        return cast(LibraryData, LibraryData.model_validate(raw["library"]))
+        return LibraryData.model_validate(raw["library"])
 
     def get_model(self, model_id: str) -> ModelDefinition | None:
         """Return the full model definition, or None if not found."""

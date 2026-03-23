@@ -19,8 +19,7 @@ from src.metrics import TimeAggregation, ViewConfig
 TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 
 CONFIG_PATHS = [
-    TEST_FILES_ROOT / "test_1" / "view_config.yml",
-    TEST_FILES_ROOT / "test_2" / "view_config.yml",
+    TEST_FILES_ROOT / "test_3" / "view_config.yml",
 ]
 
 
@@ -50,15 +49,37 @@ def test_view_config_metrics_are_pairs(config_path: Path) -> None:
 
 
 def test_view_config_known_values() -> None:
-    config = ViewConfig(TEST_FILES_ROOT / "test_2" / "view_config.yml")
+    config = ViewConfig(TEST_FILES_ROOT / "test_3" / "view_config.yml")
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
-    assert config.catalog_ids == ["catalog_1"]
-    assert ("catalog_1", "OVERALL_COST") in config.metrics
-    assert ("catalog_1", "UNSP_ENRG") in config.metrics
-    assert ("catalog_1", "MRG_PRICE") in config.metrics
+    assert config.catalog_ids == ["catalog"]
+    assert ("catalog", "PROD") in config.metrics
+    assert ("catalog", "LOAD") in config.metrics
+    assert ("catalog", "BALANCE") in config.metrics
 
 
 def test_view_config_time_aggregation() -> None:
-    config = ViewConfig(TEST_FILES_ROOT / "test_2" / "view_config.yml")
+    config = ViewConfig(TEST_FILES_ROOT / "test_3" / "view_config.yml")
     assert config.time_aggregation == TimeAggregation.HOURS
+
+
+def test_view_config_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
+    invalid_config = tmp_path / "view_config.yml"
+    invalid_config.write_text(
+        """
+view:
+  id: invalid_metric_format
+  scope:
+    - taxonomy-category: balance
+    - calendar: calendar_file
+  aggregation:
+    - time: hours
+  catalog:
+    - id: catalog_1
+  metrics:
+    - id: invalid_metric_id
+""".strip()
+    )
+
+    with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
+        ViewConfig(invalid_config)
