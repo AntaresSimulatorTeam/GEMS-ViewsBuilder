@@ -10,18 +10,13 @@
 #
 # This file is part of the Antares project.
 
-import sys
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(ROOT_DIR))
+import polars as pl
+import pytest
 
-import polars as pl  # noqa: E402
-import pytest  # noqa: E402
-
-from src import FilteredSimulationTable, SimulationTable, load_calendar  # noqa: E402
-
-TEST_FILES_ROOT = ROOT_DIR / "resources" / "test_files"
+from gems_views_builder import FilteredSimulationTable, SimulationTable, load_calendar
+from tests.conftest import TEST_FILES_ROOT
 
 # Existing calendar + simulation table pairs
 FILTER_TEST_CASES = [

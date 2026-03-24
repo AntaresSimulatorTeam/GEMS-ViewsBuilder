@@ -21,8 +21,7 @@ from gems_views_builder import (
     PortDef,
     VariableDef,
 )
-
-TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
+from tests.conftest import TEST_FILES_ROOT
 
 LIBRARY_PATHS = [
     TEST_FILES_ROOT / "test_3" / "pypsa_models.yml",

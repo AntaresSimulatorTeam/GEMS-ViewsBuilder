@@ -35,7 +35,7 @@ Repository = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["gems_views_builder", "src"]
+include = ["gems_views_builder"]
 
 
 [tool.pytest.ini_options]
@@ -59,6 +59,6 @@ quote-style = "double"
 skip-magic-trailing-comma = false
 
 [tool.mypy]
-files = "src"
+files = "gems_views_builder"
 strict = true
 plugins = ["pydantic.mypy"]

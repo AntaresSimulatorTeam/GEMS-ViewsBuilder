@@ -14,9 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from src import Metric, Term, TermsOperator, TimeOperator, load_catalog
-
-TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
+from gems_views_builder import Metric, Term, TermsOperator, TimeOperator, load_catalog
+from tests.conftest import TEST_FILES_ROOT
 
 CATALOG_PATH = [
     TEST_FILES_ROOT / "test_3" / "catalogs" / "catalog.yml",

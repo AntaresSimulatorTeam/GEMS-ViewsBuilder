@@ -14,13 +14,13 @@
 
 from pathlib import Path
 
-from src.catalog import Catalog, Metric, get_catalog_metric
-from src.library import ModelLibrary
-from src.metrics import ViewConfig
-from src.metrics_builder import MetricStructureBuilder
-from src.simulation_table import SimulationTable
-from src.system import InputSystem
-from src.taxonomy import load_taxonomy
+from gems_views_builder.catalog import Catalog, Metric, get_catalog_metric
+from gems_views_builder.library import ModelLibrary
+from gems_views_builder.metrics import ViewConfig
+from gems_views_builder.metrics_builder import MetricStructureBuilder
+from gems_views_builder.simulation_table import SimulationTable
+from gems_views_builder.system import InputSystem
+from gems_views_builder.taxonomy import load_taxonomy
 
 """
 # ViewConfig -> representation of the view_config.yml file and it references the catalogs and calendar

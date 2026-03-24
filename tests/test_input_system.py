@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 from gems.study.parsing import InputSystem, parse_yaml_components  # type: ignore
 
-TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
+from tests.conftest import TEST_FILES_ROOT
 
 # Exact relative paths that must exist in every input_* directory.
 REQUIRED_FILES = [
