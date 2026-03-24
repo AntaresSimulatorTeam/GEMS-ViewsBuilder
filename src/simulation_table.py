@@ -44,7 +44,7 @@ FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {
 
 class SimulationTable:
     """
-    In memory representation of the SIMULATION_TABLE
+    Lazy representation of the SIMULATION_TABLE CSV.
     Expected columns: see SIMULATION_TABLE_COLUMNS.
     """
 
@@ -89,7 +89,7 @@ class SimulationTable:
 
 class FilteredSimulationTable:
     """
-    In-memory representation of a filtered SIMULATION_TABLE.
+    Lazy representation of a filtered SIMULATION_TABLE CSV(Parquet in close future).
     Has all SIMULATION_TABLE columns plus granular_date from the calendar join.
     """
 

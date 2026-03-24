@@ -10,7 +10,6 @@ license = {file = "LICENSE"}
 dependencies = [
     "polars>=1.39.2",
     "pyyaml==6.0.2",
-    "types-PyYAML>=6.0.0",
     "pydantic>=2.11.7",
     "gemspy>=0.0.4",
 ]
@@ -34,11 +33,9 @@ Repository = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
 "Bug Tracker" = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/issues"
 
 
-[tool.setuptools.package-dir]
-"" = "src"
-
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["gems_views_builder", "src"]
 
 
 [tool.pytest.ini_options]
@@ -65,11 +62,3 @@ skip-magic-trailing-comma = false
 files = "src"
 strict = true
 plugins = ["pydantic.mypy"]
-disable_error_code = ["attr-defined"]
-
-[[tool.mypy.overrides]]
-module = ["pydantic.*", "pytest.*", "polars.*"]
-
-[[tool.mypy.overrides]]
-module = "src.library"
-disable_error_code = ["import-untyped"]

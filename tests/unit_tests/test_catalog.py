@@ -14,18 +14,18 @@ from pathlib import Path
 
 import pytest
 
-from src import Catalog, Metric, Term, TermsOperator, TimeOperator
+from src import Metric, Term, TermsOperator, TimeOperator, load_catalog
 
 TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
 
 CATALOG_PATH = [
-    TEST_FILES_ROOT / "test_1" / "catalogs" / "catalog_1.yml",
+    TEST_FILES_ROOT / "test_3" / "catalogs" / "catalog.yml",
 ]
 
 
 @pytest.mark.parametrize("catalog_path", CATALOG_PATH)
 def test_catalog_loads(catalog_path: Path) -> None:
-    catalog = Catalog(catalog_path)
+    catalog = load_catalog(catalog_path)
     assert isinstance(catalog.id, str)
     assert isinstance(catalog.taxonomy, str)
     assert isinstance(catalog.location_taxonomy_category, str)
@@ -34,7 +34,7 @@ def test_catalog_loads(catalog_path: Path) -> None:
 
 @pytest.mark.parametrize("catalog_path", CATALOG_PATH)
 def test_catalog_metrics_are_typed(catalog_path: Path) -> None:
-    catalog = Catalog(catalog_path)
+    catalog = load_catalog(catalog_path)
     for metric in catalog.metrics.values():
         assert isinstance(metric, Metric)
         assert isinstance(metric.id, str)
@@ -45,25 +45,25 @@ def test_catalog_metrics_are_typed(catalog_path: Path) -> None:
 
 @pytest.mark.parametrize("catalog_path", CATALOG_PATH)
 def test_catalog_terms_are_typed(catalog_path: Path) -> None:
-    catalog = Catalog(catalog_path)
+    catalog = load_catalog(catalog_path)
     for metric in catalog.metrics.values():
         for term in metric.terms:
             assert isinstance(term, Term)
             assert isinstance(term.taxonomy_category, str)
             assert isinstance(term.output_id, str)
-            assert term.location_ports is None or isinstance(term.location_ports, str)
+            assert term.location_ports is None or isinstance(term.location_ports, (str, tuple))
 
 
 def test_catalog_known_metrics() -> None:
-    catalog = Catalog(TEST_FILES_ROOT / "test_1" / "catalogs" / "catalog_1.yml")
+    catalog = load_catalog(TEST_FILES_ROOT / "test_3" / "catalogs" / "catalog.yml")
     metric_ids = set(catalog.metrics.keys())
-    assert "OVERALL_COST" in metric_ids
-    assert "MRG_PRICE" in metric_ids
-    assert "UNSP_ENRG" in metric_ids
+    assert "PROD" in metric_ids
+    assert "LOAD" in metric_ids
+    assert "BALANCE" in metric_ids
 
 
 def test_catalog_operators_valid_values() -> None:
-    catalog = Catalog(TEST_FILES_ROOT / "test_1" / "catalogs" / "catalog_1.yml")
+    catalog = load_catalog(TEST_FILES_ROOT / "test_3" / "catalogs" / "catalog.yml")
     for metric in catalog.metrics.values():
         assert metric.terms_operator in (TermsOperator.SUM, TermsOperator.AVG)
         assert metric.time_operator in (TimeOperator.SUM, TimeOperator.AVG)

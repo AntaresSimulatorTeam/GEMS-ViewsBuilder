@@ -14,14 +14,16 @@
 
 from pathlib import Path
 
+from src.catalog import Catalog, Metric, get_catalog_metric
 import polars as pl
 
 from src.catalog import Catalog, Metric, TermsOperator, TimeOperator
 from src.library import ModelLibrary
-from src.metrics import MetricStructureBuilder, TimeAggregation, ViewConfig
+from src.metrics import ViewConfig
+from src.metrics_builder import MetricStructureBuilder
 from src.simulation_table import SimulationTable
 from src.system import InputSystem
-from src.taxonomy import Taxonomy
+from src.taxonomy import load_taxonomy
 
 """
 # ViewConfig -> representation of the view_config.yml file and it references the catalogs and calendar
@@ -37,7 +39,7 @@ class ViewBuilder:
     ) -> None:
         self._check_input_data_structure(input_data_path)
         self.system = self._load_system(input_data_path)
-        self.taxonomy = Taxonomy(input_data_path / "taxonomy.yml")
+        self.taxonomy = load_taxonomy(input_data_path / "taxonomy.yml")
         self.view_config = ViewConfig(input_data_path / "view_config.yml")
         simulation_table_path = next(input_data_path.glob("simulation_table*"))
         self.simulation_table = SimulationTable(simulation_table_path)
@@ -52,7 +54,7 @@ class ViewBuilder:
         if not catalogs_path.is_dir():
             raise NotADirectoryError(f"Catalogs directory {catalogs_path} not found or not a directory")
         if not any(catalogs_path.iterdir()):
-            raise FileNotFoundError(f"Catalogs directory {catalogs_path} is empty")
+            raise FileNotFoundError(f"Catalogs directory {catalogs_path} is empty")  # 1 * constraint
 
         exact_files = ["taxonomy.yml", "view_config.yml"]
         for filename in exact_files:
@@ -101,6 +103,10 @@ class ViewBuilder:
         filtered_simulation_table = self.simulation_table.filter_simulation_table(
             self.view_config.load_calendar(), self.input_data_path / "simulation_table_filtered.csv"
         )
+        _ = filtered_simulation_table  # to avoid copilot unnecessary warnings
+        # # 2. Create metric structure table and perform SQL operations on it
+        # # Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
+        for catalog_id, metrics in self.view_config.catalog_to_metrics.items():
 
         # # date_trunc(view.aggregation.time, ABS_TIME_INDEX_TO_DATE(...)) (spec: step 2.c)
         view_date_trunc_unit = self._get_view_date_trunc_unit()
@@ -112,12 +118,11 @@ class ViewBuilder:
         # # Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog.
         for catalog_id, metrics in self.view_config.metrics_by_catalog.items():
             # # 2.1 Load catalog
-            catalog: Catalog = self.view_config._load_current_catalog(catalog_id)
-
+            catalog: Catalog = self.view_config.load_catalog(catalog_id)
             # # 2.2 Iterate over all metrics for this catalog
             for metric_id in metrics:
                 try:
-                    metric: Metric = catalog.get_metric(metric_id)
+                    metric: Metric = get_catalog_metric(catalog, metric_id)
                 except ValueError:
                     continue  # keep processing other metrics
 

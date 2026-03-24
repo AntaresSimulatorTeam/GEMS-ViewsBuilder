@@ -10,14 +10,20 @@
 #
 # This file is part of the Antares project.
 
-"""In memory representation of a catalog .yml file."""
+"""Catalog .yml parsing models and typed representation."""
 
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
 import yaml
 
 from src.base_model import ViewBuilderBasedModel
+
+"""
+They are the same for now but we could keep them separated for future use.
+In fact they represent the different operators
+"""
 
 
 class TermsOperator(Enum):
@@ -30,14 +36,43 @@ class TimeOperator(Enum):
     AVG = "avg"
 
 
-class Term(ViewBuilderBasedModel):
+class TermData(ViewBuilderBasedModel):
     taxonomy_category: str
     output_id: str
-    location_ports: str | None
+    location_ports: str | tuple[str, ...] | None
     weight_output_id: str | None = None
 
 
-class Metric(ViewBuilderBasedModel):
+class MetricData(ViewBuilderBasedModel):
+    id: str
+    terms: list[TermData]
+    terms_operator: TermsOperator
+    time_operator: TimeOperator
+    breakdown_property: str | None = None
+    filter: tuple[str, str] | None = None
+
+
+class CatalogLocationData(ViewBuilderBasedModel):
+    taxonomy_category: str
+
+
+class CatalogData(ViewBuilderBasedModel):
+    id: str
+    taxonomy: str
+    location: CatalogLocationData
+    metrics_definition: list[MetricData]
+
+
+@dataclass
+class Term:
+    taxonomy_category: str
+    output_id: str
+    location_ports: str | tuple[str, ...] | None
+    weight_output_id: str | None = None
+
+
+@dataclass
+class Metric:
     id: str
     terms: list[Term]
     terms_operator: TermsOperator
@@ -46,31 +81,51 @@ class Metric(ViewBuilderBasedModel):
     filter: tuple[str, str] | None = None
 
 
-class CatalogLocation(ViewBuilderBasedModel):
-    taxonomy_category: str
-
-
-class CatalogData(ViewBuilderBasedModel):
+@dataclass
+class Catalog:
     id: str
     taxonomy: str
-    location: CatalogLocation
-    metrics_definition: list[Metric]
+    location_taxonomy_category: str
+    metrics: dict[str, Metric] = field(default_factory=dict)
 
 
-class Catalog:
-    def __init__(self, catalog_file_path: Path) -> None:
-        parsed = self._load_catalog_file(catalog_file_path)
-        self.id = parsed.id
-        self.taxonomy = parsed.taxonomy
-        self.location_taxonomy_category = parsed.location.taxonomy_category
-        self.metrics: dict[str, Metric] = {metric.id: metric for metric in parsed.metrics_definition}
+def _to_term(term_data: TermData) -> Term:
+    return Term(
+        taxonomy_category=term_data.taxonomy_category,
+        output_id=term_data.output_id,
+        location_ports=term_data.location_ports,
+        weight_output_id=term_data.weight_output_id,
+    )
 
-    def _load_catalog_file(self, catalog_file_path: Path) -> CatalogData:
-        with open(catalog_file_path) as f:
-            raw = yaml.safe_load(f)
-        return CatalogData.model_validate(raw["catalog"])
 
-    def get_metric(self, metric_id: str) -> Metric:
-        if metric_id not in self.metrics:
-            raise ValueError(f"Metric {metric_id} not found in catalog {self.id}")
-        return self.metrics[metric_id]
+def _to_metric(metric_data: MetricData) -> Metric:
+    return Metric(
+        id=metric_data.id,
+        terms=[_to_term(term) for term in metric_data.terms],
+        terms_operator=metric_data.terms_operator,
+        time_operator=metric_data.time_operator,
+        breakdown_property=metric_data.breakdown_property,
+        filter=metric_data.filter,
+    )
+
+
+def load_catalog(catalog_file_path: Path) -> Catalog:
+    parsed = _load_catalog_file(catalog_file_path)
+    return Catalog(
+        id=parsed.id,
+        taxonomy=parsed.taxonomy,
+        location_taxonomy_category=parsed.location.taxonomy_category,
+        metrics={metric.id: _to_metric(metric) for metric in parsed.metrics_definition},
+    )
+
+
+def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
+    with open(catalog_file_path) as f:
+        raw = yaml.safe_load(f)
+    return CatalogData.model_validate(raw["catalog"])
+
+
+def get_catalog_metric(catalog: Catalog, metric_id: str) -> Metric:
+    if metric_id not in catalog.metrics:
+        raise ValueError(f"Metric {metric_id} not found in catalog {catalog.id}")
+    return catalog.metrics[metric_id]

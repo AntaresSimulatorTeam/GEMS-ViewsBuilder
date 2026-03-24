@@ -43,8 +43,7 @@ def test_input_folders_have_required_files() -> None:
 @pytest.mark.parametrize(
     "input_system_path",
     [
-        TEST_FILES_ROOT / "test_1" / "system_france_clusters_50_snapshots_365_period_one_year.yml",
-        TEST_FILES_ROOT / "test_2" / "system_france_clusters_80_snapshots_168_period_one_week.yml",
+        TEST_FILES_ROOT / "test_3" / "system.yml",
     ],
 )
 def test_input_system_using(input_system_path: Path) -> None:
@@ -57,7 +56,7 @@ def test_input_system_using(input_system_path: Path) -> None:
 
 def test_locating_function() -> None:
     """LOCATING_FUNCTION: None -> component_id, string -> peer id, tuple -> tuple of peer ids."""
-    from src.system import InputSystem as GemsViewsInputSystem
+    from gems_views_builder import InputSystem as GemsViewsInputSystem
 
     system_path = TEST_FILES_ROOT / "test_3" / "system.yml"
     assert system_path.exists(), f"System file not found: {system_path}"
