@@ -51,7 +51,7 @@ class ViewBuilder:
         if not catalogs_path.is_dir():
             raise NotADirectoryError(f"Catalogs directory {catalogs_path} not found or not a directory")
         if not any(catalogs_path.iterdir()):
-            raise FileNotFoundError(f"Catalogs directory {catalogs_path} is empty")
+            raise FileNotFoundError(f"Catalogs directory {catalogs_path} is empty")  # 1 * constraint
 
         exact_files = ["taxonomy.yml", "view_config.yml"]
         for filename in exact_files:
@@ -78,7 +78,7 @@ class ViewBuilder:
         _ = filtered_simulation_table  # to avoid copilot unnecessary warnings
         # # 2. Create metric structure table and perform SQL operations on it
         # # Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
-        for catalog_id, metrics in self.view_config.metrics_by_catalog.items():
+        for catalog_id, metrics in self.view_config.catalog_to_metrics.items():
             # # 2.1 Load catalog
             catalog: Catalog = self.view_config.load_catalog(catalog_id)
             # # 2.2 Iterate over all metrics for this catalog

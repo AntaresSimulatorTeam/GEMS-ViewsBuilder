@@ -30,7 +30,6 @@ def test_view_config_loads(config_path: Path) -> None:
     assert isinstance(config.location_taxonomy_category, str)
     assert isinstance(config.calendar_id, str)
     assert len(config.catalog_ids) > 0
-    assert len(config.metrics) > 0
 
 
 @pytest.mark.parametrize("config_path", CONFIG_PATHS)
@@ -43,9 +42,10 @@ def test_view_config_catalog_ids_are_strings(config_path: Path) -> None:
 @pytest.mark.parametrize("config_path", CONFIG_PATHS)
 def test_view_config_metrics_are_pairs(config_path: Path) -> None:
     config = ViewConfig(config_path)
-    for catalog_id, metric_id in config.metrics:
+    for catalog_id, metrics in config.catalog_to_metrics.items():
         assert isinstance(catalog_id, str)
-        assert isinstance(metric_id, str)
+        assert isinstance(metrics, list)
+        assert all(isinstance(metric, str) for metric in metrics)
 
 
 def test_view_config_known_values() -> None:
@@ -53,9 +53,9 @@ def test_view_config_known_values() -> None:
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.catalog_ids == ["catalog"]
-    assert ("catalog", "PROD") in config.metrics
-    assert ("catalog", "LOAD") in config.metrics
-    assert ("catalog", "BALANCE") in config.metrics
+    assert "PROD" in config.catalog_to_metrics["catalog"]
+    assert "LOAD" in config.catalog_to_metrics["catalog"]
+    assert "BALANCE" in config.catalog_to_metrics["catalog"]
 
 
 def test_view_config_time_aggregation() -> None:

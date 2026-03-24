@@ -89,7 +89,7 @@ class SimulationTable:
 
 class FilteredSimulationTable:
     """
-    Lazy representation of a filtered SIMULATION_TABLE CSV.
+    Lazy representation of a filtered SIMULATION_TABLE CSV(Parquet in close future).
     Has all SIMULATION_TABLE columns plus granular_date from the calendar join.
     """
 

@@ -74,13 +74,11 @@ class ViewConfig:
         self.calendar_id: str = next(item.calendar for item in parsed.scope if item.calendar)
         self.catalog_ids: list[str] = [c.id for c in parsed.catalog]
         self.time_aggregation: TimeAggregation | None = parsed.aggregation[0].time if parsed.aggregation else None
-        # Public API: list of (catalog_id, metric_id) pairs
-        self.metrics: list[tuple[str, str]] = self._extract_metric_pairs(parsed.metrics)
         # Internal helper: grouped by catalog
-        self.metrics_by_catalog: dict[str, list[str]] = self._group_metrics_by_catalog(self.metrics)
+        self.catalog_to_metrics: dict[str, list[str]] = self._group_metrics_by_catalog(parsed.metrics)
 
-    def _extract_metric_pairs(self, metrics: list[MetricRef]) -> list[tuple[str, str]]:
-        pairs: list[tuple[str, str]] = []
+    def _group_metrics_by_catalog(self, metrics: list[MetricRef]) -> dict[str, list[str]]:
+        catalog_to_metrics: dict[str, list[str]] = defaultdict(list)
         for metric in metrics:
             if "." not in metric.id or metric.id.startswith(".") or metric.id.endswith("."):
                 raise ValueError(
@@ -88,14 +86,8 @@ class ViewConfig:
                     "Expected format '<catalog_id>.<metric_id>'"
                 )
             catalog_id, metric_id = metric.id.split(".", 1)
-            pairs.append((catalog_id, metric_id))
-        return pairs
-
-    def _group_metrics_by_catalog(self, metrics: list[tuple[str, str]]) -> dict[str, list[str]]:
-        metrics_for_catalog: dict[str, list[str]] = defaultdict(list)
-        for catalog_id, metric_id in metrics:
-            metrics_for_catalog[catalog_id].append(metric_id)
-        return metrics_for_catalog
+            catalog_to_metrics[catalog_id].append(metric_id)
+        return catalog_to_metrics
 
     def _load_view_file(self, view_file_path: Path) -> ViewData:
         with open(view_file_path) as f:
