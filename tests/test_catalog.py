@@ -1,0 +1,68 @@
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+#
+# See AUTHORS.txt
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# This file is part of the Antares project.
+
+from pathlib import Path
+
+import pytest
+
+from gems_views_builder import Metric, Term, TermsOperator, TimeOperator, load_catalog
+from tests.conftest import TEST_FILES_ROOT
+
+CATALOG_PATH = [
+    TEST_FILES_ROOT / "test_3" / "catalogs" / "catalog.yml",
+]
+
+
+@pytest.mark.parametrize("catalog_path", CATALOG_PATH)
+def test_catalog_loads(catalog_path: Path) -> None:
+    catalog = load_catalog(catalog_path)
+    assert isinstance(catalog.id, str)
+    assert isinstance(catalog.taxonomy, str)
+    assert isinstance(catalog.location_taxonomy_category, str)
+    assert len(catalog.metrics) > 0
+
+
+@pytest.mark.parametrize("catalog_path", CATALOG_PATH)
+def test_catalog_metrics_are_typed(catalog_path: Path) -> None:
+    catalog = load_catalog(catalog_path)
+    for metric in catalog.metrics.values():
+        assert isinstance(metric, Metric)
+        assert isinstance(metric.id, str)
+        assert isinstance(metric.terms_operator, TermsOperator)
+        assert isinstance(metric.time_operator, TimeOperator)
+        assert len(metric.terms) > 0
+
+
+@pytest.mark.parametrize("catalog_path", CATALOG_PATH)
+def test_catalog_terms_are_typed(catalog_path: Path) -> None:
+    catalog = load_catalog(catalog_path)
+    for metric in catalog.metrics.values():
+        for term in metric.terms:
+            assert isinstance(term, Term)
+            assert isinstance(term.taxonomy_category, str)
+            assert isinstance(term.output_id, str)
+            assert term.location_ports is None or isinstance(term.location_ports, (str, tuple))
+
+
+def test_catalog_known_metrics() -> None:
+    catalog = load_catalog(TEST_FILES_ROOT / "test_3" / "catalogs" / "catalog.yml")
+    metric_ids = set(catalog.metrics.keys())
+    assert "PROD" in metric_ids
+    assert "LOAD" in metric_ids
+    assert "BALANCE" in metric_ids
+
+
+def test_catalog_operators_valid_values() -> None:
+    catalog = load_catalog(TEST_FILES_ROOT / "test_3" / "catalogs" / "catalog.yml")
+    for metric in catalog.metrics.values():
+        assert metric.terms_operator in (TermsOperator.SUM, TermsOperator.AVG)
+        assert metric.time_operator in (TimeOperator.SUM, TimeOperator.AVG)

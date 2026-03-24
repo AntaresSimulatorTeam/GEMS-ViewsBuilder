@@ -26,12 +26,12 @@ jobs:
 
     - name: Run Ruff linting
       run: |
-        ruff check src
+        ruff check gems_views_builder
         ruff check tests
 
     - name: Run Mypy type checking
-      run: | 
-        mypy src
+      run: |
+        mypy gems_views_builder
         mypy tests
 
       continue-on-error: false
