@@ -16,6 +16,7 @@ from pathlib import Path
 
 from src.catalog import Catalog, Metric, get_catalog_metric
 import polars as pl
+from src.metrics import TimeAggregation
 
 from src.catalog import Catalog, Metric, TermsOperator, TimeOperator
 from src.library import ModelLibrary
