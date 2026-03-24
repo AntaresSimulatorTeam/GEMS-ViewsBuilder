@@ -28,7 +28,7 @@ from gems.model.parsing import (  # type: ignore
 )
 from pydantic import Field
 
-from src.base_model import ViewBuilderBasedModel
+from gems_views_builder.base_model import ViewBuilderBasedModel
 
 # Public aliases — same names as the previous local Pydantic models.
 ParameterDef = InputParameter

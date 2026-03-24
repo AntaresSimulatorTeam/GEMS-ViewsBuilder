@@ -18,7 +18,7 @@ from pathlib import Path
 
 import yaml
 
-from src.base_model import ViewBuilderBasedModel
+from gems_views_builder.base_model import ViewBuilderBasedModel
 
 """
 They are the same for now but we could keep them separated for future use.

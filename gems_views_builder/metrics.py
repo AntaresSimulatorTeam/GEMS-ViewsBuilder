@@ -19,9 +19,9 @@ from pathlib import Path
 import yaml
 from pydantic import Field
 
-from src.base_model import ViewBuilderBasedModel
-from src.calendar import Calendar, load_calendar
-from src.catalog import Catalog, load_catalog
+from gems_views_builder.base_model import ViewBuilderBasedModel
+from gems_views_builder.calendar import Calendar, load_calendar
+from gems_views_builder.catalog import Catalog, load_catalog
 
 
 class TimeAggregation(Enum):
