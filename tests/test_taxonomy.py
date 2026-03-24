@@ -15,8 +15,7 @@ from pathlib import Path
 import pytest
 
 from gems_views_builder import TaxonomyCategory, TaxonomyItem, load_taxonomy
-
-TEST_FILES_ROOT = Path(__file__).resolve().parent.parent.parent / "resources" / "test_files"
+from tests.conftest import TEST_FILES_ROOT
 
 TAXONOMY_PATH = [
     TEST_FILES_ROOT / "test_3" / "taxonomy.yml",

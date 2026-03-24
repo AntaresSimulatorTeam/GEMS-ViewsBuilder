@@ -12,9 +12,17 @@
 
 """GEMS-ViewsBuilder public package namespace."""
 
-from src.calendar import Calendar, load_calendar
-from src.catalog import Catalog, Metric, Term, TermsOperator, TimeOperator, get_catalog_metric, load_catalog
-from src.library import (
+from gems_views_builder.calendar import Calendar, load_calendar
+from gems_views_builder.catalog import (
+    Catalog,
+    Metric,
+    Term,
+    TermsOperator,
+    TimeOperator,
+    get_catalog_metric,
+    load_catalog,
+)
+from gems_views_builder.library import (
     BindingConstraintDef,
     ConstraintDef,
     ExtraOutputDef,
@@ -28,12 +36,12 @@ from src.library import (
     PortTypeDef,
     VariableDef,
 )
-from src.metrics import TimeAggregation, ViewConfig
-from src.metrics_builder import MetricStructureBuilder, MetricStructureTable
-from src.simulation_table import FilteredSimulationTable, SimulationTable
-from src.system import InputSystem
-from src.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
-from src.views import ViewBuilder
+from gems_views_builder.metrics import TimeAggregation, ViewConfig
+from gems_views_builder.metrics_builder import MetricStructureBuilder, MetricStructureTable
+from gems_views_builder.simulation_table import FilteredSimulationTable, SimulationTable
+from gems_views_builder.system import InputSystem
+from gems_views_builder.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
+from gems_views_builder.views import ViewBuilder
 
 __all__ = [
     "Calendar",

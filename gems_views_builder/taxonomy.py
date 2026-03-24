@@ -16,7 +16,7 @@ from pathlib import Path
 import yaml
 from pydantic import Field
 
-from src.base_model import ViewBuilderBasedModel
+from gems_views_builder.base_model import ViewBuilderBasedModel
 
 
 class TaxonomyItem(ViewBuilderBasedModel):

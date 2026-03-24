@@ -14,10 +14,10 @@ from dataclasses import dataclass
 
 import polars as pl
 
-from src.catalog import Catalog, Metric
-from src.library import ModelLibrary
-from src.system import InputSystem
-from src.taxonomy import Taxonomy
+from gems_views_builder.catalog import Catalog, Metric
+from gems_views_builder.library import ModelLibrary
+from gems_views_builder.system import InputSystem
+from gems_views_builder.taxonomy import Taxonomy
 
 _METRIC_STRUCTURE_SCHEMA = pl.Schema(
     {
