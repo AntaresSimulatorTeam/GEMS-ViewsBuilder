@@ -38,7 +38,9 @@ class ViewBuilder:
         self.system = self._load_system(input_data_path)
         self.taxonomy = load_taxonomy(input_data_path / "taxonomy.yml")
         self.view_config = ViewConfig(input_data_path / "view_config.yml")
-        simulation_table_path = next(input_data_path.glob("simulation_table*"))
+        simulation_table_path = next(input_data_path.glob("simulation_table*"), None)
+        if simulation_table_path is None:
+            raise FileNotFoundError(f"Required file starting with 'simulation_table' not found in {input_data_path}")
         self.simulation_table = SimulationTable(simulation_table_path)
         self.model_library = ModelLibrary(input_data_path / "pypsa_models.yml")
         self.input_data_path = input_data_path

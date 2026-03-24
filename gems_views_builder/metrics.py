@@ -71,7 +71,7 @@ class ViewConfig:
                 f"view_config.yml '{parsed.id}': no 'taxonomy-category' found in scope. "
                 f"At least one scope entry must define a taxonomy-category"
             )
-        self.calendar_id: str = next(item.calendar for item in parsed.scope if item.calendar)
+        self.calendar_id: str | None = next((item.calendar for item in parsed.scope if item.calendar), None)
         self.catalog_ids: list[str] = [c.id for c in parsed.catalog]
         self.time_aggregation: TimeAggregation | None = parsed.aggregation[0].time if parsed.aggregation else None
         # Internal helper: grouped by catalog
