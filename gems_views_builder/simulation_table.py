@@ -41,10 +41,10 @@ SIMULATION_TABLE_COLUMNS: frozenset[str] = frozenset(
 # Filtered simulation table has all SIMULATION_TABLE columns plus granular_date from the calendar join
 FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {"granular_date"}
 
+
 def validate_file_format(simulation_table_file: Path) -> None:
     if simulation_table_file.suffix.lower() != ".parquet":
         raise ValueError(f"Simulation table file '{simulation_table_file}' is not a parquet file")
-
 
 
 class SimulationTable:
@@ -62,7 +62,6 @@ class SimulationTable:
         self.dataframe = pl.scan_parquet(simulation_table_file)
         self._check_simulation_table_columns()
 
- 
     def _check_simulation_table_columns(self) -> None:
         actual = frozenset(self.dataframe.collect_schema().names())
         missing = SIMULATION_TABLE_COLUMNS - actual
