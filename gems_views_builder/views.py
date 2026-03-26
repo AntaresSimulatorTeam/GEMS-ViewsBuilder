@@ -76,7 +76,9 @@ class ViewBuilder:
         return InputSystem.from_file(system_path)
 
     def _build_metric_view(self, joined_dataframe: pl.LazyFrame, metric: Metric) -> Path:
-        value_agg = pl.col("value").sum() if metric.terms_operator == TermsOperator.SUM else pl.col("value").mean()
+        value_agg = (
+            pl.col("value").sum() if metric.terms_operator == TermsOperator.SUM else pl.col("value").mean()
+        )
         metric_view = (
             joined_dataframe.with_columns(pl.col("scenario_index").alias("scenario"))
             .group_by(
@@ -154,15 +156,15 @@ class ViewBuilder:
         return out_path
 
     def execute(self, cleanup_intermediate: bool = False) -> None:
-        # 1. Filter simulation table (written to disk)
+        # # 1. Filter simulation table (written to disk)
         filtered_simulation_table_path = self.input_data_path / "simulation_table_filtered.parquet"
         self.simulation_table.filter_simulation_table(self.view_config.load_calendar(), filtered_simulation_table_path)
         parquet_files_to_process = []
-        # 2. Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
+        # # 2. Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
         for catalog_id, metrics in self.view_config.catalog_to_metrics.items():
-            # 2.1 Load catalog
+            # # 2.1 Load catalog
             catalog: Catalog = self.view_config.load_catalog(catalog_id)
-            # 2.2 Iterate over all metrics for this catalog
+            # # 2.2 Iterate over all metrics for this catalog
             for metric_id in metrics:
                 try:
                     metric: Metric = get_catalog_metric(catalog, metric_id)
@@ -180,10 +182,8 @@ class ViewBuilder:
                 metric_structure_dir = self.input_data_path / "views" / "metric_structure"
                 metric_structure_dir.mkdir(parents=True, exist_ok=True)
                 metric_structure_path = metric_structure_dir / f"{metric.id}.parquet"
-                metric_structure_table.dataframe.write_parquet(
-                    metric_structure_path
-                )  # # TO DO for benchmark: test behavior when using write_parquet and not sink_parquet since metric structure table won't be heavy datum
-                # # Apply sylvan suggestions for creation of new parquet file(meta data)
+                metric_structure_table.dataframe.write_parquet(metric_structure_path) # # TO DO for benchmark: test behavior when using write_parquet and not sink_parquet since metric structure table won't be heavy datum
+                                                                                      # # Apply sylvan suggestions for creation of new parquet file(meta data)
 
                 filtered_lazy = pl.scan_parquet(filtered_simulation_table_path)
                 metric_structure_lazy = pl.scan_parquet(metric_structure_path)
@@ -195,9 +195,13 @@ class ViewBuilder:
                     how="right",
                 )
 
-                metric_view_parquet_path = self._build_metric_view(joined_dataframe=joined_dataframe, metric=metric)
-                view_parquet_path = self._build_view(metric_view_parquet_path=metric_view_parquet_path, metric=metric)
-                # # Open question do we want to keep small parquet files and then after everything to make one big parquet file
+                metric_view_parquet_path = self._build_metric_view(
+                    joined_dataframe=joined_dataframe, metric=metric
+                )
+                view_parquet_path = self._build_view(
+                    metric_view_parquet_path=metric_view_parquet_path, metric=metric
+                )
+                # # Open question do we want to keep small parquet files and then after everything to make one big parquet file 
                 # # Parquet doens't support in place wiriting as csv(basic open file append at the end)
                 # # We could proceed with csv but have that on mind we lose fast processing of result after
                 # # In future integration with AntaREST we will need fast retrival of specific data from view(e.g. business view)
