@@ -53,12 +53,6 @@ class InputSystem:
         """Return all component ids for the given model type (e.g. 'generator' -> ['generator_A1', ...])."""
         return self._components_by_model.get(model_id, [])
 
-    def get_component_by_id(self, component_id: str) -> GemsInputComponent:
-        for component in self.components:
-            if component.id == component_id:
-                return component
-        raise ValueError(f"Component {component_id} not found")
-
     def _get_peer_component(self, component_id: str, port_id: str) -> str | None:
         """
         Find the component connected to (component_id, port_id).
