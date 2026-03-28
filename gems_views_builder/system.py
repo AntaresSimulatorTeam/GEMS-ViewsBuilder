@@ -31,6 +31,7 @@ class InputSystem:
     def __init__(self, system: GemsInputSystem) -> None:
         self._system = system
         self._components_by_model: dict[str, list[str]] = self.models_to_components()
+        self._component_port_connections: dict[tuple[str, str], set[str]] = self.build_component_port_connections()
 
     @property
     def components(self) -> list[GemsInputComponent]:
@@ -49,28 +50,32 @@ class InputSystem:
             groups[model_ref].append(component.id)
         return groups
 
-    def get_components(self, model_id: str) -> list[str]:
-        """Return all component ids for the given model type (e.g. 'generator' -> ['generator_A1', ...])."""
-        return self._components_by_model.get(model_id, [])
+    def build_component_port_connections(self) -> dict[tuple[str, str], set[str]]:
+        component_port_connections: dict[tuple[str, str], set[str]] = defaultdict(set)
+        for connection in self.connections:
+            component1 = cast(str | None, getattr(connection, "component1", None))
+            port1 = cast(str | None, getattr(connection, "port1", None))
+            component2 = cast(str | None, getattr(connection, "component2", None))
+            port2 = cast(str | None, getattr(connection, "port2", None))
+            if port2 is None:
+                port2 = port1
+            if component1 is None or port1 is None or component2 is None or port2 is None:
+                continue
+            component_port_connections[(component1, port1)].add(component2)
+            component_port_connections[(component2, port2)].add(component1)
 
-    def _get_peer_component(self, component_id: str, port_id: str) -> str | None:
-        """
-        Find the component connected to (component_id, port_id).
+        return component_port_connections
 
-        Returns None if not found.
-        """
-        # GemsPy exposes `connections` as a list of pydantic objects (e.g. InputPortConnections),
-        # so we must use attribute access (not dict `.get()`).
-        for conn in self.connections:
-            c1 = cast(str | None, getattr(conn, "component1", None))
-            p1 = cast(str | None, getattr(conn, "port1", None))
-            c2 = cast(str | None, getattr(conn, "component2", None))
-            p2 = cast(str | None, getattr(conn, "port2", None))
-            if (c1, p1) == (component_id, port_id):
-                return c2
-            if (c2, p2) == (component_id, port_id):
-                return c1
-        return None
+    def _get_peer_component(self, component_id: str, port_id: str) -> str:
+        """Return the peer component id for (component_id, port_id), or raise ValueError."""
+        if (component_id, port_id) not in self._component_port_connections:
+            raise ValueError(f"No connection found for component {component_id!r} on port {port_id!r}")
+
+        peers = self._component_port_connections[(component_id, port_id)]
+        if len(peers) > 1:
+            raise ValueError(f"Multiple connections found for component {component_id!r} on port {port_id!r}")
+
+        return next(iter(peers))
 
     def get_location(
         self,
@@ -82,16 +87,12 @@ class InputSystem:
 
         if isinstance(location_port, str):
             peer = self._get_peer_component(component_0_id, location_port)
-            if peer is None:
-                raise ValueError(f"No connection found for component {component_0_id!r} on port {location_port!r}")
             return peer
 
         # location_port is tuple[str, ...]
         result: list[str] = []
         for port in location_port:
             peer = self._get_peer_component(component_0_id, port)
-            if peer is None:
-                raise ValueError(f"No connection found for component {component_0_id} on port {port}")
             result.append(peer)
         return tuple(result)
 
