@@ -153,7 +153,7 @@ class ViewBuilder:
         business_view.sink_parquet(out_path)
         return out_path
 
-    def execute(self, cleanup_intermediate: bool = False) -> None:
+    def build(self, cleanup_intermediate: bool = False) -> None:
         # # 1. Filter simulation table (written to disk)
         filtered_simulation_table_path = self.input_data_path / "simulation_table_filtered.parquet"
         self.simulation_table.filter_simulation_table(self.view_config.load_calendar(), filtered_simulation_table_path)
