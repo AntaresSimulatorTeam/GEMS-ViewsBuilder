@@ -22,10 +22,10 @@ from gems_views_builder.taxonomy import Taxonomy
 _METRIC_STRUCTURE_SCHEMA = pl.Schema(
     {
         "metric_id": pl.Utf8,
-        "component_id": pl.Utf8,
+        "component": pl.Utf8,
         "metric_location": pl.Utf8,
         "breakdown_properties": pl.Utf8,
-        "output_id": pl.Utf8,
+        "output": pl.Utf8,
         "weight_output_id": pl.Int64,  # # What will be value range here, probably we could use Int8 to save memory?
     }
 )
@@ -72,10 +72,10 @@ class MetricStructureBuilder:
                 rows.append(
                     {
                         "metric_id": self.metric.id,
-                        "component_id": component_id,
+                        "component": component_id,
                         "metric_location": loc_str,
                         "breakdown_properties": "",
-                        "output_id": term.output_id,
+                        "output": term.output_id,
                         "weight_output_id": 1,  # # Default value for now
                     }
                 )

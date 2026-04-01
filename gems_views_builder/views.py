@@ -232,8 +232,7 @@ class ViewBuilder:
 
                 joined_dataframe = filtered_lazy.join(
                     metric_structure_lazy,
-                    left_on=["component", "output"],
-                    right_on=["component_id", "output_id"],
+                    on=["component", "output"],
                     how="right",
                 )
 
