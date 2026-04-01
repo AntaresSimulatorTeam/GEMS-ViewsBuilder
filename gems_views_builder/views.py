@@ -12,6 +12,7 @@
 
 """ViewBuilder."""
 
+from collections import Counter
 from pathlib import Path
 
 import polars as pl
@@ -29,6 +30,8 @@ from gems_views_builder.taxonomy import load_taxonomy
 # System -> representation of the system.yml file
 # Taxonomy -> representation of the taxonomy.yml file
 """
+EXACT_FILES = ["taxonomy.yml", "view_config.yml", "library.yml", "system.yml"]
+PREFIX_FILES = {"calendar": ".csv", "simulation_table": ".parquet"}
 
 
 class ViewBuilder:
@@ -36,43 +39,82 @@ class ViewBuilder:
         self,
         input_data_path: Path,
     ) -> None:
-        self._check_input_data_structure(input_data_path)
-        self.system = self._load_system(input_data_path)
-        self.taxonomy = load_taxonomy(input_data_path / "taxonomy.yml")
-        self.view_config = ViewConfig(input_data_path / "view_config.yml")
-        simulation_table_candidates = sorted(input_data_path.glob("simulation_table*.parquet"))
-        simulation_table_path = next((p for p in simulation_table_candidates if "filtered" not in p.stem), None)
-        if simulation_table_path is None:
-            raise FileNotFoundError(f"Required file starting with 'simulation_table' not found in {input_data_path}")
-        self.simulation_table = SimulationTable(simulation_table_path)
-        self.model_library = ModelLibrary(input_data_path / "pypsa_models.yml")
         self.input_data_path = input_data_path
+        # # If this function raise an error, the builder will not be able to build the views.
+        self._check_input_data_structure()
+        #
+        self.system = self._load_system()
+        self.taxonomy = load_taxonomy(self.input_data_path / "taxonomy.yml")
+        self.view_config = ViewConfig(self.input_data_path / "view_config.yml")
+        self.simulation_table = SimulationTable(
+            next(self.input_data_path.glob("simulation_table*.parquet"))
+        )  # we could have only one simulation table at this phase
+        self.model_library = ModelLibrary(
+            self.input_data_path / "library.yml"
+        )  # # must be named like this for now, in future when we enable user to have more than one libraries we should decide pattern to use
 
-    def _check_input_data_structure(self, input_data_path: Path) -> None:
-        if not input_data_path.is_dir():
-            raise NotADirectoryError(f"Input data path {input_data_path} is not a directory")
+    def _check_input_data_path(self) -> None:
+        """
+        # Check if input_data_path exists and is a directory.
+        """
+        if not self.input_data_path.is_dir():
+            raise NotADirectoryError(f"Input data path {self.input_data_path} is not a directory")
 
-        catalogs_path = input_data_path / "catalogs"
+    def _check_catalogs_directory(self) -> None:
+        """
+        # Check if catalogs directory exists and is a directory.
+        # Check if catalogs directory is empty.
+        """
+        catalogs_path = self.input_data_path / "catalogs"
         if not catalogs_path.is_dir():
             raise NotADirectoryError(f"Catalogs directory {catalogs_path} not found or not a directory")
         if not any(catalogs_path.iterdir()):
             raise FileNotFoundError(f"Catalogs directory {catalogs_path} is empty")  # 1 * constraint
 
-        exact_files = ["taxonomy.yml", "view_config.yml"]
-        for filename in exact_files:
-            if not (input_data_path / filename).is_file():
-                raise FileNotFoundError(f"Required file '{filename}' not found in {input_data_path}")
+    def _check_number_of_required_files(self) -> None:
+        """
+        # Check if there are exactly 6 required files.
+        """
+        counter = Counter(p.is_file() for p in self.input_data_path.iterdir())
+        if counter.get(True, 0) != 6:
+            raise ValueError(f"Expected 6 files in {self.input_data_path}, found {counter.get(True, 0)}")
 
-        prefix_files = {"system": ".yml", "calendar": ".csv", "simulation_table": ".parquet"}
-        for prefix, expected_suffix in prefix_files.items():
-            match = next(input_data_path.glob(f"{prefix}*"), None)
+    def _check_required_input_files(self) -> None:
+        """
+        # Check if there are exactly 6 required files.
+        """
+        for filename in EXACT_FILES:
+            if not (self.input_data_path / filename).is_file():
+                raise FileNotFoundError(f"Required file '{filename}' not found in {self.input_data_path}")
+
+        for prefix, expected_suffix in PREFIX_FILES.items():
+            match = next(self.input_data_path.glob(f"{prefix}*"), None)
             if match is None:
-                raise FileNotFoundError(f"Required file starting with '{prefix}' not found in {input_data_path}")
+                raise FileNotFoundError(f"Required file starting with '{prefix}' not found in {self.input_data_path}")
             if match.suffix != expected_suffix:
                 raise ValueError(f"File '{match.name}' starting with '{prefix}' must be a '{expected_suffix}' file")
 
-    def _load_system(self, input_data_path: Path) -> InputSystem:
-        system_path = next(input_data_path.glob("system*"))
+    def _check_input_data_structure(self) -> None:
+        """
+        Expected files:
+        - taxonomy.yml
+        - view_config.yml
+        - library.yml
+        - system.yml
+        - simulation_table.parquet
+        - calendar.csv
+        - catalogs directory with 1 * catalogs without strict name convention for now
+        """
+        self._check_input_data_path()
+
+        self._check_number_of_required_files()
+
+        self._check_catalogs_directory()
+
+        self._check_required_input_files()
+
+    def _load_system(self) -> InputSystem:
+        system_path = next(self.input_data_path.glob("system*"))
         return InputSystem.from_file(system_path)
 
     def _build_metric_view(self, joined_dataframe: pl.LazyFrame, metric: Metric) -> Path:
@@ -150,7 +192,7 @@ class ViewBuilder:
         existing_parts = sorted(dataset_dir.glob("part-*.parquet"))
         next_part_idx = (int(existing_parts[-1].stem.split("-")[1]) + 1) if existing_parts else 0
         out_path = dataset_dir / f"part-{next_part_idx:05d}.parquet"
-        business_view.sink_parquet(out_path)
+        view.sink_parquet(out_path)
         return out_path
 
     def build(self, cleanup_intermediate: bool = False) -> None:
