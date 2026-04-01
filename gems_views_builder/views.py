@@ -145,7 +145,7 @@ class ViewBuilder:
         )
         # Business view is meant to be created once, then appended to on future runs.
         # We implement this by writing a new parquet "part" file each time.
-        dataset_dir = self.input_data_path / "views" / "metric_business_view" / metric.id
+        dataset_dir = self.input_data_path / "views" / "metric_views" / metric.id
         dataset_dir.mkdir(parents=True, exist_ok=True)
         existing_parts = sorted(dataset_dir.glob("part-*.parquet"))
         next_part_idx = (int(existing_parts[-1].stem.split("-")[1]) + 1) if existing_parts else 0
