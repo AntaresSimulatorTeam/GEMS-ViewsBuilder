@@ -120,7 +120,7 @@ class ViewBuilder:
             else pl.col("granular_metric_value").mean()
         ).alias("metric_value")
         view_date_expr = pl.col("granular_date").alias("view_date")
-        business_view = (
+        view = (
             metric_view.with_columns(view_date_expr)
             .group_by(
                 [
