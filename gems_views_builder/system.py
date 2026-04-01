@@ -42,6 +42,11 @@ class InputSystem:
         return cast(list[Any], getattr(self._system, "connections", None) or [])
 
     def models_to_components(self) -> dict[str, list[str]]:
+        """
+        Map each component ``model`` reference (e.g. ``pypsa_models.generator``) to the list of component ids using it.
+        Qualified names keep components apart across libraries when the same role (e.g. a generator) behaves differently per library.
+        |--> Good practice for future
+        """
         groups: defaultdict[str, list[str]] = defaultdict(list)
         for component in self.components:
             model_ref = getattr(component, "model", None)
@@ -51,18 +56,28 @@ class InputSystem:
         return groups
 
     def build_component_port_connections(self) -> dict[tuple[str, str], set[str]]:
+        """
+        Iterate over connections and for each component and port add other side in dictionary
+        """
         component_port_connections: dict[tuple[str, str], set[str]] = defaultdict(set)
         for connection in self.connections:
             component1 = cast(str | None, getattr(connection, "component1", None))
             port1 = cast(str | None, getattr(connection, "port1", None))
             component2 = cast(str | None, getattr(connection, "component2", None))
             port2 = cast(str | None, getattr(connection, "port2", None))
-            if port2 is None:
+
+            if port1 is not None and port2 is None:
                 port2 = port1
-            if component1 is None or port1 is None or component2 is None or port2 is None:
-                continue
-            component_port_connections[(component1, port1)].add(component2)
-            component_port_connections[(component2, port2)].add(component1)
+
+            if (
+                component1 is not None
+                and component2 is not None
+                and port1 is not None
+                and port2 is not None
+                and component1 != component2
+            ):
+                component_port_connections[(component1, port1)].add(component2)
+                component_port_connections[(component2, port2)].add(component1)
 
         return component_port_connections
 
