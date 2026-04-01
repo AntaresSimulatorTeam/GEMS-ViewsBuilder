@@ -57,7 +57,7 @@ class InputSystem:
 
     def build_component_port_connections(self) -> dict[tuple[str, str], set[str]]:
         """
-        Iterate over connections and for each component and port add other side in dictionary
+        Iterate over connections and for each component and port add other side of connection in dictionary
         """
         component_port_connections: dict[tuple[str, str], set[str]] = defaultdict(set)
         for connection in self.connections:
