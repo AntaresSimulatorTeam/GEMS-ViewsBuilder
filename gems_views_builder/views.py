@@ -117,7 +117,7 @@ class ViewBuilder:
         system_path = next(self.input_data_path.glob("system*"))
         return InputSystem.from_file(system_path)
 
-    def _build_metric_view(self, joined_dataframe: pl.LazyFrame, metric: Metric) -> Path:
+    def _aggregate_metric_terms(self, joined_dataframe: pl.LazyFrame, metric: Metric) -> Path:
         value_agg = pl.col("value").sum() if metric.terms_operator == TermsOperator.SUM else pl.col("value").mean()
         metric_view = (
             joined_dataframe.with_columns(pl.col("scenario_index").alias("scenario"))
@@ -154,7 +154,7 @@ class ViewBuilder:
         metric_view.sink_parquet(out_path)
         return out_path
 
-    def _build_view(self, metric_view_parquet_path: Path, metric: Metric) -> Path:
+    def _aggregate_metric_temporally(self, metric_view_parquet_path: Path, metric: Metric) -> Path:
         metric_view = pl.scan_parquet(metric_view_parquet_path)
         time_agg = (
             pl.col("granular_metric_value").sum()
@@ -236,13 +236,17 @@ class ViewBuilder:
                     how="right",
                 )
 
-                metric_view_parquet_path = self._build_metric_view(joined_dataframe=joined_dataframe, metric=metric)
-                view_parquet_path = self._build_view(metric_view_parquet_path=metric_view_parquet_path, metric=metric)
+                metric_view_parquet_path = self._aggregate_metric_terms(
+                    joined_dataframe=joined_dataframe, metric=metric
+                )
+                temp_metric_view = self._aggregate_metric_temporally(
+                    metric_view_parquet_path=metric_view_parquet_path, metric=metric
+                )
                 # # Open question do we want to keep small parquet files and then after everything to make one big parquet file
                 # # Parquet doens't support in place wiriting as csv(basic open file append at the end)
                 # # We could proceed with csv but have that on mind we lose fast processing of result after
                 # # In future integration with AntaREST we will need fast retrival of specific data from view(e.g. business view)
-                parquet_files_to_process.append(view_parquet_path)
+                parquet_files_to_process.append(temp_metric_view)
                 if cleanup_intermediate:
                     # Safe cleanup: remove only intermediates produced by this run.
                     metric_view_parquet_path.unlink(missing_ok=True)
