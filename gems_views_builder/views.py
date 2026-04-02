@@ -32,6 +32,7 @@ from gems_views_builder.taxonomy import load_taxonomy
 """
 EXACT_FILES = ["taxonomy.yml", "view_config.yml", "library.yml", "system.yml"]
 PREFIX_FILES = {"calendar": ".csv", "simulation_table": ".parquet"}
+TEMPORAL_METRIC_VIEW_PART = 0
 
 
 class ViewBuilder:
@@ -196,11 +197,14 @@ class ViewBuilder:
         )
         # Business view is meant to be created once, then appended to on future runs.
         # We implement this by writing a new parquet "part" file each time.
-        dataset_dir = self.input_data_path / "views" / "metric_views" / metric_id
+        dataset_dir = self.input_data_path / "temporal_aggregation"
         dataset_dir.mkdir(parents=True, exist_ok=True)
-        existing_parts = sorted(dataset_dir.glob("part-*.parquet"))
-        next_part_idx = (int(existing_parts[-1].stem.split("-")[1]) + 1) if existing_parts else 0
-        out_path = dataset_dir / f"part-{next_part_idx:05d}.parquet"
+
+        # have global value here which will be counter
+        global TEMPORAL_METRIC_VIEW_PART
+        TEMPORAL_METRIC_VIEW_PART += 1
+        part_number = TEMPORAL_METRIC_VIEW_PART
+        out_path = dataset_dir / f"{metric_id}-{part_number}.parquet"
         view.sink_parquet(out_path)
         return out_path
 
