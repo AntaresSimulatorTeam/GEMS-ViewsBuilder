@@ -117,8 +117,15 @@ class ViewBuilder:
         system_path = next(self.input_data_path.glob("system*"))
         return InputSystem.from_file(system_path)
 
-    def _aggregate_metric_terms(self, joined_dataframe: pl.LazyFrame, metric: Metric) -> Path:
-        value_agg = pl.col("value").sum() if metric.terms_operator == TermsOperator.SUM else pl.col("value").mean()
+    def _aggregate_metric_terms(
+        self, joined_dataframe: pl.LazyFrame, metric_term_operator: TermsOperator, metric_id: str
+    ) -> Path:
+        """
+        2b step from POC
+        2b-1 Right join TIME_FILTERED_SIMULATION_TABLE with METRIC_STRUCTURE_TABLE on component and output
+        2b-2 Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
+        """
+        value_agg = pl.col("value").sum() if metric_term_operator == TermsOperator.SUM else pl.col("value").mean()
         metric_view = (
             joined_dataframe.with_columns(pl.col("scenario_index").alias("scenario"))
             .group_by(
@@ -150,15 +157,17 @@ class ViewBuilder:
         )
         out_dir = self.input_data_path / "views" / "metric_view"
         out_dir.mkdir(parents=True, exist_ok=True)
-        out_path = out_dir / f"{metric.id}.parquet"
+        out_path = out_dir / f"{metric_id}.parquet"
         metric_view.sink_parquet(out_path)
         return out_path
 
-    def _aggregate_metric_temporally(self, metric_view_parquet_path: Path, metric: Metric) -> Path:
+    def _aggregate_metric_temporally(
+        self, metric_view_parquet_path: Path, metric_time_operator: TimeOperator, metric_id: str
+    ) -> Path:
         metric_view = pl.scan_parquet(metric_view_parquet_path)
         time_agg = (
             pl.col("granular_metric_value").sum()
-            if metric.time_operator == TimeOperator.SUM
+            if metric_time_operator == TimeOperator.SUM
             else pl.col("granular_metric_value").mean()
         ).alias("metric_value")
         view_date_expr = pl.col("granular_date").alias("view_date")
@@ -187,7 +196,7 @@ class ViewBuilder:
         )
         # Business view is meant to be created once, then appended to on future runs.
         # We implement this by writing a new parquet "part" file each time.
-        dataset_dir = self.input_data_path / "views" / "metric_views" / metric.id
+        dataset_dir = self.input_data_path / "views" / "metric_views" / metric_id
         dataset_dir.mkdir(parents=True, exist_ok=True)
         existing_parts = sorted(dataset_dir.glob("part-*.parquet"))
         next_part_idx = (int(existing_parts[-1].stem.split("-")[1]) + 1) if existing_parts else 0
@@ -227,20 +236,26 @@ class ViewBuilder:
                 )  # # TO DO for benchmark: test behavior when using write_parquet and not sink_parquet since metric structure table won't be heavy datum
                 # # Apply sylvan suggestions for creation of new parquet file(meta data)
 
-                filtered_lazy = pl.scan_parquet(filtered_simulation_table_path)
+                filtered_simulation_table_lazy = pl.scan_parquet(filtered_simulation_table_path)
                 metric_structure_lazy = pl.scan_parquet(metric_structure_path)
+                # pass this 2 to the aggregate metric terms and
 
-                joined_dataframe = filtered_lazy.join(
+                # # type(joined dataframe) == Lazy array
+                # # no real data(in memory/disk) just query exectuion plan on scanned data
+                # # we will perform additional query inside
+                joined_dataframe = filtered_simulation_table_lazy.join(
                     metric_structure_lazy,
                     on=["component", "output"],
                     how="right",
                 )
 
                 metric_view_parquet_path = self._aggregate_metric_terms(
-                    joined_dataframe=joined_dataframe, metric=metric
+                    joined_dataframe=joined_dataframe, metric_term_operator=metric.terms_operator, metric_id=metric.id
                 )
                 temp_metric_view = self._aggregate_metric_temporally(
-                    metric_view_parquet_path=metric_view_parquet_path, metric=metric
+                    metric_view_parquet_path=metric_view_parquet_path,
+                    metric_time_operator=metric.time_operator,
+                    metric_id=metric.id,
                 )
                 # # Open question do we want to keep small parquet files and then after everything to make one big parquet file
                 # # Parquet doens't support in place wiriting as csv(basic open file append at the end)
