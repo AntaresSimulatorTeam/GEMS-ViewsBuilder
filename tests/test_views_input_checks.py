@@ -31,31 +31,6 @@ def _touch_required_six_files(base: Path) -> None:
     (base / "simulation_table.parquet").touch()
 
 
-def test_check_number_of_required_files_passes_with_exactly_six_files(tmp_path: Path) -> None:
-    _touch_required_six_files(tmp_path)
-    _builder_without_init(tmp_path)._check_number_of_required_files()
-
-
-def test_check_number_of_required_files_passes_with_six_files_and_extra_directory(tmp_path: Path) -> None:
-    _touch_required_six_files(tmp_path)
-    (tmp_path / "catalogs").mkdir()
-    _builder_without_init(tmp_path)._check_number_of_required_files()
-
-
-def test_check_number_of_required_files_raises_when_five_files(tmp_path: Path) -> None:
-    _touch_required_six_files(tmp_path)
-    (tmp_path / "taxonomy.yml").unlink()
-    with pytest.raises(ValueError, match="Expected 6 files"):
-        _builder_without_init(tmp_path)._check_number_of_required_files()
-
-
-def test_check_number_of_required_files_raises_when_seven_files(tmp_path: Path) -> None:
-    _touch_required_six_files(tmp_path)
-    (tmp_path / "extra.yml").touch()
-    with pytest.raises(ValueError, match="Expected 6 files"):
-        _builder_without_init(tmp_path)._check_number_of_required_files()
-
-
 def test_check_required_input_files_passes_when_layout_valid(tmp_path: Path) -> None:
     _touch_required_six_files(tmp_path)
     _builder_without_init(tmp_path)._check_required_input_files()
@@ -80,4 +55,19 @@ def test_check_required_input_files_raises_when_wrong_suffix_for_prefix_match(tm
     (tmp_path / "calendar.csv").unlink()
     (tmp_path / "calendar.txt").touch()
     with pytest.raises(ValueError, match="must be a '.csv' file"):
+        _builder_without_init(tmp_path)._check_required_input_files()
+
+
+def test_check_required_input_files_raises_when_simulation_table_missing(tmp_path: Path) -> None:
+    _touch_required_six_files(tmp_path)
+    (tmp_path / "simulation_table.parquet").unlink()
+    with pytest.raises(FileNotFoundError, match="simulation_table"):
+        _builder_without_init(tmp_path)._check_required_input_files()
+
+
+def test_check_required_input_files_raises_when_wrong_suffix_for_simulation_table(tmp_path: Path) -> None:
+    _touch_required_six_files(tmp_path)
+    (tmp_path / "simulation_table.parquet").unlink()
+    (tmp_path / "simulation_table.csv").touch()
+    with pytest.raises(ValueError, match="must be a '.parquet' file"):
         _builder_without_init(tmp_path)._check_required_input_files()
