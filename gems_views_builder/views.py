@@ -32,7 +32,6 @@ from gems_views_builder.taxonomy import load_taxonomy
 """
 EXACT_FILES = ["taxonomy.yml", "view_config.yml", "library.yml", "system.yml"]
 PREFIX_FILES = {"calendar": ".csv", "simulation_table": ".parquet"}
-TEMPORAL_METRIC_VIEW_PART = 0
 
 
 class ViewBuilder:
@@ -53,6 +52,7 @@ class ViewBuilder:
         self.model_library = ModelLibrary(
             self.input_data_path / "library.yml"
         )  # # must be named like this for now, in future when we enable user to have more than one libraries we should decide pattern to use
+        self._part_counter = 0
 
     def _check_input_data_path(self) -> None:
         """
@@ -200,11 +200,8 @@ class ViewBuilder:
         dataset_dir = self.input_data_path / "temporal_aggregation"
         dataset_dir.mkdir(parents=True, exist_ok=True)
 
-        # have global value here which will be counter
-        global TEMPORAL_METRIC_VIEW_PART
-        TEMPORAL_METRIC_VIEW_PART += 1
-        part_number = TEMPORAL_METRIC_VIEW_PART
-        out_path = dataset_dir / f"{metric_id}-{part_number}.parquet"
+        out_path = dataset_dir / f"{metric_id}-{self._part_counter}.parquet"
+        self._part_counter += 1
         view.sink_parquet(out_path)
         return out_path
 
