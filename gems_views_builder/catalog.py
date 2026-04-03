@@ -122,6 +122,8 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
 def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
     with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
+    if "catalog" not in raw:
+        raise ValueError(f"catalog.yml file {catalog_file_path} is missing the 'catalog' key at the root")
     return CatalogData.model_validate(raw["catalog"])
 
 
