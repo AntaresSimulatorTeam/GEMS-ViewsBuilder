@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 
 import polars as pl
-import pyarrow.parquet as pq
+import pyarrow.parquet as pq  # type: ignore[import-untyped]
 import pytest
 
 from gems_views_builder.views import _PARQUET_ROW_GROUP_SIZE, ViewBuilder
@@ -38,7 +38,7 @@ def _make_builder(tmp_path: Path) -> ViewBuilder:
     return vb
 
 
-def _write_chunk(path: Path, rows: list[dict]) -> Path:
+def _write_chunk(path: Path, rows: list[dict[str, object]]) -> Path:
     pl.DataFrame(rows, schema=_CHUNK_SCHEMA).write_parquet(path)
     return path
 
