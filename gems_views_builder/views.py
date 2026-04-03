@@ -13,7 +13,9 @@
 """ViewBuilder."""
 
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
+from typing import Literal
 
 import polars as pl
 
@@ -32,6 +34,11 @@ from gems_views_builder.taxonomy import load_taxonomy
 """
 EXACT_FILES = ["taxonomy.yml", "view_config.yml", "library.yml", "system.yml"]
 PREFIX_FILES = {"calendar": ".csv", "simulation_table": ".parquet"}
+
+_ParquetCompression = Literal["lz4", "uncompressed", "snappy", "gzip", "brotli", "zstd"]
+_PARQUET_COMPRESSION: _ParquetCompression = "zstd"
+_PARQUET_COMPRESSION_LEVEL = 3
+_PARQUET_ROW_GROUP_SIZE = 64_000
 
 
 class ViewBuilder:
@@ -159,7 +166,12 @@ class ViewBuilder:
         out_dir = self.input_data_path / "views" / "metric_view"
         out_dir.mkdir(parents=True, exist_ok=True)
         out_path = out_dir / f"{metric_id}.parquet"
-        metric_view.sink_parquet(out_path)
+        metric_view.sink_parquet(
+            out_path,
+            compression=_PARQUET_COMPRESSION,
+            compression_level=_PARQUET_COMPRESSION_LEVEL,
+            row_group_size=_PARQUET_ROW_GROUP_SIZE,
+        )
         return out_path
 
     def _aggregate_metric_temporally(
@@ -202,7 +214,27 @@ class ViewBuilder:
 
         out_path = dataset_dir / f"{metric_id}-{self._part_counter}.parquet"
         self._part_counter += 1
-        view.sink_parquet(out_path)
+        view.sink_parquet(
+            out_path,
+            compression=_PARQUET_COMPRESSION,
+            compression_level=_PARQUET_COMPRESSION_LEVEL,
+            row_group_size=_PARQUET_ROW_GROUP_SIZE,
+        )
+        return out_path
+
+    def _consolidate_results(self, chunk_paths: list[Path]) -> Path:
+        results_dir = self.input_data_path / "results"
+        results_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        out_path = results_dir / f"view{timestamp}.parquet"
+        pl.scan_parquet(chunk_paths).sink_parquet(
+            out_path,
+            compression=_PARQUET_COMPRESSION,
+            compression_level=_PARQUET_COMPRESSION_LEVEL,
+            row_group_size=_PARQUET_ROW_GROUP_SIZE,
+        )
+        for path in chunk_paths:
+            path.unlink(missing_ok=True)
         return out_path
 
     def build(self, cleanup_intermediate: bool = False) -> None:
@@ -233,9 +265,13 @@ class ViewBuilder:
                 metric_structure_dir.mkdir(parents=True, exist_ok=True)
                 metric_structure_path = metric_structure_dir / f"{metric.id}.parquet"
                 metric_structure_table.dataframe.write_parquet(
-                    metric_structure_path
+                    metric_structure_path,
+                    compression=_PARQUET_COMPRESSION,
+                    compression_level=_PARQUET_COMPRESSION_LEVEL,
+                    row_group_size=_PARQUET_ROW_GROUP_SIZE,
+                    use_pyarrow=True,
+                    pyarrow_options={"data_page_version": "2.0"},
                 )  # # TO DO for benchmark: test behavior when using write_parquet and not sink_parquet since metric structure table won't be heavy datum
-                # # Apply sylvan suggestions for creation of new parquet file(meta data)
 
                 filtered_simulation_table_lazy = pl.scan_parquet(filtered_simulation_table_path)
                 metric_structure_lazy = pl.scan_parquet(metric_structure_path)
@@ -258,10 +294,7 @@ class ViewBuilder:
                     metric_time_operator=metric.time_operator,
                     metric_id=metric.id,
                 )
-                # # Open question do we want to keep small parquet files and then after everything to make one big parquet file
-                # # Parquet doens't support in place wiriting as csv(basic open file append at the end)
-                # # We could proceed with csv but have that on mind we lose fast processing of result after
-                # # In future integration with AntaREST we will need fast retrival of specific data from view(e.g. business view)
+
                 parquet_files_to_process.append(temp_metric_view)
                 if cleanup_intermediate:
                     # Safe cleanup: remove only intermediates produced by this run.
@@ -270,3 +303,6 @@ class ViewBuilder:
 
         if cleanup_intermediate:
             filtered_simulation_table_path.unlink(missing_ok=True)
+
+        if parquet_files_to_process:
+            self._consolidate_results(parquet_files_to_process)

@@ -85,7 +85,12 @@ class SimulationTable:
             .filter(pl.col("block") == pl.col("block_right"))
             .drop("block_right")
         )
-        filtered_lazy.sink_parquet(output_path)
+        filtered_lazy.sink_parquet(
+            output_path,
+            compression="zstd",
+            compression_level=3,
+            row_group_size=64_000,
+        )
         return FilteredSimulationTable(output_path)
 
 
