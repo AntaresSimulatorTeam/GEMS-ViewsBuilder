@@ -120,7 +120,7 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
 
 
 def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
-    with open(catalog_file_path) as f:
+    with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     return CatalogData.model_validate(raw["catalog"])
 

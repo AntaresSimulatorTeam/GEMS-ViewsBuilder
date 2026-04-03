@@ -114,6 +114,6 @@ class InputSystem:
     @classmethod
     def from_file(cls, path: Path) -> "InputSystem":
         """Load InputSystem from a system yml file."""
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             parsed = parse_yaml_components(f)
         return cls(cast(GemsInputSystem, parsed))
