@@ -79,18 +79,30 @@ class SimulationTable:
         Filter the simulation table based on the calendar and write the result to output_path.
         Returns a FilteredSimulationTable with additional granular_date column from the calendar.
         """
-        # Build a lazy pipeline, actual execution happens on sink.
-        filtered_lazy = (
+        # Time-dependent rows: keep only timesteps present in the calendar.
+        time_dep_path = output_path.with_suffix(".time_dep.parquet")
+        (
             self.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
             .filter(pl.col("block") == pl.col("block_right"))
             .drop("block_right")
+        ).sink_parquet(time_dep_path, compression="zstd", compression_level=3)
+
+        # Non-time-dependent rows (absolute_time_index IS NULL) are not tied
+        # to any timestep; pass them through with a null granular_date so
+        # their constant values are preserved in the view.
+        non_time_dep_path = output_path.with_suffix(".non_time_dep.parquet")
+        granular_date_dtype = pl.read_parquet_schema(time_dep_path)["granular_date"]
+        (
+            self.dataframe.filter(pl.col("absolute_time_index").is_null()).with_columns(
+                pl.lit(None).cast(granular_date_dtype).alias("granular_date")
+            )
+        ).sink_parquet(non_time_dep_path, compression="zstd", compression_level=3)
+
+        pl.scan_parquet([time_dep_path, non_time_dep_path]).sink_parquet(
+            output_path, compression="zstd", compression_level=3, row_group_size=64_000
         )
-        filtered_lazy.sink_parquet(
-            output_path,
-            compression="zstd",
-            compression_level=3,
-            row_group_size=64_000,
-        )
+        time_dep_path.unlink()
+        non_time_dep_path.unlink()
         return FilteredSimulationTable(output_path)
 
 

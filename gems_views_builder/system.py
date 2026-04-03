@@ -92,6 +92,10 @@ class InputSystem:
 
         return next(iter(peers))
 
+    def get_instances_by_model(self, qualified_model_ref: str) -> list[str]:
+        """Return component instance IDs for the given qualified model reference."""
+        return list(self._components_by_model.get(qualified_model_ref, []))
+
     def get_location(
         self,
         component_0_id: str,
