@@ -238,9 +238,11 @@ class ViewBuilder:
             path.unlink(missing_ok=True)
         return out_path
 
-    def build(self, cleanup_intermediate: bool = False) -> None:
+    def build(self, cleanup_intermediate: bool = True) -> None:
         # # 1. Filter simulation table (written to disk)
-        filtered_simulation_table_path = self.input_data_path / "simulation_table_filtered.parquet"
+        intermediates_dir = self.input_data_path / "views" / "intermediate"
+        intermediates_dir.mkdir(parents=True, exist_ok=True)
+        filtered_simulation_table_path = intermediates_dir / "simulation_table_filtered.parquet"
         self.simulation_table.filter_simulation_table(self.view_config.load_calendar(), filtered_simulation_table_path)
         parquet_files_to_process = []
         # # 2. Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
