@@ -89,8 +89,10 @@ class ModelLibrary:
             self.models_by_taxonomy_category.setdefault(m.taxonomy_category, []).append(m.id)
 
     def _load_library_file(self, library_file_path: Path) -> LibraryData:
-        with open(library_file_path) as f:
+        with open(library_file_path, encoding="utf-8") as f:
             raw = yaml.safe_load(f)
+        if "library" not in raw:
+            raise ValueError(f"library.yml file {library_file_path} is missing the 'library' key at the root")
         return LibraryData.model_validate(raw["library"])
 
     def get_model(self, model_id: str) -> ModelDefinition | None:

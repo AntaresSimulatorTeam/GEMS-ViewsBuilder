@@ -32,23 +32,27 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     assert isinstance(filtered_table, FilteredSimulationTable)
     filtered = pl.read_parquet(out_file)
 
-    # 1. Every row in the result has (absolute_time_index, block) present in the calendar
+    # Time-dependent rows must have (absolute_time_index, block) in the calendar.
+    # Non-time-dependent rows (null absolute_time_index) are passed through as-is.
+    time_dep = filtered.filter(pl.col("absolute_time_index").is_not_null())
     calendar_df = calendar.dataframe.collect()
-    in_calendar = filtered.join(calendar_df, on=["absolute_time_index", "block"], how="semi")
-    assert in_calendar.height == filtered.height, (
+    in_calendar = time_dep.join(calendar_df, on=["absolute_time_index", "block"], how="semi")
+    assert in_calendar.height == time_dep.height, (
         "Every filtered row must have (absolute_time_index, block) in the calendar"
     )
 
-    # 2. Result has exactly the rows that belong to the calendar block (spec: inner join + block match)
-    expected_count = (
+    # Total count = time-dep (inner join + block match) + non-time-dep (null index)
+    time_dep_count = (
         simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
         .collect(engine="streaming")
         .height
     )
-    assert filtered.height == expected_count, (
-        "Filtered row count must equal simulation rows whose (absolute_time_index, block) is in the calendar"
+    non_time_dep_count = (
+        simulation_table.dataframe.filter(pl.col("absolute_time_index").is_null()).collect(engine="streaming").height
     )
+    expected_total = time_dep_count + non_time_dep_count
+    assert filtered.height == expected_total, "Filtered count must equal calendar-matched plus non-time-dependent rows"
 
 
 def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dataset_dir: Path) -> None:
@@ -71,7 +75,10 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
     assert isinstance(filtered_table, FilteredSimulationTable)
     filtered = pl.read_parquet(out_file)
-    assert filtered.height == 0
+    # Time-dependent rows with block=2 are all dropped; only non-time-dependent
+    # rows (null absolute_time_index) are preserved regardless of block.
+    non_time_dep_count = duplicated.filter(pl.col("absolute_time_index").is_null()).height
+    assert filtered.height == non_time_dep_count
 
 
 def test_filter_simulation_table_writes_parquet(
@@ -97,6 +104,13 @@ def test_filter_simulation_table_writes_parquet(
         .collect(engine="streaming")
     )
     sort_cols = ["block", "component", "output", "absolute_time_index", "block_time_index", "scenario_index"]
+    granular_date_dtype = written.schema["granular_date"]
+    non_time_dep = (
+        simulation_table.dataframe.filter(pl.col("absolute_time_index").is_null())
+        .with_columns(pl.lit(None).cast(granular_date_dtype).alias("granular_date"))
+        .collect(engine="streaming")
+    )
+    expected = pl.concat([expected, non_time_dep])
     written_sorted = written.select(expected.columns).sort(sort_cols)
     expected_sorted = expected.sort(sort_cols)
     assert written_sorted.equals(expected_sorted), "Written parquet sim-table columns should match expected"
