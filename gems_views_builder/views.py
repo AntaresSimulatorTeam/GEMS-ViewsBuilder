@@ -13,7 +13,7 @@
 """ViewBuilder."""
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
@@ -225,7 +225,7 @@ class ViewBuilder:
     def _consolidate_results(self, chunk_paths: list[Path]) -> Path:
         results_dir = self.input_data_path / "results"
         results_dir.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         out_path = results_dir / f"view{timestamp}.parquet"
         pl.scan_parquet(chunk_paths).sink_parquet(
             out_path,

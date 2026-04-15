@@ -25,7 +25,11 @@ from gems_views_builder.catalog import Catalog, load_catalog
 
 
 class TimeAggregation(Enum):
-    HOURS = "hours"
+    HOUR = "hour"
+    DAY = "day"
+    WEEK = "week"
+    MONTH = "month"
+    YEAR = "year"
 
 
 class Scope(ViewBuilderBasedModel):

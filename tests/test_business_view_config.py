@@ -54,7 +54,7 @@ def test_view_config_known_values(test_dataset_dir: Path) -> None:
 
 def test_view_config_time_aggregation(test_dataset_dir: Path) -> None:
     config = ViewConfig(test_dataset_dir / "view_config.yml")
-    assert config.time_aggregation == TimeAggregation.HOURS
+    assert config.time_aggregation == TimeAggregation.HOUR
 
 
 def test_view_config_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
@@ -67,7 +67,7 @@ view:
     - taxonomy-category: balance
     - calendar: calendar_file
   aggregation:
-    - time: hours
+    - time: hour
   catalog:
     - id: catalog_1
   metrics:
