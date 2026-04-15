@@ -148,7 +148,8 @@ class ViewBuilder:
             .agg(
                 [
                     value_agg.alias("granular_metric_value"),
-                    pl.first("granular_date"),  # # take a first row of group whatever it is
+                    # take first non-null value of group
+                    pl.col("granular_date").drop_nulls().first(),
                 ]
             )
             .select(
