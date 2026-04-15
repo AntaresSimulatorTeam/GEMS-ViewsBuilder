@@ -1,4 +1,4 @@
-# Data processing
+# Data processing (core)
 polars>=1.39.2
 pyarrow>=14.0.0
 # YAML
@@ -7,3 +7,16 @@ pyyaml==6.0.2
 pydantic>=2.11.7
 # gemspy
 gemspy>=0.0.4
+
+# ── Benchmark backends (optional) ────────────────────────────────────────────
+# Install all at once:  pip install -e ".[benchmark]"
+# Or individually:      pip install duckdb  /  pip install pyspark  / etc.
+
+# DuckDB backend
+duckdb>=1.0.0
+
+# PyArrow backend (pyarrow already above; pandas needed for relational ops)
+pandas>=2.0.0
+
+# Spark backend
+pyspark>=3.5.0

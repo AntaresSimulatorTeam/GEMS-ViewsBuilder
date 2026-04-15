@@ -34,6 +34,7 @@ class Calendar:
     """
 
     id: str
+    file_path: Path
     dataframe: pl.LazyFrame
 
 
@@ -44,7 +45,7 @@ def load_calendar(calendar_file_path: Path) -> Calendar:
     calendar_id = calendar_file_path.stem
     dataframe = _read_calendar_file(calendar_file_path)
     _check_calendar_columns(calendar_id=calendar_id, dataframe=dataframe)
-    return Calendar(id=calendar_id, dataframe=dataframe)
+    return Calendar(id=calendar_id, file_path=calendar_file_path, dataframe=dataframe)
 
 
 def _read_calendar_file(calendar_file_path: Path) -> pl.LazyFrame:

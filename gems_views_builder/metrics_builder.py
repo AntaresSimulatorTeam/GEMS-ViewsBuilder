@@ -55,7 +55,11 @@ class MetricStructureBuilder:
         self.taxonomy = taxonomy
         self.model_library = model_library
 
-    def build(self) -> MetricStructureTable:
+    def build_rows(self) -> list[dict[str, object]]:
+        """Return raw metric-structure rows without materialising a DataFrame.
+
+        Used by engine backends that handle serialisation themselves.
+        """
         rows: list[dict[str, object]] = []
         for term in self.metric.terms:
             model_ids = self.model_library.get_components_in_taxonomy_category(term.taxonomy_category)
@@ -75,6 +79,10 @@ class MetricStructureBuilder:
                             "weight_output_id": 1,
                         }
                     )
+        return rows
+
+    def build(self) -> MetricStructureTable:
+        rows = self.build_rows()
         if not rows:
             return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
         return MetricStructureTable(pl.DataFrame(rows, schema=_METRIC_STRUCTURE_SCHEMA))

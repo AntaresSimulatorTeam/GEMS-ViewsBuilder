@@ -59,6 +59,7 @@ class SimulationTable:
         """
         validate_file_format(simulation_table_file)
         self.id = simulation_table_file.stem
+        self.file_path = simulation_table_file
         self.dataframe = pl.scan_parquet(simulation_table_file)
         self._check_simulation_table_columns()
 
