@@ -1,0 +1,8 @@
+Collecting duckdb
+  Using cached duckdb-1.5.2-cp310-cp310-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (4.2 kB)
+Using cached duckdb-1.5.2-cp310-cp310-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (21.4 MB)
+Installing collected packages: duckdb
+Successfully installed duckdb-1.5.2
+
+[notice] A new release of pip is available: 25.3 -> 26.0.1
+[notice] To update, run: pip install --upgrade pip

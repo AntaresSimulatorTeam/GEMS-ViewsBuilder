@@ -12,26 +12,19 @@
 
 from pathlib import Path
 
-import pytest
-
 from gems_views_builder import TaxonomyCategory, TaxonomyItem, load_taxonomy
-from tests.conftest import TEST_FILES_ROOT
-
-TAXONOMY_PATH = [
-    TEST_FILES_ROOT / "test_3" / "taxonomy.yml",
-]
 
 
-@pytest.mark.parametrize("taxonomy_path", TAXONOMY_PATH)
-def test_taxonomy_loads(taxonomy_path: Path) -> None:
+def test_taxonomy_loads(test_dataset_dir: Path) -> None:
+    taxonomy_path = test_dataset_dir / "taxonomy.yml"
     taxonomy = load_taxonomy(taxonomy_path)
     assert taxonomy.id == "my_taxonomy"
     assert taxonomy.description != ""
     assert len(taxonomy.categories) > 0
 
 
-@pytest.mark.parametrize("taxonomy_path", TAXONOMY_PATH)
-def test_taxonomy_categories_are_typed(taxonomy_path: Path) -> None:
+def test_taxonomy_categories_are_typed(test_dataset_dir: Path) -> None:
+    taxonomy_path = test_dataset_dir / "taxonomy.yml"
     taxonomy = load_taxonomy(taxonomy_path)
     for category in taxonomy.categories:
         assert isinstance(category, TaxonomyCategory)
@@ -39,8 +32,8 @@ def test_taxonomy_categories_are_typed(taxonomy_path: Path) -> None:
         assert category.parent_category is None or isinstance(category.parent_category, str)
 
 
-@pytest.mark.parametrize("taxonomy_path", TAXONOMY_PATH)
-def test_taxonomy_items_are_typed(taxonomy_path: Path) -> None:
+def test_taxonomy_items_are_typed(test_dataset_dir: Path) -> None:
+    taxonomy_path = test_dataset_dir / "taxonomy.yml"
     taxonomy = load_taxonomy(taxonomy_path)
     for category in taxonomy.categories:
         for field in (
@@ -56,8 +49,8 @@ def test_taxonomy_items_are_typed(taxonomy_path: Path) -> None:
                 assert isinstance(item.id, str)
 
 
-def test_taxonomy_known_categories() -> None:
-    taxonomy = load_taxonomy(TEST_FILES_ROOT / "test_3" / "taxonomy.yml")
+def test_taxonomy_known_categories(test_dataset_dir: Path) -> None:
+    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
     category_ids = {c.id for c in taxonomy.categories}
     assert "balance" in category_ids
     assert "production" in category_ids

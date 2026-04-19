@@ -16,54 +16,49 @@ import polars as pl
 import pytest
 
 from gems_views_builder import FilteredSimulationTable, SimulationTable, load_calendar
-from tests.conftest import TEST_FILES_ROOT
-
-# Existing calendar + simulation table pairs
-FILTER_TEST_CASES = [
-    (
-        TEST_FILES_ROOT / "test_3" / "calendar_file.csv",
-        TEST_FILES_ROOT / "test_3" / "simulation_table--20260318-0623.csv",
-    ),
-]
-
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 
 
-@pytest.mark.parametrize("calendar_file, simulation_table_file", FILTER_TEST_CASES)
-def test_filter_simulation_table_logical(tmp_path: Path, calendar_file: Path, simulation_table_file: Path) -> None:
+def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path) -> None:
     """Filtered result must satisfy: every row (absolute_time_index, block) in calendar, correct count, rows from sim table."""
+    calendar_file = test_dataset_dir / "calendar_file.csv"
+    simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     calendar = load_calendar(calendar_file)
     simulation_table = SimulationTable(simulation_table_file)
-    out_file = tmp_path / "filtered_logical.csv"
+    out_file = tmp_path / "filtered_logical.parquet"
 
     filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
     assert isinstance(filtered_table, FilteredSimulationTable)
-    filtered = pl.read_csv(out_file, null_values=["None"], try_parse_dates=True)
+    filtered = pl.read_parquet(out_file)
 
-    # 1. Every row in the result has (absolute_time_index, block) present in the calendar
+    # Time-dependent rows must have (absolute_time_index, block) in the calendar.
+    # Non-time-dependent rows (null absolute_time_index) are passed through as-is.
+    time_dep = filtered.filter(pl.col("absolute_time_index").is_not_null())
     calendar_df = calendar.dataframe.collect()
-    in_calendar = filtered.join(calendar_df, on=["absolute_time_index", "block"], how="semi")
-    assert in_calendar.height == filtered.height, (
+    in_calendar = time_dep.join(calendar_df, on=["absolute_time_index", "block"], how="semi")
+    assert in_calendar.height == time_dep.height, (
         "Every filtered row must have (absolute_time_index, block) in the calendar"
     )
 
-    # 2. Result has exactly the rows that belong to the calendar block (spec: inner join + block match)
-    expected_count = (
+    # Total count = time-dep (inner join + block match) + non-time-dep (null index)
+    time_dep_count = (
         simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
         .collect(engine="streaming")
         .height
     )
-    assert filtered.height == expected_count, (
-        "Filtered row count must equal simulation rows whose (absolute_time_index, block) is in the calendar"
+    non_time_dep_count = (
+        simulation_table.dataframe.filter(pl.col("absolute_time_index").is_null()).collect(engine="streaming").height
     )
+    expected_total = time_dep_count + non_time_dep_count
+    assert filtered.height == expected_total, "Filtered count must equal calendar-matched plus non-time-dependent rows"
 
 
-def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path) -> None:
+def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dataset_dir: Path) -> None:
     """Rows whose block does not match the calendar's block for a given absolute_time_index are dropped."""
-    calendar_file = TEST_FILES_ROOT / "test_3" / "calendar_file.csv"
-    base_sim_table_file = TEST_FILES_ROOT / "test_3" / "simulation_table--20260318-0623.csv"
+    calendar_file = test_dataset_dir / "calendar_file.csv"
+    base_sim_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
 
     calendar = load_calendar(calendar_file)
     base_sim_table = SimulationTable(base_sim_table_file)
@@ -72,33 +67,36 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path) -> None:
     base_df = base_sim_table.dataframe.collect(engine="streaming")
     block_dtype = base_df["block"].dtype
     duplicated = base_df.with_columns(pl.lit(2).cast(block_dtype).alias("block"))
-    sim_path_block2 = tmp_path / "simulation_table_block2_only.csv"
-    duplicated.write_csv(sim_path_block2)
+    sim_path_block2 = tmp_path / "simulation_table_block2_only.parquet"
+    duplicated.write_parquet(sim_path_block2)
     simulation_table = SimulationTable(sim_path_block2)
 
-    out_file = tmp_path / "filtered_empty.csv"
+    out_file = tmp_path / "filtered_empty.parquet"
     filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
     assert isinstance(filtered_table, FilteredSimulationTable)
-    filtered = pl.read_csv(out_file, null_values=["None"], try_parse_dates=True)
-    assert filtered.height == 0
+    filtered = pl.read_parquet(out_file)
+    # Time-dependent rows with block=2 are all dropped; only non-time-dependent
+    # rows (null absolute_time_index) are preserved regardless of block.
+    non_time_dep_count = duplicated.filter(pl.col("absolute_time_index").is_null()).height
+    assert filtered.height == non_time_dep_count
 
 
-@pytest.mark.parametrize("calendar_file, simulation_table_file", FILTER_TEST_CASES)
-def test_filter_simulation_table_writes_csv(
+def test_filter_simulation_table_writes_parquet(
     tmp_path: Path,
-    calendar_file: Path,
-    simulation_table_file: Path,
+    test_dataset_dir: Path,
 ) -> None:
-    """When output_path is set, the filtered table is written to CSV with expected content."""
+    """When output_path is set, the filtered table is written to parquet with expected content."""
+    calendar_file = test_dataset_dir / "calendar_file.csv"
+    simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     calendar = load_calendar(calendar_file)
     simulation_table = SimulationTable(simulation_table_file)
-    out_file = tmp_path / f"filtered_{calendar_file.stem}.csv"
+    out_file = tmp_path / f"filtered_{calendar_file.stem}.parquet"
 
     filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
     assert isinstance(filtered_table, FilteredSimulationTable)
 
-    assert out_file.exists(), "Output CSV should be created"
-    written = pl.scan_csv(out_file, null_values=["None"], try_parse_dates=True).collect()
+    assert out_file.exists(), "Output parquet should be created"
+    written = pl.scan_parquet(out_file).collect()
     expected = (
         simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
@@ -106,6 +104,23 @@ def test_filter_simulation_table_writes_csv(
         .collect(engine="streaming")
     )
     sort_cols = ["block", "component", "output", "absolute_time_index", "block_time_index", "scenario_index"]
+    granular_date_dtype = written.schema["granular_date"]
+    non_time_dep = (
+        simulation_table.dataframe.filter(pl.col("absolute_time_index").is_null())
+        .with_columns(pl.lit(None).cast(granular_date_dtype).alias("granular_date"))
+        .collect(engine="streaming")
+    )
+    expected = pl.concat([expected, non_time_dep])
     written_sorted = written.select(expected.columns).sort(sort_cols)
     expected_sorted = expected.sort(sort_cols)
-    assert written_sorted.equals(expected_sorted), "Written CSV sim-table columns should match expected"
+    assert written_sorted.equals(expected_sorted), "Written parquet sim-table columns should match expected"
+
+
+def test_filter_simulation_table_invalid_file_format(test_dataset_dir: Path) -> None:
+    """When a non-parquet file is provided, an error is raised."""
+    simulation_table_file = test_dataset_dir / "simulation_table--invalid.csv"
+    with pytest.raises(
+        ValueError,
+        match=r"Simulation table file '.*simulation_table--invalid\.csv' is not a parquet file",
+    ):
+        SimulationTable(simulation_table_file)

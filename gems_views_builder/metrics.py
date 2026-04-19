@@ -25,7 +25,11 @@ from gems_views_builder.catalog import Catalog, load_catalog
 
 
 class TimeAggregation(Enum):
-    HOURS = "hours"
+    HOUR = "hour"
+    DAY = "day"
+    WEEK = "week"
+    MONTH = "month"
+    YEAR = "year"
 
 
 class Scope(ViewBuilderBasedModel):
@@ -90,8 +94,10 @@ class ViewConfig:
         return catalog_to_metrics
 
     def _load_view_file(self, view_file_path: Path) -> ViewData:
-        with open(view_file_path) as f:
+        with open(view_file_path, encoding="utf-8") as f:
             raw = yaml.safe_load(f)
+        if "view" not in raw:
+            raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
         return ViewData.model_validate(raw["view"])
 
     def load_catalog(self, catalog_id: str) -> Catalog:

@@ -41,6 +41,7 @@ from gems_views_builder.metrics_builder import MetricStructureBuilder, MetricStr
 from gems_views_builder.simulation_table import FilteredSimulationTable, SimulationTable
 from gems_views_builder.system import InputSystem
 from gems_views_builder.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
+from gems_views_builder.engines.base import BackendName, DataEngine, make_engine
 from gems_views_builder.views import ViewBuilder
 
 __all__ = [
@@ -77,4 +78,7 @@ __all__ = [
     "MetricStructureTable",
     "ViewBuilder",
     "InputSystem",
+    "BackendName",
+    "DataEngine",
+    "make_engine",
 ]

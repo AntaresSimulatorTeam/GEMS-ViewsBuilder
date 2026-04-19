@@ -15,15 +15,10 @@ from pathlib import Path
 import pytest
 
 from gems_views_builder import TimeAggregation, ViewConfig
-from tests.conftest import TEST_FILES_ROOT
-
-CONFIG_PATHS = [
-    TEST_FILES_ROOT / "test_3" / "view_config.yml",
-]
 
 
-@pytest.mark.parametrize("config_path", CONFIG_PATHS)
-def test_view_config_loads(config_path: Path) -> None:
+def test_view_config_loads(test_dataset_dir: Path) -> None:
+    config_path = test_dataset_dir / "view_config.yml"
     config = ViewConfig(config_path)
     assert isinstance(config.id, str)
     assert isinstance(config.location_taxonomy_category, str)
@@ -31,15 +26,15 @@ def test_view_config_loads(config_path: Path) -> None:
     assert len(config.catalog_ids) > 0
 
 
-@pytest.mark.parametrize("config_path", CONFIG_PATHS)
-def test_view_config_catalog_ids_are_strings(config_path: Path) -> None:
+def test_view_config_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
+    config_path = test_dataset_dir / "view_config.yml"
     config = ViewConfig(config_path)
     for catalog_id in config.catalog_ids:
         assert isinstance(catalog_id, str)
 
 
-@pytest.mark.parametrize("config_path", CONFIG_PATHS)
-def test_view_config_metrics_are_pairs(config_path: Path) -> None:
+def test_view_config_metrics_are_pairs(test_dataset_dir: Path) -> None:
+    config_path = test_dataset_dir / "view_config.yml"
     config = ViewConfig(config_path)
     for catalog_id, metrics in config.catalog_to_metrics.items():
         assert isinstance(catalog_id, str)
@@ -47,8 +42,8 @@ def test_view_config_metrics_are_pairs(config_path: Path) -> None:
         assert all(isinstance(metric, str) for metric in metrics)
 
 
-def test_view_config_known_values() -> None:
-    config = ViewConfig(TEST_FILES_ROOT / "test_3" / "view_config.yml")
+def test_view_config_known_values(test_dataset_dir: Path) -> None:
+    config = ViewConfig(test_dataset_dir / "view_config.yml")
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.catalog_ids == ["catalog"]
@@ -57,9 +52,9 @@ def test_view_config_known_values() -> None:
     assert "BALANCE" in config.catalog_to_metrics["catalog"]
 
 
-def test_view_config_time_aggregation() -> None:
-    config = ViewConfig(TEST_FILES_ROOT / "test_3" / "view_config.yml")
-    assert config.time_aggregation == TimeAggregation.HOURS
+def test_view_config_time_aggregation(test_dataset_dir: Path) -> None:
+    config = ViewConfig(test_dataset_dir / "view_config.yml")
+    assert config.time_aggregation == TimeAggregation.HOUR
 
 
 def test_view_config_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
@@ -72,7 +67,7 @@ view:
     - taxonomy-category: balance
     - calendar: calendar_file
   aggregation:
-    - time: hours
+    - time: hour
   catalog:
     - id: catalog_1
   metrics:
