@@ -12,9 +12,10 @@
 
 import re
 from pathlib import Path
+from typing import Any, cast
 
 import polars as pl
-import pyarrow.parquet as pq  # type: ignore[import-untyped]
+import pyarrow.parquet as pq
 import pytest
 
 from gems_views_builder.views import _PARQUET_ROW_GROUP_SIZE, ViewBuilder
@@ -135,7 +136,7 @@ def test_merged_file_contains_correct_metric_ids(tmp_path: Path, two_chunks: lis
 def test_parquet_compression_is_zstd(tmp_path: Path, two_chunks: list[Path]) -> None:
     _make_builder(tmp_path)._consolidate_results(two_chunks)
     result_file = next((tmp_path / "results").glob("*.parquet"))
-    meta = pq.read_metadata(result_file)
+    meta = cast(Any, pq).read_metadata(result_file)
     for rg_idx in range(meta.num_row_groups):
         for col_idx in range(meta.num_columns):
             compression = meta.row_group(rg_idx).column(col_idx).compression
@@ -164,7 +165,7 @@ def test_parquet_row_group_size_respected(tmp_path: Path) -> None:
     )
     _make_builder(tmp_path)._consolidate_results([chunk])
     result_file = next((tmp_path / "results").glob("*.parquet"))
-    meta = pq.read_metadata(result_file)
+    meta = cast(Any, pq).read_metadata(result_file)
     assert meta.num_row_groups >= 2, "Expected at least 2 row groups for data exceeding row_group_size"
 
 
