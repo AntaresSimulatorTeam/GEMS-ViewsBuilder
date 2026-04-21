@@ -22,10 +22,10 @@ from gems_views_builder.taxonomy import Taxonomy
 _METRIC_STRUCTURE_SCHEMA = pl.Schema(
     {
         "metric_id": pl.Utf8,
-        "component_id": pl.Utf8,
+        "component": pl.Utf8,
         "metric_location": pl.Utf8,
         "breakdown_properties": pl.Utf8,
-        "output_id": pl.Utf8,
+        "output": pl.Utf8,
         "weight_output_id": pl.Int64,  # # What will be value range here, probably we could use Int8 to save memory?
     }
 )
@@ -58,27 +58,23 @@ class MetricStructureBuilder:
     def build(self) -> MetricStructureTable:
         rows: list[dict[str, object]] = []
         for term in self.metric.terms:
-            # # Pick components whih belongs to the taxonomy category, from model library
-            components_in_taxonomy_category = self.model_library.get_components_in_taxonomy_category(
-                term.taxonomy_category
-            )  # # O(1) access insted of O(n) from pseudo code
-            for component_id in components_in_taxonomy_category:
-                # # Here will be applied filter with respect to properties of the component
-                # # Breakdown properties will be applied here
-
-                # # locating function
-                metric_location = self.system.get_location(component_id, term.location_ports)
-                loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
-                rows.append(
-                    {
-                        "metric_id": self.metric.id,
-                        "component_id": component_id,
-                        "metric_location": loc_str,
-                        "breakdown_properties": "",
-                        "output_id": term.output_id,
-                        "weight_output_id": 1,  # # Default value for now
-                    }
-                )
+            model_ids = self.model_library.get_components_in_taxonomy_category(term.taxonomy_category)
+            for model_id in model_ids:
+                qualified_ref = f"{self.model_library.id}.{model_id}"
+                for component_id in self.system.get_instances_by_model(qualified_ref):
+                    # # locating function
+                    metric_location = self.system.get_location(component_id, term.location_ports)
+                    loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
+                    rows.append(
+                        {
+                            "metric_id": self.metric.id,
+                            "component": component_id,
+                            "metric_location": loc_str,
+                            "breakdown_properties": "",
+                            "output": term.output_id,
+                            "weight_output_id": 1,
+                        }
+                    )
         if not rows:
             return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
         return MetricStructureTable(pl.DataFrame(rows, schema=_METRIC_STRUCTURE_SCHEMA))

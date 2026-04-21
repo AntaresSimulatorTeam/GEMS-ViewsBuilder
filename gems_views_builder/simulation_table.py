@@ -42,6 +42,11 @@ SIMULATION_TABLE_COLUMNS: frozenset[str] = frozenset(
 FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {"granular_date"}
 
 
+def validate_file_format(simulation_table_file: Path) -> None:
+    if simulation_table_file.suffix.lower() != ".parquet":
+        raise ValueError(f"Simulation table file '{simulation_table_file}' is not a parquet file")
+
+
 class SimulationTable:
     """
     Lazy representation of the SIMULATION_TABLE CSV.
@@ -50,14 +55,11 @@ class SimulationTable:
 
     def __init__(self, simulation_table_file: Path) -> None:
         """
-        simulation_table_file: Path to the simulation_table.csv file
+        simulation_table_file: Path to the simulation_table.parquet file
         """
+        validate_file_format(simulation_table_file)
         self.id = simulation_table_file.stem
-        # # scan csv for memory efficiency
-        self.dataframe = pl.scan_csv(
-            simulation_table_file,
-            null_values=["None"],
-        )
+        self.dataframe = pl.scan_parquet(simulation_table_file)
         self._check_simulation_table_columns()
 
     def _check_simulation_table_columns(self) -> None:
@@ -77,13 +79,30 @@ class SimulationTable:
         Filter the simulation table based on the calendar and write the result to output_path.
         Returns a FilteredSimulationTable with additional granular_date column from the calendar.
         """
-        # Build a lazy pipeline and collect with streaming enabled.
-        filtered_lazy = (
+        # Time-dependent rows: keep only timesteps present in the calendar.
+        time_dep_path = output_path.with_suffix(".time_dep.parquet")
+        (
             self.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
             .filter(pl.col("block") == pl.col("block_right"))
             .drop("block_right")
+        ).sink_parquet(time_dep_path, compression="zstd", compression_level=3)
+
+        # Non-time-dependent rows (absolute_time_index IS NULL) are not tied
+        # to any timestep; pass them through with a null granular_date so
+        # their constant values are preserved in the view.
+        non_time_dep_path = output_path.with_suffix(".non_time_dep.parquet")
+        granular_date_dtype = pl.read_parquet_schema(time_dep_path)["granular_date"]
+        (
+            self.dataframe.filter(pl.col("absolute_time_index").is_null()).with_columns(
+                pl.lit(None).cast(granular_date_dtype).alias("granular_date")
+            )
+        ).sink_parquet(non_time_dep_path, compression="zstd", compression_level=3)
+
+        pl.scan_parquet([time_dep_path, non_time_dep_path]).sink_parquet(
+            output_path, compression="zstd", compression_level=3, row_group_size=64_000
         )
-        filtered_lazy.sink_csv(output_path)
+        time_dep_path.unlink()
+        non_time_dep_path.unlink()
         return FilteredSimulationTable(output_path)
 
 
@@ -97,12 +116,9 @@ class FilteredSimulationTable:
         """
         filtered_simulation_table_file: Path to the filtered simulation_table CSV
         """
+        validate_file_format(filtered_simulation_table_file)
         self.id = filtered_simulation_table_file.stem
-        self.dataframe = pl.scan_csv(
-            filtered_simulation_table_file,
-            null_values=["None"],
-            try_parse_dates=True,
-        )
+        self.dataframe = pl.scan_parquet(filtered_simulation_table_file)
         self._check_filtered_columns()
 
     def _check_filtered_columns(self) -> None:

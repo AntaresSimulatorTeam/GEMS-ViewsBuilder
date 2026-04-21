@@ -63,6 +63,8 @@ def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
 
 
 def _load_taxonomy_file(taxonomy_file_path: Path) -> TaxonomyData:
-    with open(taxonomy_file_path) as f:
+    with open(taxonomy_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
+    if "taxonomy" not in raw:
+        raise ValueError(f"taxonomy.yml file {taxonomy_file_path} is missing the 'taxonomy' key at the root")
     return TaxonomyData.model_validate(raw["taxonomy"])

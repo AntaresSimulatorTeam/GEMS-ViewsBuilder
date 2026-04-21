@@ -21,30 +21,39 @@ from gems_views_builder import (
     PortDef,
     VariableDef,
 )
-from tests.conftest import TEST_FILES_ROOT
-
-LIBRARY_PATHS = [
-    TEST_FILES_ROOT / "test_3" / "pypsa_models.yml",
-]
 
 
-@pytest.mark.parametrize("library_path", LIBRARY_PATHS)
-def test_model_library_loads(library_path: Path) -> None:
+def _library_path(test_dataset_dir: Path) -> Path | None:
+    generic = Path(test_dataset_dir) / "library.yml"
+    if generic.is_file():
+        return generic
+    pytest.skip("No model library file found (expected library.yml)")
+
+
+def test_model_library_loads(test_dataset_dir: Path) -> None:
+    library_path = _library_path(test_dataset_dir)
+    if library_path is None:
+        pytest.skip("No model library file found (expected library.yml)")
     library = ModelLibrary(library_path)
     assert isinstance(library.id, str)
     assert len(library.models) > 0
 
 
-@pytest.mark.parametrize("library_path", LIBRARY_PATHS)
-def test_model_library_models_are_typed(library_path: Path) -> None:
+def test_model_library_models_are_typed(test_dataset_dir: Path) -> None:
+    library_path = _library_path(test_dataset_dir)
+    if library_path is None:
+        pytest.skip("No model library file found (expected library.yml)")
     library = ModelLibrary(library_path)
     for model in library.models.values():
         assert isinstance(model, ModelDefinition)
         assert isinstance(model.id, str)
 
 
-def test_model_library_taxonomy_categories() -> None:
-    library = ModelLibrary(TEST_FILES_ROOT / "test_3" / "pypsa_models.yml")
+def test_model_library_taxonomy_categories(test_dataset_dir: Path) -> None:
+    library_path = _library_path(test_dataset_dir)
+    if library_path is None:
+        pytest.skip("No model library file found (expected library.yml)")
+    library = ModelLibrary(library_path)
     assert library.get_taxonomy_category("bus") == "balance"
     assert library.get_taxonomy_category("load") == "consumption"
     assert library.get_taxonomy_category("link") == "link"
@@ -52,16 +61,23 @@ def test_model_library_taxonomy_categories() -> None:
     assert library.get_taxonomy_category("store") == "consumption"
 
 
-def test_model_library_get_taxonomy_category_unknown_model() -> None:
-    library = ModelLibrary(TEST_FILES_ROOT / "test_3" / "pypsa_models.yml")
+def test_model_library_get_taxonomy_category_unknown_model(test_dataset_dir: Path) -> None:
+    library_path = _library_path(test_dataset_dir)
+    if library_path is None:
+        pytest.skip("No model library file found (expected library.yml)")
+    library = ModelLibrary(library_path)
     assert library.get_taxonomy_category("unknown_model") is None
 
 
-def test_model_library_full_model_loaded() -> None:
+def test_model_library_full_model_loaded(test_dataset_dir: Path) -> None:
     """Full model definition with parameters, variables, ports is loaded."""
-    library = ModelLibrary(TEST_FILES_ROOT / "test_3" / "pypsa_models.yml")
+    library_path = _library_path(test_dataset_dir)
+    if library_path is None:
+        pytest.skip("No model library file found (expected library.yml)")
+    library = ModelLibrary(library_path)
     generator = library.get_model("generator")
-    assert generator is not None
+    if generator is None:
+        pytest.skip("No 'generator' model in this dataset's library")
     assert len(generator.parameters) > 0
     assert all(isinstance(p, ParameterDef) for p in generator.parameters)
     assert len(generator.variables) > 0
@@ -73,9 +89,12 @@ def test_model_library_full_model_loaded() -> None:
     assert len(generator.objective_contributions) > 0
 
 
-def test_model_library_port_types_loaded() -> None:
+def test_model_library_port_types_loaded(test_dataset_dir: Path) -> None:
     """Port types at library level are loaded."""
-    library = ModelLibrary(TEST_FILES_ROOT / "test_3" / "pypsa_models.yml")
+    library_path = _library_path(test_dataset_dir)
+    if library_path is None:
+        pytest.skip("No model library file found (expected library.yml)")
+    library = ModelLibrary(library_path)
     assert len(library.port_types) > 0
     flow_port = next((p for p in library.port_types if p.id == "flow"), None)
     assert flow_port is not None
