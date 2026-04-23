@@ -1,5 +1,5 @@
 # Data processing
-polars>=1.39.2
+polars[rt64]>=1.39.2
 pyarrow>=14.0.0
 # YAML
 pyyaml==6.0.2
