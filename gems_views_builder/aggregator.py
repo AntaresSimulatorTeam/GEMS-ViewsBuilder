@@ -1,0 +1,110 @@
+from pathlib import Path
+
+import polars as pl
+
+from gems_views_builder.catalog import TermsOperator, TimeOperator
+from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
+
+
+class Aggregator:
+    def __init__(self, input_data_path: Path) -> None:
+        self.input_data_path = input_data_path
+        self._part_counter = 0
+
+    def aggregate_metric_terms(
+        self, joined_dataframe: pl.LazyFrame, metric_term_operator: TermsOperator, metric_id: str
+    ) -> Path:
+        """
+        2b step from POC
+        2b-1 Right join TIME_FILTERED_SIMULATION_TABLE with METRIC_STRUCTURE_TABLE on component and output
+        2b-2 Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
+        """
+        value_agg = pl.col("value").sum() if metric_term_operator == TermsOperator.SUM else pl.col("value").mean()
+        metric_view = (
+            joined_dataframe.with_columns(pl.col("scenario_index").alias("scenario"))
+            .group_by(
+                [
+                    "metric_id",
+                    "metric_location",
+                    "breakdown_properties",
+                    "absolute_time_index",
+                    "scenario",
+                ]
+            )
+            .agg(
+                [
+                    value_agg.alias("granular_metric_value"),
+                    # take first non-null value of group
+                    pl.col("granular_date").drop_nulls().first(),
+                ]
+            )
+            .select(
+                [
+                    "metric_id",
+                    "metric_location",
+                    "breakdown_properties",
+                    "absolute_time_index",
+                    "scenario",
+                    "granular_metric_value",
+                    "granular_date",
+                ]
+            )
+        )
+        out_dir = self.input_data_path / "views" / "metric_view"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_path = out_dir / f"{metric_id}.parquet"
+        metric_view.sink_parquet(
+            out_path,
+            compression=PARQUET_COMPRESSION,
+            compression_level=PARQUET_COMPRESSION_LEVEL,
+            row_group_size=PARQUET_ROW_GROUP_SIZE,
+        )
+        return out_path
+
+    def aggregate_metric_temporally(
+        self, metric_view_parquet_path: Path, metric_time_operator: TimeOperator, metric_id: str
+    ) -> Path:
+        metric_view = pl.scan_parquet(metric_view_parquet_path)
+        time_agg = (
+            pl.col("granular_metric_value").sum()
+            if metric_time_operator == TimeOperator.SUM
+            else pl.col("granular_metric_value").mean()
+        ).alias("metric_value")
+        view_date_expr = pl.col("granular_date").alias("view_date")
+        view = (
+            metric_view.with_columns(view_date_expr)
+            .group_by(
+                [
+                    "metric_id",
+                    "metric_location",
+                    "breakdown_properties",
+                    "scenario",
+                    "view_date",
+                ]
+            )
+            .agg(time_agg)
+            .select(
+                [
+                    "metric_id",
+                    "metric_location",
+                    "breakdown_properties",
+                    "view_date",
+                    "scenario",
+                    "metric_value",
+                ]
+            )
+        )
+        # Business view is meant to be created once, then appended to on future runs.
+        # We implement this by writing a new parquet "part" file each time.
+        dataset_dir = self.input_data_path / "temporal_aggregation"
+        dataset_dir.mkdir(parents=True, exist_ok=True)
+
+        out_path = dataset_dir / f"{metric_id}-{self._part_counter}.parquet"
+        self._part_counter += 1
+        view.sink_parquet(
+            out_path,
+            compression=PARQUET_COMPRESSION,
+            compression_level=PARQUET_COMPRESSION_LEVEL,
+            row_group_size=PARQUET_ROW_GROUP_SIZE,
+        )
+        return out_path

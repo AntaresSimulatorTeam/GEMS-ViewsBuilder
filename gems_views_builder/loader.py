@@ -1,0 +1,26 @@
+from pathlib import Path
+
+from gems_views_builder.library import ModelLibrary
+from gems_views_builder.metrics import ViewConfig
+from gems_views_builder.simulation_table import SimulationTable
+from gems_views_builder.system import InputSystem
+from gems_views_builder.taxonomy import load_taxonomy
+
+
+class Loader:
+    def __init__(self, input_data_path: Path) -> None:
+        self.input_data_path = input_data_path
+
+        self.system = self._load_system()
+        self.taxonomy = load_taxonomy(self.input_data_path / "taxonomy.yml")
+        self.view_config = ViewConfig(self.input_data_path / "view_config.yml")
+        self.simulation_table = SimulationTable(
+            next(self.input_data_path.glob("simulation_table*.parquet"))
+        )  # # we could have only one simulation table at this phase of development
+        self.model_library = ModelLibrary(
+            self.input_data_path / "library.yml"
+        )  # # must be named like this for now, in future when we enable user to have more than one libraries we should decide pattern to use
+
+    def _load_system(self) -> InputSystem:
+        system_path = next(self.input_data_path.glob("system*"))
+        return InputSystem.from_file(system_path)
