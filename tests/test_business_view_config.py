@@ -19,7 +19,7 @@ from gems_views_builder import TimeAggregation, ViewConfig
 
 def test_view_config_loads(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
-    config = ViewConfig(config_path)
+    config = ViewConfig.load(config_path)
     assert isinstance(config.id, str)
     assert isinstance(config.location_taxonomy_category, str)
     assert isinstance(config.calendar_id, str)
@@ -28,14 +28,14 @@ def test_view_config_loads(test_dataset_dir: Path) -> None:
 
 def test_view_config_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
-    config = ViewConfig(config_path)
+    config = ViewConfig.load(config_path)
     for catalog_id in config.catalog_ids:
         assert isinstance(catalog_id, str)
 
 
 def test_view_config_metrics_are_pairs(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
-    config = ViewConfig(config_path)
+    config = ViewConfig.load(config_path)
     for catalog_id, metrics in config.catalog_to_metrics.items():
         assert isinstance(catalog_id, str)
         assert isinstance(metrics, list)
@@ -43,7 +43,7 @@ def test_view_config_metrics_are_pairs(test_dataset_dir: Path) -> None:
 
 
 def test_view_config_known_values(test_dataset_dir: Path) -> None:
-    config = ViewConfig(test_dataset_dir / "view_config.yml")
+    config = ViewConfig.load(test_dataset_dir / "view_config.yml")
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.catalog_ids == ["catalog"]
@@ -53,7 +53,7 @@ def test_view_config_known_values(test_dataset_dir: Path) -> None:
 
 
 def test_view_config_time_aggregation(test_dataset_dir: Path) -> None:
-    config = ViewConfig(test_dataset_dir / "view_config.yml")
+    config = ViewConfig.load(test_dataset_dir / "view_config.yml")
     assert config.time_aggregation == TimeAggregation.HOUR
 
 
@@ -76,4 +76,4 @@ view:
     )
 
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        ViewConfig(invalid_config)
+        ViewConfig.load(invalid_config)

@@ -34,7 +34,7 @@ def test_model_library_loads(test_dataset_dir: Path) -> None:
     library_path = _library_path(test_dataset_dir)
     if library_path is None:
         pytest.skip("No model library file found (expected library.yml)")
-    library = ModelLibrary(library_path)
+    library = ModelLibrary.load(library_path)
     assert isinstance(library.id, str)
     assert len(library.models) > 0
 
@@ -43,7 +43,7 @@ def test_model_library_models_are_typed(test_dataset_dir: Path) -> None:
     library_path = _library_path(test_dataset_dir)
     if library_path is None:
         pytest.skip("No model library file found (expected library.yml)")
-    library = ModelLibrary(library_path)
+    library = ModelLibrary.load(library_path)
     for model in library.models.values():
         assert isinstance(model, ModelDefinition)
         assert isinstance(model.id, str)
@@ -53,7 +53,7 @@ def test_model_library_taxonomy_categories(test_dataset_dir: Path) -> None:
     library_path = _library_path(test_dataset_dir)
     if library_path is None:
         pytest.skip("No model library file found (expected library.yml)")
-    library = ModelLibrary(library_path)
+    library = ModelLibrary.load(library_path)
     assert library.get_taxonomy_category("bus") == "balance"
     assert library.get_taxonomy_category("load") == "consumption"
     assert library.get_taxonomy_category("link") == "link"
@@ -65,7 +65,7 @@ def test_model_library_get_taxonomy_category_unknown_model(test_dataset_dir: Pat
     library_path = _library_path(test_dataset_dir)
     if library_path is None:
         pytest.skip("No model library file found (expected library.yml)")
-    library = ModelLibrary(library_path)
+    library = ModelLibrary.load(library_path)
     assert library.get_taxonomy_category("unknown_model") is None
 
 
@@ -74,7 +74,7 @@ def test_model_library_full_model_loaded(test_dataset_dir: Path) -> None:
     library_path = _library_path(test_dataset_dir)
     if library_path is None:
         pytest.skip("No model library file found (expected library.yml)")
-    library = ModelLibrary(library_path)
+    library = ModelLibrary.load(library_path)
     generator = library.get_model("generator")
     if generator is None:
         pytest.skip("No 'generator' model in this dataset's library")
@@ -94,7 +94,7 @@ def test_model_library_port_types_loaded(test_dataset_dir: Path) -> None:
     library_path = _library_path(test_dataset_dir)
     if library_path is None:
         pytest.skip("No model library file found (expected library.yml)")
-    library = ModelLibrary(library_path)
+    library = ModelLibrary.load(library_path)
     assert len(library.port_types) > 0
     flow_port = next((p for p in library.port_types if p.id == "flow"), None)
     assert flow_port is not None

@@ -77,16 +77,34 @@ class ModelLibrary:
     """
 
     def __init__(self, library_file_path: Path) -> None:
-        parsed = self._load_library_file(library_file_path)
+        """
+        Cheap constructor: keep only the file path.
+
+        Use `ModelLibrary.load(...)` (or `load_into_self()`) to perform I/O and build indexes.
+        """
+        self.file = library_file_path
+        self.id = ""
+        self.description = ""
+        self.port_types: list[InputPortType] = []
+        self.models: dict[str, ModelDefinition] = {}
+        self.models_by_taxonomy_category: dict[str, list[str]] = {}
+
+    @classmethod
+    def load(cls, library_file_path: Path) -> "ModelLibrary":
+        return cls(library_file_path).load_into_self()
+
+    def load_into_self(self) -> "ModelLibrary":
+        parsed = self._load_library_file(self.file)
         self.id = parsed.id
         self.description = parsed.description or ""
-        self.port_types: list[InputPortType] = parsed.port_types
-        self.models: dict[str, ModelDefinition] = {m.id: m for m in parsed.models}
-        self.models_by_taxonomy_category: dict[str, list[str]] = {}
+        self.port_types = parsed.port_types
+        self.models = {m.id: m for m in parsed.models}
+        self.models_by_taxonomy_category = {}
         for m in parsed.models:
             if not m.taxonomy_category:
                 continue
             self.models_by_taxonomy_category.setdefault(m.taxonomy_category, []).append(m.id)
+        return self
 
     def _load_library_file(self, library_file_path: Path) -> LibraryData:
         with open(library_file_path, encoding="utf-8") as f:
