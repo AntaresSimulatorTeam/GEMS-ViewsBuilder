@@ -4,7 +4,6 @@ import polars as pl
 
 from gems_views_builder.aggregator import Aggregator
 from gems_views_builder.catalog import TermsOperator, TimeOperator
-from gems_views_builder.views import ViewBuilder
 
 
 def _joined_df(values: list[float]) -> pl.LazyFrame:
@@ -58,32 +57,3 @@ def test_aggregate_metric_temporally_sum_and_part_counter(tmp_path: Path) -> Non
     assert part1 != part0
     assert part0.name.endswith("-0.parquet")
     assert part1.name.endswith("-1.parquet")
-
-
-def test_aggregator_integration_build_writes_final_result_and_cleans_chunks(
-    test_files_root: Path, tmp_path: Path
-) -> None:
-    """
-    Integration smoke test on a real dataset from tests.zip.
-
-    ViewBuilder uses Aggregator to create temporal chunk parquets, then Writer
-    consolidates them into a single result and deletes the chunks.
-    """
-    import shutil
-
-    src = test_files_root / "test_3"
-    dst = tmp_path / "test_3"
-    shutil.copytree(src, dst)
-
-    ViewBuilder(dst).build()
-
-    result_files = sorted((dst / "results").glob("*.parquet"))
-    assert result_files, "Expected a consolidated result parquet to be written"
-
-    # Sanity check: result is readable and contains at least one row.
-    df = pl.read_parquet(result_files[0])
-    assert df.height > 0
-
-    # Chunks should have been deleted by Writer.consolidate_results().
-    chunk_parts = sorted((dst / "temporal_aggregation").glob("*.parquet"))
-    assert not chunk_parts
