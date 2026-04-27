@@ -11,6 +11,13 @@ class Loader:
     def __init__(self, input_data_path: Path) -> None:
         self.input_data_path = input_data_path
 
+    @classmethod
+    def load(cls, input_data_path: Path) -> "Loader":
+        """Create a loader and perform all input data I/O."""
+        return cls(input_data_path).load_into_self()
+
+    def load_into_self(self) -> "Loader":
+        """Perform all input data I/O and populate attributes."""
         self.system = self._load_system()
         self.taxonomy = load_taxonomy(self.input_data_path / "taxonomy.yml")
         self.view_config = ViewConfig(self.input_data_path / "view_config.yml")
@@ -20,6 +27,7 @@ class Loader:
         self.model_library = ModelLibrary(
             self.input_data_path / "library.yml"
         )  # # must be named like this for now, in future when we enable user to have more than one libraries we should decide pattern to use
+        return self
 
     def _load_system(self) -> InputSystem:
         system_path = next(self.input_data_path.glob("system*"))

@@ -4,7 +4,6 @@ from pathlib import Path
 import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
-from gems_views_builder.metrics_builder import MetricStructureTable
 
 
 class Writer:
@@ -28,11 +27,11 @@ class Writer:
             chunk_path.unlink(missing_ok=True)
         return out_path
 
-    def write_metric_structure_table(self, metric_structure_table: MetricStructureTable, metric_id: str) -> Path:
+    def write_metric_structure_table(self, metric_structure_table: pl.DataFrame, metric_id: str) -> Path:
         metric_structure_dir = self.input_data_path / "views" / "metric_structure"
         metric_structure_dir.mkdir(parents=True, exist_ok=True)
         metric_structure_path = metric_structure_dir / f"{metric_id}.parquet"
-        metric_structure_table.dataframe.write_parquet(
+        metric_structure_table.write_parquet(
             metric_structure_path,
             compression=PARQUET_COMPRESSION,
             compression_level=PARQUET_COMPRESSION_LEVEL,

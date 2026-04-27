@@ -1,4 +1,3 @@
-from collections import defaultdict
 from pathlib import Path
 
 EXACT_FILES = ["taxonomy.yml", "view_config.yml", "library.yml", "system.yml"]
@@ -35,26 +34,23 @@ class InputValidator:
         """
         # Check if there are exactly 6 required files.
         """
-        files_counter: defaultdict[str, int] = defaultdict(int)
         # # Check names
         for filename in EXACT_FILES:
             if not (self.input_data_path / filename).is_file():
                 raise FileNotFoundError(f"Required file '{filename}' not found in {self.input_data_path}")
-            files_counter[filename] += 1
 
         for prefix, expected_suffix in PREFIX_FILES.items():
-            match = next(self.input_data_path.glob(f"{prefix}*"), None)
-            if match is None:
+            matches = list(self.input_data_path.glob(f"{prefix}*"))
+            if not matches:
                 raise FileNotFoundError(f"Required file starting with '{prefix}' not found in {self.input_data_path}")
+            if len(matches) > 1:
+                names = ", ".join(sorted(m.name for m in matches))
+                raise ValueError(
+                    f"Expected exactly one file starting with '{prefix}' in {self.input_data_path}, found: {names}"
+                )
+            match = matches[0]
             if match.suffix != expected_suffix:
                 raise ValueError(f"File '{match.name}' starting with '{prefix}' must be a '{expected_suffix}' file")
-            files_counter[match.name] += 1
-
-        # # Check counter
-        if sum(files_counter.values()) != len(EXACT_FILES) + len(PREFIX_FILES):
-            raise ValueError(
-                f"Expected {len(EXACT_FILES) + len(PREFIX_FILES)} files in {self.input_data_path}, found {len(files_counter)}"
-            )
 
     def validate(self) -> None:
         """

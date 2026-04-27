@@ -39,12 +39,7 @@ class ViewBuilder:
         # # 1. Validate input data, if it fails, the builder will not be able to build the views.
         InputValidator(self.input_data_path).validate()
         # # 2. Load input data, if it fails, the builder will not be able to build the views.
-        loader = Loader(self.input_data_path)
-        self.system = loader.system
-        self.taxonomy = loader.taxonomy
-        self.view_config = loader.view_config
-        self.simulation_table = loader.simulation_table
-        self.model_library = loader.model_library
+        self.loader = Loader.load(self.input_data_path)
         # # 3. Instantiate aggregator and writer if everything is loaded successfully
         self.aggregator = Aggregator(self.input_data_path)
         self.writer = Writer(self.input_data_path)
@@ -66,12 +61,14 @@ class ViewBuilder:
         filtered_simulation_table_path = intermediates_dir / "simulation_table_filtered.parquet"
 
         # # 1. Filter simulation table (written to disk)
-        self.simulation_table.filter_simulation_table(self.view_config.load_calendar(), filtered_simulation_table_path)
+        self.loader.simulation_table.filter_simulation_table(
+            self.loader.view_config.load_calendar(), filtered_simulation_table_path
+        )
         parquet_files_to_process = []
         # # 2. Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
-        for catalog_id, metrics in self.view_config.catalog_to_metrics.items():
+        for catalog_id, metrics in self.loader.view_config.catalog_to_metrics.items():
             # # 2.1 Load catalog
-            catalog: Catalog = self.view_config.load_catalog(catalog_id)
+            catalog: Catalog = self.loader.view_config.load_catalog(catalog_id)
             # # 2.2 Iterate over all metrics for this catalog
             for metric_id in metrics:
                 try:
@@ -81,14 +78,16 @@ class ViewBuilder:
 
                 # # 2.3 Build metric structure table, persist to disk, then re-open lazily
                 metric_structure_table = MetricStructureBuilder(
-                    self.system,
+                    self.loader.system,
                     catalog,
                     metric,
-                    self.taxonomy,
-                    self.model_library,
+                    self.loader.taxonomy,
+                    self.loader.model_library,
                 ).build()
 
-                metric_structure_path = self.writer.write_metric_structure_table(metric_structure_table, metric.id)
+                metric_structure_path = self.writer.write_metric_structure_table(
+                    metric_structure_table.dataframe, metric.id
+                )
 
                 filtered_simulation_table_lazy = pl.scan_parquet(filtered_simulation_table_path)
                 metric_structure_lazy = pl.scan_parquet(metric_structure_path)
