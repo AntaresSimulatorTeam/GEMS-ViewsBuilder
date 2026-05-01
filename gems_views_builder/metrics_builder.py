@@ -62,19 +62,28 @@ class MetricStructureBuilder:
             for model_id in model_ids:
                 qualified_ref = f"{self.model_library.id}.{model_id}"
                 for component_id in self.system.get_instances_by_model(qualified_ref):
-                    # # locating function
-                    metric_location = self.system.get_location(component_id, term.location_ports)
-                    loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
-                    rows.append(
-                        {
-                            "metric_id": self.metric.id,
-                            "component": component_id,
-                            "metric_location": loc_str,
-                            "breakdown_properties": "",
-                            "output": term.output_id,
-                            "weight_output_id": 1,
-                        }
-                    )
+                    # # filter with respect to the pair key,value from filter, open question do we want to have multiple filters?
+                    filter_key = self.metric.filter[0] if self.metric.filter else None
+                    filter_value = self.metric.filter[1] if self.metric.filter else None
+                    if (
+                        filter_key is not None
+                        and filter_value is not None
+                        and filter_key in self.system.get_component(component_id).properties
+                        and self.system.get_component(component_id).properties[filter_key] == filter_value
+                    ):
+                        # # locating function
+                        metric_location = self.system.get_location(component_id, term.location_ports)
+                        loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
+                        rows.append(
+                            {
+                                "metric_id": self.metric.id,
+                                "component": component_id,
+                                "metric_location": loc_str,
+                                "breakdown_properties": "",
+                                "output": term.output_id,
+                                "weight_output_id": 1,
+                            }
+                        )
         if not rows:
             return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
         return MetricStructureTable(pl.DataFrame(rows, schema=_METRIC_STRUCTURE_SCHEMA))

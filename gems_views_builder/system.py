@@ -93,6 +93,10 @@ class InputSystem:
         """Return component instance IDs for the given qualified model reference."""
         return list(self._components_by_model.get(qualified_model_ref, []))
 
+    def get_component(self, component_id: str) -> Component:
+        """Return the Gems ``Component`` for ``component_id`` (delegates to the underlying system)."""
+        return self._system.get_component(component_id)
+
     def get_location(
         self,
         component_0_id: str,
