@@ -16,31 +16,18 @@ from pathlib import Path
 
 import yaml
 from gems.model.parsing import (  # type: ignore
-    InputConstraint,
-    InputExtraOutput,
-    InputField,
-    InputModelPort,
-    InputObjectiveContribution,
-    InputParameter,
-    InputPortFieldDefinition,
-    InputPortType,
-    InputVariable,
+    ConstraintSchema,
+    ExtraOutputSchema,
+    ModelPortSchema,
+    ObjectiveContributionSchema,
+    ParameterSchema,
+    PortFieldDefinitionSchema,
+    PortTypeSchema,
+    VariableSchema,
 )
 from pydantic import Field
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
-
-# Public aliases — same names as the previous local Pydantic models.
-ParameterDef = InputParameter
-VariableDef = InputVariable
-PortDef = InputModelPort
-PortFieldDefinition = InputPortFieldDefinition
-ConstraintDef = InputConstraint
-BindingConstraintDef = InputConstraint
-ObjectiveContributionDef = InputObjectiveContribution
-PortTypeField = InputField
-PortTypeDef = InputPortType
-ExtraOutputDef = InputExtraOutput
 
 
 class ModelDefinition(ViewBuilderBasedModel):
@@ -48,14 +35,14 @@ class ModelDefinition(ViewBuilderBasedModel):
 
     id: str
     description: str | None = None
-    parameters: list[InputParameter] = Field(default_factory=list)
-    variables: list[InputVariable] = Field(default_factory=list)
-    ports: list[InputModelPort] = Field(default_factory=list)
-    port_field_definitions: list[InputPortFieldDefinition] = Field(default_factory=list)
-    constraints: list[InputConstraint] = Field(default_factory=list)
-    binding_constraints: list[InputConstraint] = Field(default_factory=list)
-    objective_contributions: list[InputObjectiveContribution] = Field(default_factory=list)
-    extra_outputs: list[InputExtraOutput] = Field(default_factory=list)
+    parameters: list[ParameterSchema] = Field(default_factory=list)
+    variables: list[VariableSchema] = Field(default_factory=list)
+    ports: list[ModelPortSchema] = Field(default_factory=list)
+    port_field_definitions: list[PortFieldDefinitionSchema] = Field(default_factory=list)
+    constraints: list[ConstraintSchema] = Field(default_factory=list)
+    binding_constraints: list[ConstraintSchema] = Field(default_factory=list)
+    objective_contributions: list[ObjectiveContributionSchema] = Field(default_factory=list)
+    extra_outputs: list[ExtraOutputSchema] = Field(default_factory=list)
 
     taxonomy_category: str | None = Field(default=None, alias="taxonomy-category")
 
@@ -65,7 +52,7 @@ class LibraryData(ViewBuilderBasedModel):
 
     id: str
     description: str | None = None
-    port_types: list[InputPortType] = Field(default_factory=list)
+    port_types: list[PortTypeSchema] = Field(default_factory=list)
     models: list[ModelDefinition] = Field(default_factory=list)
 
 
@@ -85,7 +72,7 @@ class ModelLibrary:
         self.file = library_file_path
         self.id = ""
         self.description = ""
-        self.port_types: list[InputPortType] = []
+        self.port_types: list[PortTypeSchema] = []
         self.models: dict[str, ModelDefinition] = {}
         self.models_by_taxonomy_category: dict[str, list[str]] = {}
 

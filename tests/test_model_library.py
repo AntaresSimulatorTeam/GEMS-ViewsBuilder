@@ -13,13 +13,11 @@
 from pathlib import Path
 
 import pytest
+from gems.model.parsing import ModelPortSchema, ParameterSchema, VariableSchema  # type: ignore[import-untyped]
 
 from gems_views_builder import (
     ModelDefinition,
     ModelLibrary,
-    ParameterDef,
-    PortDef,
-    VariableDef,
 )
 
 
@@ -79,11 +77,11 @@ def test_model_library_full_model_loaded(test_dataset_dir: Path) -> None:
     if generator is None:
         pytest.skip("No 'generator' model in this dataset's library")
     assert len(generator.parameters) > 0
-    assert all(isinstance(p, ParameterDef) for p in generator.parameters)
+    assert all(isinstance(p, ParameterSchema) for p in generator.parameters)
     assert len(generator.variables) > 0
-    assert all(isinstance(v, VariableDef) for v in generator.variables)
+    assert all(isinstance(v, VariableSchema) for v in generator.variables)
     assert len(generator.ports) > 0
-    assert all(isinstance(p, PortDef) for p in generator.ports)
+    assert all(isinstance(p, ModelPortSchema) for p in generator.ports)
     assert len(generator.port_field_definitions) > 0
     assert len(generator.constraints) > 0
     assert len(generator.objective_contributions) > 0

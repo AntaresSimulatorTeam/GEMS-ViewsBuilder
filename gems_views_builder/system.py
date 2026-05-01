@@ -10,17 +10,14 @@
 #
 # This file is part of the Antares project.
 
-"""InputSystem wrapper with helper methods for component lookup."""
+"""System wrapper with helper methods for component lookup."""
 
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, cast
 
-from gems.study.parsing import (  # type: ignore
-    InputComponent as GemsInputComponent,
-)
-from gems.study.parsing import InputSystem as GemsInputSystem
-from gems.study.parsing import parse_yaml_components
+from gems.study.parsing import parse_yaml_components  # type: ignore[import-untyped]
+from gems.study.system import Component, System  # type: ignore[import-untyped]
 
 
 class InputSystem:
@@ -28,14 +25,14 @@ class InputSystem:
     Compose a Gems InputSystem and expose ViewsBuilder-specific helpers.
     """
 
-    def __init__(self, system: GemsInputSystem) -> None:
+    def __init__(self, system: System) -> None:
         self._system = system
         self._components_by_model: dict[str, list[str]] = self.models_to_components()
         self._component_port_connections: dict[tuple[str, str], set[str]] = self.build_component_port_connections()
 
     @property
-    def components(self) -> list[GemsInputComponent]:
-        return cast(list[GemsInputComponent], self._system.components)
+    def components(self) -> list[Component]:
+        return cast(list[Component], self._system.components)
 
     @property
     def connections(self) -> list[Any]:
@@ -117,7 +114,7 @@ class InputSystem:
 
     @classmethod
     def from_file(cls, path: Path) -> "InputSystem":
-        """Load InputSystem from a system yml file."""
+        """Load a Gems system from a `system.yml` file."""
         with open(path, encoding="utf-8") as f:
             parsed = parse_yaml_components(f)
-        return cls(cast(GemsInputSystem, parsed))
+        return cls(cast(System, parsed))

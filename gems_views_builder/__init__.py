@@ -23,18 +23,9 @@ from gems_views_builder.catalog import (
     load_catalog,
 )
 from gems_views_builder.library import (
-    BindingConstraintDef,
-    ConstraintDef,
-    ExtraOutputDef,
     LibraryData,
     ModelDefinition,
     ModelLibrary,
-    ObjectiveContributionDef,
-    ParameterDef,
-    PortDef,
-    PortFieldDefinition,
-    PortTypeDef,
-    VariableDef,
 )
 from gems_views_builder.metrics import TimeAggregation, ViewConfig
 from gems_views_builder.metrics_builder import MetricStructureBuilder, MetricStructureTable
@@ -55,18 +46,9 @@ __all__ = [
     "Term",
     "TermsOperator",
     "TimeOperator",
-    "BindingConstraintDef",
-    "ConstraintDef",
-    "ExtraOutputDef",
     "LibraryData",
     "ModelDefinition",
     "ModelLibrary",
-    "ObjectiveContributionDef",
-    "ParameterDef",
-    "PortDef",
-    "PortFieldDefinition",
-    "PortTypeDef",
-    "VariableDef",
     "Taxonomy",
     "TaxonomyCategory",
     "TaxonomyItem",
