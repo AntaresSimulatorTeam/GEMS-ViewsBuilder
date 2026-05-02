@@ -29,6 +29,7 @@ class InputSystem:
         self._system = system
         self._components_by_model: dict[str, list[str]] = self.models_to_components()
         self._component_port_connections: dict[tuple[str, str], set[str]] = self.build_component_port_connections()
+        self._components_by_id: dict[str, Component] = self._index_components_by_id()
 
     @property
     def components(self) -> list[Component]:
@@ -37,6 +38,15 @@ class InputSystem:
     @property
     def connections(self) -> list[Any]:
         return cast(list[Any], getattr(self._system, "connections", None) or [])
+
+    def _index_components_by_id(self) -> dict[str, Component]:
+        """Single pass over ``components`` for O(1) :meth:`get_component` when not using GemsPy ``System.get_component``."""
+        out: dict[str, Component] = {}
+        for c in self.components:
+            cid = getattr(c, "id", None)
+            if isinstance(cid, str):
+                out[cid] = cast(Component, c)
+        return out
 
     def models_to_components(self) -> dict[str, list[str]]:
         """
@@ -94,19 +104,13 @@ class InputSystem:
         return list(self._components_by_model.get(qualified_model_ref, []))
 
     def get_component(self, component_id: str) -> Component:
-        """
-        Return the component for ``component_id``.
-
-        Resolved GemsPy ``System`` objects provide ``get_component``; parsed
-        ``SystemSchema`` from YAML does not—look up by id on ``components`` instead.
-        """
-        getter = getattr(type(self._system), "get_component", None)
-        if callable(getter):
-            return self._system.get_component(component_id)
-        for c in self.components:
-            if getattr(c, "id", None) == component_id:
-                return cast(Component, c)
-        raise ValueError(f"Unknown component id: {component_id!r}")
+        #getter = getattr(type(self._system), "get_component", None)
+        #if callable(getter):
+        #    return self._system.get_component(component_id)
+        try:
+            return self._components_by_id[component_id]
+        except KeyError as e:
+            raise ValueError(f"Unknown component id: {component_id!r}") from e
 
     def get_location(
         self,
