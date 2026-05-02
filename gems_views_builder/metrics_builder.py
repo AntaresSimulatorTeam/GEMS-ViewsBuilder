@@ -90,16 +90,19 @@ class MetricStructureBuilder:
                     if _component_matches_property_filter(component, self.metric.filter):
                         metric_location = self.system.get_location(component_id, term.location_ports)
                         loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
-                        rows.append(
-                            {
-                                "metric_id": self.metric.id,
-                                "component": component_id,
-                                "metric_location": loc_str,
-                                "breakdown_properties": "",
-                                "output": term.output_id,
-                                "weight_output_id": 1,
-                            }
-                        )
+
+                        for breakdown_property in self.metric.breakdown_property:
+                            if breakdown_property in component.properties:       
+                                rows.append(
+                                    {
+                                        "metric_id": self.metric.id,
+                                        "component": component_id,
+                                        "metric_location": loc_str,
+                                        "breakdown_properties": f"{breakdown_property}:{component.properties[breakdown_property]}",
+                                        "output": term.output_id,
+                                        "weight_output_id": 1,
+                                    }
+                                )
         if not rows:
             return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
         return MetricStructureTable(pl.DataFrame(rows, schema=_METRIC_STRUCTURE_SCHEMA))
