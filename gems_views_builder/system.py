@@ -94,8 +94,19 @@ class InputSystem:
         return list(self._components_by_model.get(qualified_model_ref, []))
 
     def get_component(self, component_id: str) -> Component:
-        """Return the Gems ``Component`` for ``component_id`` (delegates to the underlying system)."""
-        return self._system.get_component(component_id)
+        """
+        Return the component for ``component_id``.
+
+        Resolved GemsPy ``System`` objects provide ``get_component``; parsed
+        ``SystemSchema`` from YAML does not—look up by id on ``components`` instead.
+        """
+        getter = getattr(type(self._system), "get_component", None)
+        if callable(getter):
+            return self._system.get_component(component_id)
+        for c in self.components:
+            if getattr(c, "id", None) == component_id:
+                return cast(Component, c)
+        raise ValueError(f"Unknown component id: {component_id!r}")
 
     def get_location(
         self,

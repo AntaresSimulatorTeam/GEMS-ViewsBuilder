@@ -11,6 +11,7 @@
 # This file is part of the Antares project.
 
 from dataclasses import dataclass
+from typing import Any
 
 import polars as pl
 
@@ -38,9 +39,38 @@ class MetricStructureTable:
     dataframe: pl.DataFrame
 
 
-class MetricStructureBuilder:
-    """Build metric structure rows without loading unrelated datasets."""
+def _component_property_value(component: Any, key: str) -> Any:
+    """
+    Read a property value from a component.
 
+    Parsed YAML uses ``List[ComponentPropertySchema]`` (``key`` / ``value``); a resolved
+    GemsPy ``Component`` uses ``Dict[str, str]`` for ``properties``.
+    """
+    props = getattr(component, "properties", None)
+    if props is None:
+        return None
+    if isinstance(props, dict):
+        return props.get(key)
+    if isinstance(props, list):
+        for item in props:
+            k = getattr(item, "key", None) if not isinstance(item, dict) else item.get("key")
+            if k != key:
+                continue
+            return getattr(item, "value", None) if not isinstance(item, dict) else item.get("value")
+        return None
+    return None
+
+
+def _component_matches_property_filter(component: Any, clause: tuple[str, str] | None) -> bool:
+    """If the metric defines a filter, the component must have that key with that value."""
+    if clause is None:
+        return True
+    key, value = clause
+    actual: object = _component_property_value(component, key)
+    return actual == value
+
+
+class MetricStructureBuilder:
     def __init__(
         self,
         system: InputSystem,
@@ -62,16 +92,8 @@ class MetricStructureBuilder:
             for model_id in model_ids:
                 qualified_ref = f"{self.model_library.id}.{model_id}"
                 for component_id in self.system.get_instances_by_model(qualified_ref):
-                    # # filter with respect to the pair key,value from filter, open question do we want to have multiple filters?
-                    filter_key = self.metric.filter[0] if self.metric.filter else None
-                    filter_value = self.metric.filter[1] if self.metric.filter else None
-                    if (
-                        filter_key is not None
-                        and filter_value is not None
-                        and filter_key in self.system.get_component(component_id).properties
-                        and self.system.get_component(component_id).properties[filter_key] == filter_value
-                    ):
-                        # # locating function
+                    component = self.system.get_component(component_id)
+                    if _component_matches_property_filter(component, self.metric.filter):
                         metric_location = self.system.get_location(component_id, term.location_ports)
                         loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
                         rows.append(

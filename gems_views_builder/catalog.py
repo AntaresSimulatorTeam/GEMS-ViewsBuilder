@@ -43,13 +43,18 @@ class TermData(ViewBuilderBasedModel):
     weight_output_id: str | None = None
 
 
+class PropertyFilter(ViewBuilderBasedModel):
+    key: str
+    value: str
+
+
 class MetricData(ViewBuilderBasedModel):
     id: str
     terms: list[TermData]
     terms_operator: TermsOperator
     time_operator: TimeOperator
     breakdown_property: str | None = None
-    filter: tuple[str, str] | None = None
+    filter: PropertyFilter | None = None
 
 
 class CatalogLocationData(ViewBuilderBasedModel):
@@ -99,13 +104,16 @@ def _to_term(term_data: TermData) -> Term:
 
 
 def _to_metric(metric_data: MetricData) -> Metric:
+    filter: tuple[str, str] | None = None
+    if metric_data.filter is not None:
+        filter = (metric_data.filter.key, metric_data.filter.value)
     return Metric(
         id=metric_data.id,
         terms=[_to_term(term) for term in metric_data.terms],
         terms_operator=metric_data.terms_operator,
         time_operator=metric_data.time_operator,
         breakdown_property=metric_data.breakdown_property,
-        filter=metric_data.filter,
+        filter=filter,
     )
 
 
