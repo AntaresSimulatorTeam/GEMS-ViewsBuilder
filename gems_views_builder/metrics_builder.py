@@ -40,12 +40,6 @@ class MetricStructureTable:
 
 
 def _component_property_value(component: Any, key: str) -> Any:
-    """
-    Read a property value from a component.
-
-    Parsed YAML uses ``List[ComponentPropertySchema]`` (``key`` / ``value``); a resolved
-    GemsPy ``Component`` uses ``Dict[str, str]`` for ``properties``.
-    """
     props = getattr(component, "properties", None)
     if props is None:
         return None
