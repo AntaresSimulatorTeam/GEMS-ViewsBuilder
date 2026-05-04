@@ -8,7 +8,7 @@ from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_L
 
 class Aggregator:
     def __init__(self, input_data_path: Path) -> None:
-        self.input_data_path = input_data_path
+        self.output_data_path = output_data_path
         self._part_counter = 0
 
     def aggregate_metric_terms(
