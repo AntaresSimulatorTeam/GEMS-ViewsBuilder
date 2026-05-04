@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import polars as pl
+from pytest import approx
 
 from gems_views_builder.aggregator import Aggregator
 from gems_views_builder.catalog import TermsOperator, TimeOperator
@@ -9,7 +10,6 @@ from gems_views_builder.catalog import TermsOperator, TimeOperator
 def _joined_df(values: list[float]) -> pl.LazyFrame:
     """
     Minimal columns required by Aggregator.aggregate_metric_terms().
-
     """
     return pl.DataFrame(
         {
@@ -31,7 +31,7 @@ def test_aggregate_metric_terms_sum(tmp_path: Path) -> None:
 
     df = pl.read_parquet(out_path)
     assert df.shape[0] == 1
-    assert df["granular_metric_value"][0] == 5.0
+    assert approx(df["granular_metric_value"][0]) == 5.0
 
 
 def test_aggregate_metric_terms_avg(tmp_path: Path) -> None:
@@ -40,7 +40,7 @@ def test_aggregate_metric_terms_avg(tmp_path: Path) -> None:
 
     df = pl.read_parquet(out_path)
     assert df.shape[0] == 1
-    assert df["granular_metric_value"][0] == 2.5
+    assert approx(df["granular_metric_value"][0]) == 2.5
 
 
 def test_aggregate_metric_temporally_sum_and_part_counter(tmp_path: Path) -> None:
@@ -51,7 +51,7 @@ def test_aggregate_metric_temporally_sum_and_part_counter(tmp_path: Path) -> Non
     part0 = agg.aggregate_metric_temporally(metric_view_path, TimeOperator.SUM, metric_id="M")
     df0 = pl.read_parquet(part0)
     assert df0.shape[0] == 1
-    assert df0["metric_value"][0] == 3.0
+    assert approx(df0["metric_value"][0]) == 3.0
 
     part1 = agg.aggregate_metric_temporally(metric_view_path, TimeOperator.SUM, metric_id="M")
     assert part1 != part0

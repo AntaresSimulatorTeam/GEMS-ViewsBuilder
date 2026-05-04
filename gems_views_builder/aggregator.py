@@ -15,9 +15,7 @@ class Aggregator:
         self, joined_dataframe: pl.LazyFrame, metric_term_operator: TermsOperator, metric_id: str
     ) -> Path:
         """
-        2b step from POC
-        2b-1 Right join TIME_FILTERED_SIMULATION_TABLE with METRIC_STRUCTURE_TABLE on component and output
-        2b-2 Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
+        Step 2.B from POC[Computing the metric]: Right join TIME_FILTERED_SIMULATION_TABLE with METRIC_STRUCTURE_TABLE on component and output
         """
         value_agg = pl.col("value").sum() if metric_term_operator == TermsOperator.SUM else pl.col("value").mean()
         metric_view = (
@@ -64,6 +62,9 @@ class Aggregator:
     def aggregate_metric_temporally(
         self, metric_view_parquet_path: Path, metric_time_operator: TimeOperator, metric_id: str
     ) -> Path:
+        """
+        Step 2.C from POC[temporal aggregation]: Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
+        """
         metric_view = pl.scan_parquet(metric_view_parquet_path)
         time_agg = (
             pl.col("granular_metric_value").sum()
