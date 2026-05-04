@@ -7,7 +7,7 @@ from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_L
 
 
 class Aggregator:
-    def __init__(self, input_data_path: Path) -> None:
+    def __init__(self, output_data_path: Path) -> None:
         self.output_data_path = output_data_path
         self._part_counter = 0
 
@@ -50,7 +50,7 @@ class Aggregator:
                 ]
             )
         )
-        out_dir = self.input_data_path / "views" / "metric_view"
+        out_dir = self.output_data_path / "views" / "metric_view"
         out_dir.mkdir(parents=True, exist_ok=True)
         out_path = out_dir / f"{metric_id}.parquet"
         metric_view.sink_parquet(
@@ -96,7 +96,7 @@ class Aggregator:
         )
         # Business view is meant to be created once, then appended to on future runs.
         # We implement this by writing a new parquet "part" file each time.
-        dataset_dir = self.input_data_path / "temporal_aggregation"
+        dataset_dir = self.output_data_path / "temporal_aggregation"
         dataset_dir.mkdir(parents=True, exist_ok=True)
 
         out_path = dataset_dir / f"{metric_id}-{self._part_counter}.parquet"
