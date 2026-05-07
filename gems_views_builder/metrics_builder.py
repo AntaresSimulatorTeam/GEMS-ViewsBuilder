@@ -11,14 +11,15 @@
 # This file is part of the Antares project.
 
 from dataclasses import dataclass
-from typing import Any
 
 import polars as pl
-
+from gems.study.system import Component
 from gems_views_builder.catalog import Catalog, Metric
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.system import InputSystem
 from gems_views_builder.taxonomy import Taxonomy
+
+from typing import Any, Dict
 
 _METRIC_STRUCTURE_SCHEMA = pl.Schema(
     {
@@ -39,29 +40,51 @@ class MetricStructureTable:
     dataframe: pl.DataFrame
 
 
-def _component_property_value(component: Any, key: str) -> Any:
-    props = getattr(component, "properties", None)
-    if props is None:
-        return None
-    if isinstance(props, dict):
-        return props.get(key)
-    if isinstance(props, list):
-        for item in props:
-            k = getattr(item, "key", None) if not isinstance(item, dict) else item.get("key")
-            if k != key:
-                continue
-            return getattr(item, "value", None) if not isinstance(item, dict) else item.get("value")
-        return None
-    return None
+def _component_properties(component: Component) -> dict[str, str]:
+    """
+    Normalize `component.properties` to a dict[str,str].
+
+    Depending on Gems parser versions, properties may be:
+    - dict-like {key: value}
+    - list-like of items with (id|key, value) fields
+    """
+    raw: Any = getattr(component, "properties", None) or {}
+    if isinstance(raw, dict):
+        return {k: str(v) for k, v in raw.items()}
+    out: dict[str, str] = {}
+    for item in raw:
+        if isinstance(item, dict):
+            k = item.get("id") or item.get("key")
+            v = item.get("value")
+        else:
+            k = getattr(item, "id", None) or getattr(item, "key", None)
+            v = getattr(item, "value", None)
+        if isinstance(k, str) and v is not None:
+            out[k] = str(v)
+    return out
 
 
-def _component_matches_property_filter(component: Any, clause: tuple[str, str] | None) -> bool:
-    """If the metric defines a filter, the component must have that key with that value."""
-    if clause is None:
+def _component_property_value(component: Component, key: str) -> str | None:
+    return _component_properties(component).get(key)
+
+
+def _component_matches_property_filter(component: Component, clauses: tuple[tuple[str, str], ...] | None) -> bool:
+    """If the metric defines filters, the component must match all (key,value) clauses."""
+    if clauses is None:
         return True
-    key, value = clause
-    actual: object = _component_property_value(component, key)
-    return actual == value
+    props = _component_properties(component)
+    return all(props.get(k) == v for k, v in clauses)
+
+
+def _format_breakdown_properties(props: dict[str, str], keys: tuple[str, ...] | None) -> str:
+    if not keys:
+        return "{}"
+    pairs: list[str] = []
+    for k in keys:
+        if k not in props:
+            return "{}"
+        pairs.append(f"({k},{props[k]})")
+    return "{" + ",".join(pairs) + "}"
 
 
 class MetricStructureBuilder:
@@ -87,22 +110,25 @@ class MetricStructureBuilder:
                 qualified_ref = f"{self.model_library.id}.{model_id}"
                 for component_id in self.system.get_instances_by_model(qualified_ref):
                     component = self.system.get_component(component_id)
+                    
+                    # # Decide does the component matches the filter, if yes they will contribute to the metric
                     if _component_matches_property_filter(component, self.metric.filter):
                         metric_location = self.system.get_location(component_id, term.location_ports)
                         loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
 
-                        for breakdown_property in self.metric.breakdown_property:
-                            if breakdown_property in component.properties:       
-                                rows.append(
-                                    {
-                                        "metric_id": self.metric.id,
-                                        "component": component_id,
-                                        "metric_location": loc_str,
-                                        "breakdown_properties": f"{breakdown_property}:{component.properties[breakdown_property]}",
-                                        "output": term.output_id,
-                                        "weight_output_id": 1,
-                                    }
-                                )
+                        props = _component_properties(component)
+                        breakdown_properties = _format_breakdown_properties(props, self.metric.breakdown)
+                        rows.append(
+                            {
+                                "metric_id": self.metric.id,
+                                "component": component_id,
+                                "metric_location": loc_str,
+                                "breakdown_properties": breakdown_properties,
+                                "output": term.output_id,
+                                "weight_output_id": 1,
+                            }
+                        )
+                        
         if not rows:
             return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
         return MetricStructureTable(pl.DataFrame(rows, schema=_METRIC_STRUCTURE_SCHEMA))

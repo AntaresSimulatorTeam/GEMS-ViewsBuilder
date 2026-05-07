@@ -13,7 +13,7 @@
 from pathlib import Path
 
 import pytest
-from gems.study.parsing import SystemSchema as ParsedSystem  # type: ignore[import-untyped]
+from gems.study.parsing import SystemSchema
 from gems.study.parsing import parse_yaml_components
 
 from gems_views_builder import InputSystem as GemsViewsInputSystem
@@ -25,7 +25,7 @@ def test_input_system_using(test_dataset_dir: Path) -> None:
     with open(input_system_path, encoding="utf-8") as f:
         input_system = parse_yaml_components(f)
     assert input_system is not None
-    assert isinstance(input_system, ParsedSystem)
+    assert isinstance(input_system, SystemSchema)
 
 
 def test_locating_function_ambiguous_ports_xfail(test_dataset_dir: Path) -> None:

@@ -48,13 +48,27 @@ class PropertyFilter(ViewBuilderBasedModel):
     value: str
 
 
+class BreakdownKey(ViewBuilderBasedModel):
+    key: str
+
+
+class BreakdownProperty(ViewBuilderBasedModel):
+    """Legacy single breakdown clause (key,value)."""
+
+    key: str
+    value: str
+
 class MetricData(ViewBuilderBasedModel):
     id: str
     terms: list[TermData]
     terms_operator: TermsOperator
     time_operator: TimeOperator
-    breakdown_property: str | None = None
-    filter: PropertyFilter | None = None
+    # New schema: group-by keys
+    breakdown: list[BreakdownKey] | None = None
+    # Legacy schema: single clause
+    breakdown_property: BreakdownProperty | None = None
+    # New schema: list of clauses; legacy: a single clause
+    filter: list[PropertyFilter] | PropertyFilter | None = None
 
 
 class CatalogLocationData(ViewBuilderBasedModel):
@@ -82,8 +96,8 @@ class Metric:
     terms: list[Term]
     terms_operator: TermsOperator
     time_operator: TimeOperator
-    breakdown_property: str | None = None
-    filter: tuple[str, str] | None = None
+    breakdown: tuple[str, ...] | None = None
+    filter: tuple[tuple[str, str], ...] | None = None
 
 
 @dataclass
@@ -104,16 +118,31 @@ def _to_term(term_data: TermData) -> Term:
 
 
 def _to_metric(metric_data: MetricData) -> Metric:
-    filter: tuple[str, str] | None = None
-    if metric_data.filter is not None:
-        filter = (metric_data.filter.key, metric_data.filter.value)
+    filter_clauses: tuple[tuple[str, str], ...] | None
+    if metric_data.filter is None:
+        filter_clauses = None
+    elif isinstance(metric_data.filter, list):
+        filter_clauses = tuple((f.key, f.value) for f in metric_data.filter)
+    else:
+        filter_clauses = ((metric_data.filter.key, metric_data.filter.value),)
+
+    breakdown: tuple[str, ...] | None = None
+    if metric_data.breakdown is not None:
+        breakdown = tuple(b.key for b in metric_data.breakdown)
+    elif metric_data.breakdown_property is not None:
+        # Legacy: treat breakdown_property as a filter clause on that key and
+        # use the key itself as breakdown dimension.
+        breakdown = (metric_data.breakdown_property.key,)
+        filter_clauses = tuple(
+            list(filter_clauses or ()) + [(metric_data.breakdown_property.key, metric_data.breakdown_property.value)]
+        )
     return Metric(
         id=metric_data.id,
         terms=[_to_term(term) for term in metric_data.terms],
         terms_operator=metric_data.terms_operator,
         time_operator=metric_data.time_operator,
-        breakdown_property=metric_data.breakdown_property,
-        filter=filter,
+        breakdown=breakdown,
+        filter=filter_clauses,
     )
 
 
