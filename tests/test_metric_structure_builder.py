@@ -30,7 +30,7 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
     test_3 = test_files_root / "test_3"
     system = InputSystem.from_file(test_3 / "system.yml")
     taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
-    library = ModelLibrary(test_3 / "library.yml")
+    library = ModelLibrary.load(test_3 / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     return {
         "system": system,

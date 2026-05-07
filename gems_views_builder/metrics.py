@@ -63,8 +63,26 @@ class ViewConfig:
     """
 
     def __init__(self, config_file_path: Path) -> None:
-        parsed = self._load_view_file(config_file_path)
+        """
+        Cheap constructor: keep only the path.
+
+        Use `ViewConfig.load(...)` (or `load_into_self()`) to perform YAML I/O and validation.
+        """
+        self.file = config_file_path
         self.input_data_path = config_file_path.parent
+        self.id = ""
+        self.location_taxonomy_category: str | None = None
+        self.calendar_id: str | None = None
+        self.catalog_ids: list[str] = []
+        self.time_aggregation: TimeAggregation | None = None
+        self.catalog_to_metrics: dict[str, list[str]] = {}
+
+    @classmethod
+    def load(cls, config_file_path: Path) -> "ViewConfig":
+        return cls(config_file_path).load_into_self()
+
+    def load_into_self(self) -> "ViewConfig":
+        parsed = self._load_view_file(self.file)
         self.id = parsed.id
         self.location_taxonomy_category = next(
             (item.taxonomy_category for item in parsed.scope if item.taxonomy_category),
@@ -75,11 +93,12 @@ class ViewConfig:
                 f"view_config.yml '{parsed.id}': no 'taxonomy-category' found in scope. "
                 f"At least one scope entry must define a taxonomy-category"
             )
-        self.calendar_id: str | None = next((item.calendar for item in parsed.scope if item.calendar), None)
-        self.catalog_ids: list[str] = [c.id for c in parsed.catalog]
-        self.time_aggregation: TimeAggregation | None = parsed.aggregation[0].time if parsed.aggregation else None
+        self.calendar_id = next((item.calendar for item in parsed.scope if item.calendar), None)
+        self.catalog_ids = [c.id for c in parsed.catalog]
+        self.time_aggregation = parsed.aggregation[0].time if parsed.aggregation else None
         # Internal helper: grouped by catalog
-        self.catalog_to_metrics: dict[str, list[str]] = self._group_metrics_by_catalog(parsed.metrics)
+        self.catalog_to_metrics = self._group_metrics_by_catalog(parsed.metrics)
+        return self
 
     def _group_metrics_by_catalog(self, metrics: list[MetricRef]) -> dict[str, list[str]]:
         catalog_to_metrics: dict[str, list[str]] = defaultdict(list)

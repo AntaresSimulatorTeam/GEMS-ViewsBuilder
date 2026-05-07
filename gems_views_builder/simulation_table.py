@@ -55,12 +55,29 @@ class SimulationTable:
 
     def __init__(self, simulation_table_file: Path) -> None:
         """
-        simulation_table_file: Path to the simulation_table.parquet file
+        Cheap constructor: keep only the file path and metadata.
+
+        Use `SimulationTable.load(...)` to perform I/O and schema validation.
         """
         validate_file_format(simulation_table_file)
+        self.file = simulation_table_file
         self.id = simulation_table_file.stem
-        self.dataframe = pl.scan_parquet(simulation_table_file)
+        self._dataframe: pl.LazyFrame | None = None
+
+    @property
+    def dataframe(self) -> pl.LazyFrame:
+        if self._dataframe is None:
+            raise RuntimeError("SimulationTable is not loaded. Call SimulationTable.load(...) first.")
+        return self._dataframe
+
+    @classmethod
+    def load(cls, simulation_table_file: Path) -> "SimulationTable":
+        return cls(simulation_table_file).load_into_self()
+
+    def load_into_self(self) -> "SimulationTable":
+        self._dataframe = pl.scan_parquet(self.file)
         self._check_simulation_table_columns()
+        return self
 
     def _check_simulation_table_columns(self) -> None:
         actual = frozenset(self.dataframe.collect_schema().names())
@@ -103,7 +120,7 @@ class SimulationTable:
         )
         time_dep_path.unlink()
         non_time_dep_path.unlink()
-        return FilteredSimulationTable(output_path)
+        return FilteredSimulationTable.load(output_path)
 
 
 class FilteredSimulationTable:
@@ -117,9 +134,24 @@ class FilteredSimulationTable:
         filtered_simulation_table_file: Path to the filtered simulation_table CSV
         """
         validate_file_format(filtered_simulation_table_file)
+        self.file = filtered_simulation_table_file
         self.id = filtered_simulation_table_file.stem
-        self.dataframe = pl.scan_parquet(filtered_simulation_table_file)
+        self._dataframe: pl.LazyFrame | None = None
+
+    @property
+    def dataframe(self) -> pl.LazyFrame:
+        if self._dataframe is None:
+            raise RuntimeError("FilteredSimulationTable is not loaded. Call FilteredSimulationTable.load(...) first.")
+        return self._dataframe
+
+    @classmethod
+    def load(cls, filtered_simulation_table_file: Path) -> "FilteredSimulationTable":
+        return cls(filtered_simulation_table_file).load_into_self()
+
+    def load_into_self(self) -> "FilteredSimulationTable":
+        self._dataframe = pl.scan_parquet(self.file)
         self._check_filtered_columns()
+        return self
 
     def _check_filtered_columns(self) -> None:
         actual = frozenset(self.dataframe.collect_schema().names())

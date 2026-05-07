@@ -25,7 +25,7 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     calendar_file = test_dataset_dir / "calendar_file.csv"
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     calendar = load_calendar(calendar_file)
-    simulation_table = SimulationTable(simulation_table_file)
+    simulation_table = SimulationTable.load(simulation_table_file)
     out_file = tmp_path / "filtered_logical.parquet"
 
     filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
@@ -61,7 +61,7 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     base_sim_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
 
     calendar = load_calendar(calendar_file)
-    base_sim_table = SimulationTable(base_sim_table_file)
+    base_sim_table = SimulationTable.load(base_sim_table_file)
 
     # Duplicate rows with block=2 so they do not match calendar (block=1)
     base_df = base_sim_table.dataframe.collect(engine="streaming")
@@ -69,7 +69,7 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     duplicated = base_df.with_columns(pl.lit(2).cast(block_dtype).alias("block"))
     sim_path_block2 = tmp_path / "simulation_table_block2_only.parquet"
     duplicated.write_parquet(sim_path_block2)
-    simulation_table = SimulationTable(sim_path_block2)
+    simulation_table = SimulationTable.load(sim_path_block2)
 
     out_file = tmp_path / "filtered_empty.parquet"
     filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
@@ -89,7 +89,7 @@ def test_filter_simulation_table_writes_parquet(
     calendar_file = test_dataset_dir / "calendar_file.csv"
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     calendar = load_calendar(calendar_file)
-    simulation_table = SimulationTable(simulation_table_file)
+    simulation_table = SimulationTable.load(simulation_table_file)
     out_file = tmp_path / f"filtered_{calendar_file.stem}.parquet"
 
     filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
