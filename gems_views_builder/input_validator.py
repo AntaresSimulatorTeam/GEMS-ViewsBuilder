@@ -6,7 +6,14 @@ PREFIX_FILES = {"calendar": ".csv", "simulation_table": ".parquet"}
 
 class InputValidator:
     """
-    Validator of the input data
+    Expected files:
+    - taxonomy.yml
+    - view_config.yml
+    - library.yml
+    - system.yml
+    - simulation_table.parquet
+    - calendar.csv
+    - catalogs directory with 1 * catalogs without strict name convention for now
     """
 
     def __init__(self, input_data_path: Path) -> None:
@@ -53,16 +60,6 @@ class InputValidator:
                 raise ValueError(f"File '{match.name}' starting with '{prefix}' must be a '{expected_suffix}' file")
 
     def validate(self) -> None:
-        """
-        Expected files:
-        - taxonomy.yml
-        - view_config.yml
-        - library.yml
-        - system.yml
-        - simulation_table.parquet
-        - calendar.csv
-        - catalogs directory with 1 * catalogs without strict name convention for now
-        """
         self._check_input_data_path()
 
         self._check_catalogs_directory()

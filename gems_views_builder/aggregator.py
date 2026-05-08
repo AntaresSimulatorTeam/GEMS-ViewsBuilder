@@ -7,17 +7,27 @@ from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_L
 
 
 class Aggregator:
-    def __init__(self, input_data_path: Path) -> None:
-        self.input_data_path = input_data_path
+    def __init__(self, output_data_path: Path) -> None:
+        self.output_data_path = output_data_path
         self._part_counter = 0
+        self._temporal_aggregation_dir = self._create_temporal_aggregation_directory()
+        self._metric_view_dir = self._create_metric_view_directory()
+
+    def _create_temporal_aggregation_directory(self) -> Path:
+        temporal_aggregation_dir = self.output_data_path / "temporal_aggregation"
+        temporal_aggregation_dir.mkdir(parents=True, exist_ok=True)
+        return self.output_data_path / "temporal_aggregation"
+
+    def _create_metric_view_directory(self) -> Path:
+        metric_view_dir = self.output_data_path / "views" / "metric_view"
+        metric_view_dir.mkdir(parents=True, exist_ok=True)
+        return metric_view_dir
 
     def aggregate_metric_terms(
         self, joined_dataframe: pl.LazyFrame, metric_term_operator: TermsOperator, metric_id: str
     ) -> Path:
         """
-        2b step from POC
-        2b-1 Right join TIME_FILTERED_SIMULATION_TABLE with METRIC_STRUCTURE_TABLE on component and output
-        2b-2 Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
+        Step 2.B from POC[Computing the metric]: Right join TIME_FILTERED_SIMULATION_TABLE with METRIC_STRUCTURE_TABLE on component and output
         """
         value_agg = pl.col("value").sum() if metric_term_operator == TermsOperator.SUM else pl.col("value").mean()
         metric_view = (
@@ -50,9 +60,7 @@ class Aggregator:
                 ]
             )
         )
-        out_dir = self.input_data_path / "views" / "metric_view"
-        out_dir.mkdir(parents=True, exist_ok=True)
-        out_path = out_dir / f"{metric_id}.parquet"
+        out_path = self._metric_view_dir / f"{metric_id}.parquet"
         metric_view.sink_parquet(
             out_path,
             compression=PARQUET_COMPRESSION,
@@ -64,6 +72,9 @@ class Aggregator:
     def aggregate_metric_temporally(
         self, metric_view_parquet_path: Path, metric_time_operator: TimeOperator, metric_id: str
     ) -> Path:
+        """
+        Step 2.C from POC[temporal aggregation]: Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
+        """
         metric_view = pl.scan_parquet(metric_view_parquet_path)
         time_agg = (
             pl.col("granular_metric_value").sum()
@@ -96,10 +107,7 @@ class Aggregator:
         )
         # Business view is meant to be created once, then appended to on future runs.
         # We implement this by writing a new parquet "part" file each time.
-        dataset_dir = self.input_data_path / "temporal_aggregation"
-        dataset_dir.mkdir(parents=True, exist_ok=True)
-
-        out_path = dataset_dir / f"{metric_id}-{self._part_counter}.parquet"
+        out_path = self._temporal_aggregation_dir / f"{metric_id}-{self._part_counter}.parquet"
         self._part_counter += 1
         view.sink_parquet(
             out_path,
