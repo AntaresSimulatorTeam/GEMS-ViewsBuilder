@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import polars as pl
-from gems.study.system import Component  # type: ignore[import-untyped]
+from gems.study import Component  # type: ignore[import-untyped]
 
 from gems_views_builder.catalog import Catalog, Metric
 from gems_views_builder.library import ModelLibrary

@@ -13,47 +13,15 @@
 """Model library YAML with explicit local models"""
 
 from pathlib import Path
+from typing import cast
 
-import yaml
 from gems.model.parsing import (  # type: ignore
-    ConstraintSchema,
-    ExtraOutputSchema,
-    ModelPortSchema,
-    ObjectiveContributionSchema,
-    ParameterSchema,
-    PortFieldDefinitionSchema,
+    LibrarySchema,
+    ModelSchema,
     PortTypeSchema,
-    VariableSchema,
+    parse_yaml_library,
 )
-from pydantic import Field
-
-from gems_views_builder.base_model import ViewBuilderBasedModel
-
-
-class ModelDefinition(ViewBuilderBasedModel):
-    """Local model definition used by ViewsBuilder."""
-
-    id: str
-    description: str | None = None
-    parameters: list[ParameterSchema] = Field(default_factory=list)
-    variables: list[VariableSchema] = Field(default_factory=list)
-    ports: list[ModelPortSchema] = Field(default_factory=list)
-    port_field_definitions: list[PortFieldDefinitionSchema] = Field(default_factory=list)
-    constraints: list[ConstraintSchema] = Field(default_factory=list)
-    binding_constraints: list[ConstraintSchema] = Field(default_factory=list)
-    objective_contributions: list[ObjectiveContributionSchema] = Field(default_factory=list)
-    extra_outputs: list[ExtraOutputSchema] = Field(default_factory=list)
-
-    taxonomy_category: str | None = Field(default=None, alias="taxonomy-category")
-
-
-class LibraryData(ViewBuilderBasedModel):
-    """Library root model for `library` yaml section."""
-
-    id: str
-    description: str | None = None
-    port_types: list[PortTypeSchema] = Field(default_factory=list)
-    models: list[ModelDefinition] = Field(default_factory=list)
+from gems.model.resolve_library import resolve_library  # type: ignore[import-untyped]
 
 
 class ModelLibrary:
@@ -73,34 +41,44 @@ class ModelLibrary:
         self.id = ""
         self.description = ""
         self.port_types: list[PortTypeSchema] = []
-        self.models: dict[str, ModelDefinition] = {}
+        self.models: dict[str, ModelSchema] = {}
         self.models_by_taxonomy_category: dict[str, list[str]] = {}
+        self.library_schema: LibrarySchema | None = None
 
     @classmethod
     def load(cls, library_file_path: Path) -> "ModelLibrary":
         return cls(library_file_path).load_into_self()
 
     def load_into_self(self) -> "ModelLibrary":
-        parsed = self._load_library_file(self.file)
+        parsed = self._load_library_schema(self.file)
+        self.library_schema = parsed
+
         self.id = parsed.id
         self.description = parsed.description or ""
         self.port_types = parsed.port_types
         self.models = {m.id: m for m in parsed.models}
         self.models_by_taxonomy_category = {}
-        for m in parsed.models:
-            if not m.taxonomy_category:
+        for m in self.models.values():
+            taxonomy_category = getattr(m, "taxonomy_category", None)
+            if not taxonomy_category:
                 continue
-            self.models_by_taxonomy_category.setdefault(m.taxonomy_category, []).append(m.id)
+            self.models_by_taxonomy_category.setdefault(taxonomy_category, []).append(m.id)
         return self
 
-    def _load_library_file(self, library_file_path: Path) -> LibraryData:
+    def _load_library_schema(self, library_file_path: Path) -> LibrarySchema:
         with open(library_file_path, encoding="utf-8") as f:
-            raw = yaml.safe_load(f)
-        if "library" not in raw:
-            raise ValueError(f"library.yml file {library_file_path} is missing the 'library' key at the root")
-        return LibraryData.model_validate(raw["library"])
+            return parse_yaml_library(f)
 
-    def get_model(self, model_id: str) -> ModelDefinition | None:
+    def resolve_libraries(self) -> dict[str, object]:
+        """
+        Resolve this library via GemsPy to obtain `dict[library_id, Library]`
+        suitable for resolving a system (`resolve_system`).
+        """
+        if self.library_schema is None:
+            raise RuntimeError("ModelLibrary is not loaded (missing LibrarySchema)")
+        return cast(dict[str, object], resolve_library([self.library_schema]))
+
+    def get_model(self, model_id: str) -> ModelSchema | None:
         """Return the full model definition, or None if not found."""
         return self.models.get(model_id)
 

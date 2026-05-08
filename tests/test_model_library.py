@@ -16,7 +16,6 @@ import pytest
 from gems.model.parsing import ModelPortSchema, ParameterSchema, VariableSchema  # type: ignore[import-untyped]
 
 from gems_views_builder import (
-    ModelDefinition,
     ModelLibrary,
 )
 
@@ -43,7 +42,8 @@ def test_model_library_models_are_typed(test_dataset_dir: Path) -> None:
         pytest.skip("No model library file found (expected library.yml)")
     library = ModelLibrary.load(library_path)
     for model in library.models.values():
-        assert isinstance(model, ModelDefinition)
+        # GemsPy parsing schema
+        assert hasattr(model, "id")
         assert isinstance(model.id, str)
 
 

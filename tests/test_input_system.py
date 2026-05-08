@@ -16,6 +16,7 @@ import pytest
 from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore[import-untyped]
 
 from gems_views_builder import InputSystem as GemsViewsInputSystem
+from gems_views_builder.library import ModelLibrary
 
 
 def test_input_system_using(test_dataset_dir: Path) -> None:
@@ -31,7 +32,8 @@ def test_locating_function_ambiguous_ports_xfail(test_dataset_dir: Path) -> None
     """Datasets with multiple peers on one (component, port) — expect xfail when API raises."""
     system_path = test_dataset_dir / "system.yml"
     assert system_path.exists(), f"System file not found: {system_path}"
-    system = GemsViewsInputSystem.from_file(system_path)
+    library = ModelLibrary.load(test_dataset_dir / "library.yml")
+    system = GemsViewsInputSystem.load(system_path, library)
 
     if not system.connections:
         pytest.skip("No connections in this dataset's system.yml")
@@ -54,7 +56,8 @@ def test_locating_function(test_dataset_dir: Path) -> None:
     """LOCATING_FUNCTION: None -> component_id, string -> peer id, tuple -> tuple of peer ids."""
     system_path = test_dataset_dir / "system.yml"
     assert system_path.exists(), f"System file not found: {system_path}"
-    system = GemsViewsInputSystem.from_file(system_path)
+    library = ModelLibrary.load(test_dataset_dir / "library.yml")
+    system = GemsViewsInputSystem.load(system_path, library)
 
     # location_port is None -> return component_id (generic)
     assert len(system.components) > 0

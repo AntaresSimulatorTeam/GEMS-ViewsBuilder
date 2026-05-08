@@ -18,17 +18,12 @@ class Loader:
 
     def load_into_self(self) -> "Loader":
         """Perform all input data I/O and populate attributes."""
-        self.system = self._load_system()
         self.taxonomy = load_taxonomy(self.input_data_path / "taxonomy.yml")
         self.view_config = ViewConfig.load(self.input_data_path / "view_config.yml")
         self.simulation_table = SimulationTable.load(
             next(self.input_data_path.glob("simulation_table*.parquet"))
         )  # # we could have only one simulation table at this phase of development
-        self.model_library = ModelLibrary.load(
-            self.input_data_path / "library.yml"
-        )  # # must be named like this for now, in future when we enable user to have more than one libraries we should decide pattern to use
-        return self
-
-    def _load_system(self) -> InputSystem:
+        self.model_library = ModelLibrary.load(self.input_data_path / "library.yml")
         system_path = next(self.input_data_path.glob("system*"))
-        return InputSystem.from_file(system_path)
+        self.system = InputSystem.load(system_path, self.model_library)
+        return self

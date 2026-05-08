@@ -23,8 +23,6 @@ from gems_views_builder.catalog import (
     load_catalog,
 )
 from gems_views_builder.library import (
-    LibraryData,
-    ModelDefinition,
     ModelLibrary,
 )
 from gems_views_builder.metrics import TimeAggregation, ViewConfig
@@ -46,8 +44,6 @@ __all__ = [
     "Term",
     "TermsOperator",
     "TimeOperator",
-    "LibraryData",
-    "ModelDefinition",
     "ModelLibrary",
     "Taxonomy",
     "TaxonomyCategory",

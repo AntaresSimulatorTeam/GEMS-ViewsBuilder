@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from gems.study.system import Component  # type: ignore[import-untyped]
+from gems.study import Component  # type: ignore[import-untyped]
 
 from gems_views_builder.catalog import get_catalog_metric, load_catalog
 from gems_views_builder.library import ModelLibrary
@@ -29,9 +29,9 @@ from gems_views_builder.taxonomy import load_taxonomy
 @pytest.fixture(scope="module")
 def test_3_components(test_files_root: Path) -> dict[str, Any]:
     test_3 = test_files_root / "test_3"
-    system = InputSystem.from_file(test_3 / "system.yml")
     taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
     library = ModelLibrary.load(test_3 / "library.yml")
+    system = InputSystem.load(test_3 / "system.yml", library)
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     return {
         "system": system,

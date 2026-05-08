@@ -17,6 +17,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder.catalog import get_catalog_metric, load_catalog
+from gems_views_builder.library import ModelLibrary
 from gems_views_builder.system import InputSystem
 from gems_views_builder.views import ViewBuilder
 
@@ -71,7 +72,8 @@ def test_prod_busa_row_count(view_run: tuple[pl.DataFrame, Path]) -> None:
 
     catalog = load_catalog(dst / "catalogs" / "catalog.yml")
     metric = get_catalog_metric(catalog, "PROD")
-    system = InputSystem.from_file(dst / "system.yml")
+    library = ModelLibrary.load(dst / "library.yml")
+    system = InputSystem.load(dst / "system.yml", library)
     included = [
         cid
         for cid in ("generator_A1", "generator_A2")
@@ -90,7 +92,8 @@ def test_prod_busa_values(view_run: tuple[pl.DataFrame, Path]) -> None:
     rows = _metric_at(view_result, "PROD", "busA")
     catalog = load_catalog(dst / "catalogs" / "catalog.yml")
     metric = get_catalog_metric(catalog, "PROD")
-    system = InputSystem.from_file(dst / "system.yml")
+    library = ModelLibrary.load(dst / "library.yml")
+    system = InputSystem.load(dst / "system.yml", library)
     included = [
         cid
         for cid in ("generator_A1", "generator_A2")
@@ -109,7 +112,8 @@ def test_prod_busb_row_count(view_run: tuple[pl.DataFrame, Path]) -> None:
     rows = _metric_at(view_result, "PROD", "busB")
     catalog = load_catalog(dst / "catalogs" / "catalog.yml")
     metric = get_catalog_metric(catalog, "PROD")
-    system = InputSystem.from_file(dst / "system.yml")
+    library = ModelLibrary.load(dst / "library.yml")
+    system = InputSystem.load(dst / "system.yml", library)
     if not _component_matches_filters(metric.filter, system.get_component("generator_B1")):
         assert len(rows) == 0
         return
@@ -122,7 +126,8 @@ def test_prod_busb_values(view_run: tuple[pl.DataFrame, Path]) -> None:
     rows = _metric_at(view_result, "PROD", "busB")
     catalog = load_catalog(dst / "catalogs" / "catalog.yml")
     metric = get_catalog_metric(catalog, "PROD")
-    system = InputSystem.from_file(dst / "system.yml")
+    library = ModelLibrary.load(dst / "library.yml")
+    system = InputSystem.load(dst / "system.yml", library)
     if not _component_matches_filters(metric.filter, system.get_component("generator_B1")):
         assert rows.is_empty()
         return
@@ -140,7 +145,8 @@ def test_load_busa_value(view_run: tuple[pl.DataFrame, Path]) -> None:
     rows = _metric_at(view_result, "LOAD", "busA")
     catalog = load_catalog(dst / "catalogs" / "catalog.yml")
     metric = get_catalog_metric(catalog, "LOAD")
-    system = InputSystem.from_file(dst / "system.yml")
+    library = ModelLibrary.load(dst / "library.yml")
+    system = InputSystem.load(dst / "system.yml", library)
     if not _component_matches_filters(metric.filter, system.get_component("load_AL")):
         assert len(rows) == 0
         return
@@ -166,7 +172,8 @@ def test_balance_busa_values(view_run: tuple[pl.DataFrame, Path]) -> None:
     rows = _metric_at(view_result, "BALANCE", "busA")
     catalog = load_catalog(dst / "catalogs" / "catalog.yml")
     metric = get_catalog_metric(catalog, "BALANCE")
-    system = InputSystem.from_file(dst / "system.yml")
+    library = ModelLibrary.load(dst / "library.yml")
+    system = InputSystem.load(dst / "system.yml", library)
     if not _component_matches_filters(metric.filter, system.get_component("link_link_AB")):
         assert len(rows) == 0
         return
@@ -181,7 +188,8 @@ def test_balance_busb_values(view_run: tuple[pl.DataFrame, Path]) -> None:
     rows = _metric_at(view_result, "BALANCE", "busB")
     catalog = load_catalog(dst / "catalogs" / "catalog.yml")
     metric = get_catalog_metric(catalog, "BALANCE")
-    system = InputSystem.from_file(dst / "system.yml")
+    library = ModelLibrary.load(dst / "library.yml")
+    system = InputSystem.load(dst / "system.yml", library)
     if not _component_matches_filters(metric.filter, system.get_component("link_link_AB")):
         assert len(rows) == 0
         return
