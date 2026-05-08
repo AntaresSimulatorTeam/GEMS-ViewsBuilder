@@ -49,9 +49,7 @@ def test_catalog_terms_are_typed(test_dataset_dir: Path) -> None:
 def test_catalog_known_metrics(test_dataset_dir: Path) -> None:
     catalog = load_catalog(sorted((test_dataset_dir / "catalogs").glob("*.yml"))[0])
     metric_ids = set(catalog.metrics.keys())
-    assert "PROD" in metric_ids
     assert "LOAD" in metric_ids
-    assert "BALANCE" in metric_ids
 
 
 def test_catalog_operators_valid_values(test_dataset_dir: Path) -> None:

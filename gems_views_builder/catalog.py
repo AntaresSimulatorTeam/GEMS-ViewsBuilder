@@ -58,6 +58,7 @@ class BreakdownProperty(ViewBuilderBasedModel):
     key: str
     value: str
 
+
 class MetricData(ViewBuilderBasedModel):
     id: str
     terms: list[TermData]

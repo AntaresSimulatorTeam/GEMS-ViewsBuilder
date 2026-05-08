@@ -11,15 +11,15 @@
 # This file is part of the Antares project.
 
 from dataclasses import dataclass
+from typing import Any
 
 import polars as pl
-from gems.study.system import Component
+from gems.study.system import Component  # type: ignore[import-untyped]
+
 from gems_views_builder.catalog import Catalog, Metric
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.system import InputSystem
 from gems_views_builder.taxonomy import Taxonomy
-
-from typing import Any, Dict
 
 _METRIC_STRUCTURE_SCHEMA = pl.Schema(
     {
@@ -110,7 +110,7 @@ class MetricStructureBuilder:
                 qualified_ref = f"{self.model_library.id}.{model_id}"
                 for component_id in self.system.get_instances_by_model(qualified_ref):
                     component = self.system.get_component(component_id)
-                    
+
                     # # Decide does the component matches the filter, if yes they will contribute to the metric
                     if _component_matches_property_filter(component, self.metric.filter):
                         metric_location = self.system.get_location(component_id, term.location_ports)
@@ -128,7 +128,7 @@ class MetricStructureBuilder:
                                 "weight_output_id": 1,
                             }
                         )
-                        
+
         if not rows:
             return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
         return MetricStructureTable(pl.DataFrame(rows, schema=_METRIC_STRUCTURE_SCHEMA))

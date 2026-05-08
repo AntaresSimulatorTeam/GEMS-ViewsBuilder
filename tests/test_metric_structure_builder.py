@@ -14,9 +14,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from gems.study.system import Component  # type: ignore[import-untyped]
 
 from gems_views_builder.catalog import get_catalog_metric, load_catalog
-from gems.study.system import Component
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.metrics_builder import (
     MetricStructureBuilder,
@@ -84,9 +84,7 @@ def test_prod_structure_row_count(test_3_components: dict[str, Any]) -> None:
     system = test_3_components["system"]
     candidates = ["generator_A1", "generator_A2", "generator_B1"]
     expected_components = [
-        cid
-        for cid in candidates
-        if _component_matches_filters(metric.filter, system.get_component(cid))
+        cid for cid in candidates if _component_matches_filters(metric.filter, system.get_component(cid))
     ]
     assert len(df) == len(expected_components)
 
@@ -96,11 +94,7 @@ def test_prod_structure_components(test_3_components: dict[str, Any]) -> None:
     metric = get_catalog_metric(test_3_components["catalog"], "PROD")
     system = test_3_components["system"]
     candidates = ["generator_A1", "generator_A2", "generator_B1"]
-    expected = {
-        cid
-        for cid in candidates
-        if _component_matches_filters(metric.filter, system.get_component(cid))
-    }
+    expected = {cid for cid in candidates if _component_matches_filters(metric.filter, system.get_component(cid))}
     assert set(df["component"].to_list()) == expected
 
 

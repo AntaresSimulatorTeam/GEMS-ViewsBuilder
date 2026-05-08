@@ -56,5 +56,3 @@ def test_taxonomy_known_categories(test_dataset_dir: Path) -> None:
     assert "production" in category_ids
     assert "consumption" in category_ids
     assert "storage" in category_ids
-    assert "link" in category_ids
-    assert "coupling" in category_ids

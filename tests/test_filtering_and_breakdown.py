@@ -71,14 +71,15 @@ def test_production_equals_sum_by_tech_and_company_partitions(fb_view_result: pl
     prod = _at(fb_view_result, "PRODUCTION").group_by(keys).agg(pl.col("metric_value").sum().alias("v"))
 
     by_tech = _at(fb_view_result, "PRODUCTION_BY_TECH").group_by(keys).agg(pl.col("metric_value").sum().alias("v"))
-    by_company = _at(fb_view_result, "PRODUCTION_BY_COMPANY").group_by(keys).agg(
-        pl.col("metric_value").sum().alias("v")
+    by_company = (
+        _at(fb_view_result, "PRODUCTION_BY_COMPANY").group_by(keys).agg(pl.col("metric_value").sum().alias("v"))
     )
-    by_both = _at(fb_view_result, "PRODUCTION_BY_TECH_AND_COMPANY").group_by(keys).agg(
-        pl.col("metric_value").sum().alias("v")
+    by_both = (
+        _at(fb_view_result, "PRODUCTION_BY_TECH_AND_COMPANY")
+        .group_by(keys)
+        .agg(pl.col("metric_value").sum().alias("v"))
     )
 
     for other in (by_tech, by_company, by_both):
         joined = prod.join(other, on=keys, how="inner", suffix="_other").sort(keys)
         assert joined["v"].to_list() == joined["v_other"].to_list()
-

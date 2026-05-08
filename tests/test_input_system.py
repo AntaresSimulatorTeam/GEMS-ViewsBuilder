@@ -13,8 +13,7 @@
 from pathlib import Path
 
 import pytest
-from gems.study.parsing import SystemSchema
-from gems.study.parsing import parse_yaml_components
+from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore[import-untyped]
 
 from gems_views_builder import InputSystem as GemsViewsInputSystem
 

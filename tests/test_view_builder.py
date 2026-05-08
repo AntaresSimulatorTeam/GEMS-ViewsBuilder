@@ -16,9 +16,9 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.views import ViewBuilder
 from gems_views_builder.catalog import get_catalog_metric, load_catalog
 from gems_views_builder.system import InputSystem
+from gems_views_builder.views import ViewBuilder
 
 
 @pytest.fixture()

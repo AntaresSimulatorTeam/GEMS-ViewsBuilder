@@ -104,8 +104,8 @@ class InputSystem:
         return list(self._components_by_model.get(qualified_model_ref, []))
 
     def get_component(self, component_id: str) -> Component:
-        #getter = getattr(type(self._system), "get_component", None)
-        #if callable(getter):
+        # getter = getattr(type(self._system), "get_component", None)
+        # if callable(getter):
         #    return self._system.get_component(component_id)
         try:
             return self._components_by_id[component_id]
