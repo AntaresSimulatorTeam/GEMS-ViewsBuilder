@@ -1,0 +1,3723 @@
+system:
+  id: pypsa_to_gems_converter
+  model_libraries: pypsa_models
+  components:
+  - id: generator_BE0_0_CCGT
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 3198.3
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 3198.3
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 46.8135655764203
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.58
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.198
+  - id: generator_BE0_0_biomass
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 45.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 45.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 15.837851046032835
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.468
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_0_nuclear
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 2911.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 2911.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.883
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 14.022994742955417
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.326
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_0_oil
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 90.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 90.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 157.53332795503317
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.35
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.2571
+  - id: generator_BE0_1_oil
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 18.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 18.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 157.5334588566642
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.35
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.2571
+  - id: generator_BE0_2_nuclear
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 3008.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 3008.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.883
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 14.02353311789188
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.326
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_3_CCGT
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 498.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 498.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 46.812304899535064
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.5799999999999998
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.198
+  - id: generator_BE0_4_CCGT
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 513.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 513.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 46.81298809200052
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.58
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.198
+  - id: generator_BE0_4_biomass
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 30.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 30.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 15.838066853731789
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.468
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_5_CCGT
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 869.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 869.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 46.81310805985047
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.58
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.198
+  - id: generator_BE0_5_oil
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 18.6
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 18.6
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 157.533723089152
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.35
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.2571
+  - id: generator_BE0_0_onwind
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 424.57174414565867
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 424.57174414565867
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_0_onwind_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.02462452244594493
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_1_onwind
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 956.4285814975585
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 956.4285814975585
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_1_onwind_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.024852702613925616
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_2_onwind
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 602.2681119912731
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 602.2681119912731
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_2_onwind_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.02578677832623427
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_3_onwind
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 57.58968053344712
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 57.58968053344712
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_3_onwind_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.025888320036407758
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_4_onwind
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 62.27827918905439
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 62.27827918905439
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_4_onwind_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.025003673351768674
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_5_onwind
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 307.7636026430081
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 307.7636026430081
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_5_onwind_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.025247905903584222
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_0_offwind-float
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 871.5332191508677
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 871.5332191508677
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_0_offwind-float_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.02423123679015859
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_0_offwind-ac
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 570.7346934723101
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 570.7346934723101
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_0_offwind-ac_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.02463457096364064
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_0_offwind-dc
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 819.5320873768225
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 819.5320873768225
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_0_offwind-dc_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.024829652423907264
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_0_solar
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 1970.3315990962146
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1970.3315990962146
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_0_solar_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.020732618315766733
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_1_solar
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 752.1758682192877
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 752.1758682192877
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_1_solar_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.019500910730793013
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_2_solar
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 826.8824360273629
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 826.8824360273629
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_2_solar_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.019966068528525407
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_3_solar
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 549.7362096736204
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 549.7362096736204
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_3_solar_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.02097111957122141
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_4_solar
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 545.3686950080094
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 545.3686950080094
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_4_solar_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.020038970238519617
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_5_solar
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 928.3051919755053
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 928.3051919755053
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_5_solar_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.020225789051525937
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_0_solar-hsat
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_0_solar-hsat_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.01924125733198065
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_1_solar-hsat
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_1_solar-hsat_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.02065268160101367
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_2_solar-hsat
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_2_solar-hsat_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.020206120256821856
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_3_solar-hsat
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_3_solar-hsat_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.02009013601293293
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_4_solar-hsat
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_4_solar-hsat_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.019685527667548615
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: generator_BE0_5_solar-hsat
+    model: pypsa_models.generator
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: true
+      scenario-dependent: false
+      value: _generator_BE0_5_solar-hsat_p_max_pu
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.019608241578054367
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_sum_min
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0e+20
+    - id: e_sum_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: load_BE0_0
+    model: pypsa_models.load
+    parameters:
+    - id: p_set
+      time-dependent: true
+      scenario-dependent: false
+      value: _load_BE0_0_p_set
+    - id: q_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+  - id: load_BE0_1
+    model: pypsa_models.load
+    parameters:
+    - id: p_set
+      time-dependent: true
+      scenario-dependent: false
+      value: _load_BE0_1_p_set
+    - id: q_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+  - id: load_BE0_2
+    model: pypsa_models.load
+    parameters:
+    - id: p_set
+      time-dependent: true
+      scenario-dependent: false
+      value: _load_BE0_2_p_set
+    - id: q_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+  - id: load_BE0_3
+    model: pypsa_models.load
+    parameters:
+    - id: p_set
+      time-dependent: true
+      scenario-dependent: false
+      value: _load_BE0_3_p_set
+    - id: q_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+  - id: load_BE0_4
+    model: pypsa_models.load
+    parameters:
+    - id: p_set
+      time-dependent: true
+      scenario-dependent: false
+      value: _load_BE0_4_p_set
+    - id: q_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+  - id: load_BE0_5
+    model: pypsa_models.load
+    parameters:
+    - id: p_set
+      time-dependent: true
+      scenario-dependent: false
+      value: _load_BE0_5_p_set
+    - id: q_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+  - id: BE0_0
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 380.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 4.309175
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 51.041174999999996
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: BE0_1
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 380.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 5.736128571428572
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 49.959442857142854
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: BE0_2
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 380.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 5.09295
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 50.5142
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: BE0_3
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 380.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 4.878333333333333
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 51.146866666666675
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: BE0_4
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 380.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 5.5683428571428575
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 50.76361428571429
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: BE0_5
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 380.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 4.369566666666667
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 50.57086666666667
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: BE0_0_H2
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 4.309175
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 51.041174999999996
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: BE0_1_H2
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 5.736128571428572
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 49.959442857142854
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: BE0_2_H2
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 5.09295
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 50.5142
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: BE0_3_H2
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 4.878333333333333
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 51.146866666666675
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: BE0_4_H2
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 5.5683428571428575
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 50.76361428571429
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: BE0_5_H2
+    model: pypsa_models.bus
+    parameters:
+    - id: v_nom
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: x
+      time-dependent: false
+      scenario-dependent: false
+      value: 4.369566666666667
+    - id: y
+      time-dependent: false
+      scenario-dependent: false
+      value: 50.57086666666667
+    - id: v_mag_pu_set
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: v_mag_pu_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: v_mag_pu_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+  - id: link_BE0_0_H2_Electrolysis
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.6217
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.010392938371195724
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 3619.2066597725725
+  - id: link_BE0_1_H2_Electrolysis
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.6217
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.00957227866990076
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 3619.2066597725725
+  - id: link_BE0_2_H2_Electrolysis
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.6217
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.009453702907128407
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 3619.2066597725725
+  - id: link_BE0_3_H2_Electrolysis
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.6217
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.010102629538165783
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 3619.2066597725725
+  - id: link_BE0_4_H2_Electrolysis
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.6217
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.010438937939571126
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 3619.2066597725725
+  - id: link_BE0_5_H2_Electrolysis
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.6217
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.009846212920248922
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 3619.2066597725725
+  - id: link_BE0_0_H2_Fuel_Cell
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.5
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.010961528396769232
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2147.3299659793192
+  - id: link_BE0_1_H2_Fuel_Cell
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.5
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.010369659477169727
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2147.3299659793192
+  - id: link_BE0_2_H2_Fuel_Cell
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.5
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.009961863802968722
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2147.3299659793192
+  - id: link_BE0_3_H2_Fuel_Cell
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.5
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0097842350363883
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2147.3299659793192
+  - id: link_BE0_4_H2_Fuel_Cell
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.5
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.00968635603230174
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2147.3299659793192
+  - id: link_BE0_5_H2_Fuel_Cell
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.5
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.010458099414768083
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2147.3299659793192
+  - id: link_0-link-BE0_0-BE0_3
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 3396.205223481055
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 3396.205223481055
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: link_1-link-BE0_0-BE0_5
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 3396.205223481055
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 3396.205223481055
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: link_2-link-BE0_1-BE0_2
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 3396.205223481055
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 3396.205223481055
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: link_3-link-BE0_1-BE0_4
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 491.5560191880474
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 491.5560191880474
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: link_4-link-BE0_2-BE0_4
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 5094.3078352215825
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 5094.3078352215825
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: link_5-link-BE0_2-BE0_5
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 3396.205223481055
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 3396.205223481055
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: link_6-link-BE0_3-BE0_4
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 1698.1026117405274
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1698.1026117405274
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: link_7-link-BE0_3-BE0_4
+    model: pypsa_models.link
+    parameters:
+    - id: efficiency
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 3396.21
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 3396.21
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: storage_unit_BE0_0_battery
+    model: pypsa_models.storage_unit
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency_store
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: efficiency_dispatch
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: max_hours
+      time-dependent: false
+      scenario-dependent: false
+      value: 6.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.010063102747683676
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 1957.0340952874337
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: spill_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: inflow
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: storage_unit_BE0_1_battery
+    model: pypsa_models.storage_unit
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency_store
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: efficiency_dispatch
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: max_hours
+      time-dependent: false
+      scenario-dependent: false
+      value: 6.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.010063655174193732
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 1957.0340952874337
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: spill_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: inflow
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: storage_unit_BE0_2_battery
+    model: pypsa_models.storage_unit
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency_store
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: efficiency_dispatch
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: max_hours
+      time-dependent: false
+      scenario-dependent: false
+      value: 6.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.010268801917102643
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 1957.0340952874337
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: spill_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: inflow
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: storage_unit_BE0_3_battery
+    model: pypsa_models.storage_unit
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency_store
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: efficiency_dispatch
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: max_hours
+      time-dependent: false
+      scenario-dependent: false
+      value: 6.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.01069886358815558
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 1957.0340952874337
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: spill_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: inflow
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: storage_unit_BE0_4_battery
+    model: pypsa_models.storage_unit
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency_store
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: efficiency_dispatch
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: max_hours
+      time-dependent: false
+      scenario-dependent: false
+      value: 6.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.01044891064972127
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 1957.0340952874337
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: spill_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: inflow
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: storage_unit_BE0_5_battery
+    model: pypsa_models.storage_unit
+    parameters:
+    - id: p_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: p_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: p_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: -1.0
+    - id: p_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: efficiency_store
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: efficiency_dispatch
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.9797958971132712
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: max_hours
+      time-dependent: false
+      scenario-dependent: false
+      value: 6.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.010222047021355166
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 1957.0340952874337
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: spill_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: inflow
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: store_BE0_0_H2
+    model: pypsa_models.store
+    parameters:
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: e_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: e_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.009877144489359248
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2.844472634086065
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: store_BE0_1_H2
+    model: pypsa_models.store
+    parameters:
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: e_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: e_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.009119355793219137
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2.844472634086065
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: store_BE0_2_H2
+    model: pypsa_models.store
+    parameters:
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: e_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: e_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.009796088510660862
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2.844472634086065
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: store_BE0_3_H2
+    model: pypsa_models.store
+    parameters:
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: e_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: e_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.010475990811464072
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2.844472634086065
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: store_BE0_4_H2
+    model: pypsa_models.store
+    parameters:
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: e_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: e_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.009364983460907
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2.844472634086065
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: store_BE0_5_H2
+    model: pypsa_models.store
+    parameters:
+    - id: sign
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: e_nom_min
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_nom_max
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0e+20
+    - id: e_min_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: e_max_pu
+      time-dependent: false
+      scenario-dependent: false
+      value: 1.0
+    - id: standing_loss
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: marginal_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.009350903512294985
+    - id: capital_cost
+      time-dependent: false
+      scenario-dependent: false
+      value: 2.844472634086065
+    - id: marginal_cost_storage
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+    - id: emission_factor
+      time-dependent: false
+      scenario-dependent: false
+      value: 0.0
+  - id: ''''
+    model: pypsa_models.global_constraint_co2_max
+    parameters:
+    - id: quota
+      time-dependent: false
+      scenario-dependent: false
+      value: 10000000000.0
+  connections:
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: generator_BE0_0_CCGT
+    port2: p_balance_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: generator_BE0_0_biomass
+    port2: p_balance_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: generator_BE0_0_nuclear
+    port2: p_balance_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: generator_BE0_0_oil
+    port2: p_balance_port
+  - component1: BE0_1
+    port1: p_balance_port
+    component2: generator_BE0_1_oil
+    port2: p_balance_port
+  - component1: BE0_2
+    port1: p_balance_port
+    component2: generator_BE0_2_nuclear
+    port2: p_balance_port
+  - component1: BE0_3
+    port1: p_balance_port
+    component2: generator_BE0_3_CCGT
+    port2: p_balance_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: generator_BE0_4_CCGT
+    port2: p_balance_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: generator_BE0_4_biomass
+    port2: p_balance_port
+  - component1: BE0_5
+    port1: p_balance_port
+    component2: generator_BE0_5_CCGT
+    port2: p_balance_port
+  - component1: BE0_5
+    port1: p_balance_port
+    component2: generator_BE0_5_oil
+    port2: p_balance_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: generator_BE0_0_onwind
+    port2: p_balance_port
+  - component1: BE0_1
+    port1: p_balance_port
+    component2: generator_BE0_1_onwind
+    port2: p_balance_port
+  - component1: BE0_2
+    port1: p_balance_port
+    component2: generator_BE0_2_onwind
+    port2: p_balance_port
+  - component1: BE0_3
+    port1: p_balance_port
+    component2: generator_BE0_3_onwind
+    port2: p_balance_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: generator_BE0_4_onwind
+    port2: p_balance_port
+  - component1: BE0_5
+    port1: p_balance_port
+    component2: generator_BE0_5_onwind
+    port2: p_balance_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: generator_BE0_0_offwind-float
+    port2: p_balance_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: generator_BE0_0_offwind-ac
+    port2: p_balance_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: generator_BE0_0_offwind-dc
+    port2: p_balance_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: generator_BE0_0_solar
+    port2: p_balance_port
+  - component1: BE0_1
+    port1: p_balance_port
+    component2: generator_BE0_1_solar
+    port2: p_balance_port
+  - component1: BE0_2
+    port1: p_balance_port
+    component2: generator_BE0_2_solar
+    port2: p_balance_port
+  - component1: BE0_3
+    port1: p_balance_port
+    component2: generator_BE0_3_solar
+    port2: p_balance_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: generator_BE0_4_solar
+    port2: p_balance_port
+  - component1: BE0_5
+    port1: p_balance_port
+    component2: generator_BE0_5_solar
+    port2: p_balance_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: generator_BE0_0_solar-hsat
+    port2: p_balance_port
+  - component1: BE0_1
+    port1: p_balance_port
+    component2: generator_BE0_1_solar-hsat
+    port2: p_balance_port
+  - component1: BE0_2
+    port1: p_balance_port
+    component2: generator_BE0_2_solar-hsat
+    port2: p_balance_port
+  - component1: BE0_3
+    port1: p_balance_port
+    component2: generator_BE0_3_solar-hsat
+    port2: p_balance_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: generator_BE0_4_solar-hsat
+    port2: p_balance_port
+  - component1: BE0_5
+    port1: p_balance_port
+    component2: generator_BE0_5_solar-hsat
+    port2: p_balance_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: load_BE0_0
+    port2: p_balance_port
+  - component1: BE0_1
+    port1: p_balance_port
+    component2: load_BE0_1
+    port2: p_balance_port
+  - component1: BE0_2
+    port1: p_balance_port
+    component2: load_BE0_2
+    port2: p_balance_port
+  - component1: BE0_3
+    port1: p_balance_port
+    component2: load_BE0_3
+    port2: p_balance_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: load_BE0_4
+    port2: p_balance_port
+  - component1: BE0_5
+    port1: p_balance_port
+    component2: load_BE0_5
+    port2: p_balance_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: link_BE0_0_H2_Electrolysis
+    port2: p0_port
+  - component1: BE0_1
+    port1: p_balance_port
+    component2: link_BE0_1_H2_Electrolysis
+    port2: p0_port
+  - component1: BE0_2
+    port1: p_balance_port
+    component2: link_BE0_2_H2_Electrolysis
+    port2: p0_port
+  - component1: BE0_3
+    port1: p_balance_port
+    component2: link_BE0_3_H2_Electrolysis
+    port2: p0_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: link_BE0_4_H2_Electrolysis
+    port2: p0_port
+  - component1: BE0_5
+    port1: p_balance_port
+    component2: link_BE0_5_H2_Electrolysis
+    port2: p0_port
+  - component1: BE0_0_H2
+    port1: p_balance_port
+    component2: link_BE0_0_H2_Fuel_Cell
+    port2: p0_port
+  - component1: BE0_1_H2
+    port1: p_balance_port
+    component2: link_BE0_1_H2_Fuel_Cell
+    port2: p0_port
+  - component1: BE0_2_H2
+    port1: p_balance_port
+    component2: link_BE0_2_H2_Fuel_Cell
+    port2: p0_port
+  - component1: BE0_3_H2
+    port1: p_balance_port
+    component2: link_BE0_3_H2_Fuel_Cell
+    port2: p0_port
+  - component1: BE0_4_H2
+    port1: p_balance_port
+    component2: link_BE0_4_H2_Fuel_Cell
+    port2: p0_port
+  - component1: BE0_5_H2
+    port1: p_balance_port
+    component2: link_BE0_5_H2_Fuel_Cell
+    port2: p0_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: link_0-link-BE0_0-BE0_3
+    port2: p0_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: link_1-link-BE0_0-BE0_5
+    port2: p0_port
+  - component1: BE0_1
+    port1: p_balance_port
+    component2: link_2-link-BE0_1-BE0_2
+    port2: p0_port
+  - component1: BE0_1
+    port1: p_balance_port
+    component2: link_3-link-BE0_1-BE0_4
+    port2: p0_port
+  - component1: BE0_2
+    port1: p_balance_port
+    component2: link_4-link-BE0_2-BE0_4
+    port2: p0_port
+  - component1: BE0_2
+    port1: p_balance_port
+    component2: link_5-link-BE0_2-BE0_5
+    port2: p0_port
+  - component1: BE0_3
+    port1: p_balance_port
+    component2: link_6-link-BE0_3-BE0_4
+    port2: p0_port
+  - component1: BE0_3
+    port1: p_balance_port
+    component2: link_7-link-BE0_3-BE0_4
+    port2: p0_port
+  - component1: BE0_0_H2
+    port1: p_balance_port
+    component2: link_BE0_0_H2_Electrolysis
+    port2: p1_port
+  - component1: BE0_1_H2
+    port1: p_balance_port
+    component2: link_BE0_1_H2_Electrolysis
+    port2: p1_port
+  - component1: BE0_2_H2
+    port1: p_balance_port
+    component2: link_BE0_2_H2_Electrolysis
+    port2: p1_port
+  - component1: BE0_3_H2
+    port1: p_balance_port
+    component2: link_BE0_3_H2_Electrolysis
+    port2: p1_port
+  - component1: BE0_4_H2
+    port1: p_balance_port
+    component2: link_BE0_4_H2_Electrolysis
+    port2: p1_port
+  - component1: BE0_5_H2
+    port1: p_balance_port
+    component2: link_BE0_5_H2_Electrolysis
+    port2: p1_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: link_BE0_0_H2_Fuel_Cell
+    port2: p1_port
+  - component1: BE0_1
+    port1: p_balance_port
+    component2: link_BE0_1_H2_Fuel_Cell
+    port2: p1_port
+  - component1: BE0_2
+    port1: p_balance_port
+    component2: link_BE0_2_H2_Fuel_Cell
+    port2: p1_port
+  - component1: BE0_3
+    port1: p_balance_port
+    component2: link_BE0_3_H2_Fuel_Cell
+    port2: p1_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: link_BE0_4_H2_Fuel_Cell
+    port2: p1_port
+  - component1: BE0_5
+    port1: p_balance_port
+    component2: link_BE0_5_H2_Fuel_Cell
+    port2: p1_port
+  - component1: BE0_3
+    port1: p_balance_port
+    component2: link_0-link-BE0_0-BE0_3
+    port2: p1_port
+  - component1: BE0_5
+    port1: p_balance_port
+    component2: link_1-link-BE0_0-BE0_5
+    port2: p1_port
+  - component1: BE0_2
+    port1: p_balance_port
+    component2: link_2-link-BE0_1-BE0_2
+    port2: p1_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: link_3-link-BE0_1-BE0_4
+    port2: p1_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: link_4-link-BE0_2-BE0_4
+    port2: p1_port
+  - component1: BE0_5
+    port1: p_balance_port
+    component2: link_5-link-BE0_2-BE0_5
+    port2: p1_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: link_6-link-BE0_3-BE0_4
+    port2: p1_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: link_7-link-BE0_3-BE0_4
+    port2: p1_port
+  - component1: BE0_0
+    port1: p_balance_port
+    component2: storage_unit_BE0_0_battery
+    port2: p_balance_port
+  - component1: BE0_1
+    port1: p_balance_port
+    component2: storage_unit_BE0_1_battery
+    port2: p_balance_port
+  - component1: BE0_2
+    port1: p_balance_port
+    component2: storage_unit_BE0_2_battery
+    port2: p_balance_port
+  - component1: BE0_3
+    port1: p_balance_port
+    component2: storage_unit_BE0_3_battery
+    port2: p_balance_port
+  - component1: BE0_4
+    port1: p_balance_port
+    component2: storage_unit_BE0_4_battery
+    port2: p_balance_port
+  - component1: BE0_5
+    port1: p_balance_port
+    component2: storage_unit_BE0_5_battery
+    port2: p_balance_port
+  - component1: BE0_0_H2
+    port1: p_balance_port
+    component2: store_BE0_0_H2
+    port2: p_balance_port
+  - component1: BE0_1_H2
+    port1: p_balance_port
+    component2: store_BE0_1_H2
+    port2: p_balance_port
+  - component1: BE0_2_H2
+    port1: p_balance_port
+    component2: store_BE0_2_H2
+    port2: p_balance_port
+  - component1: BE0_3_H2
+    port1: p_balance_port
+    component2: store_BE0_3_H2
+    port2: p_balance_port
+  - component1: BE0_4_H2
+    port1: p_balance_port
+    component2: store_BE0_4_H2
+    port2: p_balance_port
+  - component1: BE0_5_H2
+    port1: p_balance_port
+    component2: store_BE0_5_H2
+    port2: p_balance_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_0_CCGT
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_0_biomass
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_0_nuclear
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_0_oil
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_1_oil
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_2_nuclear
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_3_CCGT
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_4_CCGT
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_4_biomass
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_5_CCGT
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_5_oil
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_0_onwind
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_1_onwind
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_2_onwind
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_3_onwind
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_4_onwind
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_5_onwind
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_0_offwind-float
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_0_offwind-ac
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_0_offwind-dc
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_0_solar
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_1_solar
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_2_solar
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_3_solar
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_4_solar
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_5_solar
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_0_solar-hsat
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_1_solar-hsat
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_2_solar-hsat
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_3_solar-hsat
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_4_solar-hsat
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: generator_BE0_5_solar-hsat
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: store_BE0_0_H2
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: store_BE0_1_H2
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: store_BE0_2_H2
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: store_BE0_3_H2
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: store_BE0_4_H2
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: store_BE0_5_H2
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: storage_unit_BE0_0_battery
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: storage_unit_BE0_1_battery
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: storage_unit_BE0_2_battery
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: storage_unit_BE0_3_battery
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: storage_unit_BE0_4_battery
+    port2: emission_port
+  - component1: ''''
+    port1: emission_port
+    component2: storage_unit_BE0_5_battery
+    port2: emission_port
+  area_connections: null
