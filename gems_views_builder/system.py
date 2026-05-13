@@ -93,7 +93,7 @@ class InputSystem:
 
             (c1, p1), (c2, p2) = e1, e2
 
-            # Some datasets omit port2, legacy callers treated that as "same as port1".
+            # Some datasets omit port2, callers treated that as "same as port1".
             if not p2:
                 p2 = p1
 

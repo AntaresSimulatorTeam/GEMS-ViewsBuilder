@@ -53,7 +53,7 @@ class BreakdownKey(ViewBuilderBasedModel):
 
 
 class BreakdownProperty(ViewBuilderBasedModel):
-    """Legacy single breakdown clause (key,value)."""
+    """single breakdown clause (key,value)."""
 
     key: str
     value: str
@@ -64,11 +64,11 @@ class MetricData(ViewBuilderBasedModel):
     terms: list[TermData]
     terms_operator: TermsOperator
     time_operator: TimeOperator
-    # New schema: group-by keys
+    # group-by keys
     breakdown: list[BreakdownKey] | None = None
-    # Legacy schema: single clause
+    # single clause
     breakdown_property: BreakdownProperty | None = None
-    # New schema: list of clauses; legacy: a single clause
+    # list of clauses; a single clause
     filter: list[PropertyFilter] | PropertyFilter | None = None
 
 
@@ -131,7 +131,7 @@ def _to_metric(metric_data: MetricData) -> Metric:
     if metric_data.breakdown is not None:
         breakdown = tuple(b.key for b in metric_data.breakdown)
     elif metric_data.breakdown_property is not None:
-        # Legacy: treat breakdown_property as a filter clause on that key and
+        # treat breakdown_property as a filter clause on that key and
         # use the key itself as breakdown dimension.
         breakdown = (metric_data.breakdown_property.key,)
         filter_clauses = tuple(
