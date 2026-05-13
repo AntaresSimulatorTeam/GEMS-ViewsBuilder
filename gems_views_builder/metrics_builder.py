@@ -11,6 +11,7 @@
 # This file is part of the Antares project.
 
 from dataclasses import dataclass
+
 import polars as pl
 from gems.study import Component  # type: ignore[import-untyped]
 
