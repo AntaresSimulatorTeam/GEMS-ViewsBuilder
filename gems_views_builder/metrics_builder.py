@@ -45,14 +45,14 @@ def _component_matches_property_filter(component: Component, clauses: tuple[tupl
     return all(component.properties.get(k) == v for k, v in clauses)
 
 
-def _format_breakdown_properties(props: dict[str, str], keys: tuple[str, ...] | None) -> str:
-    if not keys:
+def _format_breakdown_properties(component_properties: dict[str, str], breakdown_keys: tuple[str, ...] | None) -> str:
+    if not breakdown_keys:
         return "{}"
     pairs: list[str] = []
-    for k in keys:
-        if k not in props:
+    for breakdown_key in breakdown_keys:
+        if breakdown_key not in component_properties:
             return "{}"
-        pairs.append(f"({k},{props[k]})")
+        pairs.append(f"({breakdown_key},{component_properties[breakdown_key]})")
     return "{" + ",".join(pairs) + "}"
 
 
