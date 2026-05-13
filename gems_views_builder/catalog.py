@@ -17,6 +17,7 @@ from enum import Enum
 from pathlib import Path
 
 import yaml
+from pydantic import model_validator
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
 
@@ -43,20 +44,13 @@ class TermData(ViewBuilderBasedModel):
     weight_output_id: str | None = None
 
 
-class PropertyFilter(ViewBuilderBasedModel):
+class PropertyTuple(ViewBuilderBasedModel):
     key: str
     value: str
 
 
-class BreakdownKey(ViewBuilderBasedModel):
+class PropertyKey(ViewBuilderBasedModel):
     key: str
-
-
-class BreakdownProperty(ViewBuilderBasedModel):
-    """single breakdown clause (key,value)."""
-
-    key: str
-    value: str
 
 
 class MetricData(ViewBuilderBasedModel):
@@ -64,12 +58,14 @@ class MetricData(ViewBuilderBasedModel):
     terms: list[TermData]
     terms_operator: TermsOperator
     time_operator: TimeOperator
-    # group-by keys
-    breakdown: list[BreakdownKey] | None = None
-    # single clause
-    breakdown_property: BreakdownProperty | None = None
-    # list of clauses; a single clause
-    filter: list[PropertyFilter] | PropertyFilter | None = None
+    breakdown: list[PropertyKey] | None = None
+    filter: list[PropertyTuple] | None = None
+
+    @model_validator(mode="after")
+    def validate_filter(self) -> "MetricData":
+        if self.filter is not None and len(self.filter) > 1:
+            raise ValueError("metric filter must list at most one (key, value) entry")
+        return self
 
 
 class CatalogLocationData(ViewBuilderBasedModel):
@@ -119,31 +115,13 @@ def _to_term(term_data: TermData) -> Term:
 
 
 def _to_metric(metric_data: MetricData) -> Metric:
-    filter_clauses: tuple[tuple[str, str], ...] | None
-    if metric_data.filter is None:
-        filter_clauses = None
-    elif isinstance(metric_data.filter, list):
-        filter_clauses = tuple((f.key, f.value) for f in metric_data.filter)
-    else:
-        filter_clauses = ((metric_data.filter.key, metric_data.filter.value),)
-
-    breakdown: tuple[str, ...] | None = None
-    if metric_data.breakdown is not None:
-        breakdown = tuple(b.key for b in metric_data.breakdown)
-    elif metric_data.breakdown_property is not None:
-        # treat breakdown_property as a filter clause on that key and
-        # use the key itself as breakdown dimension.
-        breakdown = (metric_data.breakdown_property.key,)
-        filter_clauses = tuple(
-            list(filter_clauses or ()) + [(metric_data.breakdown_property.key, metric_data.breakdown_property.value)]
-        )
     return Metric(
         id=metric_data.id,
         terms=[_to_term(term) for term in metric_data.terms],
         terms_operator=metric_data.terms_operator,
         time_operator=metric_data.time_operator,
-        breakdown=breakdown,
-        filter=filter_clauses,
+        breakdown=tuple(b.key for b in metric_data.breakdown) if metric_data.breakdown else None,
+        filter=tuple((f.key, f.value) for f in metric_data.filter) if metric_data.filter else None,
     )
 
 
