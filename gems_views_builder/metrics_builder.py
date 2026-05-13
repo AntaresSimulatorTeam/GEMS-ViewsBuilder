@@ -11,8 +11,6 @@
 # This file is part of the Antares project.
 
 from dataclasses import dataclass
-from typing import Any
-
 import polars as pl
 from gems.study import Component  # type: ignore[import-untyped]
 
@@ -40,40 +38,10 @@ class MetricStructureTable:
     dataframe: pl.DataFrame
 
 
-def _component_properties(component: Component) -> dict[str, str]:
-    """
-    Normalize `component.properties` to a dict[str,str].
-
-    Depending on Gems parser versions, properties may be:
-    - dict-like {key: value}
-    - list-like of items with (id|key, value) fields
-    """
-    raw: Any = getattr(component, "properties", None) or {}
-    if isinstance(raw, dict):
-        return {k: str(v) for k, v in raw.items()}
-    out: dict[str, str] = {}
-    for item in raw:
-        if isinstance(item, dict):
-            k = item.get("id") or item.get("key")
-            v = item.get("value")
-        else:
-            k = getattr(item, "id", None) or getattr(item, "key", None)
-            v = getattr(item, "value", None)
-        if isinstance(k, str) and v is not None:
-            out[k] = str(v)
-    return out
-
-
-def _component_property_value(component: Component, key: str) -> str | None:
-    return _component_properties(component).get(key)
-
-
 def _component_matches_property_filter(component: Component, clauses: tuple[tuple[str, str], ...] | None) -> bool:
-    """If the metric defines filters, the component must match all (key,value) clauses."""
     if clauses is None:
         return True
-    props = _component_properties(component)
-    return all(props.get(k) == v for k, v in clauses)
+    return all(component.properties.get(k) == v for k, v in clauses)
 
 
 def _format_breakdown_properties(props: dict[str, str], keys: tuple[str, ...] | None) -> str:
@@ -116,8 +84,7 @@ class MetricStructureBuilder:
                         metric_location = self.system.get_location(component_id, term.location_ports)
                         loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
 
-                        props = _component_properties(component)
-                        breakdown_properties = _format_breakdown_properties(props, self.metric.breakdown)
+                        breakdown_properties = _format_breakdown_properties(component.properties, self.metric.breakdown)
                         rows.append(
                             {
                                 "metric_id": self.metric.id,
