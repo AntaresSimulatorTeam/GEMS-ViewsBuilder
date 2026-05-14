@@ -39,10 +39,10 @@ class MetricStructureTable:
     dataframe: pl.DataFrame
 
 
-def _component_matches_property_filter(component: Component, clauses: tuple[PropertyTuple, ...] | None) -> bool:
-    if clauses is None:
+def _check_filter_matches(component: Component, filter: tuple[PropertyTuple, ...] | None) -> bool:
+    if filter is None:
         return True
-    return all(component.properties.get(c.key) == c.value for c in clauses)
+    return all(component.properties.get(c.key) == c.value for c in filter)
 
 
 def _format_breakdown_properties(
@@ -84,7 +84,7 @@ class MetricStructureBuilder:
                     component = self.system.get_component(component_id)
 
                     # # Decide does the component matches the filter, if yes they will contribute to the metric
-                    if _component_matches_property_filter(component, self.metric.filter):
+                    if _check_filter_matches(component, self.metric.filter):
                         metric_location = self.system.get_location(component_id, term.location_ports)
                         loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
 
