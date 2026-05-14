@@ -15,7 +15,7 @@ from dataclasses import dataclass
 import polars as pl
 from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.catalog import Catalog, Metric
+from gems_views_builder.catalog import Catalog, Metric, PropertyKey, PropertyTuple
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.system import InputSystem
 from gems_views_builder.taxonomy import Taxonomy
@@ -39,20 +39,23 @@ class MetricStructureTable:
     dataframe: pl.DataFrame
 
 
-def _component_matches_property_filter(component: Component, clauses: tuple[tuple[str, str], ...] | None) -> bool:
+def _component_matches_property_filter(component: Component, clauses: tuple[PropertyTuple, ...] | None) -> bool:
     if clauses is None:
         return True
-    return all(component.properties.get(k) == v for k, v in clauses)
+    return all(component.properties.get(c.key) == c.value for c in clauses)
 
 
-def _format_breakdown_properties(component_properties: dict[str, str], breakdown_keys: tuple[str, ...] | None) -> str:
+def _format_breakdown_properties(
+    component_properties: dict[str, str], breakdown_keys: tuple[PropertyKey, ...] | None
+) -> str:
     if not breakdown_keys:
         return "{}"
     pairs: list[str] = []
     for breakdown_key in breakdown_keys:
-        if breakdown_key not in component_properties:
+        key = breakdown_key.key
+        if key not in component_properties:
             return "{}"
-        pairs.append(f"({breakdown_key},{component_properties[breakdown_key]})")
+        pairs.append(f"({key},{component_properties[key]})")
     return "{" + ",".join(pairs) + "}"
 
 

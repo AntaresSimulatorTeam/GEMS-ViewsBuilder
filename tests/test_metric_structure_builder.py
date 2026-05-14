@@ -16,7 +16,7 @@ from typing import Any
 import pytest
 from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.catalog import get_catalog_metric, load_catalog
+from gems_views_builder.catalog import PropertyTuple, get_catalog_metric, load_catalog
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.metrics_builder import (
     MetricStructureBuilder,
@@ -52,7 +52,7 @@ def _build(metric_id: str, components: dict[str, Any]) -> "MetricStructureTable"
     ).build()
 
 
-def _component_matches_filters(metric_filter: tuple[tuple[str, str], ...] | None, component: Component) -> bool:
+def _component_matches_filters(metric_filter: tuple[PropertyTuple, ...] | None, component: Component) -> bool:
     """Match ALL filter clauses against component properties."""
     if metric_filter is None:
         return True
@@ -70,7 +70,7 @@ def _component_matches_filters(metric_filter: tuple[tuple[str, str], ...] | None
                 pval = getattr(item, "value", None)
             if isinstance(pid, str):
                 props[pid] = pval
-    return all(props.get(k) == v for k, v in metric_filter)
+    return all(props.get(c.key) == c.value for c in metric_filter)
 
 
 # ---------------------------------------------------------------------------

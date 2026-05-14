@@ -16,7 +16,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.catalog import get_catalog_metric, load_catalog
+from gems_views_builder.catalog import PropertyTuple, get_catalog_metric, load_catalog
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.system import InputSystem
 from gems_views_builder.views import ViewBuilder
@@ -37,7 +37,7 @@ def view_run(test_files_root: Path, tmp_path: Path) -> tuple[pl.DataFrame, Path]
     return pl.read_parquet(result_file), dst
 
 
-def _component_matches_filters(metric_filter: tuple[tuple[str, str], ...] | None, component: object) -> bool:
+def _component_matches_filters(metric_filter: tuple[PropertyTuple, ...] | None, component: object) -> bool:
     if metric_filter is None:
         return True
     raw_props = getattr(component, "properties", None) or {}
@@ -54,7 +54,7 @@ def _component_matches_filters(metric_filter: tuple[tuple[str, str], ...] | None
                 pval = getattr(item, "value", None)
             if isinstance(pid, str):
                 props[pid] = pval
-    return all(props.get(k) == v for k, v in metric_filter)
+    return all(props.get(c.key) == c.value for c in metric_filter)
 
 
 def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
