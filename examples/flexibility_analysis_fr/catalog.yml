@@ -1,0 +1,55 @@
+catalog:
+  id: catalog
+  taxonomy: my_taxonomy
+  location:
+    taxonomy-category: balance
+  metrics-definition:
+  - id: NUCLEAR
+    terms:
+    - taxonomy-category: production
+      output-id: p
+      location-ports: p_balance_port
+    terms-operator: sum
+    time-operator: sum
+  - id: HYDRO
+    terms:
+    - taxonomy-category: production
+      output-id: p
+      location-ports: p_balance_port
+    terms-operator: sum
+    time-operator: sum
+  - id: GAS
+    terms:
+    - taxonomy-category: production
+      output-id: p
+      location-ports: p_balance_port
+    terms-operator: sum
+    time-operator: sum
+  - id: PSH
+    terms:
+    - taxonomy-category: production
+      output-id: p
+      location-ports: p_balance_port
+    terms-operator: sum
+    time-operator: sum
+  - id: INTERCO
+    terms:
+    - taxonomy-category: production
+      output-id: p
+      location-ports: p_balance_port
+    terms-operator: sum
+    time-operator: sum
+  - id: DEMAND_RESP
+    terms:
+    - taxonomy-category: production
+      output-id: p
+      location-ports: p_balance_port
+    terms-operator: sum
+    time-operator: sum
+  - id: RESIDUAL_LOAD
+    terms:
+    - taxonomy-category: production
+      output-id: p
+      location-ports: p_balance_port
+    terms-operator: sum
+    time-operator: sum
