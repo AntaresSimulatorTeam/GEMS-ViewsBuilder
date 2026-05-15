@@ -15,34 +15,34 @@ system:
           value: 1000
 
     # Same technology + company; YAML lists properties in opposite order.
-    - id: gen_a
+    - id: gas_1
       model: basic_lib.generator_basic
       parameters:
         - id: p_max
           time-dependent: false
           scenario-dependent: false
-          value: 100
+          value: 250
         - id: cost
           time-dependent: false
           scenario-dependent: false
-          value: 1
+          value: 50
       properties:
         - id: technology
           value: gas
         - id: company
           value: rhonepower
 
-    - id: gen_b
+    - id: gas_2
       model: basic_lib.generator_basic
       parameters:
         - id: p_max
           time-dependent: false
           scenario-dependent: false
-          value: 100
+          value: 250
         - id: cost
           time-dependent: false
           scenario-dependent: false
-          value: 2
+          value: 100
       properties:
         - id: company
           value: rhonepower
@@ -60,11 +60,11 @@ system:
   connections:
     - component1: area
       port1: balance_port
-      component2: gen_a
+      component2: gas_1
       port2: balance_port
     - component1: area
       port1: balance_port
-      component2: gen_b
+      component2: gas_2
       port2: balance_port
     - component1: area
       port1: balance_port

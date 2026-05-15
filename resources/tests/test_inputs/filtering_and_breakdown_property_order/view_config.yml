@@ -4,15 +4,20 @@ view:
 
   scope:
     - location:
-      taxonomy-category: balance
+      taxonomy-category: balance # category of the taxonomy, the components of which serves as locational objects. Main case is 'area'.
 
-    - calendar: calendar_file
+    - calendar: calendar_file # calendar_file.csv
 
   aggregation:
     - time: hour
 
-  catalog:
+  catalog: #Pointer to "catalogs" = "Business Metrics definitions files".
       - id: catalog
 
-  metrics:
+  metrics:  #reference to the selected metric among the catalog
+      - id: catalog.PRODUCTION
+      - id: catalog.LOAD
+      - id: catalog.PRODUCTION_BY_TECH
+      - id: catalog.PRODUCTION_BY_COMPANY
+      - id: catalog.NUCLEAR_PRODUCTION
       - id: catalog.PRODUCTION_BY_TECH_AND_COMPANY
