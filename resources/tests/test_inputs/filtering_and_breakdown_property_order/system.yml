@@ -1,0 +1,72 @@
+system:
+  id: property_order_example
+
+  components:
+    - id: area
+      model: basic_lib.area
+      parameters:
+        - id: spillage_cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 1000
+        - id: unsupplied_energy_cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 1000
+
+    # Same technology + company; YAML lists properties in opposite order.
+    - id: gen_a
+      model: basic_lib.generator_basic
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 100
+        - id: cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 1
+      properties:
+        - id: technology
+          value: gas
+        - id: company
+          value: rhonepower
+
+    - id: gen_b
+      model: basic_lib.generator_basic
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 100
+        - id: cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 2
+      properties:
+        - id: company
+          value: rhonepower
+        - id: technology
+          value: gas
+
+    - id: load
+      model: basic_lib.load
+      parameters:
+        - id: load
+          time-dependent: true
+          scenario-dependent: true
+          value: load_data
+
+  connections:
+    - component1: area
+      port1: balance_port
+      component2: gen_a
+      port2: balance_port
+    - component1: area
+      port1: balance_port
+      component2: gen_b
+      port2: balance_port
+    - component1: area
+      port1: balance_port
+      component2: load
+      port2: balance_port
