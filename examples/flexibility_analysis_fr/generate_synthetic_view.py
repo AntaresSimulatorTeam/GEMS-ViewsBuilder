@@ -3,7 +3,6 @@
 Produces, alongside this script:
   - view.parquet              the 6-column long-format View consumed by the FS module
   - view_config.yml           the GEMS ViewConfig that "produced" view.parquet
-  - catalog.yml               the catalog referenced by view_config.yml
   - calendar_file.csv         the calendar referenced by view_config.yml
   - flexibility_analysis.yml  the FS module's own config (paths wired up)
 
@@ -167,38 +166,6 @@ def write_view_config(path: Path) -> None:
         yaml.safe_dump(cfg, f, sort_keys=False)
 
 
-def write_catalog(path: Path) -> None:
-    """Minimal catalog declaring the 7 metric_ids used in the View.
-
-    Body fields (terms, output-id, …) are placeholders for this synthetic
-    example — they are not used to derive the view, since view.parquet is
-    generated directly. They are present so a tool reading the catalog
-    can still resolve every catalog.<id> reference from view_config.yml.
-    """
-    metrics_def = []
-    for m in ALL_METRIC_IDS:
-        metrics_def.append({
-            "id": m,
-            "terms": [{
-                "taxonomy-category": "production",
-                "output-id": "p",
-                "location-ports": "p_balance_port",
-            }],
-            "terms-operator": "sum",
-            "time-operator":  "sum",
-        })
-    cfg = {
-        "catalog": {
-            "id": "catalog",
-            "taxonomy": "my_taxonomy",
-            "location": {"taxonomy-category": "balance"},
-            "metrics-definition": metrics_def,
-        }
-    }
-    with path.open("w") as f:
-        yaml.safe_dump(cfg, f, sort_keys=False)
-
-
 def write_flexibility_analysis_config(path: Path, view_path: Path, view_config_path: Path) -> None:
     cfg = {
         "flexibility_analysis": {
@@ -224,7 +191,6 @@ def write_flexibility_analysis_config(path: Path, view_path: Path, view_config_p
 def main() -> None:
     view_path             = HERE / "view.parquet"
     view_config_path      = HERE / "view_config.yml"
-    catalog_path          = HERE / "catalog.yml"
     calendar_path         = HERE / "calendar_file.csv"
     fs_analysis_cfg_path  = HERE / "flexibility_analysis.yml"
 
@@ -232,7 +198,6 @@ def main() -> None:
     df.to_parquet(view_path, index=False)
 
     write_view_config(view_config_path)
-    write_catalog(catalog_path)
     write_calendar(calendar_path)
     write_flexibility_analysis_config(fs_analysis_cfg_path, view_path, view_config_path)
 
@@ -247,8 +212,7 @@ def main() -> None:
 
     print(f"Wrote {view_path.name}: {len(df):,} rows, {len(ALL_METRIC_IDS)} metrics, "
           f"{len(SCENARIOS)} scenarios, {N_HOURS} hours.")
-    print(f"Wrote {view_config_path.name}, {catalog_path.name}, {calendar_path.name}, "
-          f"{fs_analysis_cfg_path.name}.")
+    print(f"Wrote {view_config_path.name}, {calendar_path.name}, {fs_analysis_cfg_path.name}.")
 
 
 if __name__ == "__main__":
