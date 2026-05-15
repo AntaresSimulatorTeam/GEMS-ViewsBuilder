@@ -55,7 +55,8 @@ def _format_breakdown_properties(
         key = breakdown_key.key
         if key not in component_properties:
             pairs.append(f"({key},None)")
-        pairs.append(f"({key},{component_properties[key]})")
+        else:
+            pairs.append(f"({key},{component_properties[key]})")
     return "{" + ",".join(pairs) + "}"
 
 

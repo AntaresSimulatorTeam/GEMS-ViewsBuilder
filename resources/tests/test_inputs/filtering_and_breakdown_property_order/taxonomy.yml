@@ -25,6 +25,7 @@ taxonomy:
       ports:
         - id: balance_port
       properties:
+        - id: country
         - id: company
         - id: technology
 

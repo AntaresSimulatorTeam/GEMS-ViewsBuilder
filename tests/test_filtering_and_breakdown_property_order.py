@@ -21,11 +21,17 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from gems_views_builder.catalog import get_catalog_metric, load_catalog
+from gems_views_builder.library import ModelLibrary
+from gems_views_builder.metrics_builder import MetricStructureBuilder
+from gems_views_builder.system import InputSystem
+from gems_views_builder.taxonomy import load_taxonomy
 from gems_views_builder.views import ViewBuilder
 
 # Same (technology, company) as filtering_and_breakdown, but YAML property order differs per component.
 _GAS_RHONEPOWER_GENERATORS = ("gas_1", "gas_2")
 _GAS_RHONEPOWER_BREAKDOWN = "{(technology,gas),(company,rhonepower)}"
+_MISSING_COUNTRY_TECH_BREAKDOWN = "{(country,None),(company,rhonepower),(technology,None)}"
 
 
 @pytest.fixture()
@@ -88,3 +94,25 @@ def test_same_breakdown_group_sums_all_matching_generators(property_order_worksp
     )
 
     _assert_totals_close(got, expected, msg="PRODUCTION_BY_TECH_AND_COMPANY (gas, rhonepower)")
+
+
+def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path) -> None:
+    """
+    gen_company_only declares company only; country and technology are absent.
+    Breakdown must list (key,None) for missing keys, not omit them or return "{}".
+    """
+    root = test_files_root / "filtering_and_breakdown_property_order"
+    taxonomy = load_taxonomy(root / "taxonomy.yml")
+    library = ModelLibrary.load(root / "library.yml")
+    system = InputSystem.load(root / "system.yml", library)
+    catalog = load_catalog(root / "catalogs" / "catalog.yml")
+    metric = get_catalog_metric(catalog, "PRODUCTION_BY_COUNTRY_COMPANY_TECH")
+
+    df = MetricStructureBuilder(system, catalog, metric, taxonomy, library).build().dataframe
+    partial = df.filter(pl.col("component") == "gen_company_only")
+    assert partial.height == 1
+    assert partial["breakdown_properties"][0] == _MISSING_COUNTRY_TECH_BREAKDOWN
+
+    gas_1 = df.filter(pl.col("component") == "gas_1")
+    assert gas_1.height == 1
+    assert gas_1["breakdown_properties"][0] == "{(country,None),(company,rhonepower),(technology,gas)}"

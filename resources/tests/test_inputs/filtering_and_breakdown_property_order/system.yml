@@ -32,6 +32,22 @@ system:
         - id: company
           value: rhonepower
 
+    # Only company declared — country and technology absent from component properties.
+    - id: gen_company_only
+      model: basic_lib.generator_basic
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 100
+        - id: cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 3
+      properties:
+        - id: company
+          value: rhonepower
+
     - id: gas_2
       model: basic_lib.generator_basic
       parameters:
@@ -61,6 +77,10 @@ system:
     - component1: area
       port1: balance_port
       component2: gas_1
+      port2: balance_port
+    - component1: area
+      port1: balance_port
+      component2: gen_company_only
       port2: balance_port
     - component1: area
       port1: balance_port

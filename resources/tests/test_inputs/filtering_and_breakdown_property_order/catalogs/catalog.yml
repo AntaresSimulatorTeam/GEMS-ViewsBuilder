@@ -76,3 +76,15 @@ catalog:
     breakdown:
     - key: technology
     - key: company
+
+  - id: PRODUCTION_BY_COUNTRY_COMPANY_TECH
+    terms:
+      - taxonomy-category: production
+        output-id: generation
+        location-ports: balance_port
+    terms-operator: sum
+    time-operator: sum
+    breakdown:
+    - key: country
+    - key: company
+    - key: technology

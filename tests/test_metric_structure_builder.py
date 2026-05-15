@@ -16,11 +16,12 @@ from typing import Any
 import pytest
 from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.catalog import PropertySchema, get_catalog_metric, load_catalog
+from gems_views_builder.catalog import PropertyKey, PropertySchema, get_catalog_metric, load_catalog
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.metrics_builder import (
     MetricStructureBuilder,
     MetricStructureTable,
+    _format_breakdown_properties,
 )
 from gems_views_builder.system import InputSystem
 from gems_views_builder.taxonomy import load_taxonomy
@@ -50,6 +51,31 @@ def _build(metric_id: str, components: dict[str, Any]) -> "MetricStructureTable"
         components["taxonomy"],
         components["library"],
     ).build()
+
+
+def test_format_breakdown_properties_missing_keys_use_none_literal() -> None:
+    breakdown_keys = (
+        PropertyKey(key="country"),
+        PropertyKey(key="company"),
+        PropertyKey(key="technology"),
+    )
+    component_properties = {"company": "rhonepower"}
+    assert (
+        _format_breakdown_properties(component_properties, breakdown_keys)
+        == "{(country,None),(company,rhonepower),(technology,None)}"
+    )
+
+
+def test_format_breakdown_properties_all_keys_present() -> None:
+    breakdown_keys = (PropertyKey(key="technology"), PropertyKey(key="company"))
+    component_properties = {"technology": "gas", "company": "rhonepower"}
+    assert (
+        _format_breakdown_properties(component_properties, breakdown_keys) == "{(technology,gas),(company,rhonepower)}"
+    )
+
+
+def test_format_breakdown_properties_empty_breakdown() -> None:
+    assert _format_breakdown_properties({"company": "x"}, None) == "{}"
 
 
 def _component_matches_filters(metric_filter: tuple[PropertySchema, ...] | None, component: Component) -> bool:
