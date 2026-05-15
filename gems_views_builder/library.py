@@ -15,7 +15,7 @@
 from pathlib import Path
 from typing import cast
 
-from gems.model.parsing import (  # type: ignore
+from gems.model.parsing import (  # type: ignore[import-untyped]
     LibrarySchema,
     ModelSchema,
     PortTypeSchema,

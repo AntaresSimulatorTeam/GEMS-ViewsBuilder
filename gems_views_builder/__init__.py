@@ -16,6 +16,7 @@ from gems_views_builder.calendar import Calendar, load_calendar
 from gems_views_builder.catalog import (
     Catalog,
     Metric,
+    PropertySchema,
     Term,
     TermsOperator,
     TimeOperator,
@@ -41,6 +42,7 @@ __all__ = [
     "load_catalog",
     "get_catalog_metric",
     "Metric",
+    "PropertySchema",
     "Term",
     "TermsOperator",
     "TimeOperator",

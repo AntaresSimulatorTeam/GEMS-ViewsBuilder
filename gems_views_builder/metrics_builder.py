@@ -15,7 +15,7 @@ from dataclasses import dataclass
 import polars as pl
 from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.catalog import Catalog, Metric, PropertyKey, PropertySchema
+from gems_views_builder.catalog import Catalog, Metric, PropertySchema
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.system import InputSystem
 from gems_views_builder.taxonomy import Taxonomy
@@ -42,17 +42,17 @@ class MetricStructureTable:
 def _check_filter_matches(component: Component, filter: tuple[PropertySchema, ...] | None) -> bool:
     if filter is None:
         return True
-    return all(component.properties.get(c.key) == c.value for c in filter)
+    return all(component.properties.get(entry.key) == entry.value for entry in filter)
 
 
 def _format_breakdown_properties(
-    component_properties: dict[str, str], breakdown_keys: tuple[PropertyKey, ...] | None
+    component_properties: dict[str, str], breakdown: tuple[PropertySchema, ...] | None
 ) -> str:
-    if not breakdown_keys:
+    if not breakdown:
         return "{}"
     pairs: list[str] = []
-    for breakdown_key in breakdown_keys:
-        key = breakdown_key.key
+    for prop in breakdown:
+        key = prop.key
         if key not in component_properties:
             pairs.append(f"({key},None)")
         else:

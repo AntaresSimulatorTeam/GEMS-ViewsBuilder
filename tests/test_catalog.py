@@ -12,7 +12,10 @@
 
 from pathlib import Path
 
+import pytest
+
 from gems_views_builder import Metric, Term, TermsOperator, TimeOperator, load_catalog
+from gems_views_builder.catalog import MetricData, PropertySchema
 
 
 def test_catalog_loads(test_dataset_dir: Path) -> None:
@@ -50,6 +53,17 @@ def test_catalog_known_metrics(test_dataset_dir: Path) -> None:
     catalog = load_catalog(sorted((test_dataset_dir / "catalogs").glob("*.yml"))[0])
     metric_ids = set(catalog.metrics.keys())
     assert "LOAD" in metric_ids
+
+
+def test_metric_filter_property_requires_value() -> None:
+    with pytest.raises(ValueError, match="metric filter property must include a value"):
+        MetricData(
+            id="X",
+            terms=[],
+            terms_operator=TermsOperator.SUM,
+            time_operator=TimeOperator.SUM,
+            filter=[PropertySchema(key="technology")],
+        )
 
 
 def test_catalog_operators_valid_values(test_dataset_dir: Path) -> None:

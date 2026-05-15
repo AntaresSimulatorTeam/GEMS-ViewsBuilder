@@ -45,12 +45,10 @@ class TermData(ViewBuilderBasedModel):
 
 
 class PropertySchema(ViewBuilderBasedModel):
-    key: str
-    value: str
+    """Reference to a system/taxonomy property by key; value is required only for metric filters."""
 
-
-class PropertyKey(ViewBuilderBasedModel):
     key: str
+    value: str | None = None
 
 
 class MetricData(ViewBuilderBasedModel):
@@ -58,13 +56,17 @@ class MetricData(ViewBuilderBasedModel):
     terms: list[TermData]
     terms_operator: TermsOperator
     time_operator: TimeOperator
-    breakdown: list[PropertyKey] | None = None
+    breakdown: list[PropertySchema] | None = None
     filter: list[PropertySchema] | None = None
 
     @model_validator(mode="after")
     def validate_filter(self) -> "MetricData":
-        if self.filter is not None and len(self.filter) > 1:
-            raise ValueError("metric filter must list at most one (key, value) entry")
+        if self.filter is not None:
+            if len(self.filter) > 1:
+                raise ValueError("metric filter must list at most one (key, value) entry")
+            for entry in self.filter:
+                if entry.value is None:
+                    raise ValueError("metric filter property must include a value")
         return self
 
 
@@ -93,7 +95,7 @@ class Metric:
     terms: list[Term]
     terms_operator: TermsOperator
     time_operator: TimeOperator
-    breakdown: tuple[PropertyKey, ...] | None = None
+    breakdown: tuple[PropertySchema, ...] | None = None
     filter: tuple[PropertySchema, ...] | None = None
 
 

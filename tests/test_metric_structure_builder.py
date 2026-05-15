@@ -16,7 +16,7 @@ from typing import Any
 import pytest
 from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.catalog import PropertyKey, PropertySchema, get_catalog_metric, load_catalog
+from gems_views_builder.catalog import PropertySchema, get_catalog_metric, load_catalog
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.metrics_builder import (
     MetricStructureBuilder,
@@ -54,24 +54,22 @@ def _build(metric_id: str, components: dict[str, Any]) -> "MetricStructureTable"
 
 
 def test_format_breakdown_properties_missing_keys_use_none_literal() -> None:
-    breakdown_keys = (
-        PropertyKey(key="country"),
-        PropertyKey(key="company"),
-        PropertyKey(key="technology"),
+    breakdown = (
+        PropertySchema(key="country"),
+        PropertySchema(key="company"),
+        PropertySchema(key="technology"),
     )
     component_properties = {"company": "rhonepower"}
     assert (
-        _format_breakdown_properties(component_properties, breakdown_keys)
+        _format_breakdown_properties(component_properties, breakdown)
         == "{(country,None),(company,rhonepower),(technology,None)}"
     )
 
 
 def test_format_breakdown_properties_all_keys_present() -> None:
-    breakdown_keys = (PropertyKey(key="technology"), PropertyKey(key="company"))
+    breakdown = (PropertySchema(key="technology"), PropertySchema(key="company"))
     component_properties = {"technology": "gas", "company": "rhonepower"}
-    assert (
-        _format_breakdown_properties(component_properties, breakdown_keys) == "{(technology,gas),(company,rhonepower)}"
-    )
+    assert _format_breakdown_properties(component_properties, breakdown) == "{(technology,gas),(company,rhonepower)}"
 
 
 def test_format_breakdown_properties_empty_breakdown() -> None:
