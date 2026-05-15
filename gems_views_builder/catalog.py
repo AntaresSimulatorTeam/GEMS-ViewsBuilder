@@ -44,7 +44,7 @@ class TermData(ViewBuilderBasedModel):
     weight_output_id: str | None = None
 
 
-class PropertyTuple(ViewBuilderBasedModel):
+class PropertySchema(ViewBuilderBasedModel):
     key: str
     value: str
 
@@ -59,7 +59,7 @@ class MetricData(ViewBuilderBasedModel):
     terms_operator: TermsOperator
     time_operator: TimeOperator
     breakdown: list[PropertyKey] | None = None
-    filter: list[PropertyTuple] | None = None
+    filter: list[PropertySchema] | None = None
 
     @model_validator(mode="after")
     def validate_filter(self) -> "MetricData":
@@ -94,7 +94,7 @@ class Metric:
     terms_operator: TermsOperator
     time_operator: TimeOperator
     breakdown: tuple[PropertyKey, ...] | None = None
-    filter: tuple[PropertyTuple, ...] | None = None
+    filter: tuple[PropertySchema, ...] | None = None
 
 
 @dataclass

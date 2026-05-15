@@ -15,7 +15,7 @@ from dataclasses import dataclass
 import polars as pl
 from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.catalog import Catalog, Metric, PropertyKey, PropertyTuple
+from gems_views_builder.catalog import Catalog, Metric, PropertyKey, PropertySchema
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.system import InputSystem
 from gems_views_builder.taxonomy import Taxonomy
@@ -39,7 +39,7 @@ class MetricStructureTable:
     dataframe: pl.DataFrame
 
 
-def _check_filter_matches(component: Component, filter: tuple[PropertyTuple, ...] | None) -> bool:
+def _check_filter_matches(component: Component, filter: tuple[PropertySchema, ...] | None) -> bool:
     if filter is None:
         return True
     return all(component.properties.get(c.key) == c.value for c in filter)
