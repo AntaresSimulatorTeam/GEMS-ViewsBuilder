@@ -1,6 +1,6 @@
 flexibility_analysis:
-  view: view.parquet
-  view_config: view_config.yml
+  view: synthetic_fr_2035_view.parquet
+  view_config: synthetic_fr_2035_view_config.yml
   residual_load: RESIDUAL_LOAD
   flexibility_solutions:
   - id: NUCLEAR

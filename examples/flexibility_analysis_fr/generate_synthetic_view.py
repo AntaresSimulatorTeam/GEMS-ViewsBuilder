@@ -1,10 +1,10 @@
 """Generate a synthetic GEMS View for the Flexibility Analysis (FSMS / FSCD) module.
 
 Produces, alongside this script:
-  - view.parquet              the 6-column long-format View consumed by the FS module
-  - view_config.yml           the GEMS ViewConfig that "produced" view.parquet
-  - calendar_file.csv         the calendar referenced by view_config.yml
-  - flexibility_analysis.yml  the FS module's own config (paths wired up)
+  - synthetic_fr_2035_view.parquet         the 6-column long-format View consumed by the FS module
+  - synthetic_fr_2035_view_config.yml      the GEMS ViewConfig that "produced" the View
+  - calendar_file.csv                      the calendar referenced by the ViewConfig
+  - flexibility_analysis.yml               the FS module's own config (paths wired up)
 
 Design: each Flexibility Solution is synthesised as a sum of sinusoids targeting
 one or two of the three FFT bands (annual / weekly / daily) plus broadband noise.
@@ -189,8 +189,8 @@ def write_flexibility_analysis_config(path: Path, view_path: Path, view_config_p
 
 
 def main() -> None:
-    view_path             = HERE / "view.parquet"
-    view_config_path      = HERE / "view_config.yml"
+    view_path             = HERE / "synthetic_fr_2035_view.parquet"
+    view_config_path      = HERE / "synthetic_fr_2035_view_config.yml"
     calendar_path         = HERE / "calendar_file.csv"
     fs_analysis_cfg_path  = HERE / "flexibility_analysis.yml"
 
