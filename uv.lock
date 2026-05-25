@@ -248,7 +248,7 @@ requires-dist = [
     { name = "polars", extras = ["rt64"], specifier = ">=1.39.2" },
     { name = "pyarrow", specifier = ">=14.0.0" },
     { name = "pydantic", specifier = ">=2.11.7" },
-    { name = "pyyaml", specifier = "==6.0.2" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
 ]
 
 [package.metadata.requires-dev]
