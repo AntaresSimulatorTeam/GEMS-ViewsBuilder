@@ -15,6 +15,7 @@ from pathlib import Path
 import polars as pl
 
 from gems_views_builder.calendar import Calendar
+from gems_views_builder.common import logger
 
 # Columns of the SIMULATION_TABLE:
 # block               (str)   – identifies the timeblock in the simulation
@@ -43,6 +44,7 @@ FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {
 
 
 def validate_file_format(simulation_table_file: Path) -> None:
+    logger.info(f"Validating parquet file format for {simulation_table_file}")
     if simulation_table_file.suffix.lower() != ".parquet":
         raise ValueError(f"Simulation table file '{simulation_table_file}' is not a parquet file")
 
@@ -75,11 +77,14 @@ class SimulationTable:
         return cls(simulation_table_file).load_into_self()
 
     def load_into_self(self) -> "SimulationTable":
+        logger.info(f"Loading simulation table from {self.file}")
         self._dataframe = pl.scan_parquet(self.file)
         self._check_simulation_table_columns()
+        logger.info(f"Simulation table {self.id!r} loaded successfully")
         return self
 
     def _check_simulation_table_columns(self) -> None:
+        logger.info(f"Validating simulation table columns for {self.id!r}")
         actual = frozenset(self.dataframe.collect_schema().names())
         missing = SIMULATION_TABLE_COLUMNS - actual
         extra = actual - SIMULATION_TABLE_COLUMNS
@@ -90,14 +95,17 @@ class SimulationTable:
             errors.append(f"Unexpected columns: {extra}")
         if errors:
             raise ValueError(f"SimulationTable '{self.id}' has invalid columns: {'; '.join(errors)}")
+        logger.info(f"Simulation table {self.id!r} columns validated")
 
     def filter_simulation_table(self, calendar: Calendar, output_path: Path) -> "FilteredSimulationTable":
         """
         Filter the simulation table based on the calendar and write the result to output_path.
         Returns a FilteredSimulationTable with additional granular_date column from the calendar.
         """
+        logger.info(f"Filtering simulation table {self.id!r} with calendar {calendar.id!r} into {output_path}")
         # Time-dependent rows: keep only timesteps present in the calendar.
         time_dep_path = output_path.with_suffix(".time_dep.parquet")
+        logger.info(f"Writing time-dependent filtered rows to {time_dep_path}")
         (
             self.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
             .filter(pl.col("block") == pl.col("block_right"))
@@ -108,6 +116,7 @@ class SimulationTable:
         # to any timestep; pass them through with a null granular_date so
         # their constant values are preserved in the view.
         non_time_dep_path = output_path.with_suffix(".non_time_dep.parquet")
+        logger.info(f"Writing non-time-dependent filtered rows to {non_time_dep_path}")
         granular_date_dtype = pl.read_parquet_schema(time_dep_path)["granular_date"]
         (
             self.dataframe.filter(pl.col("absolute_time_index").is_null()).with_columns(
@@ -115,11 +124,13 @@ class SimulationTable:
             )
         ).sink_parquet(non_time_dep_path, compression="zstd", compression_level=3)
 
+        logger.info(f"Merging filtered simulation table parts into {output_path}")
         pl.scan_parquet([time_dep_path, non_time_dep_path]).sink_parquet(
             output_path, compression="zstd", compression_level=3, row_group_size=64_000
         )
         time_dep_path.unlink()
         non_time_dep_path.unlink()
+        logger.info(f"Filtered simulation table ready at {output_path}")
         return FilteredSimulationTable.load(output_path)
 
 
@@ -149,11 +160,14 @@ class FilteredSimulationTable:
         return cls(filtered_simulation_table_file).load_into_self()
 
     def load_into_self(self) -> "FilteredSimulationTable":
+        logger.info(f"Loading filtered simulation table from {self.file}")
         self._dataframe = pl.scan_parquet(self.file)
         self._check_filtered_columns()
+        logger.info(f"Filtered simulation table {self.id!r} loaded successfully")
         return self
 
     def _check_filtered_columns(self) -> None:
+        logger.info(f"Validating filtered simulation table columns for {self.id!r}")
         actual = frozenset(self.dataframe.collect_schema().names())
         missing = FILTERED_SIMULATION_TABLE_COLUMNS - actual
         extra = actual - FILTERED_SIMULATION_TABLE_COLUMNS
@@ -164,3 +178,4 @@ class FilteredSimulationTable:
             errors.append(f"Unexpected columns: {extra}")
         if errors:
             raise ValueError(f"FilteredSimulationTable '{self.id}' has invalid columns: {'; '.join(errors)}")
+        logger.info(f"Filtered simulation table {self.id!r} columns validated")

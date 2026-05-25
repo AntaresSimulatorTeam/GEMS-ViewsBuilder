@@ -23,6 +23,8 @@ from gems.model.parsing import (  # type: ignore[import-untyped]
 )
 from gems.model.resolve_library import resolve_library  # type: ignore[import-untyped]
 
+from gems_views_builder.common import logger
+
 
 class ModelLibrary:
     """
@@ -50,24 +52,44 @@ class ModelLibrary:
         return cls(library_file_path).load_into_self()
 
     def load_into_self(self) -> "ModelLibrary":
+        logger.info(f"Loading model library from {self.file}")
         parsed = self._load_library_schema(self.file)
         self.library_schema = parsed
 
+        logger.info("Assigning library metadata")
         self.id = parsed.id
         self.description = parsed.description or ""
         self.port_types = parsed.port_types
+
+        logger.info("Building model lookup table")
         self.models = {m.id: m for m in parsed.models}
+        logger.info(
+            f"Library schema loaded: id={self.id!r}, {len(self.port_types)} port type(s), {len(self.models)} model(s)"
+        )
+
         self.models_by_taxonomy_category = {}
+        logger.info("Indexing models by taxonomy category")
         for m in self.models.values():
+            logger.info(f"Inspecting model {m.id!r} for taxonomy indexing")
             taxonomy_category = getattr(m, "taxonomy_category", None)
             if not taxonomy_category:
+                logger.info(f"Model {m.id!r} has no taxonomy category — skipping")
                 continue
             self.models_by_taxonomy_category.setdefault(taxonomy_category, []).append(m.id)
+            logger.info(f"Indexed model {m.id!r} under taxonomy category {taxonomy_category!r}")
+
+        logger.info(
+            f"Library indexing complete: {len(self.models_by_taxonomy_category)} taxonomy categor"
+            f"{'y' if len(self.models_by_taxonomy_category) == 1 else 'ies'}"
+        )
         return self
 
     def _load_library_schema(self, library_file_path: Path) -> LibrarySchema:
+        logger.info(f"Parsing library YAML from {library_file_path}")
         with open(library_file_path, encoding="utf-8") as f:
-            return parse_yaml_library(f)
+            schema = parse_yaml_library(f)
+        logger.info("Library YAML parsed successfully")
+        return schema
 
     def resolve_libraries(self) -> dict[str, object]:
         """
@@ -76,7 +98,10 @@ class ModelLibrary:
         """
         if self.library_schema is None:
             raise RuntimeError("ModelLibrary is not loaded (missing LibrarySchema)")
-        return cast(dict[str, object], resolve_library([self.library_schema]))
+        logger.info(f"Resolving library {self.id!r} with GemsPy")
+        resolved = cast(dict[str, object], resolve_library([self.library_schema]))
+        logger.info(f"Resolved {len(resolved)} library/libraries from schema {self.id!r}")
+        return resolved
 
     def get_model(self, model_id: str) -> ModelSchema | None:
         """Return the full model definition, or None if not found."""

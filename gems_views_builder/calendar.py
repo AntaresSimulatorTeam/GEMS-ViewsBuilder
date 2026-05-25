@@ -15,6 +15,8 @@ from pathlib import Path
 
 import polars as pl
 
+from gems_views_builder.common import logger
+
 # Expected CSV columns (name and order)
 EXPECTED_CALENDAR_COLUMNS: tuple[str, ...] = (
     "absolute_time_index",
@@ -42,12 +44,15 @@ def load_calendar(calendar_file_path: Path) -> Calendar:
     Load and validate a calendar.csv file into a plain Calendar dataclass.
     """
     calendar_id = calendar_file_path.stem
+    logger.info(f"Loading calendar {calendar_id!r} from {calendar_file_path}")
     dataframe = _read_calendar_file(calendar_file_path)
     _check_calendar_columns(calendar_id=calendar_id, dataframe=dataframe)
+    logger.info(f"Calendar {calendar_id!r} loaded successfully")
     return Calendar(id=calendar_id, dataframe=dataframe)
 
 
 def _read_calendar_file(calendar_file_path: Path) -> pl.LazyFrame:
+    logger.info(f"Reading calendar file {calendar_file_path}")
     if not calendar_file_path.exists():
         raise FileNotFoundError(f"Calendar file {calendar_file_path} not found")
     if calendar_file_path.suffix.lower() != ".csv":
@@ -56,6 +61,7 @@ def _read_calendar_file(calendar_file_path: Path) -> pl.LazyFrame:
 
 
 def _check_calendar_columns(calendar_id: str, dataframe: pl.LazyFrame) -> None:
+    logger.info(f"Validating calendar {calendar_id!r} structure")
     df = dataframe.collect(
         engine="streaming"
     )  # # calendar isn't big too much,so I think we could perform safely streaming
@@ -78,6 +84,7 @@ def _check_calendar_columns(calendar_id: str, dataframe: pl.LazyFrame) -> None:
             parts.append(f"actual columns: {actual}")
         raise ValueError(f"Calendar '{calendar_id}' has invalid columns: {'; '.join(parts)}")
     if df.is_empty():
+        logger.info(f"Calendar {calendar_id!r} is empty")
         return
 
     # absolute_time_index must equal row index (contiguous 0..N-1, no misses)
@@ -101,3 +108,4 @@ def _check_calendar_columns(calendar_id: str, dataframe: pl.LazyFrame) -> None:
         raise ValueError(
             f"Calendar '{calendar_id}' has non-constant differences between consecutive granular_date values"
         )
+    logger.info(f"Calendar {calendar_id!r} validated with {df.height} row(s)")

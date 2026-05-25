@@ -17,6 +17,7 @@ import yaml
 from pydantic import Field
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
+from gems_views_builder.common import logger
 
 
 class TaxonomyItem(ViewBuilderBasedModel):
@@ -54,17 +55,22 @@ class Taxonomy:
 
 
 def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
+    logger.info(f"Loading taxonomy from {taxonomy_file_path}")
     parsed = _load_taxonomy_file(taxonomy_file_path)
-    return Taxonomy(
+    taxonomy = Taxonomy(
         id=parsed.id,
         description=parsed.description,
         categories=parsed.categories,
     )
+    logger.info(f"Taxonomy {taxonomy.id!r} loaded with {len(taxonomy.categories)} categor(ies)")
+    return taxonomy
 
 
 def _load_taxonomy_file(taxonomy_file_path: Path) -> TaxonomyData:
+    logger.info(f"Parsing taxonomy YAML from {taxonomy_file_path}")
     with open(taxonomy_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     if "taxonomy" not in raw:
         raise ValueError(f"taxonomy.yml file {taxonomy_file_path} is missing the 'taxonomy' key at the root")
+    logger.info(f"Taxonomy YAML parsed successfully from {taxonomy_file_path}")
     return TaxonomyData.model_validate(raw["taxonomy"])

@@ -196,3 +196,32 @@ def test_balance_busb_values(view_run: tuple[pl.DataFrame, Path]) -> None:
     assert len(rows) == 24
     expected = [-(100 - 2 * t) for t in range(1, 25)]
     assert rows["metric_value"].to_list() == expected
+
+
+def test_pipeline_logs_are_saved_to_file(view_run: tuple[pl.DataFrame, Path]) -> None:
+    _, dst = view_run
+    log_files = list((dst / "logs").glob("pipeline-*.log"))
+    assert len(log_files) == 1
+
+    content = log_files[0].read_text(encoding="utf-8")
+    assert "[pipeline]" in content
+    assert "Starting pipeline for study" in content
+    assert "Pipeline complete" in content
+
+
+def test_reused_view_builder_creates_one_log_file_per_run(test_files_root: Path, tmp_path: Path) -> None:
+    src = test_files_root / "test_3"
+    dst = tmp_path / "test_3"
+    shutil.copytree(src, dst)
+
+    builder = ViewBuilder(dst)
+    builder.build()
+    builder.build()
+
+    log_files = sorted((dst / "logs").glob("pipeline-*.log"))
+    assert len(log_files) == 2
+
+    for log_file in log_files:
+        content = log_file.read_text(encoding="utf-8")
+        assert "Starting pipeline for study" in content
+        assert "Pipeline complete" in content
