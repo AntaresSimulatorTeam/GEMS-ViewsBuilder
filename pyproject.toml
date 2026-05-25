@@ -37,12 +37,12 @@ Repository = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
 
 [dependency-groups]
 dev = [
-    "pytest==7.0.1",
-    "pytest-xdist==3.8.0",
-    "mypy~=1.15.0",
+    "pytest>=7.0.1",
+    "pytest-xdist>=3.8.0",
+    "mypy>=1.15.0",
     "types-PyYAML>=6.0.0",
-    "ruff~=0.9.6",
-    "pre-commit~=4.1.0",
+    "ruff>=0.9.6",
+    "pre-commit>=4.1.0",
 ]
 
 [tool.setuptools.packages.find]
