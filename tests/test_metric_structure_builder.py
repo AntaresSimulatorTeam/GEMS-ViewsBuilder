@@ -13,10 +13,19 @@
 from pathlib import Path
 from typing import Any
 
+import polars as pl
 import pytest
 from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.catalog import PropertySchema, get_catalog_metric, load_catalog
+from gems_views_builder.catalog import (
+    Metric,
+    PropertySchema,
+    Term,
+    TermsOperator,
+    TimeOperator,
+    get_catalog_metric,
+    load_catalog,
+)
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.metrics_builder import (
     MetricStructureBuilder,
@@ -102,15 +111,22 @@ def _component_matches_filters(metric_filter: tuple[PropertySchema, ...] | None,
 # ---------------------------------------------------------------------------
 
 
+def _count_expected_rows(metric_id: str, component_ids: list[str], components: dict[str, Any]) -> int:
+    metric = get_catalog_metric(components["catalog"], metric_id)
+    system = components["system"]
+    count = 0
+    for cid in component_ids:
+        if _component_matches_filters(metric.filter, system.get_component(cid)):
+            for term in metric.terms:
+                loc = system.get_location(cid, term.location_ports)
+                count += 1 if isinstance(loc, str) else len(loc)
+    return count
+
+
 def test_prod_structure_row_count(test_3_components: dict[str, Any]) -> None:
     df = _build("PROD", test_3_components).dataframe
-    metric = get_catalog_metric(test_3_components["catalog"], "PROD")
-    system = test_3_components["system"]
     candidates = ["generator_A1", "generator_A2", "generator_B1"]
-    expected_components = [
-        cid for cid in candidates if _component_matches_filters(metric.filter, system.get_component(cid))
-    ]
-    assert len(df) == len(expected_components)
+    assert len(df) == _count_expected_rows("PROD", candidates, test_3_components)
 
 
 def test_prod_structure_components(test_3_components: dict[str, Any]) -> None:
@@ -124,13 +140,15 @@ def test_prod_structure_components(test_3_components: dict[str, Any]) -> None:
 
 def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
     df = _build("PROD", test_3_components).dataframe
-    location_by_component: dict[str, Any] = dict(zip(df["component"].to_list(), df["metric_location"].to_list()))
-    if "generator_A1" in location_by_component:
-        assert location_by_component["generator_A1"] == "busA"
-    if "generator_A2" in location_by_component:
-        assert location_by_component["generator_A2"] == "busA"
-    if "generator_B1" in location_by_component:
-        assert location_by_component["generator_B1"] == "busB"
+    locations_by_component: dict[str, set[str]] = {}
+    for comp, loc in df.select(["component", "metric_location"]).rows():
+        locations_by_component.setdefault(comp, set()).add(loc)
+    if "generator_A1" in locations_by_component:
+        assert "busA" in locations_by_component["generator_A1"]
+    if "generator_A2" in locations_by_component:
+        assert "busA" in locations_by_component["generator_A2"]
+    if "generator_B1" in locations_by_component:
+        assert "busB" in locations_by_component["generator_B1"]
 
 
 def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
@@ -147,10 +165,7 @@ def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
 
 def test_load_structure_row_count(test_3_components: dict[str, Any]) -> None:
     df = _build("LOAD", test_3_components).dataframe
-    metric = get_catalog_metric(test_3_components["catalog"], "LOAD")
-    system = test_3_components["system"]
-    expected = 1 if _component_matches_filters(metric.filter, system.get_component("load_AL")) else 0
-    assert len(df) == expected
+    assert len(df) == _count_expected_rows("LOAD", ["load_AL"], test_3_components)
 
 
 def test_load_structure_component_and_location(
@@ -159,9 +174,10 @@ def test_load_structure_component_and_location(
     df = _build("LOAD", test_3_components).dataframe
     if len(df) == 0:
         return
-    assert df["component"][0] == "load_AL"
-    assert df["metric_location"][0] == "busA"
-    assert df["output"][0] == "active_load"
+    component_rows = df.filter(pl.col("component") == "load_AL")
+    assert len(component_rows) >= 1
+    assert "busA" in component_rows["metric_location"].to_list()
+    assert set(component_rows["output"].to_list()) == {"active_load"}
 
 
 # ---------------------------------------------------------------------------
@@ -171,19 +187,18 @@ def test_load_structure_component_and_location(
 
 def test_balance_structure_row_count(test_3_components: dict[str, Any]) -> None:
     df = _build("BALANCE", test_3_components).dataframe
-    metric = get_catalog_metric(test_3_components["catalog"], "BALANCE")
-    system = test_3_components["system"]
-    expected = 2 if _component_matches_filters(metric.filter, system.get_component("link_link_AB")) else 0
-    assert len(df) == expected
+    assert len(df) == _count_expected_rows("BALANCE", ["link_link_AB"], test_3_components)
 
 
 def test_balance_structure_locations(test_3_components: dict[str, Any]) -> None:
     df = _build("BALANCE", test_3_components).dataframe
     if len(df) == 0:
         return
-    output_to_location: dict[str, Any] = dict(zip(df["output"].to_list(), df["metric_location"].to_list()))
-    assert output_to_location["p0_port.flow"] == "busA"
-    assert output_to_location["p1_port.flow"] == "busB"
+    locations_by_output: dict[str, set[str]] = {}
+    for output, loc in df.select(["output", "metric_location"]).rows():
+        locations_by_output.setdefault(output, set()).add(loc)
+    assert "busA" in locations_by_output["p0_port.flow"]
+    assert "busB" in locations_by_output["p1_port.flow"]
 
 
 def test_balance_structure_component(test_3_components: dict[str, Any]) -> None:
@@ -191,3 +206,46 @@ def test_balance_structure_component(test_3_components: dict[str, Any]) -> None:
     if len(df) == 0:
         return
     assert set(df["component"].to_list()) == {"link_link_AB"}
+
+
+# ---------------------------------------------------------------------------
+# Multiple locations expand into separate rows
+# ---------------------------------------------------------------------------
+
+
+def test_single_port_multiple_peers_produces_one_row_per_peer(test_3_components: dict[str, Any]) -> None:
+    """A term with a single location_port that connects to multiple peers yields one row per peer.
+
+    In test_3, busA.p_balance_port connects to generator_A1, generator_A2, load_AL, link_link_AB
+    and busB.p_balance_port connects to generator_B1, link_link_AB.
+    Each bus should therefore produce as many rows as it has peers.
+    """
+    metric = Metric(
+        id="BUS_PEER_TEST",
+        terms=[
+            Term(
+                taxonomy_category="balance",
+                output_id="p_balance_port.flow",
+                location_ports="p_balance_port",
+            )
+        ],
+        terms_operator=TermsOperator.SUM,
+        time_operator=TimeOperator.SUM,
+    )
+    df = (
+        MetricStructureBuilder(
+            test_3_components["system"],
+            test_3_components["catalog"],
+            metric,
+            test_3_components["taxonomy"],
+            test_3_components["library"],
+        )
+        .build()
+        .dataframe
+    )
+
+    bus_a_rows = df.filter(pl.col("component") == "busA")
+    assert set(bus_a_rows["metric_location"].to_list()) == {"generator_A1", "generator_A2", "load_AL", "link_link_AB"}
+
+    bus_b_rows = df.filter(pl.col("component") == "busB")
+    assert set(bus_b_rows["metric_location"].to_list()) == {"generator_B1", "link_link_AB"}

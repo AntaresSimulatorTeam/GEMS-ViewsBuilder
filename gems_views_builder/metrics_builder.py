@@ -100,19 +100,21 @@ class MetricStructureBuilder:
                     # # Decide does the component matches the filter, if yes they will contribute to the metric
                     if _check_filter_matches(component, self.metric.filter):
                         metric_location = self.system.get_location(component_id, term.location_ports)
-                        loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
+                        locations = [metric_location] if isinstance(metric_location, str) else list(metric_location)
 
                         breakdown_properties = _format_breakdown_properties(component.properties, self.metric.breakdown)
-                        rows.append(
-                            {
-                                "metric_id": self.metric.id,
-                                "component": component_id,
-                                "metric_location": loc_str,
-                                "breakdown_properties": breakdown_properties,
-                                "output": term.output_id,
-                                "weight_output_id": 1,
-                            }
-                        )
+
+                        for location in locations:
+                            rows.append(
+                                {
+                                    "metric_id": self.metric.id,
+                                    "component": component_id,
+                                    "metric_location": location,
+                                    "breakdown_properties": breakdown_properties,
+                                    "output": term.output_id,
+                                    "weight_output_id": 1,
+                                }
+                            )
                     else:
                         logger.info(
                             f"[{self.metric.id}] Component {component_id!r} did not match metric filter and was skipped"
