@@ -128,6 +128,14 @@ def _to_metric(metric_data: MetricData) -> Metric:
     )
 
 
+def load_catalogs(input_data_path: Path, catalog_ids: list[str]) -> dict[str, Catalog]:
+    catalogs_dir = input_data_path / "catalogs"
+    catalogs: dict[str, Catalog] = {}
+    for catalog_id in catalog_ids:
+        catalogs[catalog_id] = load_catalog(catalogs_dir / f"{catalog_id}.yml")
+    return catalogs
+
+
 def load_catalog(catalog_file_path: Path) -> Catalog:
     logger.info(f"Loading catalog from {catalog_file_path}")
     parsed = _load_catalog_file(catalog_file_path)

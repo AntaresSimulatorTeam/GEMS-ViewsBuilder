@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from gems_views_builder.catalog import Catalog
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics import ViewConfig
@@ -25,6 +26,11 @@ def test_loader_load_into_self_populates_attributes(test_dataset_dir: Path) -> N
     assert isinstance(loader.view_config, ViewConfig)
     assert isinstance(loader.simulation_table, SimulationTable)
     assert isinstance(loader.model_library, ModelLibrary)
+    assert isinstance(loader.catalogs, dict)
+    assert loader.catalogs
+    for catalog_id in loader.view_config.catalog_ids:
+        assert catalog_id in loader.catalogs
+        assert isinstance(loader.catalogs[catalog_id], Catalog)
 
 
 def test_loader_classmethod_load_populates_attributes(test_dataset_dir: Path) -> None:
@@ -35,3 +41,5 @@ def test_loader_classmethod_load_populates_attributes(test_dataset_dir: Path) ->
     assert isinstance(loader.view_config, ViewConfig)
     assert isinstance(loader.simulation_table, SimulationTable)
     assert isinstance(loader.model_library, ModelLibrary)
+    assert loader.catalogs
+    assert set(loader.catalogs) == set(loader.view_config.catalog_ids)

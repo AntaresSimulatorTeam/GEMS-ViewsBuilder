@@ -10,7 +10,7 @@
 
 catalog:
 
-  id: example_catalog
+  id: catalog
 
   taxonomy: my_taxonomy
 

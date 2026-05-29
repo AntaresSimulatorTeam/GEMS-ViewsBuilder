@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from gems_views_builder.catalog import load_catalogs
 from gems_views_builder.common import logger
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.metrics import ViewConfig
@@ -24,6 +25,8 @@ class Loader:
         logger.info("Taxonomy loaded")
         self.view_config = ViewConfig.load(self.input_data_path / "view_config.yml")
         logger.info("View config loaded")
+        self.catalogs = load_catalogs(self.input_data_path, self.view_config.catalog_ids)
+        logger.info("Catalogs loaded")
         self.simulation_table = SimulationTable.load(
             next(self.input_data_path.glob("simulation_table*.parquet"))
         )  # # we could have only one simulation table at this phase of development
