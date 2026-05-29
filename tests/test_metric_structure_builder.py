@@ -244,8 +244,88 @@ def test_single_port_multiple_peers_produces_one_row_per_peer(test_3_components:
         .dataframe
     )
 
+    bus_a_expected = {"generator_A1", "generator_A2", "load_AL", "link_link_AB"}
     bus_a_rows = df.filter(pl.col("component") == "busA")
-    assert set(bus_a_rows["metric_location"].to_list()) == {"generator_A1", "generator_A2", "load_AL", "link_link_AB"}
+    assert len(bus_a_rows) == len(bus_a_expected)
+    assert set(bus_a_rows["metric_location"].to_list()) == bus_a_expected
+    assert bus_a_rows["metric_location"].n_unique() == len(bus_a_expected)
 
+    bus_b_expected = {"generator_B1", "link_link_AB"}
     bus_b_rows = df.filter(pl.col("component") == "busB")
-    assert set(bus_b_rows["metric_location"].to_list()) == {"generator_B1", "link_link_AB"}
+    assert len(bus_b_rows) == len(bus_b_expected)
+    assert set(bus_b_rows["metric_location"].to_list()) == bus_b_expected
+    assert bus_b_rows["metric_location"].n_unique() == len(bus_b_expected)
+
+
+def test_get_location_tuple_of_ports_returns_peer_per_port(test_3_components: dict[str, Any]) -> None:
+    """Each port in a location_ports tuple resolves to its connected peer(s)."""
+    system = test_3_components["system"]
+    locations = system.get_location("link_link_AB", ("p0_port", "p1_port"))
+    assert isinstance(locations, tuple)
+    assert set(locations) == {"busA", "busB"}
+
+
+def test_tuple_location_ports_produces_one_row_per_location(test_3_components: dict[str, Any]) -> None:
+    """A term with multiple location_ports yields one metric-structure row per resolved location."""
+    metric = Metric(
+        id="LINK_BOTH_PORTS",
+        terms=[
+            Term(
+                taxonomy_category="link",
+                output_id="p0_port.flow",
+                location_ports=("p0_port", "p1_port"),
+            )
+        ],
+        terms_operator=TermsOperator.SUM,
+        time_operator=TimeOperator.SUM,
+    )
+    df = (
+        MetricStructureBuilder(
+            test_3_components["system"],
+            test_3_components["catalog"],
+            metric,
+            test_3_components["taxonomy"],
+            test_3_components["library"],
+        )
+        .build()
+        .dataframe
+    )
+
+    link_rows = df.filter(pl.col("component") == "link_link_AB")
+    assert len(link_rows) == 2
+    assert set(link_rows["metric_location"].to_list()) == {"busA", "busB"}
+    assert set(link_rows["output"].to_list()) == {"p0_port.flow"}
+
+
+def test_duplicate_locations_from_two_ports_produce_duplicate_rows(test_files_root: Path) -> None:
+    """When two ports resolve to the same peer, get_location and the structure table keep both entries."""
+    test_3 = test_files_root / "test_3"
+    taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
+    library = ModelLibrary.load(test_3 / "library.yml")
+    system = InputSystem.load(test_3 / "system.yml", library)
+    catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
+
+    # Default test_3 wiring uses p0_port -> busA and p1_port -> busB; force both ports to busA here.
+    system._component_port_connections[("link_link_AB", "p0_port")] = {"busA"}
+    system._component_port_connections[("link_link_AB", "p1_port")] = {"busA"}
+
+    assert system.get_location("link_link_AB", ("p0_port", "p1_port")) == ("busA", "busA")
+
+    metric = Metric(
+        id="DUP_PEER_VIA_TWO_PORTS",
+        terms=[
+            Term(
+                taxonomy_category="link",
+                output_id="p0_port.flow",
+                location_ports=("p0_port", "p1_port"),
+            )
+        ],
+        terms_operator=TermsOperator.SUM,
+        time_operator=TimeOperator.SUM,
+    )
+    df = MetricStructureBuilder(system, catalog, metric, taxonomy, library).build().dataframe
+
+    link_rows = df.filter(pl.col("component") == "link_link_AB")
+    assert len(link_rows) == 2
+    assert link_rows["metric_location"].to_list() == ["busA", "busA"]
+    assert link_rows["metric_location"].n_unique() == 1
