@@ -19,7 +19,7 @@ import polars as pl
 from gems_views_builder.aggregator import Aggregator
 from gems_views_builder.catalog import Catalog, Metric, get_catalog_metric
 from gems_views_builder.common import logger
-from gems_views_builder.input_validator import InputValidator
+from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_builder import MetricStructureBuilder
 from gems_views_builder.writer import Writer
@@ -38,7 +38,7 @@ class ViewBuilder:
     ) -> None:
         self.input_data_path = input_data_path
         with logger.use_context("validation"):
-            InputValidator(self.input_data_path).validate()
+            StudyLayoutValidator(self.input_data_path).validate()
 
         with logger.use_context("loader"):
             self.loader = Loader.load(self.input_data_path)

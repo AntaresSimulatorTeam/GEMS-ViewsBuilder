@@ -6,7 +6,7 @@ EXACT_FILES = ["taxonomy.yml", "view_config.yml", "library.yml", "system.yml"]
 PREFIX_FILES = {"calendar": ".csv", "simulation_table": ".parquet"}
 
 
-class InputValidator:
+class StudyLayoutValidator:
     """
     Expected files:
     - taxonomy.yml
