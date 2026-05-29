@@ -15,6 +15,7 @@
 from collections import defaultdict
 from enum import Enum
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import Field
@@ -33,6 +34,11 @@ class TimeAggregation(Enum):
     YEAR = "year"
 
 
+class LocationAggregation(ViewBuilderBasedModel):
+    key: str
+    on_missing: Literal["keep", "drop"] = "keep"
+
+
 class Scope(ViewBuilderBasedModel):
     taxonomy_category: str | None = Field(None, alias="taxonomy-category")
     calendar: str | None = None
@@ -40,6 +46,7 @@ class Scope(ViewBuilderBasedModel):
 
 class Aggregation(ViewBuilderBasedModel):
     time: TimeAggregation | None = None
+    location: LocationAggregation | None = None
 
 
 class CatalogRef(ViewBuilderBasedModel):
@@ -76,6 +83,7 @@ class ViewConfig:
         self.calendar_id: str | None = None
         self.catalog_ids: list[str] = []
         self.time_aggregation: TimeAggregation | None = None
+        self.location_aggregation: LocationAggregation | None = None
         self.catalog_to_metrics: dict[str, list[str]] = {}
 
     @classmethod
@@ -98,6 +106,10 @@ class ViewConfig:
         self.calendar_id = next((item.calendar for item in parsed.scope if item.calendar), None)
         self.catalog_ids = [c.id for c in parsed.catalog]
         self.time_aggregation = parsed.aggregation[0].time if parsed.aggregation else None
+        self.location_aggregation = next(
+            (item.location for item in parsed.aggregation if item.location),
+            None,
+        )
         # Internal helper: grouped by catalog
         self.catalog_to_metrics = self._group_metrics_by_catalog(parsed.metrics)
         logger.info(

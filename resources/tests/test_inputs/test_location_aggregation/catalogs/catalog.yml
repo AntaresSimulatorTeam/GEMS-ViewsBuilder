@@ -1,0 +1,37 @@
+catalog:
+
+  id: catalog
+
+  taxonomy: my_taxonomy
+
+  location:
+    taxonomy-category: balance
+
+  metrics-definition:
+
+  - id: LOAD
+    terms:
+      - taxonomy-category: consumption
+        output-id: effective_load
+        location-ports: p_balance_port
+    terms-operator: sum
+    time-operator: sum
+
+  - id: PRODUCTION
+    terms:
+      - taxonomy-category: production
+        output-id: p
+        location-ports: p_balance_port
+    terms-operator: sum
+    time-operator: sum
+
+  - id: BALANCE
+    terms:
+      - taxonomy-category: link
+        output-id: p0_port.flow
+        location-ports: p0_port
+      - taxonomy-category: link
+        output-id: p1_port.flow
+        location-ports: p1_port
+    terms-operator: sum
+    time-operator: sum

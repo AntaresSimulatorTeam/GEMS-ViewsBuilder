@@ -1,0 +1,18 @@
+view:
+
+  id: view_no_location
+
+  scope:
+    - location:
+      taxonomy-category: balance
+
+    - calendar: calendar_file
+
+  aggregation:
+    - time: hour
+
+  catalog:
+    - id: catalog
+
+  metrics:
+    - id: catalog.PRODUCTION

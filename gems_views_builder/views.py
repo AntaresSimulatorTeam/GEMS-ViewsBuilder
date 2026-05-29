@@ -110,6 +110,7 @@ class ViewBuilder:
                             metric,
                             self.loader.taxonomy,
                             self.loader.model_library,
+                            location_aggregation=self.loader.view_config.location_aggregation,
                         ).build()
 
                         metric_structure_path = self.writer.write_metric_structure_table(
