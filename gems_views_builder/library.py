@@ -13,61 +13,17 @@
 """Model library YAML with explicit local models"""
 
 from pathlib import Path
+from typing import cast
 
-import yaml
-from gems.model.parsing import (  # type: ignore
-    InputConstraint,
-    InputExtraOutput,
-    InputField,
-    InputModelPort,
-    InputObjectiveContribution,
-    InputParameter,
-    InputPortFieldDefinition,
-    InputPortType,
-    InputVariable,
+from gems.model.parsing import (  # type: ignore[import-untyped]
+    LibrarySchema,
+    ModelSchema,
+    PortTypeSchema,
+    parse_yaml_library,
 )
-from pydantic import Field
+from gems.model.resolve_library import resolve_library  # type: ignore[import-untyped]
 
-from gems_views_builder.base_model import ViewBuilderBasedModel
 from gems_views_builder.common import logger
-
-# Public aliases — same names as the previous local Pydantic models.
-ParameterDef = InputParameter
-VariableDef = InputVariable
-PortDef = InputModelPort
-PortFieldDefinition = InputPortFieldDefinition
-ConstraintDef = InputConstraint
-BindingConstraintDef = InputConstraint
-ObjectiveContributionDef = InputObjectiveContribution
-PortTypeField = InputField
-PortTypeDef = InputPortType
-ExtraOutputDef = InputExtraOutput
-
-
-class ModelDefinition(ViewBuilderBasedModel):
-    """Local model definition used by ViewsBuilder."""
-
-    id: str
-    description: str | None = None
-    parameters: list[InputParameter] = Field(default_factory=list)
-    variables: list[InputVariable] = Field(default_factory=list)
-    ports: list[InputModelPort] = Field(default_factory=list)
-    port_field_definitions: list[InputPortFieldDefinition] = Field(default_factory=list)
-    constraints: list[InputConstraint] = Field(default_factory=list)
-    binding_constraints: list[InputConstraint] = Field(default_factory=list)
-    objective_contributions: list[InputObjectiveContribution] = Field(default_factory=list)
-    extra_outputs: list[InputExtraOutput] = Field(default_factory=list)
-
-    taxonomy_category: str | None = Field(default=None, alias="taxonomy-category")
-
-
-class LibraryData(ViewBuilderBasedModel):
-    """Library root model for `library` yaml section."""
-
-    id: str
-    description: str | None = None
-    port_types: list[InputPortType] = Field(default_factory=list)
-    models: list[ModelDefinition] = Field(default_factory=list)
 
 
 class ModelLibrary:
@@ -86,9 +42,10 @@ class ModelLibrary:
         self.file = library_file_path
         self.id = ""
         self.description = ""
-        self.port_types: list[InputPortType] = []
-        self.models: dict[str, ModelDefinition] = {}
+        self.port_types: list[PortTypeSchema] = []
+        self.models: dict[str, ModelSchema] = {}
         self.models_by_taxonomy_category: dict[str, list[str]] = {}
+        self.library_schema: LibrarySchema | None = None
 
     @classmethod
     def load(cls, library_file_path: Path) -> "ModelLibrary":
@@ -96,35 +53,57 @@ class ModelLibrary:
 
     def load_into_self(self) -> "ModelLibrary":
         logger.info(f"Loading model library from {self.file}")
-        parsed = self._load_library_file(self.file)
+        parsed = self._load_library_schema(self.file)
+        self.library_schema = parsed
+
+        logger.info("Assigning library metadata")
         self.id = parsed.id
         self.description = parsed.description or ""
         self.port_types = parsed.port_types
+
+        logger.info("Building model lookup table")
         self.models = {m.id: m for m in parsed.models}
         logger.info(
             f"Library schema loaded: id={self.id!r}, {len(self.port_types)} port type(s), {len(self.models)} model(s)"
         )
+
         self.models_by_taxonomy_category = {}
-        for m in parsed.models:
-            if not m.taxonomy_category:
+        logger.info("Indexing models by taxonomy category")
+        for m in self.models.values():
+            logger.info(f"Inspecting model {m.id!r} for taxonomy indexing")
+            taxonomy_category = getattr(m, "taxonomy_category", None)
+            if not taxonomy_category:
+                logger.info(f"Model {m.id!r} has no taxonomy category — skipping")
                 continue
-            self.models_by_taxonomy_category.setdefault(m.taxonomy_category, []).append(m.id)
+            self.models_by_taxonomy_category.setdefault(taxonomy_category, []).append(m.id)
+            logger.info(f"Indexed model {m.id!r} under taxonomy category {taxonomy_category!r}")
+
         logger.info(
             f"Library indexing complete: {len(self.models_by_taxonomy_category)} taxonomy categor"
             f"{'y' if len(self.models_by_taxonomy_category) == 1 else 'ies'}"
         )
         return self
 
-    def _load_library_file(self, library_file_path: Path) -> LibraryData:
+    def _load_library_schema(self, library_file_path: Path) -> LibrarySchema:
         logger.info(f"Parsing library YAML from {library_file_path}")
         with open(library_file_path, encoding="utf-8") as f:
-            raw = yaml.safe_load(f)
-        if "library" not in raw:
-            raise ValueError(f"library.yml file {library_file_path} is missing the 'library' key at the root")
+            schema = parse_yaml_library(f)
         logger.info("Library YAML parsed successfully")
-        return LibraryData.model_validate(raw["library"])
+        return schema
 
-    def get_model(self, model_id: str) -> ModelDefinition | None:
+    def resolve_libraries(self) -> dict[str, object]:
+        """
+        Resolve this library via GemsPy to obtain `dict[library_id, Library]`
+        suitable for resolving a system (`resolve_system`).
+        """
+        if self.library_schema is None:
+            raise RuntimeError("ModelLibrary is not loaded (missing LibrarySchema)")
+        logger.info(f"Resolving library {self.id!r} with GemsPy")
+        resolved = cast(dict[str, object], resolve_library([self.library_schema]))
+        logger.info(f"Resolved {len(resolved)} library/libraries from schema {self.id!r}")
+        return resolved
+
+    def get_model(self, model_id: str) -> ModelSchema | None:
         """Return the full model definition, or None if not found."""
         return self.models.get(model_id)
 

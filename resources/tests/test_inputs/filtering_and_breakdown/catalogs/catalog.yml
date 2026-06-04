@@ -1,0 +1,78 @@
+# Such a file for "Business Metrics" definitions should be modified only by expert user in a text editor. No API/GUI is needed.
+# In "secure mode", a user can only refer to "Business Metrics Definition files" that are registered as "safe" in a reference repo.
+# In "free mode", a user can refer to "Business Metrics Definitions files" that are freely modified
+
+############################    Columns of a Business View   #######################################
+
+# metric_id | metric_location | breakdown_property | view_date | scenario_id | metric_value |
+
+####################################################################################################
+
+catalog:
+
+  id: catalog
+
+  taxonomy: my_taxonomy
+
+  location:
+    taxonomy-category: balance
+
+  metrics-definition:
+
+  - id: LOAD
+    terms:
+      - taxonomy-category: consumption
+        output-id: effective_load
+        location-ports: balance_port
+    terms-operator: sum
+    time-operator: sum
+
+  - id: PRODUCTION
+    terms:
+      - taxonomy-category: production
+        output-id: generation
+        location-ports: balance_port
+    terms-operator: sum
+    time-operator: sum
+
+  - id: PRODUCTION_BY_TECH
+    terms:
+      - taxonomy-category: production
+        output-id: generation
+        location-ports: balance_port
+    terms-operator: sum
+    time-operator: sum
+    breakdown:
+    - key: technology
+
+  - id: PRODUCTION_BY_COMPANY
+    terms:
+      - taxonomy-category: production
+        output-id: generation
+        location-ports: balance_port
+    terms-operator: sum
+    time-operator: sum
+    breakdown:
+    - key: company
+
+  - id: NUCLEAR_PRODUCTION
+    terms:
+      - taxonomy-category: production
+        output-id: generation
+        location-ports: balance_port
+    terms-operator: sum
+    time-operator: sum
+    filter:
+    - key: technology
+      value: nuclear
+
+  - id: PRODUCTION_BY_TECH_AND_COMPANY
+    terms:
+      - taxonomy-category: production
+        output-id: generation
+        location-ports: balance_port
+    terms-operator: sum
+    time-operator: sum
+    breakdown:
+    - key: technology
+    - key: company

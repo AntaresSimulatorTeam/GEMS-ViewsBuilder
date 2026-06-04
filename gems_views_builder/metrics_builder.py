@@ -13,8 +13,9 @@
 from dataclasses import dataclass
 
 import polars as pl
+from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.catalog import Catalog, Metric
+from gems_views_builder.catalog import Catalog, Metric, PropertySchema
 from gems_views_builder.common import logger
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.system import InputSystem
@@ -39,9 +40,28 @@ class MetricStructureTable:
     dataframe: pl.DataFrame
 
 
-class MetricStructureBuilder:
-    """Build metric structure rows without loading unrelated datasets."""
+def _check_filter_matches(component: Component, filter: tuple[PropertySchema, ...] | None) -> bool:
+    if filter is None:
+        return True
+    return all(component.properties.get(entry.key) == entry.value for entry in filter)
 
+
+def _format_breakdown_properties(
+    component_properties: dict[str, str], breakdown: tuple[PropertySchema, ...] | None
+) -> str:
+    if not breakdown:
+        return "{}"
+    pairs: list[str] = []
+    for prop in breakdown:
+        key = prop.key
+        if key not in component_properties:
+            pairs.append(f"({key},None)")
+        else:
+            pairs.append(f"({key},{component_properties[key]})")
+    return "{" + ",".join(pairs) + "}"
+
+
+class MetricStructureBuilder:
     def __init__(
         self,
         system: InputSystem,
@@ -75,19 +95,29 @@ class MetricStructureBuilder:
                     f"[{self.metric.id}] Model {qualified_ref!r} resolves to {len(component_ids)} component instance(s)"
                 )
                 for component_id in component_ids:
-                    # # locating function
-                    metric_location = self.system.get_location(component_id, term.location_ports)
-                    loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
-                    rows.append(
-                        {
-                            "metric_id": self.metric.id,
-                            "component": component_id,
-                            "metric_location": loc_str,
-                            "breakdown_properties": "",
-                            "output": term.output_id,
-                            "weight_output_id": 1,
-                        }
-                    )
+                    component = self.system.get_component(component_id)
+
+                    # # Decide does the component matches the filter, if yes they will contribute to the metric
+                    if _check_filter_matches(component, self.metric.filter):
+                        metric_location = self.system.get_location(component_id, term.location_ports)
+                        raw_locations = [metric_location] if isinstance(metric_location, str) else list(metric_location)
+                        breakdown_properties = _format_breakdown_properties(component.properties, self.metric.breakdown)
+                        for location in raw_locations:
+                            rows.append(
+                                {
+                                    "metric_id": self.metric.id,
+                                    "component": component_id,
+                                    "metric_location": location,
+                                    "breakdown_properties": breakdown_properties,
+                                    "output": term.output_id,
+                                    "weight_output_id": 1,
+                                }
+                            )
+                    else:
+                        logger.info(
+                            f"[{self.metric.id}] Component {component_id!r} did not match metric filter and was skipped"
+                        )
+
         if not rows:
             logger.info(f"[{self.metric.id}] No matching components found — metric structure table is empty")
             return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
