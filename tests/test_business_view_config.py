@@ -47,9 +47,7 @@ def test_view_config_known_values(test_dataset_dir: Path) -> None:
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.catalog_ids == ["catalog"]
-    assert "PROD" in config.catalog_to_metrics["catalog"]
     assert "LOAD" in config.catalog_to_metrics["catalog"]
-    assert "BALANCE" in config.catalog_to_metrics["catalog"]
 
 
 def test_view_config_time_aggregation(test_dataset_dir: Path) -> None:

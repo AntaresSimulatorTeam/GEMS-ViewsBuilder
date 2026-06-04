@@ -1,0 +1,25 @@
+taxonomy:
+  id: my_taxonomy
+  description: Taxonomy for spatial-aggregation test fixture
+
+  categories:
+    - id: balance
+      ports:
+        - id: p_balance_port
+
+    - id: production
+      ports:
+        - id: p_balance_port
+
+    - id: consumption
+      ports:
+        - id: p_balance_port
+
+    - id: storage
+      ports:
+        - id: p_balance_port
+
+    - id: link
+      ports:
+        - id: p0_port
+        - id: p1_port

@@ -1,0 +1,92 @@
+system:
+  id: country_aggregation_example
+  model_libraries: country_models
+
+  components:
+    - id: area_FR1
+      model: country_models.area
+      properties:
+        - id: country
+          value: FR
+
+    - id: area_FR2
+      model: country_models.area
+      properties:
+        - id: country
+          value: FR
+
+    - id: area_DE
+      model: country_models.area
+      properties:
+        - id: country
+          value: DE
+
+    - id: area_orph
+      model: country_models.area
+
+    - id: gen_FR1
+      model: country_models.generator
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 100
+
+    - id: gen_FR2
+      model: country_models.generator
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 100
+
+    - id: gen_DE
+      model: country_models.generator
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 100
+
+    - id: gen_orph
+      model: country_models.generator
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 100
+
+    - id: link_FRDE
+      model: country_models.link
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 100
+
+  connections:
+    - component1: area_FR1
+      port1: p_balance_port
+      component2: gen_FR1
+      port2: p_balance_port
+    - component1: area_FR2
+      port1: p_balance_port
+      component2: gen_FR2
+      port2: p_balance_port
+    - component1: area_DE
+      port1: p_balance_port
+      component2: gen_DE
+      port2: p_balance_port
+    - component1: area_orph
+      port1: p_balance_port
+      component2: gen_orph
+      port2: p_balance_port
+    - component1: area_FR1
+      port1: p_balance_port
+      component2: link_FRDE
+      port2: p0_port
+    - component1: area_DE
+      port1: p_balance_port
+      component2: link_FRDE
+      port2: p1_port
+  area_connections: null

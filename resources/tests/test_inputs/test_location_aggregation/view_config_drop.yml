@@ -1,0 +1,21 @@
+view:
+
+  id: view_country_drop
+
+  scope:
+    - location:
+      taxonomy-category: balance
+
+    - calendar: calendar_file
+
+  aggregation:
+    - time: hour
+    - location:
+        key: country
+        on_missing: drop
+
+  catalog:
+    - id: catalog
+
+  metrics:
+    - id: catalog.PRODUCTION

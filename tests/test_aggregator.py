@@ -10,6 +10,7 @@ from gems_views_builder.catalog import TermsOperator, TimeOperator
 def _joined_df(values: list[float]) -> pl.LazyFrame:
     """
     Minimal columns required by Aggregator.aggregate_metric_terms().
+
     """
     return pl.DataFrame(
         {

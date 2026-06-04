@@ -1,0 +1,23 @@
+view:
+
+  id: view_area
+
+  scope:
+    - location:
+      taxonomy-category: balance
+
+    - calendar: calendar_file
+
+  aggregation:
+    - time: hour
+    - location:
+        key: country
+        on_missing: keep
+
+  catalog:
+    - id: catalog
+
+  metrics:
+    - id: catalog.LOAD
+    - id: catalog.PRODUCTION
+    - id: catalog.BALANCE
