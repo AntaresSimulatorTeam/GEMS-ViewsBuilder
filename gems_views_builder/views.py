@@ -19,9 +19,10 @@ import polars as pl
 from gems_views_builder.aggregator import Aggregator
 from gems_views_builder.catalog import Catalog, Metric, get_catalog_metric
 from gems_views_builder.common import logger
-from gems_views_builder.input_validator import InputValidator
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_builder import MetricStructureBuilder
+from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
+from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
 from gems_views_builder.writer import Writer
 
 """
@@ -37,11 +38,17 @@ class ViewBuilder:
         input_data_path: Path,
     ) -> None:
         self.input_data_path = input_data_path
-        # # 1. Validate input data, if it fails, the builder will not be able to build the views.
-        InputValidator(self.input_data_path).validate()
-        # # 2. Load input data, if it fails, the builder will not be able to build the views.
-        self.loader = Loader.load(self.input_data_path)
-        # # 3. Instantiate aggregator and writer if everything is loaded successfully
+        with logger.use_context("validation"):
+            StudyLayoutValidator(self.input_data_path).validate()
+
+        with logger.use_context("loader"):
+            self.loader = Loader.load(self.input_data_path)
+
+        with logger.use_context("validation"):
+            # # Currently we support only one taxonomy per study
+            # # TO DO: Opened issues do we see interest in multiple taxonomies per study?
+            validate_catalogs_against_taxonomy(self.loader.catalogs, self.loader.taxonomy)
+
         self.aggregator = Aggregator(self.input_data_path)
         self.writer = Writer(self.input_data_path)
 
@@ -81,12 +88,11 @@ class ViewBuilder:
                 f"metric(s) across {len(self.loader.view_config.catalog_to_metrics)} catalog(s)"
             )
 
-            # # 2. Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
+            # # 2. Metrics are grouped by catalog (preloaded and validated in Loader)
             for catalog_id, metrics in self.loader.view_config.catalog_to_metrics.items():
                 with logger.use_context(f"catalog:{catalog_id}"):
                     logger.info(f"Processing catalog '{catalog_id}' ({len(metrics)} metric(s))")
-                # # 2.1 Load catalog
-                catalog: Catalog = self.loader.view_config.load_catalog(catalog_id)
+                    catalog: Catalog = self.loader.catalogs[catalog_id]
                 # # 2.2 Iterate over all metrics for this catalog
                 for metric_id in metrics:
                     with logger.use_context(f"metric:{metric_id}"):

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from gems_views_builder.catalog import load_catalogs
 from gems_views_builder.common import logger
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.metrics import ViewConfig
@@ -20,11 +21,12 @@ class Loader:
     def load_into_self(self) -> "Loader":
         """Perform all input data I/O and populate attributes."""
         logger.info(f"Loading inputs from {self.input_data_path}")
-        self.system = self._load_system()
         self.taxonomy = load_taxonomy(self.input_data_path / "taxonomy.yml")
         logger.info("Taxonomy loaded")
         self.view_config = ViewConfig.load(self.input_data_path / "view_config.yml")
         logger.info("View config loaded")
+        self.catalogs = load_catalogs(self.input_data_path, self.view_config.catalog_ids)
+        logger.info("Catalogs loaded")
         self.simulation_table = SimulationTable.load(
             next(self.input_data_path.glob("simulation_table*.parquet"))
         )  # # we could have only one simulation table at this phase of development
@@ -33,9 +35,8 @@ class Loader:
             self.input_data_path / "library.yml"
         )  # # must be named like this for now, in future when we enable user to have more than one libraries we should decide pattern to use
         logger.info("Model library loaded")
+        system_path = next(self.input_data_path.glob("system*"))
+        self.system = InputSystem.from_file(system_path)
+        logger.info(f"System loaded from {system_path}")
         logger.info("All inputs loaded successfully")
         return self
-
-    def _load_system(self) -> InputSystem:
-        system_path = next(self.input_data_path.glob("system*"))
-        return InputSystem.from_file(system_path)
