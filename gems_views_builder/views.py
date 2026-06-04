@@ -18,6 +18,7 @@ import polars as pl
 
 from gems_views_builder.aggregator import Aggregator
 from gems_views_builder.catalog import Catalog, Metric, get_catalog_metric
+from gems_views_builder.common import logger
 from gems_views_builder.input_validator import InputValidator
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_builder import MetricStructureBuilder
@@ -57,63 +58,93 @@ class ViewBuilder:
         return intermediates_dir
 
     def build(self) -> None:
-        intermediates_dir = self.create_intermediate_dir()
-        filtered_simulation_table_path = intermediates_dir / "simulation_table_filtered.parquet"
+        pipeline_log_path = logger.configure_pipeline_run(self.input_data_path)
+        try:
+            with logger.use_context("pipeline"):
+                logger.info(f"Pipeline log file initialized at {pipeline_log_path}")
+                logger.info(f"Starting pipeline for study at {self.input_data_path}")
 
-        # # 1. Filter simulation table (written to disk)
-        self.loader.simulation_table.filter_simulation_table(
-            self.loader.view_config.load_calendar(), filtered_simulation_table_path
-        )
-        parquet_files_to_process = []
-        # # 2. Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
-        for catalog_id, metrics in self.loader.view_config.catalog_to_metrics.items():
-            # # 2.1 Load catalog
-            catalog: Catalog = self.loader.view_config.load_catalog(catalog_id)
-            # # 2.2 Iterate over all metrics for this catalog
-            for metric_id in metrics:
-                try:
-                    metric: Metric = get_catalog_metric(catalog, metric_id)
-                except ValueError:
-                    continue  # # We should decide do we want to break process fully or continue without the current metric
+            intermediates_dir = self.create_intermediate_dir()
+            filtered_simulation_table_path = intermediates_dir / "simulation_table_filtered.parquet"
 
-                # # 2.3 Build metric structure table, persist to disk, then re-open lazily
-                metric_structure_table = MetricStructureBuilder(
-                    self.loader.system,
-                    catalog,
-                    metric,
-                    self.loader.taxonomy,
-                    self.loader.model_library,
-                ).build()
-
-                metric_structure_path = self.writer.write_metric_structure_table(
-                    metric_structure_table.dataframe, metric.id
+            # # 1. Filter simulation table (written to disk)
+            with logger.use_context("calendar-filter"):
+                logger.info("Step 1: Filtering simulation table by calendar")
+                self.loader.simulation_table.filter_simulation_table(
+                    self.loader.view_config.load_calendar(), filtered_simulation_table_path
                 )
+                logger.info(f"Filtered simulation table written to {filtered_simulation_table_path}")
 
-                filtered_simulation_table_lazy = pl.scan_parquet(filtered_simulation_table_path)
-                metric_structure_lazy = pl.scan_parquet(metric_structure_path)
+            parquet_files_to_process = []
+            logger.info(
+                f"Step 2: Processing {sum(len(m) for m in self.loader.view_config.catalog_to_metrics.values())} "
+                f"metric(s) across {len(self.loader.view_config.catalog_to_metrics)} catalog(s)"
+            )
 
-                # # type(joined dataframe) == Lazy array
-                # # no real data(in memory/disk) just query exectuion plan on scanned data
-                # # we will perform additional query inside
-                joined_dataframe = filtered_simulation_table_lazy.join(
-                    metric_structure_lazy,
-                    on=["component", "output"],
-                    how="right",
-                )
+            # # 2. Metrics are grouped by catalog, in order to prevent multiple loading of the same catalog
+            for catalog_id, metrics in self.loader.view_config.catalog_to_metrics.items():
+                with logger.use_context(f"catalog:{catalog_id}"):
+                    logger.info(f"Processing catalog '{catalog_id}' ({len(metrics)} metric(s))")
+                # # 2.1 Load catalog
+                catalog: Catalog = self.loader.view_config.load_catalog(catalog_id)
+                # # 2.2 Iterate over all metrics for this catalog
+                for metric_id in metrics:
+                    with logger.use_context(f"metric:{metric_id}"):
+                        logger.info(f"[{metric_id}] Processing metric")
+                        try:
+                            metric: Metric = get_catalog_metric(catalog, metric_id)
+                        except ValueError:
+                            logger.info(f"[{metric_id}] Metric not found in catalog '{catalog_id}' — skipping")
+                            continue  # # We should decide do we want to break process fully or continue without the current metric
 
-                metric_view_parquet_path = self.aggregator.aggregate_metric_terms(
-                    joined_dataframe=joined_dataframe, metric_term_operator=metric.terms_operator, metric_id=metric.id
-                )
-                temp_metric_view = self.aggregator.aggregate_metric_temporally(
-                    metric_view_parquet_path=metric_view_parquet_path,
-                    metric_time_operator=metric.time_operator,
-                    metric_id=metric.id,
-                )
+                        # # 2.3 Build metric structure table, persist to disk, then re-open lazily
+                        metric_structure_table = MetricStructureBuilder(
+                            self.loader.system,
+                            catalog,
+                            metric,
+                            self.loader.taxonomy,
+                            self.loader.model_library,
+                        ).build()
 
-                parquet_files_to_process.append(temp_metric_view)
+                        metric_structure_path = self.writer.write_metric_structure_table(
+                            metric_structure_table.dataframe, metric.id
+                        )
 
-                self._clean_intermediate_metric(metric_view_parquet_path, metric_structure_path)
+                        filtered_simulation_table_lazy = pl.scan_parquet(filtered_simulation_table_path)
+                        metric_structure_lazy = pl.scan_parquet(metric_structure_path)
 
-        self._clean_filtered_simulation_table(filtered_simulation_table_path)
+                        # # type(joined dataframe) == Lazy array
+                        # # no real data(in memory/disk) just query exectuion plan on scanned data
+                        # # we will perform additional query inside
+                        logger.info(f"[{metric_id}] Joining filtered simulation table with metric structure")
+                        joined_dataframe = filtered_simulation_table_lazy.join(
+                            metric_structure_lazy,
+                            on=["component", "output"],
+                            how="right",
+                        )
 
-        self.writer.consolidate_results(parquet_files_to_process)
+                        metric_view_parquet_path = self.aggregator.aggregate_metric_terms(
+                            joined_dataframe=joined_dataframe,
+                            metric_term_operator=metric.terms_operator,
+                            metric_id=metric.id,
+                        )
+                        temp_metric_view = self.aggregator.aggregate_metric_temporally(
+                            metric_view_parquet_path=metric_view_parquet_path,
+                            metric_time_operator=metric.time_operator,
+                            metric_id=metric.id,
+                        )
+
+                        parquet_files_to_process.append(temp_metric_view)
+
+                        logger.info(f"[{metric_id}] Cleaning intermediate files")
+                        self._clean_intermediate_metric(metric_view_parquet_path, metric_structure_path)
+
+            logger.info("Cleaning filtered simulation table")
+            self._clean_filtered_simulation_table(filtered_simulation_table_path)
+
+            with logger.use_context("writer"):
+                logger.info("Step 3: Consolidating results")
+                self.writer.consolidate_results(parquet_files_to_process)
+            logger.info("Pipeline complete")
+        finally:
+            logger.close_pipeline_run()
