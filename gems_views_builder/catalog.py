@@ -19,6 +19,7 @@ from pathlib import Path
 import yaml
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
+from gems_views_builder.common import logger
 
 """
 They are the same for now but we could keep them separated for future use.
@@ -110,24 +111,33 @@ def _to_metric(metric_data: MetricData) -> Metric:
 
 
 def load_catalog(catalog_file_path: Path) -> Catalog:
+    logger.info(f"Loading catalog from {catalog_file_path}")
     parsed = _load_catalog_file(catalog_file_path)
-    return Catalog(
+    catalog = Catalog(
         id=parsed.id,
         taxonomy=parsed.taxonomy,
         location_taxonomy_category=parsed.location.taxonomy_category,
         metrics={metric.id: _to_metric(metric) for metric in parsed.metrics_definition},
     )
+    logger.info(
+        f"Catalog {catalog.id!r} loaded with taxonomy {catalog.taxonomy!r} and {len(catalog.metrics)} metric(s)"
+    )
+    return catalog
 
 
 def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
+    logger.info(f"Parsing catalog YAML from {catalog_file_path}")
     with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     if "catalog" not in raw:
         raise ValueError(f"catalog.yml file {catalog_file_path} is missing the 'catalog' key at the root")
+    logger.info(f"Catalog YAML parsed successfully from {catalog_file_path}")
     return CatalogData.model_validate(raw["catalog"])
 
 
 def get_catalog_metric(catalog: Catalog, metric_id: str) -> Metric:
+    logger.info(f"Looking up metric {metric_id!r} in catalog {catalog.id!r}")
     if metric_id not in catalog.metrics:
         raise ValueError(f"Metric {metric_id} not found in catalog {catalog.id}")
+    logger.info(f"Metric {metric_id!r} found in catalog {catalog.id!r}")
     return catalog.metrics[metric_id]
