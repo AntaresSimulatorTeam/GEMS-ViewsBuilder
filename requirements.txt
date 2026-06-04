@@ -1,9 +1,0 @@
-# Data processing
-polars[rt64]>=1.39.2
-pyarrow>=14.0.0
-# YAML
-pyyaml==6.0.2
-# Pydantic
-pydantic>=2.11.7
-# gemspy
-gemspy==0.0.4

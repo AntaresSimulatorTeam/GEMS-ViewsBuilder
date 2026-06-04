@@ -1,9 +1,0 @@
--r requirements.txt
-# Testing
-pytest==7.0.1
-pytest-xdist==3.8.0
-# Code quality
-mypy~=1.15.0
-types-PyYAML>=6.0.0
-ruff~=0.9.6
-pre-commit~=4.1.0

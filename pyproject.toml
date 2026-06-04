@@ -10,7 +10,7 @@ license = {file = "LICENSE"}
 dependencies = [
     "polars[rt64]>=1.39.2",
     "pyarrow>=14.0.0",
-    "pyyaml==6.0.2",
+    "pyyaml>=6.0.2",
     "pydantic>=2.11.7",
     "gemspy>=0.0.4",
 ]
@@ -33,6 +33,16 @@ classifiers = [
 Repository = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
 "Bug Tracker" = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/issues"
 
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0.1",
+    "pytest-xdist>=3.8.0",
+    "mypy>=1.15.0",
+    "types-PyYAML>=6.0.0",
+    "ruff>=0.9.6",
+    "pre-commit>=4.1.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
