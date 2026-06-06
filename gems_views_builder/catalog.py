@@ -126,18 +126,18 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
 
 
 def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
-    logger.info(f"Parsing catalog YAML from {catalog_file_path}")
+    logger.debug(f"Loading catalog YAML from {catalog_file_path}")
     with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     if "catalog" not in raw:
         raise ValueError(f"catalog.yml file {catalog_file_path} is missing the 'catalog' key at the root")
-    logger.info(f"Catalog YAML parsed successfully from {catalog_file_path}")
+    logger.debug(f"Catalog YAML parsed successfully from {catalog_file_path}")
     return CatalogData.model_validate(raw["catalog"])
 
 
 def get_catalog_metric(catalog: Catalog, metric_id: str) -> Metric:
-    logger.info(f"Looking up metric {metric_id!r} in catalog {catalog.id!r}")
+    logger.debug(f"Looking up metric {metric_id!r} in catalog {catalog.id!r}")
     if metric_id not in catalog.metrics:
         raise ValueError(f"Metric {metric_id} not found in catalog {catalog.id}")
-    logger.info(f"Metric {metric_id!r} found in catalog {catalog.id!r}")
+    logger.debug(f"Metric {metric_id!r} found in catalog {catalog.id!r}")
     return catalog.metrics[metric_id]
