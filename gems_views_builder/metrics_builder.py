@@ -90,7 +90,7 @@ class MetricStructureBuilder:
         """Filter and relabel raw location component IDs using the configured property key.
 
         Each location is resolved independently. Locations where the property is
-        undeclared are replaced with ``_UNKNOWN_LOCATION`` (on_missing='keep') or
+        undeclared are replaced with ``<unknown>`` (on_missing='keep') or
         excluded (on_missing='drop'). When no location_aggregation is configured
         the list is returned unchanged.
         """
@@ -130,21 +130,27 @@ class MetricStructureBuilder:
 
                     # # Decide does the component matches the filter, if yes they will contribute to the metric
                     if _check_filter_matches(component, self.metric.filter):
-                        metric_location = _format_metric_location(
-                            self.system.get_location(component_id, term.location_ports)
-                        )
-                        breakdown_properties = _format_breakdown_properties(component.properties, self.metric.breakdown)
-                        for location in self._resolve_location_aggregation(raw_locations):
-                            rows.append(
-                                {
-                                    "metric_id": self.metric.id,
-                                    "component": component_id,
-                                    "metric_location": location,
-                                    "breakdown_properties": breakdown_properties,
-                                    "output": term.output_id,
-                                    "weight_output_id": 1,
-                                }
+                        raw_location = self.system.get_location(component_id, term.location_ports)
+                        raw_locations = [raw_location] if isinstance(raw_location, str) else list(raw_location)
+                        resolved_locations = self._resolve_location_aggregation(raw_locations)
+                        if not resolved_locations:
+                            logger.debug(
+                                f"[{self.metric.id}] Component {component_id!r} has no locations after "
+                                "aggregation and was skipped"
                             )
+                            continue
+                        metric_location = _format_metric_location(tuple(resolved_locations))
+                        breakdown_properties = _format_breakdown_properties(component.properties, self.metric.breakdown)
+                        rows.append(
+                            {
+                                "metric_id": self.metric.id,
+                                "component": component_id,
+                                "metric_location": metric_location,
+                                "breakdown_properties": breakdown_properties,
+                                "output": term.output_id,
+                                "weight_output_id": 1,
+                            }
+                        )
                     else:
                         logger.debug(
                             f"[{self.metric.id}] Component {component_id!r} did not match metric filter and was skipped"

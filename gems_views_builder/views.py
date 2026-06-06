@@ -94,15 +94,15 @@ class ViewBuilder:
                         logger.info(f"[{metric_id}] Metric not found in catalog '{catalog_id}' — skipping")
                         continue  # # We should decide do we want to break process fully or continue without the current metric
 
-                        # # 2.3 Build metric structure table, persist to disk, then re-open lazily
-                        metric_structure_table = MetricStructureBuilder(
-                            self.loader.system,
-                            catalog,
-                            metric,
-                            self.loader.taxonomy,
-                            self.loader.model_library,
-                            location_aggregation=self.loader.view_config.location_aggregation,
-                        ).build()
+                    # # 2.3 Build metric structure table, persist to disk, then re-open lazily
+                    metric_structure_table = MetricStructureBuilder(
+                        self.loader.system,
+                        catalog,
+                        metric,
+                        self.loader.taxonomy,
+                        self.loader.model_library,
+                        location_aggregation=self.loader.view_config.location_aggregation,
+                    ).build()
 
                     metric_structure_path = self.writer.write_metric_structure_table(
                         metric_structure_table.dataframe, metric.id

@@ -27,6 +27,7 @@ from gems_views_builder.catalog import (
     load_catalog,
 )
 from gems_views_builder.library import ModelLibrary
+from gems_views_builder.metrics import LocationAggregation
 from gems_views_builder.metrics_builder import (
     MetricStructureBuilder,
     MetricStructureTable,
@@ -338,3 +339,145 @@ def test_duplicate_locations_from_two_ports_produce_duplicate_rows(test_files_ro
     assert len(link_rows) == 1
     assert link_rows["metric_location"][0] == "{busA,busA}"
     assert _parse_metric_location(link_rows["metric_location"][0]) == ["busA", "busA"]
+
+
+# ---------------------------------------------------------------------------
+# Location aggregation fixture
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def loc_agg_components(test_files_root: Path) -> dict[str, Any]:
+    fixture = test_files_root / "test_location_aggregation"
+    library = ModelLibrary.load(fixture / "library.yml")
+    system = InputSystem.load(fixture / "system.yml", library)
+    catalog = load_catalog(fixture / "catalogs" / "catalog.yml")
+    taxonomy = load_taxonomy(fixture / "taxonomy.yml")
+    return {"system": system, "catalog": catalog, "library": library, "taxonomy": taxonomy}
+
+
+def _make_builder(
+    components: dict[str, Any],
+    location_aggregation: LocationAggregation | None = None,
+) -> MetricStructureBuilder:
+    metric = get_catalog_metric(components["catalog"], "PRODUCTION")
+    return MetricStructureBuilder(
+        components["system"],
+        components["catalog"],
+        metric,
+        components["taxonomy"],
+        components["library"],
+        location_aggregation=location_aggregation,
+    )
+
+
+# ---------------------------------------------------------------------------
+# _resolve_location_aggregation unit tests
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_single_location_with_property(loc_agg_components: dict[str, Any]) -> None:
+    builder = _make_builder(loc_agg_components, LocationAggregation(key="country"))
+    assert builder._resolve_location_aggregation(["area_FR1"]) == ["FR"]
+
+
+def test_resolve_multiple_locations(loc_agg_components: dict[str, Any]) -> None:
+    builder = _make_builder(loc_agg_components, LocationAggregation(key="country"))
+    assert builder._resolve_location_aggregation(["area_FR1", "area_DE"]) == ["FR", "DE"]
+
+
+def test_resolve_missing_property_keep(loc_agg_components: dict[str, Any]) -> None:
+    builder = _make_builder(loc_agg_components, LocationAggregation(key="country", on_missing="keep"))
+    assert builder._resolve_location_aggregation(["area_orph"]) == ["<unknown>"]
+
+
+def test_resolve_missing_property_drop(loc_agg_components: dict[str, Any]) -> None:
+    builder = _make_builder(loc_agg_components, LocationAggregation(key="country", on_missing="drop"))
+    assert builder._resolve_location_aggregation(["area_orph"]) == []
+
+
+def test_resolve_mixed_known_and_unknown_drop(loc_agg_components: dict[str, Any]) -> None:
+    builder = _make_builder(loc_agg_components, LocationAggregation(key="country", on_missing="drop"))
+    assert builder._resolve_location_aggregation(["area_FR1", "area_orph"]) == ["FR"]
+
+
+def test_resolve_no_aggregation_passthrough(loc_agg_components: dict[str, Any]) -> None:
+    builder = _make_builder(loc_agg_components, location_aggregation=None)
+    assert builder._resolve_location_aggregation(["area_FR1"]) == ["area_FR1"]
+
+
+# ---------------------------------------------------------------------------
+# Location aggregation wired through build() — one merged row per component/term
+# ---------------------------------------------------------------------------
+
+
+def test_build_with_country_aggregation_collapses_fr(loc_agg_components: dict[str, Any]) -> None:
+    """gen_FR1 and gen_FR2 both resolve to '{FR}' via the country property."""
+    metric = get_catalog_metric(loc_agg_components["catalog"], "PRODUCTION")
+    df = (
+        MetricStructureBuilder(
+            loc_agg_components["system"],
+            loc_agg_components["catalog"],
+            metric,
+            loc_agg_components["taxonomy"],
+            loc_agg_components["library"],
+            location_aggregation=LocationAggregation(key="country"),
+        )
+        .build()
+        .dataframe
+    )
+    fr_rows = df.filter(pl.col("metric_location") == "{FR}")
+    assert set(fr_rows["component"].to_list()) == {"gen_FR1", "gen_FR2"}
+    assert df.filter(pl.col("metric_location").is_in(["{area_FR1}", "{area_FR2}"])).is_empty()
+
+
+def test_build_with_drop_excludes_orphan(loc_agg_components: dict[str, Any]) -> None:
+    """gen_orph has no country property; on_missing=drop excludes it."""
+    metric = get_catalog_metric(loc_agg_components["catalog"], "PRODUCTION")
+    df = (
+        MetricStructureBuilder(
+            loc_agg_components["system"],
+            loc_agg_components["catalog"],
+            metric,
+            loc_agg_components["taxonomy"],
+            loc_agg_components["library"],
+            location_aggregation=LocationAggregation(key="country", on_missing="drop"),
+        )
+        .build()
+        .dataframe
+    )
+    assert "gen_orph" not in df["component"].to_list()
+    assert "<unknown>" not in df["metric_location"].to_list()
+
+
+def test_build_multiport_location_ports_with_aggregation(loc_agg_components: dict[str, Any]) -> None:
+    """A term with location_ports=(p0_port, p1_port) on link_FRDE produces one row with '{FR,DE}'."""
+    metric = Metric(
+        id="LINK_COUNTRY_TEST",
+        terms=[
+            Term(
+                taxonomy_category="link",
+                output_id="p0_port.flow",
+                location_ports=("p0_port", "p1_port"),
+            )
+        ],
+        terms_operator=TermsOperator.SUM,
+        time_operator=TimeOperator.SUM,
+    )
+    df = (
+        MetricStructureBuilder(
+            loc_agg_components["system"],
+            loc_agg_components["catalog"],
+            metric,
+            loc_agg_components["taxonomy"],
+            loc_agg_components["library"],
+            location_aggregation=LocationAggregation(key="country"),
+        )
+        .build()
+        .dataframe
+    )
+    link_rows = df.filter(pl.col("component") == "link_FRDE")
+    assert len(link_rows) == 1
+    assert link_rows["metric_location"][0] == "{FR,DE}"
+    assert "area_FR1" not in link_rows["metric_location"][0]
+    assert "area_DE" not in link_rows["metric_location"][0]

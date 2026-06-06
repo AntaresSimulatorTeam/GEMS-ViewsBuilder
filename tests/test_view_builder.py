@@ -19,7 +19,10 @@ import polars as pl
 import pytest
 
 import gems_views_builder.common as common_mod
+from gems_views_builder.catalog import PropertySchema, get_catalog_metric, load_catalog
+from gems_views_builder.library import ModelLibrary
 from gems_views_builder.metrics_builder import _format_metric_location
+from gems_views_builder.system import InputSystem
 from gems_views_builder.views import ViewBuilder
 
 
@@ -38,24 +41,13 @@ def view_run(test_files_root: Path, tmp_path: Path) -> tuple[pl.DataFrame, Path]
     return pl.read_parquet(result_file), dst
 
 
-def _component_matches_filters(metric_filter: tuple[PropertySchema, ...] | None, component: object) -> bool:
+def _component_matches_filters(metric_filter: PropertySchema | None, component: object) -> bool:
     if metric_filter is None:
         return True
-    raw_props = getattr(component, "properties", None) or {}
-    if isinstance(raw_props, dict):
-        props = raw_props
-    else:
-        props = {}
-        for item in raw_props:
-            if isinstance(item, dict):
-                pid = item.get("id") or item.get("key")
-                pval = item.get("value")
-            else:
-                pid = getattr(item, "id", None) or getattr(item, "key", None)
-                pval = getattr(item, "value", None)
-            if isinstance(pid, str):
-                props[pid] = pval
-    return all(props.get(c.key) == c.value for c in metric_filter)
+    props = getattr(component, "properties", None) or {}
+    if not isinstance(props, dict):
+        return False
+    return bool(props.get(metric_filter.key) == metric_filter.value)
 
 
 def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
@@ -257,3 +249,74 @@ def test_no_log_file_leaked_on_exception(test_files_root: Path, tmp_path: Path) 
     log_files = list((dst / "logs").glob("pipeline-*.log"))
     assert len(log_files) == 1
     assert log_files[0].read_text(encoding="utf-8")  # non-empty and readable
+
+
+# ---------------------------------------------------------------------------
+# Spatial aggregation (test_location_aggregation fixture)
+# ---------------------------------------------------------------------------
+
+
+def _loc_run(test_files_root: Path, tmp_path: Path, config_variant: str | None = None) -> pl.DataFrame:
+    """Build the test_location_aggregation fixture and return the result DataFrame.
+
+    config_variant: name of an alternative view_config file (without .yml) to
+    copy over view_config.yml before running. None means use the default.
+    """
+    src = test_files_root / "test_location_aggregation"
+    dst = tmp_path / f"loc_agg_{config_variant or 'default'}"
+    shutil.copytree(src, dst)
+    if config_variant is not None:
+        shutil.copy(dst / f"{config_variant}.yml", dst / "view_config.yml")
+    ViewBuilder(dst).build()
+    return pl.read_parquet(next((dst / "results").glob("*.parquet")))
+
+
+def test_country_collapse_fr(test_files_root: Path, tmp_path: Path) -> None:
+    """PRODUCTION at '{FR}' = gen_FR1 + gen_FR2 summed per hour."""
+    df = _loc_run(test_files_root, tmp_path)
+    rows = _metric_at(df, "PRODUCTION", "FR")
+    assert rows["metric_value"].to_list() == [20, 40, 60, 80]
+    assert df.filter(pl.col("metric_location").is_in(["{area_FR1}", "{area_FR2}"])).is_empty()
+
+
+def test_country_collapse_de(test_files_root: Path, tmp_path: Path) -> None:
+    """PRODUCTION at '{DE}' = gen_DE alone."""
+    df = _loc_run(test_files_root, tmp_path)
+    rows = _metric_at(df, "PRODUCTION", "DE")
+    assert rows["metric_value"].to_list() == [10, 20, 30, 40]
+
+
+def test_unknown_sentinel_keep(test_files_root: Path, tmp_path: Path) -> None:
+    """gen_orph has no country property; on_missing=keep routes it to '{<unknown>}'."""
+    df = _loc_run(test_files_root, tmp_path)
+    rows = _metric_at(df, "PRODUCTION", "<unknown>")
+    assert rows["metric_value"].to_list() == [10, 20, 30, 40]
+    assert df.filter(pl.col("metric_location") == "{area_orph}").is_empty()
+
+
+def test_unknown_drop(test_files_root: Path, tmp_path: Path) -> None:
+    """on_missing=drop excludes gen_orph; FR and DE totals unchanged."""
+    df = _loc_run(test_files_root, tmp_path, config_variant="view_config_drop")
+    assert df.filter(pl.col("metric_location") == "{<unknown>}").is_empty()
+    assert df.filter(pl.col("metric_location") == "{area_orph}").is_empty()
+    assert _metric_at(df, "PRODUCTION", "FR")["metric_value"].to_list() == [20, 40, 60, 80]
+    assert _metric_at(df, "PRODUCTION", "DE")["metric_value"].to_list() == [10, 20, 30, 40]
+
+
+def test_balance_location_collapse(test_files_root: Path, tmp_path: Path) -> None:
+    """BALANCE link flows appear at country-level labels, not raw area IDs."""
+    df = _loc_run(test_files_root, tmp_path)
+    assert _metric_at(df, "BALANCE", "FR")["metric_value"].to_list() == [5, 5, 5, 5]
+    assert _metric_at(df, "BALANCE", "DE")["metric_value"].to_list() == [-5, -5, -5, -5]
+    assert df.filter(
+        (pl.col("metric_id") == "BALANCE") & pl.col("metric_location").is_in(["{area_FR1}", "{area_DE}"])
+    ).is_empty()
+
+
+def test_no_location_key_regression(test_files_root: Path, tmp_path: Path) -> None:
+    """Without a location key, PRODUCTION rows carry raw area IDs — feature is opt-in."""
+    df = _loc_run(test_files_root, tmp_path, config_variant="view_config_no_location")
+    for area in ("area_FR1", "area_FR2", "area_DE", "area_orph"):
+        rows = _metric_at(df, "PRODUCTION", area)
+        assert rows["metric_value"].to_list() == [10, 20, 30, 40], f"unexpected values for {area}"
+    assert df.filter(pl.col("metric_location").is_in(["{FR}", "{DE}", "{<unknown>}"])).is_empty()
