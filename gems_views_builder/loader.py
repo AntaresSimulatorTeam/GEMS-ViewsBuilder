@@ -33,5 +33,7 @@ class Loader:
         return self
 
     def _load_system(self) -> InputSystem:
+        logger.info("Loading system")
         system_path = next(self.input_data_path.glob("system*"))
+        logger.info(f"System loaded from {system_path}")
         return InputSystem.from_file(system_path)
