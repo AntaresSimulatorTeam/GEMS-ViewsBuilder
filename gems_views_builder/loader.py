@@ -22,7 +22,6 @@ class Loader:
         """Perform all input data I/O and populate attributes."""
         logger.info(f"Loading inputs from {self.input_data_path}")
         self.taxonomy = load_taxonomy(self.input_data_path / "taxonomy.yml")
-        logger.info("Taxonomy loaded")
         self.view_config = ViewConfig.load(self.input_data_path / "view_config.yml")
         logger.info("View config loaded")
         self.catalogs = load_catalogs(self.input_data_path, self.view_config.catalog_ids)
@@ -30,7 +29,6 @@ class Loader:
         self.simulation_table = SimulationTable.load(
             next(self.input_data_path.glob("simulation_table*.parquet"))
         )  # # we could have only one simulation table at this phase of development
-        logger.info("Simulation table loaded")
         self.model_library = ModelLibrary.load(
             self.input_data_path / "library.yml"
         )  # # must be named like this for now, in future when we enable user to have more than one libraries we should decide pattern to use
@@ -39,3 +37,9 @@ class Loader:
         logger.info(f"System loaded from {self.input_data_path / 'system.yml'}")
         logger.info("All inputs loaded successfully")
         return self
+
+    def _load_system(self) -> InputSystem:
+        logger.info("Loading system")
+        system_path = next(self.input_data_path.glob("system*"))
+        logger.info(f"System loaded from {system_path}")
+        return InputSystem.from_file(system_path)

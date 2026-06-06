@@ -10,7 +10,7 @@ class Writer:
     def __init__(self, input_data_path: Path) -> None:
         self.input_data_path = input_data_path
 
-    def consolidate_results(self, chunk_paths: list[Path]) -> Path | None:
+    def merge_results(self, chunk_paths: list[Path]) -> Path | None:
         if not chunk_paths:
             return None
         results_dir = self.input_data_path / "results"

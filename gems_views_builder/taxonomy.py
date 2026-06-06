@@ -67,10 +67,10 @@ def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
 
 
 def _load_taxonomy_file(taxonomy_file_path: Path) -> TaxonomyData:
-    logger.info(f"Parsing taxonomy YAML from {taxonomy_file_path}")
+    logger.debug(f"Loading taxonomy YAML from {taxonomy_file_path}")
     with open(taxonomy_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     if "taxonomy" not in raw:
         raise ValueError(f"taxonomy.yml file {taxonomy_file_path} is missing the 'taxonomy' key at the root")
-    logger.info(f"Taxonomy YAML parsed successfully from {taxonomy_file_path}")
+    logger.debug(f"Taxonomy YAML parsed successfully from {taxonomy_file_path}")
     return TaxonomyData.model_validate(raw["taxonomy"])
