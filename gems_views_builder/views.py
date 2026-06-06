@@ -19,7 +19,6 @@ import polars as pl
 from gems_views_builder.aggregator import Aggregator
 from gems_views_builder.catalog import Catalog, Metric, get_catalog_metric
 from gems_views_builder.common import close_pipeline_run, configure_pipeline_run, logger
-from gems_views_builder.input_validator import InputValidator
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_builder import MetricStructureBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
@@ -39,16 +38,10 @@ class ViewBuilder:
         input_data_path: Path,
     ) -> None:
         self.input_data_path = input_data_path
-        with logger.use_context("validation"):
-            StudyLayoutValidator(self.input_data_path).validate()
-
-        with logger.use_context("loader"):
-            self.loader = Loader.load(self.input_data_path)
-
-        with logger.use_context("validation"):
-            # # Currently we support only one taxonomy per study
-            # # TO DO: Opened issues do we see interest in multiple taxonomies per study?
-            validate_catalogs_against_taxonomy(self.loader.catalogs, self.loader.taxonomy)
+        StudyLayoutValidator(self.input_data_path).validate()
+        self.loader = Loader.load(self.input_data_path)
+        # # Currently we support only one taxonomy per study
+        validate_catalogs_against_taxonomy(self.loader.catalogs, self.loader.taxonomy)
 
         self.aggregator = Aggregator(self.input_data_path)
         self.writer = Writer(self.input_data_path)
