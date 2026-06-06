@@ -63,7 +63,7 @@ catalog:
     terms-operator: sum
     time-operator: sum
     filter:
-    - key: technology
+      key: technology
       value: nuclear
 
   - id: PRODUCTION_BY_TECH_AND_COMPANY

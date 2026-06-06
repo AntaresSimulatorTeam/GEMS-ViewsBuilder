@@ -41,10 +41,10 @@ class MetricStructureTable:
     dataframe: pl.DataFrame
 
 
-def _check_filter_matches(component: Component, filter: tuple[PropertySchema, ...] | None) -> bool:
+def _check_filter_matches(component: Component, filter: PropertySchema | None) -> bool:
     if filter is None:
         return True
-    return all(component.properties.get(entry.key) == entry.value for entry in filter)
+    return bool(component.properties.get(filter.key) == filter.value)
 
 
 def _format_breakdown_properties(
@@ -60,6 +60,13 @@ def _format_breakdown_properties(
         else:
             pairs.append(f"({key},{component_properties[key]})")
     return "{" + ",".join(pairs) + "}"
+
+
+def _format_metric_location(locations: str | tuple[str, ...]) -> str:
+    locs = (locations,) if isinstance(locations, str) else locations
+    if not locs:
+        return "{}"
+    return "{" + ",".join(locs) + "}"
 
 
 class MetricStructureBuilder:
@@ -101,21 +108,21 @@ class MetricStructureBuilder:
         return result
 
     def build(self) -> MetricStructureTable:
-        logger.info(f"[{self.metric.id}] Building metric structure table ({len(self.metric.terms)} term(s))")
+        logger.debug(f"[{self.metric.id}] Building metric structure table ({len(self.metric.terms)} term(s))")
         rows: list[dict[str, object]] = []
         for term in self.metric.terms:
-            logger.info(
+            logger.debug(
                 f"[{self.metric.id}] Processing term for taxonomy category {term.taxonomy_category!r} "
                 f"and output {term.output_id!r}"
             )
             model_ids = self.model_library.get_components_in_taxonomy_category(term.taxonomy_category)
-            logger.info(
+            logger.debug(
                 f"[{self.metric.id}] Found {len(model_ids)} model(s) in taxonomy category {term.taxonomy_category!r}"
             )
             for model_id in model_ids:
                 qualified_ref = f"{self.model_library.id}.{model_id}"
                 component_ids = self.system.get_instances_by_model(qualified_ref)
-                logger.info(
+                logger.debug(
                     f"[{self.metric.id}] Model {qualified_ref!r} resolves to {len(component_ids)} component instance(s)"
                 )
                 for component_id in component_ids:
@@ -123,8 +130,9 @@ class MetricStructureBuilder:
 
                     # # Decide does the component matches the filter, if yes they will contribute to the metric
                     if _check_filter_matches(component, self.metric.filter):
-                        metric_location = self.system.get_location(component_id, term.location_ports)
-                        raw_locations = [metric_location] if isinstance(metric_location, str) else list(metric_location)
+                        metric_location = _format_metric_location(
+                            self.system.get_location(component_id, term.location_ports)
+                        )
                         breakdown_properties = _format_breakdown_properties(component.properties, self.metric.breakdown)
                         for location in self._resolve_location_aggregation(raw_locations):
                             rows.append(
@@ -138,7 +146,7 @@ class MetricStructureBuilder:
                                 }
                             )
                     else:
-                        logger.info(
+                        logger.debug(
                             f"[{self.metric.id}] Component {component_id!r} did not match metric filter and was skipped"
                         )
 

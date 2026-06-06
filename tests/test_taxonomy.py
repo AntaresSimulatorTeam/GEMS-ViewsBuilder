@@ -52,7 +52,8 @@ def test_taxonomy_items_are_typed(test_dataset_dir: Path) -> None:
 def test_taxonomy_known_categories(test_dataset_dir: Path) -> None:
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
     category_ids = {c.id for c in taxonomy.categories}
-    assert "balance" in category_ids
-    assert "production" in category_ids
-    assert "consumption" in category_ids
-    assert "storage" in category_ids
+    for expected in ("balance", "production", "consumption", "storage"):
+        assert expected in category_ids
+    if test_dataset_dir.name == "test_3":
+        assert "link" in category_ids
+        assert "coupling" in category_ids

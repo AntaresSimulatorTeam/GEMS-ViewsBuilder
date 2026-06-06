@@ -49,9 +49,6 @@ system:
       time-dependent: false
       scenario-dependent: false
       value: 0.0
-    properties:
-    - id: business_view
-      value: default
   - id: generator_A2
     model: pypsa_models.generator
     parameters:
@@ -99,9 +96,6 @@ system:
       time-dependent: false
       scenario-dependent: false
       value: 0.0
-    properties:
-    - id: business_view
-      value: default
   - id: generator_B1
     model: pypsa_models.generator
     parameters:
@@ -149,9 +143,6 @@ system:
       time-dependent: false
       scenario-dependent: false
       value: 0.0
-    properties:
-    - id: business_view
-      value: default
   - id: load_AL
     model: pypsa_models.load
     parameters:
@@ -167,9 +158,6 @@ system:
       time-dependent: false
       scenario-dependent: false
       value: -1.0
-    properties:
-    - id: business_view
-      value: default
   - id: busA
     model: pypsa_models.bus
     parameters:
@@ -255,9 +243,6 @@ system:
       time-dependent: false
       scenario-dependent: false
       value: 0.0
-    properties:
-    - id: business_view
-      value: default
   connections:
   - component1: busA
     port1: p_balance_port

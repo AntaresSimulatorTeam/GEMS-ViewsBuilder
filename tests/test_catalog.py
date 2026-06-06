@@ -62,7 +62,7 @@ def test_metric_filter_property_requires_value() -> None:
             terms=[],
             terms_operator=TermsOperator.SUM,
             time_operator=TimeOperator.SUM,
-            filter=[PropertySchema(key="technology")],
+            filter=PropertySchema(key="technology"),
         )
 
 

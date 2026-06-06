@@ -118,7 +118,7 @@ class InputSystem:
         logger.info(f"Built component-port connection index with {len(component_port_connections)} entry(ies)")
         return component_port_connections
 
-    def _get_peer_component(self, component_id: str, port_id: str) -> str | tuple[str, ...]:
+    def _get_peer_components(self, component_id: str, port_id: str) -> str | tuple[str, ...]:
         """Return the peer component id(s) for (component_id, port_id), or raise ValueError."""
         if (component_id, port_id) not in self._component_port_connections:
             raise ValueError(f"No connection found for component {component_id!r} on port {port_id!r}")
@@ -131,7 +131,7 @@ class InputSystem:
     def get_instances_by_model(self, qualified_model_ref: str) -> list[str]:
         """Return component instance IDs for the given qualified model reference."""
         instances = list(self._components_by_model.get(qualified_model_ref, []))
-        logger.info(f"Resolved {len(instances)} instance(s) for model reference {qualified_model_ref!r}")
+        logger.debug(f"Resolved {len(instances)} instance(s) for model reference {qualified_model_ref!r}")
         return instances
 
     def get_component(self, component_id: str) -> Component:
@@ -144,23 +144,23 @@ class InputSystem:
         location_port: str | tuple[str, ...] | None,
     ) -> str | tuple[str, ...]:
         if location_port is None:
-            logger.info(f"Using component {component_0_id!r} as location because no location port is defined")
+            logger.debug(f"Using component {component_0_id!r} as location because no location port is defined")
             return component_0_id
 
         if isinstance(location_port, str):
-            peer = self._get_peer_component(component_0_id, location_port)
-            logger.info(f"Resolved location for component {component_0_id!r} via port {location_port!r} to {peer!r}")
+            peer = self._get_peer_components(component_0_id, location_port)
+            logger.debug(f"Resolved location for component {component_0_id!r} via port {location_port!r} to {peer!r}")
             return peer
 
         # location_port is tuple[str, ...] — each named port resolves to one or more peers
         result: list[str] = []
         for port in location_port:
-            peer = self._get_peer_component(component_0_id, port)
+            peer = self._get_peer_components(component_0_id, port)
             if isinstance(peer, str):
                 result.append(peer)
             else:
                 result.extend(peer)
-        logger.info(
+        logger.debug(
             f"Resolved location tuple for component {component_0_id!r} via ports {location_port!r} to {tuple(result)!r}"
         )
         return tuple(result)

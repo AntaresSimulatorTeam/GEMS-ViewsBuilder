@@ -17,7 +17,7 @@ from enum import Enum
 from pathlib import Path
 
 import yaml
-from pydantic import model_validator
+from pydantic import field_validator
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
 from gems_views_builder.common import logger
@@ -58,17 +58,14 @@ class MetricData(ViewBuilderBasedModel):
     terms_operator: TermsOperator
     time_operator: TimeOperator
     breakdown: list[PropertySchema] | None = None
-    filter: list[PropertySchema] | None = None
+    filter: PropertySchema | None = None
 
-    @model_validator(mode="after")
-    def validate_filter(self) -> "MetricData":
-        if self.filter is not None:
-            if len(self.filter) > 1:
-                raise ValueError("metric filter must list at most one (key, value) entry")
-            for entry in self.filter:
-                if entry.value is None:
-                    raise ValueError("metric filter property must include a value")
-        return self
+    @field_validator("filter")
+    @classmethod
+    def validate_filter(cls, value: PropertySchema | None) -> PropertySchema | None:
+        if value is not None and value.value is None:
+            raise ValueError("metric filter property must include a value")
+        return value
 
 
 class CatalogLocationData(ViewBuilderBasedModel):
@@ -97,7 +94,7 @@ class Metric:
     terms_operator: TermsOperator
     time_operator: TimeOperator
     breakdown: tuple[PropertySchema, ...] | None = None
-    filter: tuple[PropertySchema, ...] | None = None
+    filter: PropertySchema | None = None
 
 
 @dataclass
@@ -124,7 +121,7 @@ def _to_metric(metric_data: MetricData) -> Metric:
         terms_operator=metric_data.terms_operator,
         time_operator=metric_data.time_operator,
         breakdown=tuple(metric_data.breakdown) if metric_data.breakdown else None,
-        filter=tuple(metric_data.filter) if metric_data.filter else None,
+        filter=metric_data.filter,
     )
 
 
@@ -152,18 +149,18 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
 
 
 def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
-    logger.info(f"Parsing catalog YAML from {catalog_file_path}")
+    logger.debug(f"Loading catalog YAML from {catalog_file_path}")
     with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     if "catalog" not in raw:
         raise ValueError(f"catalog.yml file {catalog_file_path} is missing the 'catalog' key at the root")
-    logger.info(f"Catalog YAML parsed successfully from {catalog_file_path}")
+    logger.debug(f"Catalog YAML parsed successfully from {catalog_file_path}")
     return CatalogData.model_validate(raw["catalog"])
 
 
 def get_catalog_metric(catalog: Catalog, metric_id: str) -> Metric:
-    logger.info(f"Looking up metric {metric_id!r} in catalog {catalog.id!r}")
+    logger.debug(f"Looking up metric {metric_id!r} in catalog {catalog.id!r}")
     if metric_id not in catalog.metrics:
         raise ValueError(f"Metric {metric_id} not found in catalog {catalog.id}")
-    logger.info(f"Metric {metric_id!r} found in catalog {catalog.id!r}")
+    logger.debug(f"Metric {metric_id!r} found in catalog {catalog.id!r}")
     return catalog.metrics[metric_id]
