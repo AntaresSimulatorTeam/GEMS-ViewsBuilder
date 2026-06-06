@@ -33,13 +33,7 @@ class Loader:
             self.input_data_path / "library.yml"
         )  # # must be named like this for now, in future when we enable user to have more than one libraries we should decide pattern to use
         logger.info("Model library loaded")
-        self.system = InputSystem.from_file(self.input_data_path / "system.yml")
+        self.system = InputSystem.load(self.input_data_path / "system.yml", self.model_library)
         logger.info(f"System loaded from {self.input_data_path / 'system.yml'}")
         logger.info("All inputs loaded successfully")
         return self
-
-    def _load_system(self) -> InputSystem:
-        logger.info("Loading system")
-        system_path = next(self.input_data_path.glob("system*"))
-        logger.info(f"System loaded from {system_path}")
-        return InputSystem.from_file(system_path)

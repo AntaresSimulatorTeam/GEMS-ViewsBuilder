@@ -40,10 +40,10 @@ class MetricStructureTable:
     dataframe: pl.DataFrame
 
 
-def _check_filter_matches(component: Component, filter: tuple[PropertySchema, ...] | None) -> bool:
+def _check_filter_matches(component: Component, filter: PropertySchema | None) -> bool:
     if filter is None:
         return True
-    return all(component.properties.get(entry.key) == entry.value for entry in filter)
+    return bool(component.properties.get(filter.key) == filter.value)
 
 
 def _format_breakdown_properties(
@@ -59,6 +59,13 @@ def _format_breakdown_properties(
         else:
             pairs.append(f"({key},{component_properties[key]})")
     return "{" + ",".join(pairs) + "}"
+
+
+def _format_metric_location(locations: str | tuple[str, ...]) -> str:
+    locs = (locations,) if isinstance(locations, str) else locations
+    if not locs:
+        return "{}"
+    return "{" + ",".join(locs) + "}"
 
 
 class MetricStructureBuilder:
@@ -99,22 +106,22 @@ class MetricStructureBuilder:
 
                     # # Decide does the component matches the filter, if yes they will contribute to the metric
                     if _check_filter_matches(component, self.metric.filter):
-                        metric_location = self.system.get_location(component_id, term.location_ports)
-                        raw_locations = [metric_location] if isinstance(metric_location, str) else list(metric_location)
+                        metric_location = _format_metric_location(
+                            self.system.get_location(component_id, term.location_ports)
+                        )
                         breakdown_properties = _format_breakdown_properties(component.properties, self.metric.breakdown)
-                        for location in raw_locations:
-                            rows.append(
-                                {
-                                    "metric_id": self.metric.id,
-                                    "component": component_id,
-                                    "metric_location": location,
-                                    "breakdown_properties": breakdown_properties,
-                                    "output": term.output_id,
-                                    "weight_output_id": 1,
-                                }
-                            )
+                        rows.append(
+                            {
+                                "metric_id": self.metric.id,
+                                "component": component_id,
+                                "metric_location": metric_location,
+                                "breakdown_properties": breakdown_properties,
+                                "output": term.output_id,
+                                "weight_output_id": 1,
+                            }
+                        )
                     else:
-                        logger.info(
+                        logger.debug(
                             f"[{self.metric.id}] Component {component_id!r} did not match metric filter and was skipped"
                         )
 
