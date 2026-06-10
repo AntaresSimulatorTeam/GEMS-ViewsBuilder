@@ -12,7 +12,7 @@ view_config.yml ──[taxonomy-category]────────────►
 catalog.yml     ──[taxonomy field]───────────────► taxonomy.yml  (id must match)
 catalog.yml     ──[term.taxonomy-category]────────► taxonomy.yml  (category must exist)
 catalog.yml     ──[term.location-ports]──────────► taxonomy.yml  (port must exist on category)
-catalog.yml     ──[term.output-id]───────────────► library.yml   (via taxonomy-category models, NOT YET validated)
+catalog.yml     ──[term.output-id]───────────────► taxonomy.yml   (output must exist on category, as variable, port-field or extra-output)
 
 library.yml     ──[model.taxonomy-category]──────► taxonomy.yml  (not validated by ViewsBuilder)
 system.yml      ──[component.model]──────────────► library.yml   (resolved at load time)
