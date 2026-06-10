@@ -82,7 +82,7 @@ A string `(key, value)` pair on a component (e.g. `technology=nuclear`). Source 
 
 ### Location component
 
-The spatial unit for a metric result. Defined by the taxonomy category specified in
+The spatial unit perimeter for a metric result. Defined by the taxonomy category specified in
 `catalog.location.taxonomy-category` (typically `balance` — a bus or area component).
 
 ### Location port (`location-ports`)
