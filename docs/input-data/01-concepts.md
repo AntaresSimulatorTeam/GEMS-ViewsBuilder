@@ -14,10 +14,6 @@ their ports, variables, and output types. All other config files reference it.
 A named class of model (`id`), optionally with a `parent-category` that places it in a
 hierarchy. Example: `production`, `consumption`, `balance`, `link`.
 
-### Port
-
-A typed connection endpoint declared on a taxonomy category. Generators have a
-`p_balance_port`; links have `p0_port` and `p1_port`. Used in `system.yml` connections.
 
 ---
 
@@ -35,6 +31,11 @@ exactly one taxonomy category.
 
 An optimization decision variable defined on a model (e.g. `p`, `p_nom`). Valid source
 for `output-id` in a catalog term.
+
+### Port
+
+A typed connection endpoint declared on a taxonomy category. Generators have a
+`p_balance_port`; links have `p0_port` and `p1_port`. Used in `system.yml` connections.
 
 ### Port-field-definition
 
