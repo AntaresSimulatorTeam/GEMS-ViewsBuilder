@@ -84,7 +84,6 @@ taxonomy:
       properties:    [{ id: <str> }, ...]
       constraints:   [{ id: <str> }, ...]
       binding-constraints:   [{ id: <str> }, ...]
-      binding-constraints:   [{ id: <str> }, ...]
 ```
 
 **Example** (from `resources/tests/test_inputs/test_3/taxonomy.yml`):
