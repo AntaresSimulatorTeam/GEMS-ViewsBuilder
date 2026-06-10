@@ -96,6 +96,21 @@ ports from all ancestor categories in addition to the declared category's own po
 > Note: the direction is opposite to component resolution — ports require an **ancestor
 > walk** (upward), while component resolution requires a **descendant walk** (downward).
 
+### Rule 4 — Term output-id (ancestor walk needed, same logic as Rule 3)
+
+Rule 4 checks that `term.output-id` is a valid output identifier for models in
+`term.taxonomy-category` (a variable id, port-field-definition id, or extra-output id
+from library models whose `taxonomy-category` matches).
+
+The same problem arises: if `fatal_production` models do not redeclare an output (e.g.
+variable `p`) that `production` models declare, a term
+`{taxonomy-category: fatal_production, output-id: p}` would be falsely rejected even
+though `p` is physically meaningful for those components.
+
+To fix this, the output-id lookup must also walk **up** the hierarchy, collecting valid
+output-ids from models of all ancestor categories in addition to the declared category's
+own models.
+
 ### Rules 2, 7b, 7d — not affected
 
 - **Rule 2** (`term.taxonomy-category ∈ taxonomy.categories[*].id`): pure membership
