@@ -21,12 +21,15 @@ catalog:
   implicitly through `scope.taxonomy-category`, which plays the same role but uses a
   different key.
 
-This creates two gaps (flagged as "not yet implemented" in ADR-007 and
+This creates three gaps (flagged as "not yet implemented" in ADR-007 and
 `05-consistency-rules.md`):
 
-1. No check that the view-config and the catalogs it references all target the **same
+1. No check that `view_config.scope.taxonomy-category` is a valid category id in the
+   taxonomy (without a `taxonomy` field in view_config, this cross-check cannot be
+   performed).
+2. No check that the view-config and the catalogs it references all target the **same
    taxonomy**.
-2. No check that `view_config.scope.taxonomy-category` matches
+3. No check that `view_config.scope.taxonomy-category` matches
    `catalog.location.taxonomy-category` for every referenced catalog.
 
 When these values diverge, the pipeline runs without error but produces outputs where
@@ -60,7 +63,7 @@ view:
 `location.taxonomy-category` key in view_config (which would require restructuring
 `scope`), the existing field is used as-is for cross-validation.
 
-### 3. Add three new consistency checks
+### 3. Add four new consistency checks
 
 Once the `taxonomy` field exists in view-config, the following checks should be enforced
 at startup (parsing-time, alongside the existing `catalog_taxonomy_validator`):
@@ -68,6 +71,7 @@ at startup (parsing-time, alongside the existing `catalog_taxonomy_validator`):
 | Check | Error raised |
 |---|---|
 | `view_config.taxonomy == taxonomy.id` | `ValueError` |
+| `view_config.scope.taxonomy-category ∈ taxonomy.categories[*].id` | `ValueError` |
 | `view_config.taxonomy == catalog.taxonomy` for every referenced catalog | `ValueError` |
 | `view_config.scope.taxonomy-category == catalog.location.taxonomy-category` for every referenced catalog | `ValueError` |
 
@@ -88,4 +92,4 @@ renaming is left for a future redesign of the `scope` field.
   is implemented (breaking change to the input format).
 - Eliminates silent inconsistencies where view-config and catalog reference different
   taxonomies or use different location categories.
-- Adds three new startup `ValueError` paths (fast-fail — no computation wasted).
+- Adds four new startup `ValueError` paths (fast-fail — no computation wasted).

@@ -10,7 +10,8 @@ compute and how to aggregate them.
 ```yaml
 view:
   id: <str>
-  # TODO(#57): taxonomy: <str>   # planned field — must match taxonomy.id and all catalog.taxonomy values
+  # TODO(#57): taxonomy: <str>   # planned field — must match taxonomy.id and all catalog.taxonomy values;
+                                  # enables validation that scope.taxonomy-category ∈ taxonomy.categories[*].id
                                   # see ADR-008
 
   scope:
@@ -46,12 +47,14 @@ A list with two entries (both required):
 
 | Entry | Field | Type | Description |
 |---|---|---|---|
-| `- location:` | `taxonomy-category` | str | Taxonomy category whose components are location units. Must match `catalog.location.taxonomy-category` for all referenced catalogs (not yet validated — see [ADR-007](../adr/007-consistency-check-strategy.md) and [ADR-008](../adr/008-view-config-taxonomy-field.md)). |
+| `- location:` | `taxonomy-category` | str | Taxonomy category whose components are location units. Must exist in the taxonomy and match `catalog.location.taxonomy-category` for all referenced catalogs (not yet validated — see [ADR-007](../adr/007-consistency-check-strategy.md) and [ADR-008](../adr/008-view-config-taxonomy-field.md)). |
 | `- calendar:` | `calendar` | str | Filename stem of the calendar CSV (e.g. `calendar_file` for `calendar_file.csv`). |
 
 > **TODO(#57)**: Once a `taxonomy` field is added to view_config (see [ADR-008](../adr/008-view-config-taxonomy-field.md)),
-> consistency between `view_config.taxonomy`, `catalog.taxonomy`, and `view_config.scope.taxonomy-category`
-> vs `catalog.location.taxonomy-category` will be enforced at startup.
+> four startup checks will be enforced: `view_config.taxonomy == taxonomy.id`,
+> `scope.taxonomy-category ∈ taxonomy.categories[*].id`,
+> `view_config.taxonomy == catalog.taxonomy` for each catalog, and
+> `scope.taxonomy-category == catalog.location.taxonomy-category` for each catalog.
 
 > **YAML note**: the `location:` key is syntactically present but ignored by the parser.
 > The `taxonomy-category` field is read directly from the same list item.
@@ -130,7 +133,8 @@ view_config.yml
   # TODO(#57): └─ taxonomy ──────────────────────────► taxonomy.id            (planned, see ADR-008)
   # TODO(#57):                                          must also equal catalog.taxonomy for every catalog
   └─ scope.taxonomy-category ─────────────► taxonomy category id
-                                             (should equal catalog.location.taxonomy-category — not yet validated)
+  # TODO(#57):                               must exist in taxonomy.categories[*].id (not yet validated)
+                                             (should also equal catalog.location.taxonomy-category — not yet validated)
   └─ scope.calendar ───────────────────────► calendar*.csv (filename stem)
   └─ catalog[*].id ────────────────────────► catalogs/<id>.yml (filename)
   └─ metrics[*].id = <catalog_key>.<metric_id>
