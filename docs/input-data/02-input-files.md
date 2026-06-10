@@ -8,6 +8,7 @@ Which files reference which other files:
 view_config.yml ──[catalog ids → filename]──────► catalogs/<id>.yml  (×N)
 view_config.yml ──[calendar id → filename]───────► calendar*.csv
 view_config.yml ──[taxonomy-category]────────────► taxonomy.yml  (scope check, not yet validated)
+# TODO(#57): view_config.yml ──[taxonomy field, planned]──► taxonomy.yml  (id must match, not yet implemented)
 
 catalog.yml     ──[taxonomy field]───────────────► taxonomy.yml  (id must match)
 catalog.yml     ──[term.taxonomy-category]────────► taxonomy.yml  (category must exist)
@@ -51,6 +52,10 @@ Metric          ||--o{ PropertySchema  : "breakdown (0..N, key only)"
 
 ViewConfig      }|--|| TaxonomyCategory : "scope.taxonomy-category"
 ViewConfig      ||--|{ Catalog          : "catalog refs (1..N)"
+%% TODO(#57): ViewConfig should carry a `taxonomy` field pointing to Taxonomy.id,
+%%             and cross-checks view_config.taxonomy==catalog.taxonomy and
+%%             view_config.scope.taxonomy-category==catalog.location.taxonomy-category.
+%%             See ADR-008.
 ViewConfig      ||--|{ Metric           : "metric refs (1..N)"
 ViewConfig      }|--|| Calendar         : "calendar ref (1:1)"
 
