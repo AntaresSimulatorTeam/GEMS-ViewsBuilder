@@ -87,10 +87,42 @@ and [ADR-003](../adr/003-get-location-ownership.md).
 
 ---
 
-## 7. view_config ↔ catalog location consistency
+## 7. view_config ↔ taxonomy and catalog consistency
 
-`view_config.scope.taxonomy-category` should equal `catalog.location.taxonomy-category`
-for all catalogs referenced by the view config.
+> **TODO(#57)**: all four sub-rules below require a `taxonomy` field on `view_config.yml`
+> (not yet added). See [ADR-008](../adr/008-view-config-taxonomy-field.md).
+
+### 7a. view_config references a known taxonomy
+
+```
+view_config.taxonomy == taxonomy.id
+```
+
+**Enforced**: **no** — field `view_config.taxonomy` does not exist yet.
+
+### 7b. scope location category exists in the taxonomy
+
+```
+view_config.scope.taxonomy-category ∈ taxonomy.categories[*].id
+```
+
+**Enforced**: **no** — requires `view_config.taxonomy` field to identify which taxonomy to
+check against.
+
+### 7c. view_config and its catalogs target the same taxonomy
+
+```
+view_config.taxonomy == catalog.taxonomy   (for every referenced catalog)
+```
+
+**Enforced**: **no** — field `view_config.taxonomy` does not exist yet.
+
+### 7d. scope location category matches catalog location category
+
+```
+view_config.scope.taxonomy-category == catalog.location.taxonomy-category
+                                       (for every referenced catalog)
+```
 
 **Enforced**: **no** — not yet validated. See [ADR-007](../adr/007-consistency-check-strategy.md).
 
@@ -117,5 +149,8 @@ inner join in Step 1 silently drops unmatched rows.
 | Location port has at least 1 connection (0-peer case) | ✅ | `system.py`, execution time |
 | Location port resolves to exactly 1 peer (uniqueness) | ❌ | not implemented (multiple peers merged silently) |
 | Peer belongs to `catalog.location.taxonomy-category` | ❌ | not implemented |
-| `view_config.taxonomy-category == catalog.location.taxonomy-category` | ❌ | not implemented |
+| **TODO(#57)** `view_config.taxonomy == taxonomy.id` | ❌ | field not yet added |
+| **TODO(#57)** `view_config.scope.taxonomy-category ∈ taxonomy.categories` | ❌ | field not yet added |
+| **TODO(#57)** `view_config.taxonomy == catalog.taxonomy` (per catalog) | ❌ | field not yet added |
+| **TODO(#57)** `view_config.scope.taxonomy-category == catalog.location.taxonomy-category` | ❌ | not implemented |
 | Calendar covers all sim table timesteps | ❌ | silent at join time |
