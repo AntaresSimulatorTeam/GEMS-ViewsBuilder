@@ -21,12 +21,12 @@ hierarchy. Example: `production`, `consumption`, `balance`, `link`.
 ## Model library
 
 A `library.yml` file defining **model schemas**: what variables, parameters, ports,
-port-field-definitions, and extra-outputs a component type has.
+port-field-definitions, (binding-)constraints and extra-outputs a component type has.
 
 ### Model
 
 A component type definition (e.g. `generator`, `load`, `bus`). Each model belongs to
-exactly one taxonomy category.
+one taxonomy category.
 
 ### Variable
 
