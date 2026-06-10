@@ -47,6 +47,9 @@ Catalog         ||--o{ Metric           : "metrics-definition"
 Catalog         }|--|| TaxonomyCategory : "location.taxonomy-category"
 Metric          ||--|{ Term             : "terms (1..N)"
 Term            }|--|| TaxonomyCategory : "taxonomy-category"
+Term            }|--|| PortSchema       : "location-ports (0..N)"
+Term            }|--|| VariableSchema|ExtraOutputSchema|PortFieldSchema : "output-id"
+Term            }|--|| VariableSchema|ExtraOutputSchema|PortFieldSchema : "weight-output-id"
 Metric          |o--o| PropertySchema  : "filter (0..1, key+value)"
 Metric          ||--o{ PropertySchema  : "breakdown (0..N, key only)"
 
@@ -59,8 +62,8 @@ ViewConfig      ||--|{ Catalog          : "catalog refs (1..N)"
 ViewConfig      ||--|{ Metric           : "metric refs (1..N)"
 ViewConfig      }|--|| Calendar         : "calendar ref (1:1)"
 
-SimulationTable }|--o{ Component       : "component column"
-SimulationTable }|--o{ ModelSchema     : "output column (output-id)"
+SimulationTable }|--o{ Component                                            : "component column"
+SimulationTable }|--o{ VariableSchema|ExtraOutputSchema|PortFieldSchema     : "output column (output-id)"
 ```
 
 ---
