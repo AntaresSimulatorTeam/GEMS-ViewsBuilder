@@ -197,3 +197,5 @@ catalog.yml
   └─ term.output-id ───────────────────────► variable / port-field-def / extra-output id
                                              in models of that taxonomy-category (NOT YET validated)
 ```
+
+Moreover, `term.weight-output-id`, which will be an optional field, remains to be implemented.
