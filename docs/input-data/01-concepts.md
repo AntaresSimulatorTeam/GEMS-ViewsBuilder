@@ -6,8 +6,9 @@ All domain terms used across the documentation, in dependency order (foundations
 
 ## Taxonomy
 
-A shared vocabulary file (`taxonomy.yml`) that defines the **categories** of model types,
-their ports, variables, and output types. All other config files reference it.
+A shared vocabulary file (`taxonomy.yml`) that defines the **categories** of model categories, 
+and their expected parameters, ports, variables, (binding)-constraints, and extra-output. 
+Several other config files reference it.
 
 ### Taxonomy category
 
