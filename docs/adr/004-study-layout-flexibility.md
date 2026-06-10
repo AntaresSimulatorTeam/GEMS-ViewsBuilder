@@ -15,8 +15,8 @@
 This strict layout was chosen for simplicity at the current stage. Future needs may include:
 - Multiple library files.
 - User-controlled filenames for `taxonomy.yml` or `system.yml`.
-- Multiple calendar files (per scenario set or per simulation block).
 - Multiple simulation tables (partial outputs merged at load time).
+- Multiple view config files.
 
 ## Current state
 
