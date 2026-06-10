@@ -45,3 +45,61 @@ used for component resolution.
 
 Without this, a catalog term targeting a parent category misses all components of child
 categories, producing incomplete (silently low) metric values.
+
+---
+
+## Impact on LOCATING_FUNCTION
+
+The partial order affects `LOCATING_FUNCTION` in two distinct ways.
+
+### 1. Component selection (direct — this ADR)
+
+`MetricStructureBuilder` calls
+`ModelLibrary.get_components_in_taxonomy_category(term.taxonomy_category)` to find
+contributing components. Without the downward walk, a term with
+`taxonomy-category: production` misses all `fatal_production` components. This is the
+primary concern of this ADR.
+
+### 2. Peer validity check (indirect — ADR-001)
+
+Once the peer location category check from [ADR-001](001-location-taxonomy-hierarchy.md)
+is implemented, it will need to accept a peer whose taxonomy category is `catalog.location.taxonomy-category`
+**or any of its descendants**. A peer of `regional_balance` (subcategory of `balance`)
+should be a valid location when `catalog.location.taxonomy-category = balance`.
+
+This check therefore also depends on the **downward walk** built by this ADR (from a
+given category, enumerate all subcategories transitively).
+
+---
+
+## Impact on consistency checks
+
+### Rule 3 — Term location port (upward walk needed)
+
+`catalog_taxonomy_validator.py` currently checks:
+
+```
+term.location-ports ∈ taxonomy.category[term.taxonomy-category].ports[*].id
+```
+
+using an exact category match. If a child category does not redeclare a port that its
+parent declares, this check will raise a false `ValueError` for a term that targets the
+child category with a parent's port.
+
+Example: if `fatal_production` (child of `production`) does not redeclare `p_balance_port`,
+a term `{taxonomy-category: fatal_production, location-ports: p_balance_port}` is rejected
+today even if the port is physically present via the parent.
+
+To fix this, the port lookup must walk **up** the hierarchy (ancestor walk), collecting
+ports from all ancestor categories in addition to the declared category's own ports.
+
+> Note: the direction is opposite to component resolution — ports require an **ancestor
+> walk** (upward), while component resolution requires a **descendant walk** (downward).
+
+### Rules 2, 7b, 7d — not affected
+
+- **Rule 2** (`term.taxonomy-category ∈ taxonomy.categories[*].id`): pure membership
+  check — no hierarchy traversal needed.
+- **Rule 7b** (`scope.taxonomy-category ∈ taxonomy.categories[*].id`): same.
+- **Rule 7d** (`scope.taxonomy-category == catalog.location.taxonomy-category`): exact
+  equality is correct — the scope declares the top-level location category explicitly.
