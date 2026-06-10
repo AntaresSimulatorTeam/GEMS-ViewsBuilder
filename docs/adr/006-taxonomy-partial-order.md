@@ -64,8 +64,8 @@ primary concern of this ADR.
 
 Once the peer location category check from [ADR-001](001-location-taxonomy-hierarchy.md)
 is implemented, it will need to accept a peer whose taxonomy category is `catalog.location.taxonomy-category`
-**or any of its descendants**. A peer of `regional_balance` (subcategory of `balance`)
-should be a valid location when `catalog.location.taxonomy-category = balance`.
+**or any of its descendants**. A peer of `fatal_production` (subcategory of `production`)
+should be a valid location when `catalog.location.taxonomy-category = production`.
 
 This check therefore also depends on the **downward walk** built by this ADR (from a
 given category, enumerate all subcategories transitively).
