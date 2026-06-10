@@ -31,8 +31,10 @@ Should `get_location` move to `MetricStructureBuilder` (`metrics_builder.py`)?
 
 ## Current state
 
-`get_location` lives in `InputSystem`. The peer category check (ADR-001) is not yet
-implemented in either location.
+`get_location` lives in `InputSystem`. It raises a `ValueError` only when a port has no
+connection at all (0 peers). When a port connects to **multiple peers**, all are silently
+returned and merged into `metric_location` — no uniqueness check exists.
+The peer category check (ADR-001) is also not yet implemented.
 
 ## Source
 

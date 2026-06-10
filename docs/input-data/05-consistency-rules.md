@@ -41,8 +41,10 @@ catalog  →  term.location-ports  ∈  taxonomy.category[term.taxonomy-category
 
 **Enforced**: yes, for string values (`catalog_taxonomy_validator.py`).
 
-> Current limitation: only single-string `location-ports` values are checked. Tuple values
-> (multi-port) are not iterated.
+> Current bug: tuple `location-ports` values (multi-port) trigger a false `ValueError` — the
+> tuple is compared against the set of string port ids and never matches, so any multi-port
+> term would incorrectly fail validation. This is latent because no existing test uses a
+> tuple `location-ports` in YAML.
 
 ---
 
@@ -60,13 +62,18 @@ catalog  →  term.output-id  ∈  { variable.id | port-field-def.id | extra-out
 
 ---
 
-## 5. Location resolution uniqueness
+## 5. Location resolution — zero peers
 
-For each `(component, location-port)` pair processed at metric build time,
-exactly **one** peer component must be connected through that port.
-Zero peers or two or more peers raises a `ValueError`.
+For each `(component, location-port)` pair processed at metric build time, if no connection
+exists for that port (i.e. the pair is absent from the connection index), a `ValueError` is
+raised.
 
-**Enforced**: yes, at execution time (`system.py:_get_peer_components` + `get_location`).
+**Enforced**: yes, at execution time (`system.py:InputSystem._get_peer_components`).
+
+> **Multiple peers**: if a port connects to several peers, they are all returned and merged
+> into `metric_location` as `{peer1,peer2,...}`. No error is raised. Enforcing uniqueness
+> (exactly one peer per port) is the intended future behaviour — see
+> [ADR-003](../adr/003-get-location-ownership.md).
 
 ---
 
@@ -107,7 +114,8 @@ inner join in Step 1 silently drops unmatched rows.
 | `term.taxonomy-category ∈ taxonomy.categories` | ✅ | `catalog_taxonomy_validator.py` |
 | `term.location-ports ∈ category.ports` (string only) | ✅ | `catalog_taxonomy_validator.py` |
 | `term.output-id` valid for taxonomy-category | ❌ | not implemented |
-| Location port resolves to exactly 1 peer | ✅ | `system.py`, execution time |
+| Location port has at least 1 connection (0-peer case) | ✅ | `system.py`, execution time |
+| Location port resolves to exactly 1 peer (uniqueness) | ❌ | not implemented (multiple peers merged silently) |
 | Peer belongs to `catalog.location.taxonomy-category` | ❌ | not implemented |
 | `view_config.taxonomy-category == catalog.location.taxonomy-category` | ❌ | not implemented |
 | Calendar covers all sim table timesteps | ❌ | silent at join time |

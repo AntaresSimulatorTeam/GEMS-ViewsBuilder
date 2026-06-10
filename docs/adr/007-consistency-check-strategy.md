@@ -9,10 +9,10 @@ Consistency checks are currently scattered across four locations with no governi
 | Check | Location | Phase |
 |---|---|---|
 | File layout | `StudyLayoutValidator` | Startup |
-| Calendar columns and ordering | `calendar.py:_check_calendar_columns` | Load time |
-| SimulationTable column set | `simulation_table.py:_check_simulation_table_columns` | Load time |
+| Calendar columns and ordering | `calendar.py:_check_calendar_columns` | Step 1 of `build()` (not startup) |
+| SimulationTable column set | `simulation_table.py:_check_simulation_table_columns` | `Loader.load()` |
 | Catalog ↔ taxonomy (partial) | `catalog_taxonomy_validator.py` | Startup, after load |
-| Location port uniqueness | `system.py:_get_peer_components` | Execution time, per metric |
+| Location port 0-peer check | `system.py:_get_peer_components` | Execution time, per metric |
 
 ## Coverage gaps
 
@@ -22,6 +22,7 @@ have **no code enforcement** today:
 | Rule | Impact if violated |
 |---|---|
 | `term.output-id` is a valid variable/port-field-def/extra-output for its taxonomy category | Wrong or empty metric output (no error) |
+| Location port connects to exactly 1 peer (uniqueness) | Multiple peers silently merged into `metric_location` |
 | `view_config.taxonomy-category` matches `catalog.location.taxonomy-category` | Location resolution may use wrong components |
 | Peer component belongs to `catalog.location.taxonomy-category` | Location points to a non-location component |
 | Calendar covers all simulation table timesteps | Mismatched timesteps silently dropped |

@@ -37,20 +37,9 @@ Source: `validation/catalog_taxonomy_validator.py`
 | Every `term.taxonomy-category` is in `taxonomy.categories[*].id` | `ValueError` |
 | Every string `term.location-ports` is in the ports of `term.taxonomy-category` | `ValueError` |
 
-> **Gap**: tuple `location-ports` values (multi-port) are not iterated; only string values
-> are checked.
-
-### Calendar (`load_calendar` → `_check_calendar_columns`)
-
-Source: `calendar.py`
-
-| Check | Error raised |
-|---|---|
-| File exists | `FileNotFoundError` |
-| File extension is `.csv` | `ValueError` |
-| Columns are `[absolute_time_index, block, granular_date]` in that exact order | `ValueError` |
-| `absolute_time_index` is contiguous `0, 1, …, N-1` | `ValueError` |
-| Spacing between consecutive `granular_date` values is constant | `ValueError` |
+> **Bug**: tuple `location-ports` values (multi-port) trigger a false `ValueError` — the
+> tuple is compared against the set of string port ids and never matches, so any multi-port
+> term would incorrectly fail validation.
 
 ### SimulationTable (`SimulationTable.load` → `_check_simulation_table_columns`)
 
@@ -73,6 +62,23 @@ Source: `metrics.py`
 
 ---
 
+## Step 1 checks (during `build()`)
+
+These run when the calendar is loaded at the start of `ViewBuilder.build()`.
+`load_calendar()` is called from `build()`, **not** from `Loader.load()`.
+
+### Calendar (`view_config.load_calendar()` → `calendar.py:_check_calendar_columns`)
+
+| Check | Error raised |
+|---|---|
+| Calendar file exists | `FileNotFoundError` |
+| File extension is `.csv` | `ValueError` |
+| Columns are `[absolute_time_index, block, granular_date]` in that exact order | `ValueError` |
+| `absolute_time_index` is contiguous `0, 1, …, N-1` | `ValueError` |
+| Spacing between consecutive `granular_date` values is constant | `ValueError` |
+
+---
+
 ## Checks not yet implemented
 
 The following rules are defined (see [`input-data/05-consistency-rules.md`](../input-data/05-consistency-rules.md))
@@ -82,6 +88,7 @@ but have no corresponding code check today:
 |---|---|
 | `term.output-id` is a valid variable/port-field-def/extra-output for the term's taxonomy-category models | ❌ not implemented |
 | `view_config.scope.taxonomy-category` matches `catalog.location.taxonomy-category` | ❌ not implemented |
+| Location port connects to exactly 1 peer (uniqueness — multiple peers currently silently merged) | ❌ not implemented |
 | Peer component resolved via location port belongs to `catalog.location.taxonomy-category` | ❌ not implemented |
 | Calendar covers all `absolute_time_index` values in simulation table | ❌ silent (inner join drops unmatched rows) |
 
@@ -93,12 +100,11 @@ Run inside the per-metric loop during `ViewBuilder.build()`.
 
 | Check | When | Source | Error raised |
 |---|---|---|---|
-| Each named location port resolves to exactly 1 peer | Step 2a, per `(component, port)` | `system.py:InputSystem._get_peer_components` | `ValueError` |
-| Named port has at least one connection | same | same | `ValueError` |
+| Named port has at least 1 connection | Step 2a, per `(component, port)` | `system.py:InputSystem._get_peer_components` | `ValueError` |
 
-These checks run at execution time because they depend on the system graph, which requires
-the library to be loaded and resolved. With a fail-fast strategy (see ADR-007), they could
-run upfront as a dry-validation pass before any computation.
+> **Multiple peers**: if a port connects to several components, all peers are merged into
+> `metric_location` as `{peer1,peer2,...}`. This is the current behaviour; enforcing
+> uniqueness is planned (see [ADR-003](../adr/003-get-location-ownership.md)).
 
 ---
 
@@ -117,6 +123,7 @@ ViewBuilder.__init__()
   └─ validate_catalogs_against_taxonomy()    ← catalog ↔ taxonomy (partial)
 
 ViewBuilder.build()
+  ├─ Step 1: view_config.load_calendar()    ← calendar format + column checks
   └─ per-metric loop
-       └─ system.get_location()             ← uniqueness check (execution time)
+       └─ system.get_location()             ← 0-peer check only; multiple peers silently merged
 ```

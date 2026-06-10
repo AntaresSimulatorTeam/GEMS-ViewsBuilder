@@ -93,7 +93,9 @@ The port on a contributing component through which its location is resolved.
 ### LOCATING_FUNCTION
 
 The function that resolves a `(component, location_port)` pair to a location component id.
-For each named port, exactly **one** peer must exist — multiple peers raise an error.
+If no connection exists for the named port, a `ValueError` is raised. If multiple peers
+exist, they are all included in the `metric_location` (no uniqueness constraint today —
+see [ADR-003](../adr/003-get-location-ownership.md)).
 
 ### Filter
 

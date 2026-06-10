@@ -142,10 +142,12 @@ for term in metric.terms:
 | `location_ports` | Returns |
 |---|---|
 | `null` | `component_id` (self-location) |
-| `"port_name"` | id of the unique peer connected through that port |
-| `("p0_port", "p1_port")` | tuple of peer ids, one per port |
+| `"port_name"` | all peer ids connected through that port (str if one, tuple if several) |
+| `("p0_port", "p1_port")` | flat tuple of all peer ids from all listed ports |
 
-Uniqueness is enforced: if a port connects to 0 or 2+ peers, `ValueError` is raised.
+If the port has no connection at all (absent from the index), `ValueError` is raised.
+If the port has **multiple peers**, they are all included — no uniqueness check today.
+Enforcing uniqueness (exactly one peer per port) is planned; see [ADR-003](../adr/003-get-location-ownership.md).
 
 **`metric_location` format:**
 - Single location: `{busA}`
