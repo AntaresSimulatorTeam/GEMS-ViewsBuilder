@@ -103,3 +103,52 @@ ports from all ancestor categories in addition to the declared category's own po
 - **Rule 7b** (`scope.taxonomy-category ∈ taxonomy.categories[*].id`): same.
 - **Rule 7d** (`scope.taxonomy-category == catalog.location.taxonomy-category`): exact
   equality is correct — the scope declares the top-level location category explicitly.
+
+---
+
+## Impact on ADR-007 (consistency check strategy)
+
+[ADR-007](007-consistency-check-strategy.md) proposes a fail-fast ordered sequence of
+checks. ADR-006 has three consequences for that sequence.
+
+### 1. New prerequisite: hierarchy index build
+
+Both modified checks (Rule 3 port lookup and Rule 6 peer category check) require
+pre-computed indexes that do not exist today:
+
+- **Descendant closure**: for each category, the set of all transitively-descendant
+  category ids. Used by component resolution and the peer category check (downward walk).
+- **Ancestor closure**: for each category, the ordered list of ancestor category ids.
+  Used by the port lookup (upward walk).
+
+These indexes are O(categories²) to build and only need to be computed once from the
+loaded `Taxonomy`. They should be built as part of `Loader.load()` (or lazily on first
+use) before any check that depends on them runs. ADR-007's recommended sequence should
+therefore become:
+
+```
+1. Layout check                 (file existence, O(1))
+2. Calendar format              (keep at load time)
+3. SimulationTable columns      (keep at load time)
+4. Taxonomy hierarchy indexes   ← NEW: build descendant + ancestor closures, O(categories²)
+5. Catalog ↔ taxonomy           (port check now uses ancestor walk)
+6. view_config ↔ catalog        (unchanged)
+7. Peer category check          (now uses descendant walk)
+```
+
+### 2. Two existing checks change in complexity
+
+Steps 5 and 7 in ADR-007's sequence change from O(1) set-membership lookups to
+O(depth) hierarchy walks per term or component. For shallow taxonomies (typical depth
+≤ 5) this remains negligible, and the checks stay in the same position in the ordered
+sequence. No reordering of ADR-007's sequence is required beyond inserting step 4.
+
+### 3. The "execution-time checks become assertions" argument weakens slightly
+
+ADR-007's recommendation closes with: *"Execution-time checks (uniqueness) become
+assertions — if inputs are valid, uniqueness is guaranteed by construction."* This holds
+for Rule 5 (uniqueness). However, the peer category check (Rule 6) cannot be fully
+pre-computed at startup for large systems: it depends on which peers are actually resolved
+per metric, which requires iterating the system graph. This check therefore remains
+O(components × terms) at startup, as ADR-007 already notes — ADR-006 does not change
+its phase, only its predicate (exact match → descendant walk).
