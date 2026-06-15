@@ -107,7 +107,7 @@ class ViewConfig:
         return self
 
     def _group_metrics_by_catalog(self, metrics: list[MetricRef]) -> dict[str, list[str]]:
-        logger.info(f"Grouping {len(metrics)} metric reference(s) by catalog")
+        logger.debug(f"Grouping {len(metrics)} metric reference(s) by catalog")
         catalog_to_metrics: dict[str, list[str]] = defaultdict(list)
         for metric in metrics:
             if "." not in metric.id or metric.id.startswith(".") or metric.id.endswith("."):
@@ -117,7 +117,7 @@ class ViewConfig:
                 )
             catalog_id, metric_id = metric.id.split(".", 1)
             catalog_to_metrics[catalog_id].append(metric_id)
-            logger.info(f"Mapped metric reference {metric.id!r} to catalog {catalog_id!r}")
+            logger.debug(f"Mapped metric reference {metric.id!r} to catalog {catalog_id!r}")
         return catalog_to_metrics
 
     def _load_view_file(self, view_file_path: Path) -> ViewData:

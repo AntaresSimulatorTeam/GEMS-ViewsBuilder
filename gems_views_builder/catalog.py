@@ -110,6 +110,14 @@ def _to_metric(metric_data: MetricData) -> Metric:
     )
 
 
+def load_catalogs(input_data_path: Path, catalog_ids: list[str]) -> dict[str, Catalog]:
+    catalogs_dir = input_data_path / "catalogs"
+    catalogs: dict[str, Catalog] = {}
+    for catalog_id in catalog_ids:
+        catalogs[catalog_id] = load_catalog(catalogs_dir / f"{catalog_id}.yml")
+    return catalogs
+
+
 def load_catalog(catalog_file_path: Path) -> Catalog:
     logger.info(f"Loading catalog from {catalog_file_path}")
     parsed = _load_catalog_file(catalog_file_path)
@@ -126,18 +134,17 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
 
 
 def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
-    logger.info(f"Parsing catalog YAML from {catalog_file_path}")
+    logger.debug(f"Loading catalog YAML from {catalog_file_path}")
     with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     if "catalog" not in raw:
         raise ValueError(f"catalog.yml file {catalog_file_path} is missing the 'catalog' key at the root")
-    logger.info(f"Catalog YAML parsed successfully from {catalog_file_path}")
     return CatalogData.model_validate(raw["catalog"])
 
 
 def get_catalog_metric(catalog: Catalog, metric_id: str) -> Metric:
-    logger.info(f"Looking up metric {metric_id!r} in catalog {catalog.id!r}")
+    logger.debug(f"Looking up metric {metric_id!r} in catalog {catalog.id!r}")
     if metric_id not in catalog.metrics:
         raise ValueError(f"Metric {metric_id} not found in catalog {catalog.id}")
-    logger.info(f"Metric {metric_id!r} found in catalog {catalog.id!r}")
+    logger.debug(f"Metric {metric_id!r} found in catalog {catalog.id!r}")
     return catalog.metrics[metric_id]
