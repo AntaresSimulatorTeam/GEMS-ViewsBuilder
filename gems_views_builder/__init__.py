@@ -19,7 +19,6 @@ from gems_views_builder.catalog import (
     Term,
     TermsOperator,
     TimeOperator,
-    get_catalog_metric,
     load_catalog,
 )
 from gems_views_builder.library import (
@@ -50,7 +49,6 @@ __all__ = [
     "SimulationTable",
     "Catalog",
     "load_catalog",
-    "get_catalog_metric",
     "Metric",
     "Term",
     "TermsOperator",

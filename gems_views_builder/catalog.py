@@ -89,6 +89,13 @@ class Catalog:
     location_taxonomy_category: str
     metrics: dict[str, Metric] = field(default_factory=dict)
 
+    def get_metric(self, metric_id: str) -> Metric:
+        logging.debug(f"Looking up metric {metric_id!r} in catalog {self.id!r}")
+        if metric_id not in self.metrics:
+            raise ValueError(f"Metric {metric_id} not found in catalog {self.id}")
+        logging.debug(f"Metric {metric_id!r} found in catalog {self.id!r}")
+        return self.metrics[metric_id]
+
 
 def _to_term(term_data: TermData) -> Term:
     return Term(
@@ -140,11 +147,3 @@ def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
     if "catalog" not in raw:
         raise ValueError(f"catalog.yml file {catalog_file_path} is missing the 'catalog' key at the root")
     return CatalogData.model_validate(raw["catalog"])
-
-
-def get_catalog_metric(catalog: Catalog, metric_id: str) -> Metric:
-    logging.debug(f"Looking up metric {metric_id!r} in catalog {catalog.id!r}")
-    if metric_id not in catalog.metrics:
-        raise ValueError(f"Metric {metric_id} not found in catalog {catalog.id}")
-    logging.debug(f"Metric {metric_id!r} found in catalog {catalog.id!r}")
-    return catalog.metrics[metric_id]

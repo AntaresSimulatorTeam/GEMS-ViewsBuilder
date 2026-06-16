@@ -18,7 +18,7 @@ from pathlib import Path
 import polars as pl
 
 from gems_views_builder.aggregator import Aggregator
-from gems_views_builder.catalog import Catalog, Metric, get_catalog_metric
+from gems_views_builder.catalog import Catalog, Metric
 from gems_views_builder.common import log_file
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_builder import MetricStructureBuilder
@@ -88,7 +88,7 @@ class ViewBuilder:
             for metric_id in metrics:
                 logging.info(f"[{metric_id}] Processing metric")
                 try:
-                    metric: Metric = get_catalog_metric(catalog, metric_id)
+                    metric: Metric = catalog.get_metric(metric_id)
                 except ValueError:
                     logging.info(f"[{metric_id}] Metric not found in catalog '{catalog_id}' — skipping")
                     continue  # # We should decide do we want to break process fully or continue without the current metric
