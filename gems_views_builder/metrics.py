@@ -12,6 +12,7 @@
 
 """ViewConfig models and lazy loaders for view_config.yml."""
 
+import logging
 from collections import defaultdict
 from enum import Enum
 from pathlib import Path
@@ -22,7 +23,6 @@ from pydantic import Field
 from gems_views_builder.base_model import ViewBuilderBasedModel
 from gems_views_builder.calendar import Calendar, load_calendar
 from gems_views_builder.catalog import Catalog, load_catalog
-from gems_views_builder.common import logger
 
 
 class TimeAggregation(Enum):
@@ -83,7 +83,7 @@ class ViewConfig:
         return cls(config_file_path).load_into_self()
 
     def load_into_self(self) -> "ViewConfig":
-        logger.info(f"Loading view config from {self.file}")
+        logging.info(f"Loading view config from {self.file}")
         parsed = self._load_view_file(self.file)
         self.id = parsed.id
         self.location_taxonomy_category = next(
@@ -100,14 +100,14 @@ class ViewConfig:
         self.time_aggregation = parsed.aggregation[0].time if parsed.aggregation else None
         # Internal helper: grouped by catalog
         self.catalog_to_metrics = self._group_metrics_by_catalog(parsed.metrics)
-        logger.info(
+        logging.info(
             f"View config {self.id!r} loaded: calendar={self.calendar_id!r}, "
             f"catalogs={len(self.catalog_ids)}, metric groups={len(self.catalog_to_metrics)}"
         )
         return self
 
     def _group_metrics_by_catalog(self, metrics: list[MetricRef]) -> dict[str, list[str]]:
-        logger.debug(f"Grouping {len(metrics)} metric reference(s) by catalog")
+        logging.debug(f"Grouping {len(metrics)} metric reference(s) by catalog")
         catalog_to_metrics: dict[str, list[str]] = defaultdict(list)
         for metric in metrics:
             if "." not in metric.id or metric.id.startswith(".") or metric.id.endswith("."):
@@ -117,16 +117,16 @@ class ViewConfig:
                 )
             catalog_id, metric_id = metric.id.split(".", 1)
             catalog_to_metrics[catalog_id].append(metric_id)
-            logger.debug(f"Mapped metric reference {metric.id!r} to catalog {catalog_id!r}")
+            logging.debug(f"Mapped metric reference {metric.id!r} to catalog {catalog_id!r}")
         return catalog_to_metrics
 
     def _load_view_file(self, view_file_path: Path) -> ViewData:
-        logger.info(f"Parsing view config YAML from {view_file_path}")
+        logging.info(f"Parsing view config YAML from {view_file_path}")
         with open(view_file_path, encoding="utf-8") as f:
             raw = yaml.safe_load(f)
         if "view" not in raw:
             raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
-        logger.info(f"View config YAML parsed successfully from {view_file_path}")
+        logging.info(f"View config YAML parsed successfully from {view_file_path}")
         return ViewData.model_validate(raw["view"])
 
     def load_catalog(self, catalog_id: str) -> Catalog:
@@ -135,7 +135,7 @@ class ViewConfig:
         """
         if not (self.input_data_path / "catalogs" / f"{catalog_id}.yml").exists():
             raise FileNotFoundError(f"Catalog file {self.input_data_path / 'catalogs' / f'{catalog_id}.yml'} not found")
-        logger.info(f"Loading catalog {catalog_id!r} from view config")
+        logging.info(f"Loading catalog {catalog_id!r} from view config")
         return load_catalog(self.input_data_path / "catalogs" / f"{catalog_id}.yml")
 
     def load_calendar(self) -> Calendar:
@@ -145,5 +145,5 @@ class ViewConfig:
         calendar_file = self.input_data_path / f"{self.calendar_id}.csv"
         if not calendar_file.exists():
             raise FileNotFoundError(f"Calendar file {calendar_file} not found")
-        logger.info(f"Loading calendar {self.calendar_id!r} from view config")
+        logging.info(f"Loading calendar {self.calendar_id!r} from view config")
         return load_calendar(calendar_file)

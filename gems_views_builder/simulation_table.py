@@ -10,12 +10,12 @@
 #
 # This file is part of the Antares project.
 
+import logging
 from pathlib import Path
 
 import polars as pl
 
 from gems_views_builder.calendar import Calendar
-from gems_views_builder.common import logger
 
 # Columns of the SIMULATION_TABLE:
 # block               (str)   – identifies the timeblock in the simulation
@@ -76,10 +76,10 @@ class SimulationTable:
         return cls(simulation_table_file).load_into_self()
 
     def load_into_self(self) -> "SimulationTable":
-        logger.info(f"Scanning simulation table from {self.file}")
+        logging.info(f"Scanning simulation table from {self.file}")
         self._dataframe = pl.scan_parquet(self.file)
         self._check_simulation_table_columns()
-        logger.info(f"Simulation table {self.id!r} successfully scanned from {self.file}")
+        logging.info(f"Simulation table {self.id!r} successfully scanned from {self.file}")
         return self
 
     def _check_simulation_table_columns(self) -> None:

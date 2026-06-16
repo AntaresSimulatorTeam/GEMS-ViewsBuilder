@@ -1,15 +1,16 @@
 """Validate consistency between loaded catalogs and the study taxonomy."""
 
+import logging
+
 from gems_views_builder.catalog import Catalog
-from gems_views_builder.common import logger
 from gems_views_builder.taxonomy import Taxonomy
 
 
 def validate_catalogs_against_taxonomy(catalogs: dict[str, Catalog], taxonomy: Taxonomy) -> None:
-    logger.info(f"Validating {len(catalogs)} catalog(s) against taxonomy {taxonomy.id!r}")
+    logging.info(f"Validating {len(catalogs)} catalog(s) against taxonomy {taxonomy.id!r}")
     for catalog in catalogs.values():
         validate_catalog_against_taxonomy(catalog, taxonomy)
-    logger.info(f"All catalogs are consistent with taxonomy {taxonomy.id!r}")
+    logging.info(f"All catalogs are consistent with taxonomy {taxonomy.id!r}")
 
 
 def _category_ports_by_id(taxonomy: Taxonomy) -> dict[str, set[str]]:
@@ -17,7 +18,7 @@ def _category_ports_by_id(taxonomy: Taxonomy) -> dict[str, set[str]]:
 
 
 def validate_catalog_against_taxonomy(catalog: Catalog, taxonomy: Taxonomy) -> None:
-    logger.info(f"Validating catalog {catalog.id!r} against taxonomy {taxonomy.id!r}")
+    logging.info(f"Validating catalog {catalog.id!r} against taxonomy {taxonomy.id!r}")
     if catalog.taxonomy != taxonomy.id:
         raise ValueError(
             f"Catalog {catalog.id!r} references taxonomy {catalog.taxonomy!r}, but study taxonomy id is {taxonomy.id!r}"
