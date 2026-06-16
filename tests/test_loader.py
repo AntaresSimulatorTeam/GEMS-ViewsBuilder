@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from gems_views_builder.library import ModelLibrary
+from gems_views_builder.library import Library
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics import ViewConfig
 from gems_views_builder.simulation_table import SimulationTable
@@ -24,7 +24,7 @@ def test_loader_load_into_self_populates_attributes(test_dataset_dir: Path) -> N
     assert isinstance(loader.taxonomy, Taxonomy)
     assert isinstance(loader.view_config, ViewConfig)
     assert isinstance(loader.simulation_table, SimulationTable)
-    assert isinstance(loader.model_library, ModelLibrary)
+    assert isinstance(loader.model_library, Library)
 
 
 def test_loader_classmethod_load_populates_attributes(test_dataset_dir: Path) -> None:
@@ -34,4 +34,4 @@ def test_loader_classmethod_load_populates_attributes(test_dataset_dir: Path) ->
     assert isinstance(loader.taxonomy, Taxonomy)
     assert isinstance(loader.view_config, ViewConfig)
     assert isinstance(loader.simulation_table, SimulationTable)
-    assert isinstance(loader.model_library, ModelLibrary)
+    assert isinstance(loader.model_library, Library)

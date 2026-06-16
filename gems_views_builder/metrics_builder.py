@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import polars as pl
 
 from gems_views_builder.catalog import Catalog, Metric
-from gems_views_builder.library import ModelLibrary
+from gems_views_builder.library import Library
 from gems_views_builder.system import InputSystem
 from gems_views_builder.taxonomy import Taxonomy
 
@@ -48,7 +48,7 @@ class MetricStructureBuilder:
         catalog: Catalog,
         metric: Metric,
         taxonomy: Taxonomy,
-        model_library: ModelLibrary,
+        model_library: Library,
     ) -> None:
         self.system = system
         self.catalog = catalog

@@ -70,68 +70,73 @@ class LibraryData(ViewBuilderBasedModel):
     models: list[ModelDefinition] = Field(default_factory=list)
 
 
-class ModelLibrary:
+class Library:
     """
-    Model library .yml representation with taxonomy indexes.
-
+    library .yml representation with taxonomy indexes.
     Loads via GemsPy parsing types; builds taxonomy indexes for metric structure tables.
     """
 
-    def __init__(self, library_file_path: Path) -> None:
+    def __init__(self) -> None:
         """
-        Cheap constructor: keep only the file path.
-
-        Use `ModelLibrary.load(...)` (or `load_into_self()`) to perform I/O and build indexes.
+        Initialize an empty model library.
+        # # TODO: GEMS Craft future library could keep all data in structured in memory format
+        # # Current implementation inside gemspy drop everything after pydantic validation, what is keept:
+        # # id, description, port_types, models, internal parsing should be done there for later faster access to the data
         """
-        self.file = library_file_path
         self.id = ""
         self.description = ""
         self.port_types: list[InputPortType] = []
         self.models: dict[str, ModelDefinition] = {}
         self.models_by_taxonomy_category: dict[str, list[str]] = {}
 
-    @classmethod
-    def load(cls, library_file_path: Path) -> "ModelLibrary":
-        return cls(library_file_path).load_into_self()
-
-    def load_into_self(self) -> "ModelLibrary":
-        logging.info(f"Loading model library from {self.file}")
-        parsed = self._load_library_file(self.file)
-        self.id = parsed.id
-        self.description = parsed.description or ""
-        self.port_types = parsed.port_types
-        self.models = {m.id: m for m in parsed.models}
-        logging.info(
-            f"Library {self.id!r} loaded, containing {len(self.port_types)} port type(s) and {len(self.models)} model(s)"
-        )
-        self.models_by_taxonomy_category = {}
-        for m in parsed.models:
-            if not m.taxonomy_category:
-                continue
-            self.models_by_taxonomy_category.setdefault(m.taxonomy_category, []).append(m.id)
-        logging.debug(
-            f"Library indexing complete: {len(self.models_by_taxonomy_category)} taxonomy categor"
-            f"{'y' if len(self.models_by_taxonomy_category) == 1 else 'ies'}"
-        )
-        return self
-
-    def _load_library_file(self, library_file_path: Path) -> LibraryData:
-        logging.debug(f"Loading library YAML from {library_file_path}")
-        with open(library_file_path, encoding="utf-8") as f:
-            raw = yaml.safe_load(f)
-        if "library" not in raw:
-            raise ValueError(f"library.yml file {library_file_path} is missing the 'library' key at the root")
-        logging.debug("Library YAML parsed successfully")
-        return LibraryData.model_validate(raw["library"])
-
-    def get_model(self, model_id: str) -> ModelDefinition | None:
+    def get_model(self, model_id: str) -> ModelDefinition:
         """Return the full model definition, or None if not found."""
-        return self.models.get(model_id)
+        try:
+            return self.models[model_id]
+        except KeyError:
+            raise ValueError(f"Model {model_id} not found in library")
 
-    def get_taxonomy_category(self, model_id: str) -> str | None:
-        """Return the taxonomy category for a given model id, or None if unknown."""
+    def get_taxonomy_category(self, model_id: str) -> str:
+        """Return the taxonomy category for a given model id."""
         model = self.get_model(model_id)
-        return model.taxonomy_category if model else None
+        if model.taxonomy_category is None:
+            raise ValueError(f"Model {model_id} has no taxonomy category in library")
+        return model.taxonomy_category
 
     def get_components_in_taxonomy_category(self, taxonomy_category: str) -> list[str]:
         return self.models_by_taxonomy_category.get(taxonomy_category, [])
+
+
+def load_library(library_file_path: Path) -> Library:
+    logging.info(f"Loading model library from {library_file_path}")
+    library = Library()
+    parsed = load_library_file(library_file_path)
+    library.id = parsed.id
+    library.description = parsed.description or ""
+    library.port_types = parsed.port_types
+    library.models = {m.id: m for m in parsed.models}
+    logging.info(
+        f"Library {library.id!r} loaded, containing {len(library.port_types)} port type(s) and {len(library.models)} model(s)"
+    )
+    library.models_by_taxonomy_category = {}
+    for m in parsed.models:
+        if not m.taxonomy_category:
+            continue
+        library.models_by_taxonomy_category.setdefault(m.taxonomy_category, []).append(m.id)
+    logging.debug(
+        f"Library indexing complete: {len(library.models_by_taxonomy_category)} taxonomy categor"
+        f"{'y' if len(library.models_by_taxonomy_category) == 1 else 'ies'}"
+    )
+    return library
+
+
+def load_library_file(library_file_path: Path) -> LibraryData:
+    # # GEMS Craft future library could have option to load library model from path
+    # # Current blueprint of method inside gemspy is typing.TextIO idk why ?
+    logging.debug(f"Loading library YAML from {library_file_path}")
+    with open(library_file_path, encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+    if "library" not in raw:
+        raise ValueError(f"library.yml file {library_file_path} is missing the 'library' key at the root")
+    logging.debug("Library YAML parsed successfully")
+    return LibraryData.model_validate(raw["library"])

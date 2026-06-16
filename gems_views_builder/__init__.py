@@ -25,15 +25,16 @@ from gems_views_builder.library import (
     BindingConstraintDef,
     ConstraintDef,
     ExtraOutputDef,
+    Library,
     LibraryData,
     ModelDefinition,
-    ModelLibrary,
     ObjectiveContributionDef,
     ParameterDef,
     PortDef,
     PortFieldDefinition,
     PortTypeDef,
     VariableDef,
+    load_library,
 )
 from gems_views_builder.metrics import TimeAggregation, ViewConfig
 from gems_views_builder.metrics_builder import MetricStructureBuilder, MetricStructureTable
@@ -57,8 +58,9 @@ __all__ = [
     "ConstraintDef",
     "ExtraOutputDef",
     "LibraryData",
+    "Library",
+    "load_library",
     "ModelDefinition",
-    "ModelLibrary",
     "ObjectiveContributionDef",
     "ParameterDef",
     "PortDef",

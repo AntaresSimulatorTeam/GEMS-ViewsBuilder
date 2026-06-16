@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from gems_views_builder.catalog import load_catalogs
-from gems_views_builder.library import ModelLibrary
+from gems_views_builder.library import load_library
 from gems_views_builder.metrics import ViewConfig
 from gems_views_builder.simulation_table import SimulationTable
 from gems_views_builder.system import InputSystem
@@ -27,7 +27,7 @@ class Loader:
         self.simulation_table = SimulationTable.load(
             next(self.input_data_path.glob("simulation_table*.parquet"))
         )  # # we could have only one simulation table at this phase of development
-        self.model_library = ModelLibrary.load(
+        self.model_library = load_library(
             self.input_data_path / "library.yml"
         )  # # must be named like this for now, in future when we enable user to have more than one libraries we should decide pattern to use
         self.system = InputSystem.from_file(self.input_data_path / "system.yml")
