@@ -136,8 +136,9 @@ def test_log_messages_emitted_to_stdout(
 
     messages = [r.message for r in caplog.records]
     assert any("All inputs loaded" in m for m in messages)
-    assert any("Step 2: Processing" in m for m in messages)
-    assert any("Pipeline complete" in m for m in messages)
+    assert any("Starting input validation" in m for m in messages), "Missing expected log: Starting input validation"
+    assert any("All inputs loaded successfully" in m for m in messages), "Missing expected log: All inputs loaded successfully"
+    assert any("Results merged into" in m for m in messages), "Missing expected log: Results merged into"
 
 
 def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> None:
