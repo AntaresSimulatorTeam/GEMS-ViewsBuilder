@@ -14,16 +14,14 @@
 
 from gems_views_builder.aggregator import Aggregator
 from gems_views_builder.input.input_data import InputData
-from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_builder import build_metric_structure
 from gems_views_builder.writer import MergedView, Writer
 
 
 class ViewBuilder:
-    def __init__(self, input_data: InputData, filtered_st: FilteredSimulationTable) -> None:
+    def __init__(self, input_data: InputData) -> None:
         self.input_data = input_data
-        self.filtered_st = filtered_st
         self.writer = Writer(input_data.input_data_path)
         self.aggregator = Aggregator(input_data.input_data_path)
 
@@ -44,7 +42,7 @@ class ViewBuilder:
                     self.input_data.library,
                     self.writer,
                 )
-                metric_views.append(self.aggregator.aggregate(self.filtered_st, structure, metric))
+                metric_views.append(self.aggregator.aggregate(self.input_data.filtered_st, structure, metric))
         merged = MergedView.merge_views(metric_views, self.writer)
-        self.filtered_st.cleanup()
+        self.input_data.filtered_st.cleanup()
         return merged

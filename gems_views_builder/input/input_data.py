@@ -15,6 +15,7 @@ from pathlib import Path
 
 from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.library import Library
+from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
@@ -28,3 +29,4 @@ class InputData:
     catalogs: dict[str, Catalog]
     library: Library
     system: System
+    filtered_st: FilteredSimulationTable

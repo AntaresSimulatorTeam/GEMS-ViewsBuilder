@@ -22,10 +22,7 @@ from gems_views_builder.views_builder import ViewBuilder
 
 
 def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
-    loader = Loader(dataset_dir)
-    input_data = loader.load()
-    filtered_st = loader.load_filtered_simulation_table(dataset_dir / "views" / "intermediate")
-    return ViewBuilder(input_data, filtered_st)
+    return ViewBuilder(Loader(dataset_dir).load())
 
 
 @pytest.fixture()

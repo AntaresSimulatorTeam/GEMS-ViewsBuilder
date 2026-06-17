@@ -40,6 +40,7 @@ def test_loader_load_populates_input_data(test_dataset_dir: Path) -> None:
     assert isinstance(input_data.catalogs, dict)
     assert isinstance(input_data.library, Library)
     assert isinstance(input_data.system, System)
+    assert isinstance(input_data.filtered_st, FilteredSimulationTable)
 
 
 def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) -> None:
@@ -53,10 +54,4 @@ def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) ->
     assert isinstance(input_data.catalogs, dict)
     assert isinstance(input_data.library, Library)
     assert isinstance(input_data.system, System)
-
-
-def test_loader_load_filtered_simulation_table(test_dataset_dir: Path, tmp_path: Path) -> None:
-    filtered_st = Loader(test_dataset_dir).load_filtered_simulation_table(tmp_path)
-
-    assert isinstance(filtered_st, FilteredSimulationTable)
-    assert filtered_st.file_path.exists()
+    assert isinstance(input_data.filtered_st, FilteredSimulationTable)
