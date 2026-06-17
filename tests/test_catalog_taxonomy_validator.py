@@ -16,6 +16,7 @@ import pytest
 
 from gems_views_builder.input.catalog import Catalog, load_catalog, load_catalogs
 from gems_views_builder.input.taxonomy import load_taxonomy
+from gems_views_builder.loader import Loader
 from gems_views_builder.validation.catalog_taxonomy_validator import (
     validate_catalog_against_taxonomy,
     validate_catalogs_against_taxonomy,
@@ -75,4 +76,5 @@ def test_view_builder_raises_when_catalog_taxonomy_mismatch(
         catalogs_with_wrong_taxonomy,
     )
     with pytest.raises(ValueError, match="references taxonomy"):
-        ViewBuilder(test_dataset_dir)
+        input_data = Loader(test_dataset_dir).load()
+        ViewBuilder(input_data)

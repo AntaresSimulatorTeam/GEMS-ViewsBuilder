@@ -17,7 +17,13 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from gems_views_builder.loader import Loader
 from gems_views_builder.views_builder import ViewBuilder
+
+
+def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
+    input_data = Loader(dataset_dir).load()
+    return ViewBuilder(input_data)
 
 
 @pytest.fixture()
@@ -30,7 +36,7 @@ def view_result(test_files_root: Path, tmp_path: Path) -> pl.DataFrame:
     src = test_files_root / "test_3"
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
-    ViewBuilder(dst).build()
+    _build_view_builder(dst).build()
     result_file = next((dst / "results").glob("*.parquet"))
     return pl.read_parquet(result_file)
 
@@ -121,7 +127,7 @@ def test_log_messages_emitted_to_stdout(
     shutil.copytree(src, dst)
 
     with caplog.at_level(logging.INFO):
-        ViewBuilder(dst).build()
+        _build_view_builder(dst).build()
 
     repo_root = Path(__file__).resolve().parents[1]
     log_directory = repo_root / "logs"
@@ -129,8 +135,8 @@ def test_log_messages_emitted_to_stdout(
         raise FileNotFoundError(f"Log directory {log_directory} not found or does not contain any log files")
 
     messages = [r.message for r in caplog.records]
-    assert any("Starting pipeline" in m for m in messages)
     assert any("All inputs loaded" in m for m in messages)
+    assert any("Step 2: Processing" in m for m in messages)
     assert any("Pipeline complete" in m for m in messages)
 
 
@@ -139,7 +145,7 @@ def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> Non
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
 
-    ViewBuilder(dst).build()
+    _build_view_builder(dst).build()
 
     repo_root = Path(__file__).resolve().parents[1]
     logs_dir = repo_root / "logs"

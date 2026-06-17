@@ -10,6 +10,7 @@
 #
 # This file is part of the Antares project.
 
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -23,6 +24,7 @@ class Writer:
         self.input_data_path = input_data_path
 
     def merge_results(self, chunk_paths: list[Path]) -> Path | None:
+        logging.info(f"Merging {len(chunk_paths)} chunk(s) into results")
         if not chunk_paths:
             return None
         results_dir = self.input_data_path / "results"
@@ -37,6 +39,7 @@ class Writer:
         )
         for chunk_path in chunk_paths:
             chunk_path.unlink(missing_ok=True)
+        logging.info(f"Results merged into {out_path}")
         return out_path
 
     def write_metric_structure_table(self, metric_structure_table: pl.DataFrame, metric_id: str) -> Path:

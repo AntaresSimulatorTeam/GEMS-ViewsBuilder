@@ -99,6 +99,7 @@ class SimulationTable:
         Filter the simulation table based on the calendar and write the result to output_path.
         Returns a FilteredSimulationTable with additional granular_date column from the calendar.
         """
+        logging.info("Step 1: Filtering simulation table by calendar")
         # Time-dependent rows: keep only timesteps present in the calendar.
         time_dep_path = output_path.with_suffix(".time_dep.parquet")
         (
@@ -123,6 +124,7 @@ class SimulationTable:
         )
         time_dep_path.unlink()
         non_time_dep_path.unlink()
+        logging.info(f"Filtered simulation table written to {output_path}")
         return FilteredSimulationTable.load(output_path)
 
 
