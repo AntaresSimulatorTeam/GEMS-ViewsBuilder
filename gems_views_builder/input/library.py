@@ -30,7 +30,7 @@ class Library:
         """
         Initialize an empty model library.
         # # TODO: GEMS Craft future library could keep all data in structured in memory format
-        # # Current implementation inside gemspy drop everything after pydantic validation, what is keept:
+        # # Current implementation inside gemspy drop everything after pydantic validation, what is kept:
         # # id, description, port_types, models, internal parsing should be done there for later faster access to the data
         """
         self.id = ""

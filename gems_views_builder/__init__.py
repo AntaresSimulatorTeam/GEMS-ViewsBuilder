@@ -40,7 +40,7 @@ from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
 from gems_views_builder.input.view_config import TimeAggregation, ViewConfig
 from gems_views_builder.metrics_builder import MetricStructureBuilder, MetricStructureTable
-from gems_views_builder.views import ViewBuilder
+from gems_views_builder.views_builder import ViewBuilder
 
 __all__ = [
     "Calendar",

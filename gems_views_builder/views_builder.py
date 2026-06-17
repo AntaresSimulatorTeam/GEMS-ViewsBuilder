@@ -47,13 +47,6 @@ class ViewBuilder:
         self.aggregator = Aggregator(self.input_data_path)
         self.writer = Writer(self.input_data_path)
 
-    def _clean_intermediate_metric(self, metric_view_parquet_path: Path, metric_structure_path: Path) -> None:
-        metric_view_parquet_path.unlink(missing_ok=True)
-        metric_structure_path.unlink(missing_ok=True)
-
-    def _clean_filtered_simulation_table(self, filtered_simulation_table_path: Path) -> None:
-        filtered_simulation_table_path.unlink(missing_ok=True)
-
     def create_intermediate_dir(self) -> Path:
         intermediates_dir = self.input_data_path / "views" / "intermediate"
         intermediates_dir.mkdir(parents=True, exist_ok=True)
@@ -133,11 +126,23 @@ class ViewBuilder:
                 parquet_files_to_process.append(temp_metric_view)
 
                 logging.info(f"[{metric_id}] Cleaning intermediate files")
-                self._clean_intermediate_metric(metric_view_parquet_path, metric_structure_path)
+                clean_intermediate_metric(metric_view_parquet_path, metric_structure_path)
 
         logging.info("Cleaning filtered simulation table")
-        self._clean_filtered_simulation_table(filtered_simulation_table_path)
+        clean_filtered_simulation_table(filtered_simulation_table_path)
 
         logging.info("Step 3: Writing results")
         self.writer.merge_results(parquet_files_to_process)
         logging.info("Pipeline complete")
+
+
+# # Utils functions for ViewBuilder class
+# # They don't use any class attributes or methods, so they are not part of the class
+# # Should I put that inside common.py file?
+def clean_intermediate_metric(metric_view_parquet_path: Path, metric_structure_path: Path) -> None:
+    metric_view_parquet_path.unlink(missing_ok=True)
+    metric_structure_path.unlink(missing_ok=True)
+
+
+def clean_filtered_simulation_table(filtered_simulation_table_path: Path) -> None:
+    filtered_simulation_table_path.unlink(missing_ok=True)

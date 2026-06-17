@@ -20,7 +20,7 @@ from gems_views_builder.validation.catalog_taxonomy_validator import (
     validate_catalog_against_taxonomy,
     validate_catalogs_against_taxonomy,
 )
-from gems_views_builder.views import ViewBuilder
+from gems_views_builder.views_builder import ViewBuilder
 
 
 def test_validate_catalog_against_taxonomy_passes_for_test_dataset(test_dataset_dir: Path) -> None:

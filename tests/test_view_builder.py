@@ -17,7 +17,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.views import ViewBuilder
+from gems_views_builder.views_builder import ViewBuilder
 
 
 @pytest.fixture()
