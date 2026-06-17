@@ -97,7 +97,7 @@ class Catalog:
         return self.metrics[metric_id]
 
 
-def _to_term(term_data: TermData) -> Term:
+def to_term(term_data: TermData) -> Term:
     return Term(
         taxonomy_category=term_data.taxonomy_category,
         output_id=term_data.output_id,
@@ -106,10 +106,10 @@ def _to_term(term_data: TermData) -> Term:
     )
 
 
-def _to_metric(metric_data: MetricData) -> Metric:
+def to_metric(metric_data: MetricData) -> Metric:
     return Metric(
         id=metric_data.id,
-        terms=[_to_term(term) for term in metric_data.terms],
+        terms=[to_term(term) for term in metric_data.terms],
         terms_operator=metric_data.terms_operator,
         time_operator=metric_data.time_operator,
         breakdown_property=metric_data.breakdown_property,
@@ -132,7 +132,7 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
         id=parsed_catalog.id,
         taxonomy=parsed_catalog.taxonomy,
         location_taxonomy_category=parsed_catalog.location.taxonomy_category,
-        metrics={metric.id: _to_metric(metric) for metric in parsed_catalog.metrics_definition},
+        metrics={metric.id: to_metric(metric) for metric in parsed_catalog.metrics_definition},
     )
     logging.info(
         f"Catalog {catalog.id!r} loaded with taxonomy {catalog.taxonomy!r} and {len(catalog.metrics)} metric(s)"
