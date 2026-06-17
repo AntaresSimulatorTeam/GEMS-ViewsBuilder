@@ -18,8 +18,8 @@ from pathlib import Path
 import polars as pl
 
 from gems_views_builder.aggregator import Aggregator
-from gems_views_builder.catalog import Catalog, Metric
 from gems_views_builder.common import log_file
+from gems_views_builder.input.catalog import Catalog, Metric
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_builder import MetricStructureBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
@@ -99,7 +99,7 @@ class ViewBuilder:
                     catalog,
                     metric,
                     self.loader.taxonomy,
-                    self.loader.model_library,
+                    self.loader.library,
                 ).build()
 
                 metric_structure_path = self.writer.write_metric_structure_table(

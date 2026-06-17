@@ -10,7 +10,7 @@
 #
 # This file is part of the Antares project.
 
-"""InputSystem wrapper with helper methods for component lookup."""
+"""System wrapper with helper methods for component lookup."""
 
 import logging
 from collections import defaultdict
@@ -18,25 +18,25 @@ from pathlib import Path
 from typing import Any, cast
 
 from gems.study.parsing import (  # type: ignore
-    InputComponent as GemsInputComponent,
+    ComponentSchema as GemsComponent,
 )
-from gems.study.parsing import InputSystem as GemsInputSystem
+from gems.study.parsing import SystemSchema as GemsSystem
 from gems.study.parsing import parse_yaml_components
 
 
-class InputSystem:
+class System:
     """
-    Compose a Gems InputSystem and expose ViewsBuilder-specific helpers.
+    Compose a Gems System and expose ViewsBuilder-specific helpers.
     """
 
-    def __init__(self, system: GemsInputSystem) -> None:
+    def __init__(self, system: GemsSystem) -> None:
         self._system = system
         self._components_by_model: dict[str, list[str]] = self.models_to_components()
         self._component_port_connections: dict[tuple[str, str], set[str]] = self.build_component_port_connections()
 
     @property
-    def components(self) -> list[GemsInputComponent]:
-        return cast(list[GemsInputComponent], self._system.components)
+    def components(self) -> list[GemsComponent]:
+        return cast(list[GemsComponent], self._system.components)
 
     @property
     def connections(self) -> list[Any]:
@@ -117,10 +117,18 @@ class InputSystem:
         return tuple(result)
 
     @classmethod
-    def from_file(cls, path: Path) -> "InputSystem":
-        """Load InputSystem from a system yml file."""
+    def from_file(cls, path: Path) -> "System":
+        """Load a system yml file."""
         logging.info(f"Loading system from {path}")
         with open(path, encoding="utf-8") as f:
             parsed = parse_yaml_components(f)
         logging.info(f"System loaded from {path}")
-        return cls(cast(GemsInputSystem, parsed))
+        return cls(cast(GemsSystem, parsed))
+
+
+def load_system(input_data_path: Path) -> System:
+    logging.info("Loading system")
+    system_path = next(input_data_path.glob("system*"))
+    system = System.from_file(system_path)
+    logging.info(f"System loaded from {system_path}")
+    return system

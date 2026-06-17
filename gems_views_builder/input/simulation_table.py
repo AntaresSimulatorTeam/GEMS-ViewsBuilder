@@ -15,7 +15,7 @@ from pathlib import Path
 
 import polars as pl
 
-from gems_views_builder.calendar import Calendar
+from gems_views_builder.input.calendar import Calendar
 
 # Columns of the SIMULATION_TABLE:
 # block               (str)   – identifies the timeblock in the simulation

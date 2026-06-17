@@ -14,60 +14,10 @@
 
 import logging
 from pathlib import Path
+from typing import cast
 
 import yaml
-from gems.model.parsing import (  # type: ignore
-    InputConstraint,
-    InputExtraOutput,
-    InputField,
-    InputModelPort,
-    InputObjectiveContribution,
-    InputParameter,
-    InputPortFieldDefinition,
-    InputPortType,
-    InputVariable,
-)
-from pydantic import Field
-
-from gems_views_builder.base_model import ViewBuilderBasedModel
-
-# Public aliases — same names as the previous local Pydantic models.
-ParameterDef = InputParameter
-VariableDef = InputVariable
-PortDef = InputModelPort
-PortFieldDefinition = InputPortFieldDefinition
-ConstraintDef = InputConstraint
-BindingConstraintDef = InputConstraint
-ObjectiveContributionDef = InputObjectiveContribution
-PortTypeField = InputField
-PortTypeDef = InputPortType
-ExtraOutputDef = InputExtraOutput
-
-
-class ModelDefinition(ViewBuilderBasedModel):
-    """Local model definition used by ViewsBuilder."""
-
-    id: str
-    description: str | None = None
-    parameters: list[InputParameter] = Field(default_factory=list)
-    variables: list[InputVariable] = Field(default_factory=list)
-    ports: list[InputModelPort] = Field(default_factory=list)
-    port_field_definitions: list[InputPortFieldDefinition] = Field(default_factory=list)
-    constraints: list[InputConstraint] = Field(default_factory=list)
-    binding_constraints: list[InputConstraint] = Field(default_factory=list)
-    objective_contributions: list[InputObjectiveContribution] = Field(default_factory=list)
-    extra_outputs: list[InputExtraOutput] = Field(default_factory=list)
-
-    taxonomy_category: str | None = Field(default=None, alias="taxonomy-category")
-
-
-class LibraryData(ViewBuilderBasedModel):
-    """Library root model for `library` yaml section."""
-
-    id: str
-    description: str | None = None
-    port_types: list[InputPortType] = Field(default_factory=list)
-    models: list[ModelDefinition] = Field(default_factory=list)
+from gems.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema  # type: ignore
 
 
 class Library:
@@ -85,11 +35,11 @@ class Library:
         """
         self.id = ""
         self.description = ""
-        self.port_types: list[InputPortType] = []
-        self.models: dict[str, ModelDefinition] = {}
+        self.port_types: list[PortTypeSchema] = []
+        self.models: dict[str, ModelSchema] = {}
         self.models_by_taxonomy_category: dict[str, list[str]] = {}
 
-    def get_model(self, model_id: str) -> ModelDefinition:
+    def get_model(self, model_id: str) -> ModelSchema:
         """Return the full model definition, or None if not found."""
         try:
             return self.models[model_id]
@@ -101,7 +51,7 @@ class Library:
         model = self.get_model(model_id)
         if model.taxonomy_category is None:
             raise ValueError(f"Model {model_id} has no taxonomy category in library")
-        return model.taxonomy_category
+        return cast(str, model.taxonomy_category)
 
     def get_components_in_taxonomy_category(self, taxonomy_category: str) -> list[str]:
         return self.models_by_taxonomy_category.get(taxonomy_category, [])
@@ -130,7 +80,7 @@ def load_library(library_file_path: Path) -> Library:
     return library
 
 
-def load_library_file(library_file_path: Path) -> LibraryData:
+def load_library_file(library_file_path: Path) -> LibrarySchema:
     # # GEMS Craft future library could have option to load library model from path
     # # Current blueprint of method inside gemspy is typing.TextIO idk why ?
     logging.debug(f"Loading library YAML from {library_file_path}")
@@ -139,4 +89,4 @@ def load_library_file(library_file_path: Path) -> LibraryData:
     if "library" not in raw:
         raise ValueError(f"library.yml file {library_file_path} is missing the 'library' key at the root")
     logging.debug("Library YAML parsed successfully")
-    return LibraryData.model_validate(raw["library"])
+    return LibrarySchema.model_validate(raw["library"])

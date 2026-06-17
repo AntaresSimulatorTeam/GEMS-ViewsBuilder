@@ -21,8 +21,8 @@ import yaml
 from pydantic import Field
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
-from gems_views_builder.calendar import Calendar, load_calendar
-from gems_views_builder.catalog import Catalog, load_catalog
+from gems_views_builder.input.calendar import Calendar, load_calendar
+from gems_views_builder.input.catalog import Catalog, load_catalog
 
 
 class TimeAggregation(Enum):

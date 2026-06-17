@@ -56,7 +56,7 @@ class Taxonomy:
 
 def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
     logging.info(f"Loading taxonomy from {taxonomy_file_path}")
-    parsed = _load_taxonomy_file(taxonomy_file_path)
+    parsed = load_taxonomy_file(taxonomy_file_path)
     taxonomy = Taxonomy(
         id=parsed.id,
         description=parsed.description,
@@ -66,7 +66,7 @@ def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
     return taxonomy
 
 
-def _load_taxonomy_file(taxonomy_file_path: Path) -> TaxonomyData:
+def load_taxonomy_file(taxonomy_file_path: Path) -> TaxonomyData:
     logging.debug(f"Loading taxonomy YAML from {taxonomy_file_path}")
     with open(taxonomy_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)

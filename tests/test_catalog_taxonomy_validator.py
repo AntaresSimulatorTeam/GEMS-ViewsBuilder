@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder.catalog import Catalog, load_catalog, load_catalogs
-from gems_views_builder.taxonomy import load_taxonomy
+from gems_views_builder.input.catalog import Catalog, load_catalog, load_catalogs
+from gems_views_builder.input.taxonomy import load_taxonomy
 from gems_views_builder.validation.catalog_taxonomy_validator import (
     validate_catalog_against_taxonomy,
     validate_catalogs_against_taxonomy,
@@ -30,7 +30,7 @@ def test_validate_catalog_against_taxonomy_passes_for_test_dataset(test_dataset_
 
 
 def test_validate_catalogs_against_taxonomy_passes_for_test_dataset(test_dataset_dir: Path) -> None:
-    from gems_views_builder.metrics import ViewConfig
+    from gems_views_builder.input.view_config import ViewConfig
 
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
     view_config = ViewConfig.load(test_dataset_dir / "view_config.yml")

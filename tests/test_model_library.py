@@ -16,10 +16,10 @@ import pytest
 
 from gems_views_builder import (
     Library,
-    ModelDefinition,
-    ParameterDef,
-    PortDef,
-    VariableDef,
+    ModelPortSchema,
+    ModelSchema,
+    ParameterSchema,
+    VariableSchema,
     load_library,
 )
 
@@ -47,7 +47,7 @@ def test_model_library_models_are_typed(test_dataset_dir: Path) -> None:
         pytest.skip("No model library file found (expected library.yml)")
     library = load_library(library_path)
     for model in library.models.values():
-        assert isinstance(model, ModelDefinition)
+        assert isinstance(model, ModelSchema)
         assert isinstance(model.id, str)
 
 
@@ -83,11 +83,11 @@ def test_model_library_full_model_loaded(test_dataset_dir: Path) -> None:
     except ValueError:
         pytest.skip("No 'generator' model in this dataset's library")
     assert len(generator.parameters) > 0
-    assert all(isinstance(p, ParameterDef) for p in generator.parameters)
+    assert all(isinstance(p, ParameterSchema) for p in generator.parameters)
     assert len(generator.variables) > 0
-    assert all(isinstance(v, VariableDef) for v in generator.variables)
+    assert all(isinstance(v, VariableSchema) for v in generator.variables)
     assert len(generator.ports) > 0
-    assert all(isinstance(p, PortDef) for p in generator.ports)
+    assert all(isinstance(p, ModelPortSchema) for p in generator.ports)
     assert len(generator.port_field_definitions) > 0
     assert len(generator.constraints) > 0
     assert len(generator.objective_contributions) > 0

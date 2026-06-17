@@ -15,20 +15,20 @@ from typing import Any
 
 import pytest
 
-from gems_views_builder.catalog import load_catalog
-from gems_views_builder.library import load_library
+from gems_views_builder.input.catalog import load_catalog
+from gems_views_builder.input.library import load_library
+from gems_views_builder.input.system import System
+from gems_views_builder.input.taxonomy import load_taxonomy
 from gems_views_builder.metrics_builder import (
     MetricStructureBuilder,
     MetricStructureTable,
 )
-from gems_views_builder.system import InputSystem
-from gems_views_builder.taxonomy import load_taxonomy
 
 
 @pytest.fixture(scope="module")
 def test_3_components(test_files_root: Path) -> dict[str, Any]:
     test_3 = test_files_root / "test_3"
-    system = InputSystem.from_file(test_3 / "system.yml")
+    system = System.from_file(test_3 / "system.yml")
     taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
     library = load_library(test_3 / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
