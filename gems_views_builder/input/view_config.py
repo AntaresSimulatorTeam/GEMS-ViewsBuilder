@@ -22,7 +22,6 @@ import yaml
 from pydantic import Field
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
-from gems_views_builder.input.catalog import Catalog, load_catalog
 
 
 class TimeAggregation(Enum):
@@ -62,22 +61,11 @@ class ViewData(ViewBuilderBasedModel):
 class ViewConfig:
     id: str
     input_data_path: Path
+    calendar_id: str
     location_taxonomy_category: str | None = None
-    calendar_id: str | None = None
     catalog_ids: list[str] = field(default_factory=list)
     time_aggregation: TimeAggregation | None = None
     catalog_to_metrics: dict[str, list[str]] = field(default_factory=dict)
-
-    # # This method needs to be inside catalog.py
-    def load_catalog(self, catalog_id: str) -> Catalog:
-        """
-        Load only the requested catalog when needed instead of preloading all catalogs.
-        """
-        catalog_file = self.input_data_path / "catalogs" / f"{catalog_id}.yml"
-        if not catalog_file.exists():
-            raise FileNotFoundError(f"Catalog file {catalog_file} not found")
-        logging.info(f"Loading catalog {catalog_id!r} from view config")
-        return load_catalog(catalog_file)
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
@@ -94,11 +82,17 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
             f"At least one scope entry must define a taxonomy-category"
         )
 
+    calendar_id = next((item.calendar for item in parsed.scope if item.calendar), None)
+    if calendar_id is None:
+        raise ValueError(
+            f"view_config.yml '{parsed.id}': no calendar configured in scope. One calendar must be configured in scope"
+        )
+
     view_config = ViewConfig(
         id=parsed.id,
         input_data_path=input_data_path,
+        calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
-        calendar_id=next((item.calendar for item in parsed.scope if item.calendar), None),
         catalog_ids=[c.id for c in parsed.catalog],
         time_aggregation=parsed.aggregation[0].time if parsed.aggregation else None,
         catalog_to_metrics=group_metrics_by_catalog(parsed.id, parsed.metrics),

@@ -37,8 +37,6 @@ class Loader:
 
         logging.info(f"Loading inputs from {self.input_data_path}")
         view_config: ViewConfig = load_view_config(self.input_data_path / "view_config.yml")
-        if view_config.calendar_id is None:
-            raise ValueError(f"view_config.yml '{view_config.id}': no calendar configured in scope")
 
         input_data = InputData(
             input_data_path=self.input_data_path,

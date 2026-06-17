@@ -127,12 +127,12 @@ def load_catalogs(input_data_path: Path, catalog_ids: list[str]) -> dict[str, Ca
 
 def load_catalog(catalog_file_path: Path) -> Catalog:
     logging.info(f"Loading catalog from {catalog_file_path}")
-    parsed = _load_catalog_file(catalog_file_path)
+    parsed_catalog = load_catalog_file(catalog_file_path)
     catalog = Catalog(
-        id=parsed.id,
-        taxonomy=parsed.taxonomy,
-        location_taxonomy_category=parsed.location.taxonomy_category,
-        metrics={metric.id: _to_metric(metric) for metric in parsed.metrics_definition},
+        id=parsed_catalog.id,
+        taxonomy=parsed_catalog.taxonomy,
+        location_taxonomy_category=parsed_catalog.location.taxonomy_category,
+        metrics={metric.id: _to_metric(metric) for metric in parsed_catalog.metrics_definition},
     )
     logging.info(
         f"Catalog {catalog.id!r} loaded with taxonomy {catalog.taxonomy!r} and {len(catalog.metrics)} metric(s)"
@@ -140,7 +140,7 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
     return catalog
 
 
-def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
+def load_catalog_file(catalog_file_path: Path) -> CatalogData:
     logging.debug(f"Loading catalog YAML from {catalog_file_path}")
     with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
