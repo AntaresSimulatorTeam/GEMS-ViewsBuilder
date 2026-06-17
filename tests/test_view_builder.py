@@ -17,19 +17,15 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.input.simulation_table import filter_simulation_table
 from gems_views_builder.loader import Loader
 from gems_views_builder.views_builder import ViewBuilder
 
 
 def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
-    input_data = Loader(dataset_dir).load()
-    filtered_simu_table = filter_simulation_table(
-        input_data.simulation_table,
-        input_data.calendar,
-        dataset_dir / "views" / "intermediate",
-    )
-    return ViewBuilder(input_data, filtered_simu_table)
+    loader = Loader(dataset_dir)
+    input_data = loader.load()
+    filtered_st = loader.load_filtered_simulation_table(dataset_dir / "views" / "intermediate")
+    return ViewBuilder(input_data, filtered_st)
 
 
 @pytest.fixture()

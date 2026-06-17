@@ -12,10 +12,9 @@
 
 from pathlib import Path
 
-from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.library import Library
-from gems_views_builder.input.simulation_table import SimulationTable
+from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
@@ -39,10 +38,8 @@ def test_loader_load_populates_input_data(test_dataset_dir: Path) -> None:
     assert isinstance(input_data.taxonomy, Taxonomy)
     assert isinstance(input_data.view_config, ViewConfig)
     assert isinstance(input_data.catalogs, dict)
-    assert isinstance(input_data.simulation_table, SimulationTable)
     assert isinstance(input_data.library, Library)
     assert isinstance(input_data.system, System)
-    assert isinstance(input_data.calendar, Calendar)
 
 
 def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) -> None:
@@ -54,7 +51,12 @@ def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) ->
     assert isinstance(input_data.taxonomy, Taxonomy)
     assert isinstance(input_data.view_config, ViewConfig)
     assert isinstance(input_data.catalogs, dict)
-    assert isinstance(input_data.simulation_table, SimulationTable)
     assert isinstance(input_data.library, Library)
     assert isinstance(input_data.system, System)
-    assert isinstance(input_data.calendar, Calendar)
+
+
+def test_loader_load_filtered_simulation_table(test_dataset_dir: Path, tmp_path: Path) -> None:
+    filtered_st = Loader(test_dataset_dir).load_filtered_simulation_table(tmp_path)
+
+    assert isinstance(filtered_st, FilteredSimulationTable)
+    assert filtered_st.file_path.exists()

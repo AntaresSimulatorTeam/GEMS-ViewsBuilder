@@ -17,7 +17,11 @@ from gems_views_builder.input.calendar import load_calendar
 from gems_views_builder.input.catalog import load_catalogs
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.library import load_library
-from gems_views_builder.input.simulation_table import load_simulation_table
+from gems_views_builder.input.simulation_table import (
+    FilteredSimulationTable,
+    filter_simulation_table,
+    load_simulation_table,
+)
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.taxonomy import load_taxonomy
 from gems_views_builder.input.view_config import ViewConfig, load_view_config
@@ -32,7 +36,6 @@ class Loader:
     def load(self) -> InputData:
         """Perform all input data I/O and return populated input data."""
 
-        # # Validate study layout before loading any input data
         StudyLayoutValidator(self.input_data_path).validate()
 
         logging.info(f"Loading inputs from {self.input_data_path}")
@@ -43,16 +46,18 @@ class Loader:
             taxonomy=load_taxonomy(self.input_data_path / "taxonomy.yml"),
             view_config=view_config,
             catalogs=load_catalogs(self.input_data_path, view_config.catalog_ids),
-            simulation_table=load_simulation_table(next(self.input_data_path.glob("simulation_table*.parquet"))),
             library=load_library(self.input_data_path / "library.yml"),
             system=load_system(self.input_data_path),
-            calendar=load_calendar(self.input_data_path, view_config.calendar_id),
         )
 
-        # # Check consistecy between catalog and taxonomy
-        # # This is placeholder,some checks are done but it will be finished on suggested comments in dedicated PR
-        # # Currently we support only one taxonomy per study
         validate_catalogs_against_taxonomy(input_data.catalogs, input_data.taxonomy)
 
         logging.info("All inputs loaded successfully")
         return input_data
+
+    def load_filtered_simulation_table(self, intermediates_dir: Path) -> FilteredSimulationTable:
+        """Load and filter the simulation table against the calendar."""
+        view_config = load_view_config(self.input_data_path / "view_config.yml")
+        simulation_table = load_simulation_table(next(self.input_data_path.glob("simulation_table*.parquet")))
+        calendar = load_calendar(self.input_data_path, view_config.calendar_id)
+        return filter_simulation_table(simulation_table, calendar, intermediates_dir)
