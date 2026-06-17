@@ -22,7 +22,6 @@ from gems_views_builder.common import clean_filtered_simulation_table, clean_int
 from gems_views_builder.input.catalog import Catalog, Metric
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.metrics_builder import MetricStructureBuilder
-from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.writer import Writer
 
 """
@@ -38,9 +37,6 @@ class ViewBuilder:
         input_data: InputData,
     ) -> None:
         self.input_data = input_data
-        # # Currently we support only one taxonomy per study
-        validate_catalogs_against_taxonomy(self.input_data.catalogs, self.input_data.taxonomy)
-
         self.aggregator = Aggregator(self.input_data.input_data_path)
         self.writer = Writer(self.input_data.input_data_path)
 

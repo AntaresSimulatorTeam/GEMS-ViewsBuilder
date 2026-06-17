@@ -20,6 +20,7 @@ from gems_views_builder.input.simulation_table import SimulationTable
 from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import load_taxonomy
 from gems_views_builder.input.view_config import ViewConfig
+from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
 
 
@@ -50,7 +51,9 @@ class Loader:
         )
 
         # # Check consistecy between catalog and taxonomy
-        # # Here
+        # # This is placeholder,some checks are done but it will be finished on suggested comments in dedicated PR
+        # # Currently we support only one taxonomy per study
+        validate_catalogs_against_taxonomy(input_data.catalogs, input_data.taxonomy)
 
         logging.info("All inputs loaded successfully")
         return input_data
