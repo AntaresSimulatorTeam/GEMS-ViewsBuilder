@@ -13,6 +13,7 @@
 """Model library YAML with explicit local models"""
 
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
@@ -20,24 +21,18 @@ import yaml
 from gems.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema  # type: ignore
 
 
+@dataclass
 class Library:
     """
     library .yml representation with taxonomy indexes.
     Loads via GemsPy parsing types; builds taxonomy indexes for metric structure tables.
     """
 
-    def __init__(self) -> None:
-        """
-        Initialize an empty model library.
-        # # TODO: GEMS Craft future library could keep all data in structured in memory format
-        # # Current implementation inside gemspy drop everything after pydantic validation, what is kept:
-        # # id, description, port_types, models, internal parsing should be done there for later faster access to the data
-        """
-        self.id = ""
-        self.description = ""
-        self.port_types: list[PortTypeSchema] = []
-        self.models: dict[str, ModelSchema] = {}
-        self.models_by_taxonomy_category: dict[str, list[str]] = {}
+    id: str
+    description: str
+    port_types: list[PortTypeSchema]
+    models: dict[str, ModelSchema]
+    models_by_taxonomy_category: dict[str, list[str]]
 
     def get_model(self, model_id: str) -> ModelSchema:
         """Return the full model definition, or None if not found."""
@@ -59,25 +54,17 @@ class Library:
 
 def load_library(library_file_path: Path) -> Library:
     logging.info(f"Loading model library from {library_file_path}")
-    library = Library()
     parsed = load_library_file(library_file_path)
-    library.id = parsed.id
-    library.description = parsed.description or ""
-    library.port_types = parsed.port_types
-    library.models = {m.id: m for m in parsed.models}
-    logging.info(
-        f"Library {library.id!r} loaded, containing {len(library.port_types)} port type(s) and {len(library.models)} model(s)"
+    return Library(
+        id=parsed.id,
+        description=parsed.description or "",
+        port_types=parsed.port_types,
+        models={m.id: m for m in parsed.models},
+        models_by_taxonomy_category={
+            cat: [m.id for m in parsed.models if m.taxonomy_category == cat]
+            for cat in {m.taxonomy_category for m in parsed.models if m.taxonomy_category}
+        },
     )
-    library.models_by_taxonomy_category = {}
-    for m in parsed.models:
-        if not m.taxonomy_category:
-            continue
-        library.models_by_taxonomy_category.setdefault(m.taxonomy_category, []).append(m.id)
-    logging.debug(
-        f"Library indexing complete: {len(library.models_by_taxonomy_category)} taxonomy categor"
-        f"{'y' if len(library.models_by_taxonomy_category) == 1 else 'ies'}"
-    )
-    return library
 
 
 def load_library_file(library_file_path: Path) -> LibrarySchema:
