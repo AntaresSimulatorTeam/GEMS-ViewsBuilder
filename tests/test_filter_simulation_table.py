@@ -22,9 +22,8 @@ from gems_views_builder import FilteredSimulationTable, SimulationTable, load_ca
 
 def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path) -> None:
     """Filtered result must satisfy: every row (absolute_time_index, block) in calendar, correct count, rows from sim table."""
-    calendar_file = test_dataset_dir / "calendar_file.csv"
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
-    calendar = load_calendar(calendar_file)
+    calendar = load_calendar(test_dataset_dir, "calendar_file")
     simulation_table = SimulationTable.load(simulation_table_file)
     out_file = tmp_path / "filtered_logical.parquet"
 
@@ -57,10 +56,8 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
 
 def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dataset_dir: Path) -> None:
     """Rows whose block does not match the calendar's block for a given absolute_time_index are dropped."""
-    calendar_file = test_dataset_dir / "calendar_file.csv"
+    calendar = load_calendar(test_dataset_dir, "calendar_file")
     base_sim_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
-
-    calendar = load_calendar(calendar_file)
     base_sim_table = SimulationTable.load(base_sim_table_file)
 
     # Duplicate rows with block=2 so they do not match calendar (block=1)
@@ -86,11 +83,10 @@ def test_filter_simulation_table_writes_parquet(
     test_dataset_dir: Path,
 ) -> None:
     """When output_path is set, the filtered table is written to parquet with expected content."""
-    calendar_file = test_dataset_dir / "calendar_file.csv"
+    calendar = load_calendar(test_dataset_dir, "calendar_file")
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
-    calendar = load_calendar(calendar_file)
     simulation_table = SimulationTable.load(simulation_table_file)
-    out_file = tmp_path / f"filtered_{calendar_file.stem}.parquet"
+    out_file = tmp_path / "filtered_calendar_file.parquet"
 
     filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
     assert isinstance(filtered_table, FilteredSimulationTable)

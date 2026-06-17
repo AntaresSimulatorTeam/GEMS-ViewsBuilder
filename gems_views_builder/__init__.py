@@ -38,7 +38,7 @@ from gems_views_builder.input.library import Library, load_library
 from gems_views_builder.input.simulation_table import FilteredSimulationTable, SimulationTable
 from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
-from gems_views_builder.input.view_config import TimeAggregation, ViewConfig
+from gems_views_builder.input.view_config import TimeAggregation, ViewConfig, load_view_config
 from gems_views_builder.metrics_builder import MetricStructureBuilder, MetricStructureTable
 from gems_views_builder.views_builder import ViewBuilder
 
@@ -71,6 +71,7 @@ __all__ = [
     "load_taxonomy",
     "TimeAggregation",
     "ViewConfig",
+    "load_view_config",
     "MetricStructureBuilder",
     "MetricStructureTable",
     "ViewBuilder",

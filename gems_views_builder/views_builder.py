@@ -52,7 +52,7 @@ class ViewBuilder:
         # # 1. Filter simulation table (written to disk)
 
         self.input_data.simulation_table.filter_simulation_table(
-            self.input_data.view_config.load_calendar(), filtered_simulation_table_path
+            self.input_data.calendar, filtered_simulation_table_path
         )
 
         parquet_files_to_process = []

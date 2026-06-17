@@ -12,6 +12,7 @@
 
 from pathlib import Path
 
+from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.simulation_table import SimulationTable
@@ -41,6 +42,7 @@ def test_loader_load_populates_input_data(test_dataset_dir: Path) -> None:
     assert isinstance(input_data.simulation_table, SimulationTable)
     assert isinstance(input_data.library, Library)
     assert isinstance(input_data.system, System)
+    assert isinstance(input_data.calendar, Calendar)
 
 
 def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) -> None:
@@ -55,3 +57,4 @@ def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) ->
     assert isinstance(input_data.simulation_table, SimulationTable)
     assert isinstance(input_data.library, Library)
     assert isinstance(input_data.system, System)
+    assert isinstance(input_data.calendar, Calendar)

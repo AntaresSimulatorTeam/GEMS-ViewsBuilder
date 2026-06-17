@@ -14,6 +14,7 @@
 
 import logging
 from collections import defaultdict
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
@@ -21,7 +22,6 @@ import yaml
 from pydantic import Field
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
-from gems_views_builder.input.calendar import Calendar, load_calendar
 from gems_views_builder.input.catalog import Catalog, load_catalog
 
 
@@ -58,92 +58,78 @@ class ViewData(ViewBuilderBasedModel):
     metrics: list[MetricRef]
 
 
+@dataclass
 class ViewConfig:
-    """
-    Parsed view configuration with on-demand loading of referenced files.
-    """
+    id: str
+    input_data_path: Path
+    location_taxonomy_category: str | None = None
+    calendar_id: str | None = None
+    catalog_ids: list[str] = field(default_factory=list)
+    time_aggregation: TimeAggregation | None = None
+    catalog_to_metrics: dict[str, list[str]] = field(default_factory=dict)
 
-    def __init__(self, config_file_path: Path) -> None:
-        """
-        Cheap constructor: keep only the path.
-
-        Use `ViewConfig.load(...)` (or `load_into_self()`) to perform YAML I/O and validation.
-        """
-        self.file = config_file_path
-        self.input_data_path = config_file_path.parent
-        self.id = ""
-        self.location_taxonomy_category: str | None = None
-        self.calendar_id: str | None = None
-        self.catalog_ids: list[str] = []
-        self.time_aggregation: TimeAggregation | None = None
-        self.catalog_to_metrics: dict[str, list[str]] = {}
-
-    @classmethod
-    def load(cls, config_file_path: Path) -> "ViewConfig":
-        return cls(config_file_path).load_into_self()
-
-    def load_into_self(self) -> "ViewConfig":
-        logging.info(f"Loading view config from {self.file}")
-        parsed = self._load_view_file(self.file)
-        self.id = parsed.id
-        self.location_taxonomy_category = next(
-            (item.taxonomy_category for item in parsed.scope if item.taxonomy_category),
-            None,
-        )
-        if self.location_taxonomy_category is None:
-            raise ValueError(
-                f"view_config.yml '{parsed.id}': no 'taxonomy-category' found in scope. "
-                f"At least one scope entry must define a taxonomy-category"
-            )
-        self.calendar_id = next((item.calendar for item in parsed.scope if item.calendar), None)
-        self.catalog_ids = [c.id for c in parsed.catalog]
-        self.time_aggregation = parsed.aggregation[0].time if parsed.aggregation else None
-        # Internal helper: grouped by catalog
-        self.catalog_to_metrics = self._group_metrics_by_catalog(parsed.metrics)
-        logging.info(
-            f"View config {self.id!r} loaded: calendar={self.calendar_id!r}, "
-            f"catalogs={len(self.catalog_ids)}, metric groups={len(self.catalog_to_metrics)}"
-        )
-        return self
-
-    def _group_metrics_by_catalog(self, metrics: list[MetricRef]) -> dict[str, list[str]]:
-        logging.debug(f"Grouping {len(metrics)} metric reference(s) by catalog")
-        catalog_to_metrics: dict[str, list[str]] = defaultdict(list)
-        for metric in metrics:
-            if "." not in metric.id or metric.id.startswith(".") or metric.id.endswith("."):
-                raise ValueError(
-                    f"view_config.yml '{self.id}': invalid metric id '{metric.id}'. "
-                    "Expected format '<catalog_id>.<metric_id>'"
-                )
-            catalog_id, metric_id = metric.id.split(".", 1)
-            catalog_to_metrics[catalog_id].append(metric_id)
-            logging.debug(f"Mapped metric reference {metric.id!r} to catalog {catalog_id!r}")
-        return catalog_to_metrics
-
-    def _load_view_file(self, view_file_path: Path) -> ViewData:
-        logging.info(f"Parsing view config YAML from {view_file_path}")
-        with open(view_file_path, encoding="utf-8") as f:
-            raw = yaml.safe_load(f)
-        if "view" not in raw:
-            raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
-        logging.info(f"View config YAML parsed successfully from {view_file_path}")
-        return ViewData.model_validate(raw["view"])
-
+    # # This method needs to be inside catalog.py
     def load_catalog(self, catalog_id: str) -> Catalog:
         """
         Load only the requested catalog when needed instead of preloading all catalogs.
         """
-        if not (self.input_data_path / "catalogs" / f"{catalog_id}.yml").exists():
-            raise FileNotFoundError(f"Catalog file {self.input_data_path / 'catalogs' / f'{catalog_id}.yml'} not found")
+        catalog_file = self.input_data_path / "catalogs" / f"{catalog_id}.yml"
+        if not catalog_file.exists():
+            raise FileNotFoundError(f"Catalog file {catalog_file} not found")
         logging.info(f"Loading catalog {catalog_id!r} from view config")
-        return load_catalog(self.input_data_path / "catalogs" / f"{catalog_id}.yml")
+        return load_catalog(catalog_file)
 
-    def load_calendar(self) -> Calendar:
-        """
-        Load only the referenced calendar when needed.
-        """
-        calendar_file = self.input_data_path / f"{self.calendar_id}.csv"
-        if not calendar_file.exists():
-            raise FileNotFoundError(f"Calendar file {calendar_file} not found")
-        logging.info(f"Loading calendar {self.calendar_id!r} from view config")
-        return load_calendar(calendar_file)
+
+def load_view_config(config_file_path: Path) -> ViewConfig:
+    logging.info(f"Loading view config from {config_file_path}")
+    parsed = load_view_file(config_file_path)
+    input_data_path = config_file_path.parent
+    location_taxonomy_category = next(
+        (item.taxonomy_category for item in parsed.scope if item.taxonomy_category),
+        None,
+    )
+    if location_taxonomy_category is None:
+        raise ValueError(
+            f"view_config.yml '{parsed.id}': no 'taxonomy-category' found in scope. "
+            f"At least one scope entry must define a taxonomy-category"
+        )
+
+    view_config = ViewConfig(
+        id=parsed.id,
+        input_data_path=input_data_path,
+        location_taxonomy_category=location_taxonomy_category,
+        calendar_id=next((item.calendar for item in parsed.scope if item.calendar), None),
+        catalog_ids=[c.id for c in parsed.catalog],
+        time_aggregation=parsed.aggregation[0].time if parsed.aggregation else None,
+        catalog_to_metrics=group_metrics_by_catalog(parsed.id, parsed.metrics),
+    )
+    logging.info(
+        f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
+        f"catalogs={len(view_config.catalog_ids)}, metric groups={len(view_config.catalog_to_metrics)}"
+    )
+    return view_config
+
+
+def load_view_file(view_file_path: Path) -> ViewData:
+    logging.info(f"Parsing view config YAML from {view_file_path}")
+    with open(view_file_path, encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+    if "view" not in raw:
+        raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
+    logging.info(f"View config YAML parsed successfully from {view_file_path}")
+    return ViewData.model_validate(raw["view"])
+
+
+def group_metrics_by_catalog(view_config_id: str, metrics: list[MetricRef]) -> dict[str, list[str]]:
+    logging.debug(f"Grouping {len(metrics)} metric reference(s) by catalog")
+    catalog_to_metrics: dict[str, list[str]] = defaultdict(list)
+    for metric in metrics:
+        if "." not in metric.id or metric.id.startswith(".") or metric.id.endswith("."):
+            raise ValueError(
+                f"view_config.yml '{view_config_id}': invalid metric id '{metric.id}'. "
+                "Expected format '<catalog_id>.<metric_id>'"
+            )
+        catalog_id, metric_id = metric.id.split(".", 1)
+        catalog_to_metrics[catalog_id].append(metric_id)
+        logging.debug(f"Mapped metric reference {metric.id!r} to catalog {catalog_id!r}")
+    return catalog_to_metrics

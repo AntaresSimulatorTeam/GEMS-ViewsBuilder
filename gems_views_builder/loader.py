@@ -13,13 +13,14 @@
 import logging
 from pathlib import Path
 
+from gems_views_builder.input.calendar import load_calendar
 from gems_views_builder.input.catalog import load_catalogs
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.library import load_library
 from gems_views_builder.input.simulation_table import SimulationTable
-from gems_views_builder.input.system import System
+from gems_views_builder.input.system import load_system
 from gems_views_builder.input.taxonomy import load_taxonomy
-from gems_views_builder.input.view_config import ViewConfig
+from gems_views_builder.input.view_config import ViewConfig, load_view_config
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
 
@@ -35,19 +36,19 @@ class Loader:
         StudyLayoutValidator(self.input_data_path).validate()
 
         logging.info(f"Loading inputs from {self.input_data_path}")
-        # # TO DO Separate Load
-        view_config = ViewConfig.load(self.input_data_path / "view_config.yml")
+        view_config: ViewConfig = load_view_config(self.input_data_path / "view_config.yml")
+        if view_config.calendar_id is None:
+            raise ValueError(f"view_config.yml '{view_config.id}': no calendar configured in scope")
 
         input_data = InputData(
             input_data_path=self.input_data_path,
             taxonomy=load_taxonomy(self.input_data_path / "taxonomy.yml"),
             view_config=view_config,
             catalogs=load_catalogs(self.input_data_path, view_config.catalog_ids),
-            # # TO DO Separate Load Simulation Table
             simulation_table=SimulationTable.load(next(self.input_data_path.glob("simulation_table*.parquet"))),
             library=load_library(self.input_data_path / "library.yml"),
-            # # TO DO Separate Load of system into dedicated function
-            system=System.from_file(self.input_data_path / "system.yml"),
+            system=load_system(self.input_data_path),
+            calendar=load_calendar(self.input_data_path, view_config.calendar_id),
         )
 
         # # Check consistecy between catalog and taxonomy

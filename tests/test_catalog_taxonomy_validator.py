@@ -31,10 +31,10 @@ def test_validate_catalog_against_taxonomy_passes_for_test_dataset(test_dataset_
 
 
 def test_validate_catalogs_against_taxonomy_passes_for_test_dataset(test_dataset_dir: Path) -> None:
-    from gems_views_builder.input.view_config import ViewConfig
+    from gems_views_builder.input.view_config import load_view_config
 
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
-    view_config = ViewConfig.load(test_dataset_dir / "view_config.yml")
+    view_config = load_view_config(test_dataset_dir / "view_config.yml")
     catalogs = load_catalogs(test_dataset_dir, view_config.catalog_ids)
     validate_catalogs_against_taxonomy(catalogs, taxonomy)
 

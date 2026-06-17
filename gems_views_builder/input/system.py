@@ -128,7 +128,7 @@ class System:
 
 def load_system(input_data_path: Path) -> System:
     logging.info("Loading system")
-    system_path = next(input_data_path.glob("system*"))
+    system_path = input_data_path / "system.yml"
     system = System.from_file(system_path)
     logging.info(f"System loaded from {system_path}")
     return system
