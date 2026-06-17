@@ -92,6 +92,7 @@ class Catalog:
     def get_metric(self, metric_id: str) -> Metric:
         logging.debug(f"Looking up metric {metric_id!r} in catalog {self.id!r}")
         if metric_id not in self.metrics:
+            logging.info(f"[{metric_id}] Metric not found in catalog '{self.id}' — skipping")
             raise ValueError(f"Metric {metric_id} not found in catalog {self.id}")
         logging.debug(f"Metric {metric_id!r} found in catalog {self.id!r}")
         return self.metrics[metric_id]

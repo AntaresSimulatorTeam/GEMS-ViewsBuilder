@@ -12,6 +12,7 @@
 
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 import polars as pl
 
@@ -19,6 +20,7 @@ from gems_views_builder.input.catalog import Catalog, Metric
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy
+from gems_views_builder.writer import Writer
 
 _METRIC_STRUCTURE_SCHEMA = pl.Schema(
     {
@@ -93,3 +95,29 @@ class MetricStructureBuilder:
             return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
         logging.info(f"[{self.metric.id}] Metric structure table built with {len(rows)} row(s)")
         return MetricStructureTable(pl.DataFrame(rows, schema=_METRIC_STRUCTURE_SCHEMA))
+
+
+@dataclass
+class MetricStructure:
+    """On-disk metric structure table, ready for lazy scanning and cleanup."""
+
+    file: Path
+    dataframe: pl.LazyFrame
+
+    def cleanup(self) -> None:
+        logging.info(f"Cleaning metric structure {self.file}")
+        self.file.unlink(missing_ok=True)
+
+
+def build_metric_structure(
+    system: System,
+    catalog: Catalog,
+    metric: Metric,
+    taxonomy: Taxonomy,
+    library: Library,
+    writer: Writer,
+) -> MetricStructure:
+    """Build the metric structure table, persist it via writer, and return a MetricStructure."""
+    table = MetricStructureBuilder(system, catalog, metric, taxonomy, library).build()
+    path = writer.write_metric_structure_table(table.dataframe, metric.id)
+    return MetricStructure(path, pl.scan_parquet(path))

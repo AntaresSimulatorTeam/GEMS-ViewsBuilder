@@ -11,12 +11,14 @@
 # This file is part of the Antares project.
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
+from gems_views_builder.metric_view import MetricView
 
 
 class Writer:
@@ -55,3 +57,14 @@ class Writer:
             pyarrow_options={"data_page_version": "2.0"},
         )
         return metric_structure_path
+
+
+@dataclass
+class MergedView:
+    """Final merged view written to the results directory."""
+
+    file: Path | None
+
+    @classmethod
+    def merge_views(cls, metric_views: list[MetricView], writer: "Writer") -> "MergedView":
+        return cls(file=writer.merge_results([v.file for v in metric_views]))

@@ -17,13 +17,19 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from gems_views_builder.input.simulation_table import filter_simulation_table
 from gems_views_builder.loader import Loader
 from gems_views_builder.views_builder import ViewBuilder
 
 
 def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
     input_data = Loader(dataset_dir).load()
-    return ViewBuilder(input_data)
+    filtered_simu_table = filter_simulation_table(
+        input_data.simulation_table,
+        input_data.calendar,
+        dataset_dir / "views" / "intermediate",
+    )
+    return ViewBuilder(input_data, filtered_simu_table)
 
 
 @pytest.fixture()
@@ -36,9 +42,9 @@ def view_result(test_files_root: Path, tmp_path: Path) -> pl.DataFrame:
     src = test_files_root / "test_3"
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
-    _build_view_builder(dst).build()
-    result_file = next((dst / "results").glob("*.parquet"))
-    return pl.read_parquet(result_file)
+    merged = _build_view_builder(dst).build()
+    assert merged.file is not None
+    return pl.read_parquet(merged.file)
 
 
 def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:

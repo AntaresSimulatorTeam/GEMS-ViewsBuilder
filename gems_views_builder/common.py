@@ -33,16 +33,3 @@ logging.basicConfig(
     encoding="utf-8",  # Ensure logs are written in UTF-8
     force=True,  # Always attach file handler even under pytest, needed for logger tests
 )
-
-
-# # Utils functions for ViewBuilder class
-# # They don't use any class attributes, so they are not part of the class
-def clean_intermediate_metric(metric_view_parquet_path: Path, metric_structure_path: Path) -> None:
-    logging.info(f"Cleaning intermediate metric {metric_view_parquet_path} and {metric_structure_path}")
-    metric_view_parquet_path.unlink(missing_ok=True)
-    metric_structure_path.unlink(missing_ok=True)
-
-
-def clean_filtered_simulation_table(filtered_simulation_table_path: Path) -> None:
-    logging.info(f"Cleaning filtered simulation table {filtered_simulation_table_path}")
-    filtered_simulation_table_path.unlink(missing_ok=True)
