@@ -44,7 +44,6 @@ def _build(metric_id: str, components: dict[str, Any]) -> "MetricStructureTable"
     metric = components["catalog"].get_metric(metric_id)
     return MetricStructureBuilder(
         components["system"],
-        components["catalog"],
         metric,
         components["taxonomy"],
         components["library"],

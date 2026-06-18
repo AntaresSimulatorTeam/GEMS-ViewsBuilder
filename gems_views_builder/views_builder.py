@@ -36,7 +36,6 @@ class ViewBuilder:
                     continue
                 structure = build_metric_structure(
                     self.input_data.system,
-                    catalog,
                     metric,
                     self.input_data.taxonomy,
                     self.input_data.library,
