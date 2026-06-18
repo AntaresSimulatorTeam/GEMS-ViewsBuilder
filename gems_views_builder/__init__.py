@@ -10,6 +10,7 @@
 #
 # This file is part of the Antares project.
 
+
 """GEMS-ViewsBuilder public package namespace."""
 
 from gems.model.parsing import (  # type: ignore

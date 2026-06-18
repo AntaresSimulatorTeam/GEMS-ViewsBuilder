@@ -34,6 +34,7 @@ class TaxonomyCategory(ViewBuilderBasedModel):
     ports: list[TaxonomyItem] = Field(default_factory=list)
     constraints: list[TaxonomyItem] = Field(default_factory=list)
     extra_outputs: list[TaxonomyItem] = Field(default_factory=list, alias="extra-outputs")
+    port_fields: list[TaxonomyItem] = Field(default_factory=list, alias="port-fields")
     properties: list[TaxonomyItem] = Field(default_factory=list)
 
 

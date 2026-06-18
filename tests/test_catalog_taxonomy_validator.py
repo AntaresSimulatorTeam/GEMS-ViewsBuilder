@@ -62,6 +62,45 @@ def test_validate_catalog_against_taxonomy_raises_on_unknown_location_port(test_
         validate_catalog_against_taxonomy(catalog, taxonomy)
 
 
+def test_validate_catalog_against_taxonomy_raises_on_unknown_output_id(test_dataset_dir: Path) -> None:
+    # Arrange
+    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
+    catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
+    next(iter(catalog.metrics.values())).terms[0].output_id = "unknown_output"
+
+    # Act & Assert
+    with pytest.raises(ValueError, match="uses output-id"):
+        validate_catalog_against_taxonomy(catalog, taxonomy)
+
+
+def test_validate_catalog_term_passes_when_output_id_matches_taxonomy_category(test_dataset_dir: Path) -> None:
+    # Arrange
+    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
+    catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
+    prod_term = catalog.metrics["PROD"].terms[0]
+    link_term = catalog.metrics["BALANCE"].terms[0]
+    assert prod_term.taxonomy_category == "production"
+    assert prod_term.output_id == "p"
+    assert link_term.taxonomy_category == "link"
+    assert link_term.output_id == "p0_port.flow"
+
+    # Act & Assert
+    validate_catalog_against_taxonomy(catalog, taxonomy)
+
+
+def test_validate_catalog_term_raises_when_output_id_belongs_to_another_category(test_dataset_dir: Path) -> None:
+    # Arrange: active_load is valid on consumption, not on production
+    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
+    catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
+    term = catalog.metrics["PROD"].terms[0]
+    term.taxonomy_category = "production"
+    term.output_id = "active_load"
+
+    # Act & Assert
+    with pytest.raises(ValueError, match="uses output-id"):
+        validate_catalog_against_taxonomy(catalog, taxonomy)
+
+
 def test_view_builder_raises_when_catalog_taxonomy_mismatch(
     test_dataset_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
