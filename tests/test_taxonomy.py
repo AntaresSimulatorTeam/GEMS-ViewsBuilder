@@ -42,6 +42,7 @@ def test_taxonomy_items_are_typed(test_dataset_dir: Path) -> None:
             category.ports,
             category.constraints,
             category.extra_outputs,
+            category.port_fields,
             category.properties,
         ):
             for item in field:

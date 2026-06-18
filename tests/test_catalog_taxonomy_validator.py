@@ -62,6 +62,14 @@ def test_validate_catalog_against_taxonomy_raises_on_unknown_location_port(test_
         validate_catalog_against_taxonomy(catalog, taxonomy)
 
 
+def test_validate_catalog_against_taxonomy_raises_on_unknown_output_id(test_dataset_dir: Path) -> None:
+    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
+    catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
+    next(iter(catalog.metrics.values())).terms[0].output_id = "unknown_output"
+    with pytest.raises(ValueError, match="uses output-id"):
+        validate_catalog_against_taxonomy(catalog, taxonomy)
+
+
 def test_view_builder_raises_when_catalog_taxonomy_mismatch(
     test_dataset_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
