@@ -154,7 +154,7 @@ class System:
             logging.debug(f"Resolved location for component {component_0_id!r} via port {location_port!r} to {peer!r}")
             return peer
 
-        # location_port is tuple[str, ...] — each named port resolves to one or more peers
+        # location_port is tuple[str, ...] — each named port resolves to a UNIQUE peer
         result: list[str] = []
         for port in location_port:
             peer = self._get_peer_components(component_0_id, port)
