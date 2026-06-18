@@ -1,9 +1,10 @@
+import logging
 from pathlib import Path
 
 import polars as pl
 
 from gems_views_builder.catalog import TermsOperator, TimeOperator
-from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE, logger
+from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 
 
 class Aggregator:
@@ -29,7 +30,7 @@ class Aggregator:
         """
         Step 2.B from POC[Computing the metric]: Right join TIME_FILTERED_SIMULATION_TABLE with METRIC_STRUCTURE_TABLE on component and output
         """
-        logger.info(f"[{metric_id}] Aggregating terms with operator {metric_term_operator.value}")
+        logging.info(f"[{metric_id}] Aggregating terms with operator {metric_term_operator.value}")
         value_agg = pl.col("value").sum() if metric_term_operator == TermsOperator.SUM else pl.col("value").mean()
         metric_view = (
             joined_dataframe.with_columns(pl.col("scenario_index").alias("scenario"))
@@ -68,7 +69,7 @@ class Aggregator:
             compression_level=PARQUET_COMPRESSION_LEVEL,
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
-        logger.info(f"[{metric_id}] Terms aggregation written to {out_path}")
+        logging.info(f"[{metric_id}] Terms aggregation written to {out_path}")
         return out_path
 
     def aggregate_metric_temporally(
@@ -77,7 +78,7 @@ class Aggregator:
         """
         Step 2.C from POC[temporal aggregation]: Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
         """
-        logger.info(f"[{metric_id}] Aggregating temporally with operator {metric_time_operator.value}")
+        logging.info(f"[{metric_id}] Aggregating temporally with operator {metric_time_operator.value}")
         metric_view = pl.scan_parquet(metric_view_parquet_path)
         time_agg = (
             pl.col("granular_metric_value").sum()
@@ -118,5 +119,5 @@ class Aggregator:
             compression_level=PARQUET_COMPRESSION_LEVEL,
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
-        logger.info(f"[{metric_id}] Temporal aggregation written to {out_path}")
+        logging.info(f"[{metric_id}] Temporal aggregation written to {out_path}")
         return out_path

@@ -12,6 +12,7 @@
 
 """InputSystem wrapper with helper methods for component lookup."""
 
+import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, cast
@@ -118,6 +119,8 @@ class InputSystem:
     @classmethod
     def from_file(cls, path: Path) -> "InputSystem":
         """Load InputSystem from a system yml file."""
+        logging.info(f"Loading system from {path}")
         with open(path, encoding="utf-8") as f:
             parsed = parse_yaml_components(f)
+        logging.info(f"System loaded from {path}")
         return cls(cast(GemsInputSystem, parsed))
