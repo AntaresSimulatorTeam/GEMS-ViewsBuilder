@@ -1,10 +1,28 @@
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+#
+# See AUTHORS.txt
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# This file is part of the Antares project.
+
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import polars as pl
 
-from gems_views_builder.catalog import TermsOperator, TimeOperator
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
+from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
+from gems_views_builder.metric_view import MetricView
+
+if TYPE_CHECKING:
+    from gems_views_builder.input.simulation_table import FilteredSimulationTable
+    from gems_views_builder.metrics_builder import MetricStructure
 
 
 class Aggregator:
@@ -24,7 +42,20 @@ class Aggregator:
         metric_view_dir.mkdir(parents=True, exist_ok=True)
         return metric_view_dir
 
-    def aggregate_metric_terms(
+    def aggregate(
+        self,
+        filtered_st: "FilteredSimulationTable",
+        structure: "MetricStructure",
+        metric: Metric,
+    ) -> MetricView:
+        joined = filtered_st.dataframe.join(structure.dataframe, on=["component", "output"], how="right")
+        term_path = self._aggregate_metric_terms(joined, metric.terms_operator, metric.id)
+        temporal_path = self._aggregate_metric_temporally(term_path, metric.time_operator, metric.id)
+        structure.cleanup()
+        term_path.unlink(missing_ok=True)
+        return MetricView(temporal_path)
+
+    def _aggregate_metric_terms(
         self, joined_dataframe: pl.LazyFrame, metric_term_operator: TermsOperator, metric_id: str
     ) -> Path:
         """
@@ -72,7 +103,7 @@ class Aggregator:
         logging.info(f"[{metric_id}] Terms aggregation written to {out_path}")
         return out_path
 
-    def aggregate_metric_temporally(
+    def _aggregate_metric_temporally(
         self, metric_view_parquet_path: Path, metric_time_operator: TimeOperator, metric_id: str
     ) -> Path:
         """

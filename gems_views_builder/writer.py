@@ -1,9 +1,24 @@
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+#
+# See AUTHORS.txt
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# This file is part of the Antares project.
+
+import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
+from gems_views_builder.metric_view import MetricView
 
 
 class Writer:
@@ -11,6 +26,7 @@ class Writer:
         self.input_data_path = input_data_path
 
     def merge_results(self, chunk_paths: list[Path]) -> Path | None:
+        logging.info(f"Merging {len(chunk_paths)} chunk(s) into results")
         if not chunk_paths:
             return None
         results_dir = self.input_data_path / "results"
@@ -25,6 +41,7 @@ class Writer:
         )
         for chunk_path in chunk_paths:
             chunk_path.unlink(missing_ok=True)
+        logging.info(f"Results merged into {out_path}")
         return out_path
 
     def write_metric_structure_table(self, metric_structure_table: pl.DataFrame, metric_id: str) -> Path:
@@ -40,3 +57,14 @@ class Writer:
             pyarrow_options={"data_page_version": "2.0"},
         )
         return metric_structure_path
+
+
+@dataclass
+class MergedView:
+    """Final merged view written to the results directory."""
+
+    file: Path | None
+
+    @classmethod
+    def merge_views(cls, metric_views: list[MetricView], writer: "Writer") -> "MergedView":
+        return cls(file=writer.merge_results([v.file for v in metric_views]))

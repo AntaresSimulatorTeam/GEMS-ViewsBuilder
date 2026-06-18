@@ -37,11 +37,11 @@ class Calendar:
     dataframe: pl.LazyFrame
 
 
-def load_calendar(calendar_file_path: Path) -> Calendar:
+def load_calendar(input_data_path: Path, calendar_id: str) -> Calendar:
     """
     Load and validate a calendar.csv file into a plain Calendar dataclass.
     """
-    calendar_id = calendar_file_path.stem
+    calendar_file_path = input_data_path / f"{calendar_id}.csv"
     dataframe = _read_calendar_file(calendar_file_path)
     _check_calendar_columns(calendar_id=calendar_id, dataframe=dataframe)
     return Calendar(id=calendar_id, dataframe=dataframe)
@@ -50,8 +50,6 @@ def load_calendar(calendar_file_path: Path) -> Calendar:
 def _read_calendar_file(calendar_file_path: Path) -> pl.LazyFrame:
     if not calendar_file_path.exists():
         raise FileNotFoundError(f"Calendar file {calendar_file_path} not found")
-    if calendar_file_path.suffix.lower() != ".csv":
-        raise ValueError(f"Calendar file {calendar_file_path} is not a CSV file")
     return pl.scan_csv(calendar_file_path, try_parse_dates=True)
 
 

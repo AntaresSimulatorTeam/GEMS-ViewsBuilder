@@ -14,8 +14,21 @@
 
 """GEMS-ViewsBuilder public package namespace."""
 
-from gems_views_builder.calendar import Calendar, load_calendar
-from gems_views_builder.catalog import (
+from gems.model.parsing import (  # type: ignore
+    ConstraintSchema,
+    ExtraOutputSchema,
+    LibrarySchema,
+    ModelPortSchema,
+    ModelSchema,
+    ObjectiveContributionSchema,
+    ParameterSchema,
+    PortFieldDefinitionSchema,
+    PortTypeSchema,
+    VariableSchema,
+)
+
+from gems_views_builder.input.calendar import Calendar, load_calendar
+from gems_views_builder.input.catalog import (
     Catalog,
     Metric,
     Term,
@@ -23,58 +36,64 @@ from gems_views_builder.catalog import (
     TimeOperator,
     load_catalog,
 )
-from gems_views_builder.library import (
-    BindingConstraintDef,
-    ConstraintDef,
-    ExtraOutputDef,
-    LibraryData,
-    ModelDefinition,
-    ModelLibrary,
-    ObjectiveContributionDef,
-    ParameterDef,
-    PortDef,
-    PortFieldDefinition,
-    PortTypeDef,
-    VariableDef,
+from gems_views_builder.input.library import Library, load_library
+from gems_views_builder.input.simulation_table import (
+    FilteredSimulationTable,
+    SimulationTable,
+    filter_simulation_table,
+    load_simulation_table,
 )
-from gems_views_builder.metrics import TimeAggregation, ViewConfig
-from gems_views_builder.metrics_builder import MetricStructureBuilder, MetricStructureTable
-from gems_views_builder.simulation_table import FilteredSimulationTable, SimulationTable
-from gems_views_builder.system import InputSystem
-from gems_views_builder.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
-from gems_views_builder.views import ViewBuilder
+from gems_views_builder.input.system import System
+from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
+from gems_views_builder.input.view_config import TimeAggregation, ViewConfig, load_view_config
+from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metrics_builder import (
+    MetricStructure,
+    MetricStructureBuilder,
+    MetricStructureTable,
+    build_metric_structure,
+)
+from gems_views_builder.views_builder import ViewBuilder
+from gems_views_builder.writer import MergedView
 
 __all__ = [
     "Calendar",
     "load_calendar",
     "FilteredSimulationTable",
     "SimulationTable",
+    "load_simulation_table",
+    "filter_simulation_table",
     "Catalog",
     "load_catalog",
     "Metric",
     "Term",
     "TermsOperator",
     "TimeOperator",
-    "BindingConstraintDef",
-    "ConstraintDef",
-    "ExtraOutputDef",
-    "LibraryData",
-    "ModelDefinition",
-    "ModelLibrary",
-    "ObjectiveContributionDef",
-    "ParameterDef",
-    "PortDef",
-    "PortFieldDefinition",
-    "PortTypeDef",
-    "VariableDef",
+    "ConstraintSchema",
+    "ExtraOutputSchema",
+    "Library",
+    "LibrarySchema",
+    "load_library",
+    "ModelSchema",
+    "ModelPortSchema",
+    "ObjectiveContributionSchema",
+    "ParameterSchema",
+    "PortFieldDefinitionSchema",
+    "PortTypeSchema",
+    "VariableSchema",
     "Taxonomy",
     "TaxonomyCategory",
     "TaxonomyItem",
     "load_taxonomy",
     "TimeAggregation",
     "ViewConfig",
+    "load_view_config",
+    "MetricStructure",
     "MetricStructureBuilder",
     "MetricStructureTable",
+    "build_metric_structure",
+    "MetricView",
+    "MergedView",
     "ViewBuilder",
-    "InputSystem",
+    "System",
 ]

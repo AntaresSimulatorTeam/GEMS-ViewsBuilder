@@ -92,12 +92,13 @@ class Catalog:
     def get_metric(self, metric_id: str) -> Metric:
         logging.debug(f"Looking up metric {metric_id!r} in catalog {self.id!r}")
         if metric_id not in self.metrics:
+            logging.info(f"[{metric_id}] Metric not found in catalog '{self.id}' — skipping")
             raise ValueError(f"Metric {metric_id} not found in catalog {self.id}")
         logging.debug(f"Metric {metric_id!r} found in catalog {self.id!r}")
         return self.metrics[metric_id]
 
 
-def _to_term(term_data: TermData) -> Term:
+def to_term(term_data: TermData) -> Term:
     return Term(
         taxonomy_category=term_data.taxonomy_category,
         output_id=term_data.output_id,
@@ -106,10 +107,10 @@ def _to_term(term_data: TermData) -> Term:
     )
 
 
-def _to_metric(metric_data: MetricData) -> Metric:
+def to_metric(metric_data: MetricData) -> Metric:
     return Metric(
         id=metric_data.id,
-        terms=[_to_term(term) for term in metric_data.terms],
+        terms=[to_term(term) for term in metric_data.terms],
         terms_operator=metric_data.terms_operator,
         time_operator=metric_data.time_operator,
         breakdown_property=metric_data.breakdown_property,
@@ -127,12 +128,12 @@ def load_catalogs(input_data_path: Path, catalog_ids: list[str]) -> dict[str, Ca
 
 def load_catalog(catalog_file_path: Path) -> Catalog:
     logging.info(f"Loading catalog from {catalog_file_path}")
-    parsed = _load_catalog_file(catalog_file_path)
+    parsed_catalog = load_catalog_file(catalog_file_path)
     catalog = Catalog(
-        id=parsed.id,
-        taxonomy=parsed.taxonomy,
-        location_taxonomy_category=parsed.location.taxonomy_category,
-        metrics={metric.id: _to_metric(metric) for metric in parsed.metrics_definition},
+        id=parsed_catalog.id,
+        taxonomy=parsed_catalog.taxonomy,
+        location_taxonomy_category=parsed_catalog.location.taxonomy_category,
+        metrics={metric.id: to_metric(metric) for metric in parsed_catalog.metrics_definition},
     )
     logging.info(
         f"Catalog {catalog.id!r} loaded with taxonomy {catalog.taxonomy!r} and {len(catalog.metrics)} metric(s)"
@@ -140,7 +141,7 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
     return catalog
 
 
-def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
+def load_catalog_file(catalog_file_path: Path) -> CatalogData:
     logging.debug(f"Loading catalog YAML from {catalog_file_path}")
     with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
