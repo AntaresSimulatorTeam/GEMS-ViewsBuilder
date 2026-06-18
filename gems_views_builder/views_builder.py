@@ -37,7 +37,6 @@ class ViewBuilder:
                 structure = build_metric_structure(
                     self.input_data.system,
                     metric,
-                    self.input_data.taxonomy,
                     self.input_data.library,
                     self.writer,
                 )

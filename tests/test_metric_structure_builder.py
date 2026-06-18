@@ -45,7 +45,6 @@ def _build(metric_id: str, components: dict[str, Any]) -> "MetricStructureTable"
     return MetricStructureBuilder(
         components["system"],
         metric,
-        components["taxonomy"],
         components["library"],
     ).build()
 

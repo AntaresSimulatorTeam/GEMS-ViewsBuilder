@@ -19,7 +19,6 @@ import polars as pl
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.system import System
-from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.writer import Writer
 
 _METRIC_STRUCTURE_SCHEMA = pl.Schema(
@@ -48,12 +47,10 @@ class MetricStructureBuilder:
         self,
         system: System,
         metric: Metric,
-        taxonomy: Taxonomy,
         model_library: Library,
     ) -> None:
         self.system = system
         self.metric = metric
-        self.taxonomy = taxonomy
         self.model_library = model_library
 
     def build(self) -> MetricStructureTable:
@@ -110,11 +107,10 @@ class MetricStructure:
 def build_metric_structure(
     system: System,
     metric: Metric,
-    taxonomy: Taxonomy,
     library: Library,
     writer: Writer,
 ) -> MetricStructure:
     """Build the metric structure table, persist it via writer, and return a MetricStructure."""
-    table = MetricStructureBuilder(system, metric, taxonomy, library).build()
+    table = MetricStructureBuilder(system, metric, library).build()
     path = writer.write_metric_structure_table(table.dataframe, metric.id)
     return MetricStructure(path, pl.scan_parquet(path))
