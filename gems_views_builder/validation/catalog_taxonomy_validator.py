@@ -36,7 +36,17 @@ def validate_catalog_against_taxonomy(catalog: Catalog, taxonomy: Taxonomy) -> N
             f"Catalog {catalog.id!r} references taxonomy {catalog.taxonomy!r}, but study taxonomy id is {taxonomy.id!r}"
         )
 
+    # Taxonomy categories.
     category_ids = {category.id for category in taxonomy.categories}
+
+    for metric in catalog.metrics.values():
+        for term in metric.terms:
+            if term.taxonomy_category not in category_ids:
+                raise ValueError(
+                    f"Catalog {catalog.id!r} metric {metric.id!r} uses taxonomy-category "
+                    f"{term.taxonomy_category!r}, which is not defined in taxonomy {taxonomy.id!r}"
+                )
+
     category_ports_by_id = _category_ports_by_id(taxonomy)
 
     for metric in catalog.metrics.values():
