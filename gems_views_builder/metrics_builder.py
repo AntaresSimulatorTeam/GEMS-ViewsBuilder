@@ -17,7 +17,7 @@ from pathlib import Path
 import polars as pl
 from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.input.catalog import Metric
+from gems_views_builder.input.catalog import Metric, PropertySchema
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.system import System
 from gems_views_builder.writer import Writer
@@ -118,7 +118,7 @@ class MetricStructureBuilder:
                             }
                         )
                     else:
-                        logger.debug(
+                        logging.debug(
                             f"[{self.metric.id}] Component {component_id!r} did not match metric filter and was skipped"
                         )
 

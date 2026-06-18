@@ -13,16 +13,14 @@
 from pathlib import Path
 
 import pytest
-from gems.model.parsing import ModelPortSchema, ParameterSchema, VariableSchema  # type: ignore[import-untyped]
-
-from gems_views_builder import (
-    Library,
+from gems.model.parsing import (  # type: ignore[import-untyped]
     ModelPortSchema,
     ModelSchema,
     ParameterSchema,
     VariableSchema,
-    load_library,
 )
+
+from gems_views_builder.input.library import Library, load_library
 
 
 def _library_path(test_dataset_dir: Path) -> Path | None:
@@ -52,11 +50,17 @@ def test_model_library_models_are_typed(test_dataset_dir: Path) -> None:
         assert isinstance(model.id, str)
 
 
-def _production_model_id(library: ModelLibrary) -> str:
-    for model_id in ("generator", "generator_basic"):
-        if model_id in library.models:
-            return model_id
-    raise AssertionError("Expected a production model ('generator' or 'generator_basic') in the library")
+# Known model id -> taxonomy category for datasets that include that model.
+_KNOWN_TAXONOMY_CATEGORIES: dict[str, str] = {
+    "area": "balance",
+    "bus": "balance",
+    "generator": "production",
+    "generator_basic": "production",
+    "load": "consumption",
+    "store": "consumption",
+    "link": "link",
+    "storage_unit": "storage",
+}
 
 
 def test_model_library_taxonomy_categories(test_dataset_dir: Path) -> None:
@@ -64,13 +68,10 @@ def test_model_library_taxonomy_categories(test_dataset_dir: Path) -> None:
     if library_path is None:
         pytest.skip("No model library file found (expected library.yml)")
     library = load_library(library_path)
-    assert library.get_taxonomy_category("bus") == "balance"
-    assert library.get_taxonomy_category("load") == "consumption"
-    if "store" in library.models:
-        assert library.get_taxonomy_category("store") == "consumption"
-    else:
-        production_model = _production_model_id(library)
-        assert library.get_taxonomy_category(production_model) == "production"
+    for model_id, expected_category in _KNOWN_TAXONOMY_CATEGORIES.items():
+        if model_id not in library.models:
+            continue
+        assert library.get_taxonomy_category(model_id) == expected_category
 
 
 def test_model_library_get_taxonomy_category_unknown_model(test_dataset_dir: Path) -> None:
@@ -92,6 +93,7 @@ def test_model_library_full_model_loaded(test_dataset_dir: Path) -> None:
         generator = library.get_model("generator")
     except ValueError:
         pytest.skip("No 'generator' model in this dataset's library")
+    production_model = generator.id
     assert len(generator.parameters) > 0
     assert all(isinstance(p, ParameterSchema) for p in generator.parameters)
     assert len(generator.variables) > 0

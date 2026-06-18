@@ -22,7 +22,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.views import ViewBuilder
+from gems_views_builder.loader import Loader
+from gems_views_builder.views_builder import ViewBuilder
 
 # Generator instances in ``filtering_and_breakdown/system.yml`` (technology, company).
 _FILTERING_AND_BREAKDOWN_GEN_META: dict[str, tuple[str, str]] = {
@@ -41,9 +42,9 @@ def filtering_and_breakdown_workspace(test_files_root: Path, tmp_path: Path) -> 
     src = test_files_root / "filtering_and_breakdown"
     dst = tmp_path / "filtering_and_breakdown"
     shutil.copytree(src, dst)
-    ViewBuilder(dst).build()
-    result_file = next((dst / "results").glob("*.parquet"))
-    return dst, pl.read_parquet(result_file)
+    merged = ViewBuilder(Loader(dst).load()).build()
+    assert merged.file is not None
+    return dst, pl.read_parquet(merged.file)
 
 
 @pytest.fixture()

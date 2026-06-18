@@ -17,11 +17,17 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, cast
 
-from gems.study.parsing import (  # type: ignore
-    ComponentSchema as GemsComponent,
+from gems.model.resolve_library import resolve_library  # type: ignore[import-untyped]
+from gems.study import Component  # type: ignore[import-untyped]
+from gems.study.parsing import parse_yaml_components  # type: ignore[import-untyped]
+from gems.study.resolve_components import (  # type: ignore[import-untyped]
+    System as GemsSystem,
 )
-from gems.study.parsing import SystemSchema as GemsSystem
-from gems.study.parsing import parse_yaml_components
+from gems.study.resolve_components import (
+    resolve_system,
+)
+
+from gems_views_builder.input.library import load_library_file
 
 
 class System:
@@ -31,26 +37,24 @@ class System:
 
     def __init__(self, system: GemsSystem) -> None:
         self._system = system
-        self._library_id = library_id
-        logger.info(
+        logging.info(
             f"Initializing input system with {len(self.components)} component(s) "
             f"and {len(self.connections)} connection(s)"
         )
         self._components_by_model: dict[str, list[str]] = self._models_to_components()
         self._component_port_connections: dict[tuple[str, str], set[str]] = self.build_component_port_connections()
-        logger.info(
+        logging.info(
             f"Input system indexes ready: {len(self._components_by_model)} model mapping(s), "
             f"{len(self._component_port_connections)} component-port mapping(s)"
         )
 
     @property
-    def components(self) -> list[GemsComponent]:
-        return cast(list[GemsComponent], self._system.components)
+    def components(self) -> list[Component]:
+        return list(self._system.components)
 
     @property
-    def connections(self) -> list[PortsConnection]:
-        # Resolved system always has `connections: list[PortsConnection]` in GemsPy.
-        return cast(list[PortsConnection], self._system.connections)
+    def connections(self) -> list[Any]:
+        return cast(list[Any], getattr(self._system, "connections", None) or [])
 
     def _models_to_components(self) -> dict[str, list[str]]:
         """
@@ -59,7 +63,7 @@ class System:
         Qualified names keep components apart across libraries when the same role (e.g. a generator) behaves differently per library.
         |--> Good practice for future
         """
-        logger.info("Building model-to-components index")
+        logging.info("Building model-to-components index")
         groups: defaultdict[str, list[str]] = defaultdict(list)
         for component in self.components:
             model_ref = getattr(component, "model", None)
@@ -67,14 +71,14 @@ class System:
             if not isinstance(key, str) or "." not in key:
                 continue
             groups[key].append(component.id)
-        logger.info(f"Built model-to-components index with {len(groups)} qualified model reference(s)")
+        logging.info(f"Built model-to-components index with {len(groups)} qualified model reference(s)")
         return groups
 
     def build_component_port_connections(self) -> dict[tuple[str, str], set[str]]:
         """
         Iterate over connections and for each component and port add other side of connection in dictionary
         """
-        logger.info("Building component-port connection index")
+        logging.info("Building component-port connection index")
 
         def _endpoint(conn: Any, idx: int) -> tuple[str, str] | None:
             """
@@ -114,7 +118,7 @@ class System:
             component_port_connections[(c1, p1)].add(c2)
             component_port_connections[(c2, p2)].add(c1)
 
-        logger.info(f"Built component-port connection index with {len(component_port_connections)} entry(ies)")
+        logging.info(f"Built component-port connection index with {len(component_port_connections)} entry(ies)")
         return component_port_connections
 
     def _get_peer_components(self, component_id: str, port_id: str) -> str | tuple[str, ...]:
@@ -130,11 +134,10 @@ class System:
     def get_instances_by_model(self, qualified_model_ref: str) -> list[str]:
         """Return component instance IDs for the given qualified model reference."""
         instances = list(self._components_by_model.get(qualified_model_ref, []))
-        logger.debug(f"Resolved {len(instances)} instance(s) for model reference {qualified_model_ref!r}")
+        logging.debug(f"Resolved {len(instances)} instance(s) for model reference {qualified_model_ref!r}")
         return instances
 
     def get_component(self, component_id: str) -> Component:
-        # Resolved-only design: delegate to GemsPy's implementation.
         return cast(Component, self._system.get_component(component_id))
 
     def get_location(
@@ -143,12 +146,12 @@ class System:
         location_port: str | tuple[str, ...] | None,
     ) -> str | tuple[str, ...]:
         if location_port is None:
-            logger.debug(f"Using component {component_0_id!r} as location because no location port is defined")
+            logging.debug(f"Using component {component_0_id!r} as location because no location port is defined")
             return component_0_id
 
         if isinstance(location_port, str):
             peer = self._get_peer_components(component_0_id, location_port)
-            logger.debug(f"Resolved location for component {component_0_id!r} via port {location_port!r} to {peer!r}")
+            logging.debug(f"Resolved location for component {component_0_id!r} via port {location_port!r} to {peer!r}")
             return peer
 
         # location_port is tuple[str, ...] — each named port resolves to one or more peers
@@ -159,24 +162,20 @@ class System:
                 result.append(peer)
             else:
                 result.extend(peer)
-        logger.debug(
+        logging.debug(
             f"Resolved location tuple for component {component_0_id!r} via ports {location_port!r} to {tuple(result)!r}"
         )
         return tuple(result)
-
-    @classmethod
-    def from_file(cls, path: Path) -> "System":
-        """Load a system yml file."""
-        logging.info(f"Loading system from {path}")
-        with open(path, encoding="utf-8") as f:
-            parsed = parse_yaml_components(f)
-        logging.info(f"System loaded from {path}")
-        return cls(cast(GemsSystem, parsed))
 
 
 def load_system(input_data_path: Path) -> System:
     logging.info("Loading system")
     system_path = input_data_path / "system.yml"
-    system = System.from_file(system_path)
-    logging.info(f"System loaded from {system_path}")
-    return system
+    library_path = input_data_path / "library.yml"
+    with open(system_path, encoding="utf-8") as f:
+        parsed = parse_yaml_components(f)
+    library_schema = load_library_file(library_path)
+    resolved_libs = resolve_library([library_schema])
+    resolved = resolve_system(parsed, resolved_libs)
+    logging.info(f"System loaded and resolved from {system_path}")
+    return System(cast(GemsSystem, resolved))
