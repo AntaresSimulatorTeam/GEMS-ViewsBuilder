@@ -14,28 +14,30 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder import TimeAggregation, ViewConfig
+from gems_views_builder import TimeAggregation, ViewConfig, load_view_config
 
 
 def test_view_config_loads(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
-    config = ViewConfig.load(config_path)
+    config = load_view_config(config_path)
+    assert isinstance(config, ViewConfig)
     assert isinstance(config.id, str)
     assert isinstance(config.location_taxonomy_category, str)
     assert isinstance(config.calendar_id, str)
     assert len(config.catalog_ids) > 0
+    assert config.input_data_path == test_dataset_dir
 
 
 def test_view_config_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
-    config = ViewConfig.load(config_path)
+    config = load_view_config(config_path)
     for catalog_id in config.catalog_ids:
         assert isinstance(catalog_id, str)
 
 
 def test_view_config_metrics_are_pairs(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
-    config = ViewConfig.load(config_path)
+    config = load_view_config(config_path)
     for catalog_id, metrics in config.catalog_to_metrics.items():
         assert isinstance(catalog_id, str)
         assert isinstance(metrics, list)
@@ -43,7 +45,7 @@ def test_view_config_metrics_are_pairs(test_dataset_dir: Path) -> None:
 
 
 def test_view_config_known_values(test_dataset_dir: Path) -> None:
-    config = ViewConfig.load(test_dataset_dir / "view_config.yml")
+    config = load_view_config(test_dataset_dir / "view_config.yml")
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.catalog_ids == ["catalog"]
@@ -61,7 +63,7 @@ def test_view_config_known_values(test_dataset_dir: Path) -> None:
 
 
 def test_view_config_time_aggregation(test_dataset_dir: Path) -> None:
-    config = ViewConfig.load(test_dataset_dir / "view_config.yml")
+    config = load_view_config(test_dataset_dir / "view_config.yml")
     assert config.time_aggregation == TimeAggregation.HOUR
 
 
@@ -91,4 +93,4 @@ view:
     )
 
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        ViewConfig.load(invalid_config)
+        load_view_config(invalid_config)

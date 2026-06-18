@@ -13,10 +13,9 @@
 from pathlib import Path
 
 import pytest
-from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore[import-untyped]
+from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore
 
-from gems_views_builder import InputSystem as GemsViewsInputSystem
-from gems_views_builder.library import ModelLibrary
+from gems_views_builder.input.system import load_system
 
 
 def test_input_system_using(test_dataset_dir: Path) -> None:
@@ -30,10 +29,7 @@ def test_input_system_using(test_dataset_dir: Path) -> None:
 
 def test_locating_function_multiple_peers_returns_tuple(test_dataset_dir: Path) -> None:
     """When a single port connects to multiple peers, get_location returns a tuple of all peer ids."""
-    system_path = test_dataset_dir / "system.yml"
-    assert system_path.exists(), f"System file not found: {system_path}"
-    library = ModelLibrary.load(test_dataset_dir / "library.yml")
-    system = GemsViewsInputSystem.load(system_path, library)
+    system = load_system(test_dataset_dir)
 
     if not system.connections:
         return
@@ -51,10 +47,8 @@ def test_locating_function_multiple_peers_returns_tuple(test_dataset_dir: Path) 
 
 def test_locating_function(test_dataset_dir: Path) -> None:
     """LOCATING_FUNCTION: None -> component_id, string -> peer id, tuple -> tuple of peer ids."""
-    system_path = test_dataset_dir / "system.yml"
-    assert system_path.exists(), f"System file not found: {system_path}"
-    library = ModelLibrary.load(test_dataset_dir / "library.yml")
-    system = GemsViewsInputSystem.load(system_path, library)
+    assert (test_dataset_dir / "system.yml").exists()
+    system = load_system(test_dataset_dir)
 
     # location_port is None -> return component_id (generic)
     assert len(system.components) > 0

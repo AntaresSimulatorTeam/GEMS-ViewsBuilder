@@ -21,12 +21,12 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.catalog import get_catalog_metric, load_catalog
-from gems_views_builder.library import ModelLibrary
+from gems_views_builder.input.catalog import load_catalog
+from gems_views_builder.input.library import load_library
+from gems_views_builder.input.system import load_system
+from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_builder import MetricStructureBuilder
-from gems_views_builder.system import InputSystem
-from gems_views_builder.taxonomy import load_taxonomy
-from gems_views_builder.views import ViewBuilder
+from gems_views_builder.views_builder import ViewBuilder
 
 # Same (technology, company) as filtering_and_breakdown, but YAML property order differs per component.
 _GAS_RHONEPOWER_GENERATORS = ("gas_1", "gas_2")
@@ -39,9 +39,9 @@ def property_order_workspace(test_files_root: Path, tmp_path: Path) -> tuple[Pat
     src = test_files_root / "filtering_and_breakdown_property_order"
     dst = tmp_path / "filtering_and_breakdown_property_order"
     shutil.copytree(src, dst)
-    ViewBuilder(dst).build()
-    result_file = next((dst / "results").glob("*.parquet"))
-    return dst, pl.read_parquet(result_file)
+    merged = ViewBuilder(Loader(dst).load()).build()
+    assert merged.file is not None
+    return dst, pl.read_parquet(merged.file)
 
 
 def _assert_totals_close(got: pl.DataFrame, exp: pl.DataFrame, *, msg: str = "") -> None:
@@ -102,13 +102,12 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     Breakdown must list (key,None) for missing keys, not omit them or return "{}".
     """
     root = test_files_root / "filtering_and_breakdown_property_order"
-    taxonomy = load_taxonomy(root / "taxonomy.yml")
-    library = ModelLibrary.load(root / "library.yml")
-    system = InputSystem.load(root / "system.yml", library)
+    library = load_library(root / "library.yml")
+    system = load_system(root)
     catalog = load_catalog(root / "catalogs" / "catalog.yml")
-    metric = get_catalog_metric(catalog, "PRODUCTION_BY_COUNTRY_COMPANY_TECH")
+    metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")
 
-    df = MetricStructureBuilder(system, catalog, metric, taxonomy, library).build().dataframe
+    df = MetricStructureBuilder(system, metric, library).build().dataframe
     partial = df.filter(pl.col("component") == "gen_company_only")
     assert partial.height == 1
     assert partial["breakdown_properties"][0] == _MISSING_COUNTRY_TECH_BREAKDOWN

@@ -17,33 +17,32 @@ import polars as pl
 import pytest
 from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.catalog import (
+from gems_views_builder.input.catalog import (
     Metric,
     PropertySchema,
     Term,
     TermsOperator,
     TimeOperator,
-    get_catalog_metric,
     load_catalog,
 )
-from gems_views_builder.library import ModelLibrary
+from gems_views_builder.input.library import load_library
 from gems_views_builder.metrics import LocationAggregation
+from gems_views_builder.input.system import load_system
+from gems_views_builder.input.taxonomy import load_taxonomy
 from gems_views_builder.metrics_builder import (
     MetricStructureBuilder,
     MetricStructureTable,
     _format_breakdown_properties,
     _format_metric_location,
 )
-from gems_views_builder.system import InputSystem
-from gems_views_builder.taxonomy import load_taxonomy
 
 
 @pytest.fixture(scope="module")
 def test_3_components(test_files_root: Path) -> dict[str, Any]:
     test_3 = test_files_root / "test_3"
+    system = load_system(test_3)
     taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
-    library = ModelLibrary.load(test_3 / "library.yml")
-    system = InputSystem.load(test_3 / "system.yml", library)
+    library = load_library(test_3 / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     return {
         "system": system,
@@ -54,12 +53,10 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
 
 
 def _build(metric_id: str, components: dict[str, Any]) -> "MetricStructureTable":
-    metric = get_catalog_metric(components["catalog"], metric_id)
+    metric = components["catalog"].get_metric(metric_id)
     return MetricStructureBuilder(
         components["system"],
-        components["catalog"],
         metric,
-        components["taxonomy"],
         components["library"],
     ).build()
 
@@ -122,7 +119,7 @@ def _component_matches_filters(metric_filter: PropertySchema | None, component: 
 
 
 def _count_expected_rows(metric_id: str, component_ids: list[str], components: dict[str, Any]) -> int:
-    metric = get_catalog_metric(components["catalog"], metric_id)
+    metric = components["catalog"].get_metric(metric_id)
     system = components["system"]
     count = 0
     for cid in component_ids:
@@ -139,7 +136,7 @@ def test_prod_structure_row_count(test_3_components: dict[str, Any]) -> None:
 
 def test_prod_structure_components(test_3_components: dict[str, Any]) -> None:
     df = _build("PROD", test_3_components).dataframe
-    metric = get_catalog_metric(test_3_components["catalog"], "PROD")
+    metric = test_3_components["catalog"].get_metric("PROD")
     system = test_3_components["system"]
     candidates = ["generator_A1", "generator_A2", "generator_B1"]
     expected = {cid for cid in candidates if _component_matches_filters(metric.filter, system.get_component(cid))}
@@ -241,9 +238,7 @@ def test_single_port_multiple_peers_produces_one_row_per_peer(test_3_components:
     df = (
         MetricStructureBuilder(
             test_3_components["system"],
-            test_3_components["catalog"],
             metric,
-            test_3_components["taxonomy"],
             test_3_components["library"],
         )
         .build()
@@ -289,9 +284,7 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
     df = (
         MetricStructureBuilder(
             test_3_components["system"],
-            test_3_components["catalog"],
             metric,
-            test_3_components["taxonomy"],
             test_3_components["library"],
         )
         .build()
@@ -310,10 +303,8 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
 def test_duplicate_locations_from_two_ports_produce_duplicate_rows(test_files_root: Path) -> None:
     """When two ports resolve to the same peer, get_location and the structure table keep both entries."""
     test_3 = test_files_root / "test_3"
-    taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
-    library = ModelLibrary.load(test_3 / "library.yml")
-    system = InputSystem.load(test_3 / "system.yml", library)
-    catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
+    library = load_library(test_3 / "library.yml")
+    system = load_system(test_3)
 
     # Default test_3 wiring uses p0_port -> busA and p1_port -> busB; force both ports to busA here.
     system._component_port_connections[("link_link_AB", "p0_port")] = {"busA"}
@@ -333,7 +324,7 @@ def test_duplicate_locations_from_two_ports_produce_duplicate_rows(test_files_ro
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    df = MetricStructureBuilder(system, catalog, metric, taxonomy, library).build().dataframe
+    df = MetricStructureBuilder(system, metric, library).build().dataframe
 
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1

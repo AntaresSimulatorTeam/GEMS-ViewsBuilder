@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 from gems_views_builder import Metric, Term, TermsOperator, TimeOperator, load_catalog
-from gems_views_builder.catalog import MetricData, PropertySchema
+from gems_views_builder.input.catalog import MetricData, PropertySchema
 
 
 def test_catalog_loads(test_dataset_dir: Path) -> None:

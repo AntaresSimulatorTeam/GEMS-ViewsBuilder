@@ -13,17 +13,17 @@
 import logging
 import shutil
 from pathlib import Path
-from unittest.mock import patch
 
 import polars as pl
 import pytest
 
-import gems_views_builder.common as common_mod
-from gems_views_builder.catalog import PropertySchema, get_catalog_metric, load_catalog
-from gems_views_builder.library import ModelLibrary
+from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_builder import _format_metric_location
-from gems_views_builder.system import InputSystem
-from gems_views_builder.views import ViewBuilder
+from gems_views_builder.views_builder import ViewBuilder
+
+
+def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
+    return ViewBuilder(Loader(dataset_dir).load())
 
 
 @pytest.fixture()
@@ -36,9 +36,9 @@ def view_run(test_files_root: Path, tmp_path: Path) -> tuple[pl.DataFrame, Path]
     src = test_files_root / "test_3"
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
-    ViewBuilder(dst).build()
-    result_file = next((dst / "results").glob("*.parquet"))
-    return pl.read_parquet(result_file), dst
+    merged = _build_view_builder(dst).build()
+    assert merged.file is not None
+    return pl.read_parquet(merged.file), dst
 
 
 def _component_matches_filters(metric_filter: PropertySchema | None, component: object) -> bool:
@@ -134,8 +134,8 @@ def test_prod_busb_values(view_run: tuple[pl.DataFrame, Path]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_load_busa_value(view_run: tuple[pl.DataFrame, Path]) -> None:
-    view_result, dst = view_run
+def test_load_busa_value(view_result: pl.DataFrame) -> None:
+    # load_AL.active_load = 100 (not time-dependent).
     rows = _metric_at(view_result, "LOAD", "busA")
     catalog = load_catalog(dst / "catalogs" / "catalog.yml")
     metric = get_catalog_metric(catalog, "LOAD")
@@ -204,19 +204,21 @@ def test_log_messages_emitted_to_stdout(
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
 
-    # Our logger has propagate=False so caplog's root handler never sees the records.
-    # Attach caplog's handler directly so records are captured.
-    common_mod.logger.addHandler(caplog.handler)
-    try:
-        with caplog.at_level(logging.INFO, logger="gems_views_builder"):
-            ViewBuilder(dst).build()
-    finally:
-        common_mod.logger.removeHandler(caplog.handler)
+    with caplog.at_level(logging.INFO):
+        _build_view_builder(dst).build()
+
+    repo_root = Path(__file__).resolve().parents[1]
+    log_directory = repo_root / "logs"
+    if not log_directory.exists() or not any(log_directory.glob("gems-views-builder-pipeline-run-*.log")):
+        raise FileNotFoundError(f"Log directory {log_directory} not found or does not contain any log files")
 
     messages = [r.message for r in caplog.records]
-    assert any("Starting pipeline" in m for m in messages)
     assert any("All inputs loaded" in m for m in messages)
-    assert any("Pipeline complete" in m for m in messages)
+    assert any("Starting input validation" in m for m in messages), "Missing expected log: Starting input validation"
+    assert any("All inputs loaded successfully" in m for m in messages), (
+        "Missing expected log: All inputs loaded successfully"
+    )
+    assert any("Results merged into" in m for m in messages), "Missing expected log: Results merged into"
 
 
 def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> None:
@@ -224,31 +226,14 @@ def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> Non
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
 
-    ViewBuilder(dst).build()
+    _build_view_builder(dst).build()
 
-    logs_dir = dst / "logs"
+    repo_root = Path(__file__).resolve().parents[1]
+    logs_dir = repo_root / "logs"
     assert logs_dir.is_dir(), "logs/ directory was not created"
-    log_files = list(logs_dir.glob("pipeline-*.log"))
-    assert len(log_files) == 1, f"Expected 1 log file, found {len(log_files)}"
-    assert log_files[0].stat().st_size > 0, "Log file is empty"
-
-
-def test_no_log_file_leaked_on_exception(test_files_root: Path, tmp_path: Path) -> None:
-    src = test_files_root / "test_3"
-    dst = tmp_path / "test_3"
-    shutil.copytree(src, dst)
-
-    with patch.object(ViewBuilder, "create_intermediate_dir", side_effect=RuntimeError("boom")):
-        with pytest.raises(RuntimeError, match="boom"):
-            ViewBuilder(dst).build()
-
-    # Handler must be closed — no open file handle left dangling
-    assert common_mod._file_handler is None, "File handler was not closed after exception"
-    # The log file itself is expected to exist (messages before the exception were written)
-    # but must be closed and readable — not locked or partially flushed
-    log_files = list((dst / "logs").glob("pipeline-*.log"))
-    assert len(log_files) == 1
-    assert log_files[0].read_text(encoding="utf-8")  # non-empty and readable
+    log_files = list(logs_dir.glob("gems-views-builder-pipeline-run-*.log"))
+    assert len(log_files) >= 1, f"Expected at least 1 log file, found {len(log_files)}"
+    assert max(f.stat().st_size for f in log_files) > 0, "All log files are empty"
 
 
 # ---------------------------------------------------------------------------

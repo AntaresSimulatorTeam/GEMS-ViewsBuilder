@@ -12,8 +12,7 @@ dependencies = [
     "pyarrow>=14.0.0",
     "pyyaml>=6.0.2",
     "pydantic>=2.11.7",
-    # GemsPy (PR #205 / `properties` branch): installs the `gems` top-level package.
-    "gemspy @ git+https://github.com/AntaresSimulatorTeam/GemsPy.git@properties",
+    "gemspy==0.1.2",
 ]
 authors = [
     { name = "Antoine Oustry" },

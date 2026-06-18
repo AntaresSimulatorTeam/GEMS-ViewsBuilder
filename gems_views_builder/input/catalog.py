@@ -12,6 +12,7 @@
 
 """Catalog .yml parsing models and typed representation."""
 
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -20,7 +21,6 @@ import yaml
 from pydantic import field_validator
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
-from gems_views_builder.common import logger
 
 """
 They are the same for now but we could keep them separated for future use.
@@ -104,8 +104,16 @@ class Catalog:
     location_taxonomy_category: str
     metrics: dict[str, Metric] = field(default_factory=dict)
 
+    def get_metric(self, metric_id: str) -> Metric:
+        logging.debug(f"Looking up metric {metric_id!r} in catalog {self.id!r}")
+        if metric_id not in self.metrics:
+            logging.info(f"[{metric_id}] Metric not found in catalog '{self.id}' — skipping")
+            raise ValueError(f"Metric {metric_id} not found in catalog {self.id}")
+        logging.debug(f"Metric {metric_id!r} found in catalog {self.id!r}")
+        return self.metrics[metric_id]
 
-def _to_term(term_data: TermData) -> Term:
+
+def to_term(term_data: TermData) -> Term:
     return Term(
         taxonomy_category=term_data.taxonomy_category,
         output_id=term_data.output_id,
@@ -114,10 +122,10 @@ def _to_term(term_data: TermData) -> Term:
     )
 
 
-def _to_metric(metric_data: MetricData) -> Metric:
+def to_metric(metric_data: MetricData) -> Metric:
     return Metric(
         id=metric_data.id,
-        terms=[_to_term(term) for term in metric_data.terms],
+        terms=[to_term(term) for term in metric_data.terms],
         terms_operator=metric_data.terms_operator,
         time_operator=metric_data.time_operator,
         breakdown=tuple(metric_data.breakdown) if metric_data.breakdown else None,
@@ -134,33 +142,24 @@ def load_catalogs(input_data_path: Path, catalog_ids: list[str]) -> dict[str, Ca
 
 
 def load_catalog(catalog_file_path: Path) -> Catalog:
-    logger.info(f"Loading catalog from {catalog_file_path}")
-    parsed = _load_catalog_file(catalog_file_path)
+    logging.info(f"Loading catalog from {catalog_file_path}")
+    parsed_catalog = load_catalog_file(catalog_file_path)
     catalog = Catalog(
-        id=parsed.id,
-        taxonomy=parsed.taxonomy,
-        location_taxonomy_category=parsed.location.taxonomy_category,
-        metrics={metric.id: _to_metric(metric) for metric in parsed.metrics_definition},
+        id=parsed_catalog.id,
+        taxonomy=parsed_catalog.taxonomy,
+        location_taxonomy_category=parsed_catalog.location.taxonomy_category,
+        metrics={metric.id: to_metric(metric) for metric in parsed_catalog.metrics_definition},
     )
-    logger.info(
+    logging.info(
         f"Catalog {catalog.id!r} loaded with taxonomy {catalog.taxonomy!r} and {len(catalog.metrics)} metric(s)"
     )
     return catalog
 
 
-def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
-    logger.debug(f"Loading catalog YAML from {catalog_file_path}")
+def load_catalog_file(catalog_file_path: Path) -> CatalogData:
+    logging.debug(f"Loading catalog YAML from {catalog_file_path}")
     with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     if "catalog" not in raw:
         raise ValueError(f"catalog.yml file {catalog_file_path} is missing the 'catalog' key at the root")
-    logger.debug(f"Catalog YAML parsed successfully from {catalog_file_path}")
     return CatalogData.model_validate(raw["catalog"])
-
-
-def get_catalog_metric(catalog: Catalog, metric_id: str) -> Metric:
-    logger.debug(f"Looking up metric {metric_id!r} in catalog {catalog.id!r}")
-    if metric_id not in catalog.metrics:
-        raise ValueError(f"Metric {metric_id} not found in catalog {catalog.id}")
-    logger.debug(f"Metric {metric_id!r} found in catalog {catalog.id!r}")
-    return catalog.metrics[metric_id]
