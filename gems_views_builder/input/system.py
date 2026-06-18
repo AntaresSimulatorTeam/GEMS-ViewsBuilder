@@ -12,25 +12,24 @@
 
 """System wrapper with helper methods for component lookup."""
 
+import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, cast
 
-from gems.study import Component  # type: ignore[import-untyped]
-from gems.study.parsing import parse_yaml_components  # type: ignore[import-untyped]
-from gems.study.resolve_components import System, resolve_system  # type: ignore[import-untyped]
-from gems.study.system import PortsConnection  # type: ignore[import-untyped]
-
-from gems_views_builder.common import logger
-from gems_views_builder.library import ModelLibrary
+from gems.study.parsing import (  # type: ignore
+    ComponentSchema as GemsComponent,
+)
+from gems.study.parsing import SystemSchema as GemsSystem
+from gems.study.parsing import parse_yaml_components
 
 
-class InputSystem:
+class System:
     """
-    Compose a Gems InputSystem and expose ViewsBuilder-specific helpers.
+    Compose a Gems System and expose ViewsBuilder-specific helpers.
     """
 
-    def __init__(self, system: System, *, library_id: str | None = None) -> None:
+    def __init__(self, system: GemsSystem) -> None:
         self._system = system
         self._library_id = library_id
         logger.info(
@@ -45,8 +44,8 @@ class InputSystem:
         )
 
     @property
-    def components(self) -> list[Component]:
-        return list(self._system.components)
+    def components(self) -> list[GemsComponent]:
+        return cast(list[GemsComponent], self._system.components)
 
     @property
     def connections(self) -> list[PortsConnection]:
@@ -166,28 +165,18 @@ class InputSystem:
         return tuple(result)
 
     @classmethod
-    def load(cls, path: Path, library: "ModelLibrary") -> "InputSystem":
-        """
-        Load and resolve a Gems system from a `system.yml` file using a loaded model library.
-
-        This keeps the public API as `InputSystem.load(path, library)` while delegating
-        the lower-level "already-resolved libraries" variant to `from_file_resolved(...)`.
-        """
-        logger.info(f"Loading input system from {path}")
-        libraries = library.resolve_libraries()
-        return cls.from_file_resolved(path, libraries, library_id=library.id)
-
-    @classmethod
-    def from_file_resolved(
-        cls, path: Path, libraries: dict[str, object], *, library_id: str | None = None
-    ) -> "InputSystem":
-        """
-        Load and resolve a Gems system from a `system.yml` file using already-resolved libraries.
-        """
-        logger.info(f"Parsing system YAML from {path}")
+    def from_file(cls, path: Path) -> "System":
+        """Load a system yml file."""
+        logging.info(f"Loading system from {path}")
         with open(path, encoding="utf-8") as f:
             parsed = parse_yaml_components(f)
-        logger.info(f"Resolving system from {path} with {len(libraries)} librar(y/ies)")
-        resolved = resolve_system(parsed, libraries)
-        logger.info(f"System resolved successfully from {path}")
-        return cls(cast(System, resolved), library_id=library_id)
+        logging.info(f"System loaded from {path}")
+        return cls(cast(GemsSystem, parsed))
+
+
+def load_system(input_data_path: Path) -> System:
+    logging.info("Loading system")
+    system_path = input_data_path / "system.yml"
+    system = System.from_file(system_path)
+    logging.info(f"System loaded from {system_path}")
+    return system

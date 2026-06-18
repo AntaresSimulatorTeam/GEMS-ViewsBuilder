@@ -16,7 +16,7 @@ from typing import cast
 import pytest
 
 RESOURCES_TEST_FILES_ROOT = Path(__file__).resolve().parent.parent / "resources"
-TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
+TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "test_inputs"
 
 
 @pytest.fixture(scope="session")

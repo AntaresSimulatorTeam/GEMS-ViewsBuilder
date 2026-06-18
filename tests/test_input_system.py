@@ -13,10 +13,9 @@
 from pathlib import Path
 
 import pytest
-from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore[import-untyped]
+from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore
 
-from gems_views_builder import InputSystem as GemsViewsInputSystem
-from gems_views_builder.library import ModelLibrary
+from gems_views_builder import System as GemsViewsInputSystem
 
 
 def test_input_system_using(test_dataset_dir: Path) -> None:

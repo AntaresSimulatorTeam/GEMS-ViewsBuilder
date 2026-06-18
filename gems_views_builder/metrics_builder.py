@@ -10,16 +10,17 @@
 #
 # This file is part of the Antares project.
 
+import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 import polars as pl
 from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.catalog import Catalog, Metric, PropertySchema
-from gems_views_builder.common import logger
-from gems_views_builder.library import ModelLibrary
-from gems_views_builder.system import InputSystem
-from gems_views_builder.taxonomy import Taxonomy
+from gems_views_builder.input.catalog import Metric
+from gems_views_builder.input.library import Library
+from gems_views_builder.input.system import System
+from gems_views_builder.writer import Writer
 
 _METRIC_STRUCTURE_SCHEMA = pl.Schema(
     {
@@ -71,34 +72,30 @@ def _format_metric_location(locations: str | tuple[str, ...]) -> str:
 class MetricStructureBuilder:
     def __init__(
         self,
-        system: InputSystem,
-        catalog: Catalog,
+        system: System,
         metric: Metric,
-        taxonomy: Taxonomy,
-        model_library: ModelLibrary,
+        model_library: Library,
     ) -> None:
         self.system = system
-        self.catalog = catalog
         self.metric = metric
-        self.taxonomy = taxonomy
         self.model_library = model_library
 
     def build(self) -> MetricStructureTable:
-        logger.debug(f"[{self.metric.id}] Building metric structure table ({len(self.metric.terms)} term(s))")
+        logging.debug(f"[{self.metric.id}] Building metric structure table ({len(self.metric.terms)} term(s))")
         rows: list[dict[str, object]] = []
         for term in self.metric.terms:
-            logger.debug(
+            logging.debug(
                 f"[{self.metric.id}] Processing term for taxonomy category {term.taxonomy_category!r} "
                 f"and output {term.output_id!r}"
             )
             model_ids = self.model_library.get_components_in_taxonomy_category(term.taxonomy_category)
-            logger.debug(
+            logging.debug(
                 f"[{self.metric.id}] Found {len(model_ids)} model(s) in taxonomy category {term.taxonomy_category!r}"
             )
             for model_id in model_ids:
                 qualified_ref = f"{self.model_library.id}.{model_id}"
                 component_ids = self.system.get_instances_by_model(qualified_ref)
-                logger.debug(
+                logging.debug(
                     f"[{self.metric.id}] Model {qualified_ref!r} resolves to {len(component_ids)} component instance(s)"
                 )
                 for component_id in component_ids:
@@ -126,7 +123,31 @@ class MetricStructureBuilder:
                         )
 
         if not rows:
-            logger.info(f"[{self.metric.id}] No matching components found — metric structure table is empty")
+            logging.info(f"[{self.metric.id}] No matching components found — metric structure table is empty")
             return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
-        logger.info(f"[{self.metric.id}] Metric structure table built with {len(rows)} row(s)")
+        logging.info(f"[{self.metric.id}] Metric structure table built with {len(rows)} row(s)")
         return MetricStructureTable(pl.DataFrame(rows, schema=_METRIC_STRUCTURE_SCHEMA))
+
+
+@dataclass
+class MetricStructure:
+    """On-disk metric structure table, ready for lazy scanning and cleanup."""
+
+    file: Path
+    dataframe: pl.LazyFrame
+
+    def cleanup(self) -> None:
+        logging.info(f"Cleaning metric structure {self.file}")
+        self.file.unlink(missing_ok=True)
+
+
+def build_metric_structure(
+    system: System,
+    metric: Metric,
+    library: Library,
+    writer: Writer,
+) -> MetricStructure:
+    """Build the metric structure table, persist it via writer, and return a MetricStructure."""
+    table = MetricStructureBuilder(system, metric, library).build()
+    path = writer.write_metric_structure_table(table.dataframe, metric.id)
+    return MetricStructure(path, pl.scan_parquet(path))

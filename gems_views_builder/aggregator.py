@@ -1,9 +1,28 @@
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+#
+# See AUTHORS.txt
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# This file is part of the Antares project.
+
+import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import polars as pl
 
-from gems_views_builder.catalog import TermsOperator, TimeOperator
-from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE, logger
+from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
+from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
+from gems_views_builder.metric_view import MetricView
+
+if TYPE_CHECKING:
+    from gems_views_builder.input.simulation_table import FilteredSimulationTable
+    from gems_views_builder.metrics_builder import MetricStructure
 
 
 class Aggregator:
@@ -23,13 +42,26 @@ class Aggregator:
         metric_view_dir.mkdir(parents=True, exist_ok=True)
         return metric_view_dir
 
-    def aggregate_metric_terms(
+    def aggregate(
+        self,
+        filtered_st: "FilteredSimulationTable",
+        structure: "MetricStructure",
+        metric: Metric,
+    ) -> MetricView:
+        joined = filtered_st.dataframe.join(structure.dataframe, on=["component", "output"], how="right")
+        term_path = self._aggregate_metric_terms(joined, metric.terms_operator, metric.id)
+        temporal_path = self._aggregate_metric_temporally(term_path, metric.time_operator, metric.id)
+        structure.cleanup()
+        term_path.unlink(missing_ok=True)
+        return MetricView(temporal_path)
+
+    def _aggregate_metric_terms(
         self, joined_dataframe: pl.LazyFrame, metric_term_operator: TermsOperator, metric_id: str
     ) -> Path:
         """
         Step 2.B from POC[Computing the metric]: Right join TIME_FILTERED_SIMULATION_TABLE with METRIC_STRUCTURE_TABLE on component and output
         """
-        logger.info(f"[{metric_id}] Aggregating terms with operator {metric_term_operator.value}")
+        logging.info(f"[{metric_id}] Aggregating terms with operator {metric_term_operator.value}")
         value_agg = pl.col("value").sum() if metric_term_operator == TermsOperator.SUM else pl.col("value").mean()
         metric_view = (
             joined_dataframe.with_columns(pl.col("scenario_index").alias("scenario"))
@@ -68,16 +100,16 @@ class Aggregator:
             compression_level=PARQUET_COMPRESSION_LEVEL,
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
-        logger.info(f"[{metric_id}] Terms aggregation written to {out_path}")
+        logging.info(f"[{metric_id}] Terms aggregation written to {out_path}")
         return out_path
 
-    def aggregate_metric_temporally(
+    def _aggregate_metric_temporally(
         self, metric_view_parquet_path: Path, metric_time_operator: TimeOperator, metric_id: str
     ) -> Path:
         """
         Step 2.C from POC[temporal aggregation]: Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
         """
-        logger.info(f"[{metric_id}] Aggregating temporally with operator {metric_time_operator.value}")
+        logging.info(f"[{metric_id}] Aggregating temporally with operator {metric_time_operator.value}")
         metric_view = pl.scan_parquet(metric_view_parquet_path)
         time_agg = (
             pl.col("granular_metric_value").sum()
@@ -118,5 +150,5 @@ class Aggregator:
             compression_level=PARQUET_COMPRESSION_LEVEL,
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
-        logger.info(f"[{metric_id}] Temporal aggregation written to {out_path}")
+        logging.info(f"[{metric_id}] Temporal aggregation written to {out_path}")
         return out_path
