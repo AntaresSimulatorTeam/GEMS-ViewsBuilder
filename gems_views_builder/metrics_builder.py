@@ -48,7 +48,7 @@ def _check_filter_matches(component: Component, filter: PropertySchema | None) -
 
 
 def _format_breakdown_properties(
-    component_properties: dict[str, str], breakdown: tuple[PropertySchema, ...] | None
+    component_properties: dict[str, str], breakdown: list[PropertySchema] | None
 ) -> str:
     if not breakdown:
         return "{}"

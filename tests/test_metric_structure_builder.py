@@ -61,11 +61,11 @@ def _build(metric_id: str, components: dict[str, Any]) -> "MetricStructureTable"
 
 
 def test_format_breakdown_properties_missing_keys_use_none_literal() -> None:
-    breakdown = (
+    breakdown = [
         PropertySchema(key="country"),
         PropertySchema(key="company"),
         PropertySchema(key="technology"),
-    )
+    ]
     component_properties = {"company": "rhonepower"}
     assert (
         _format_breakdown_properties(component_properties, breakdown)
@@ -74,7 +74,7 @@ def test_format_breakdown_properties_missing_keys_use_none_literal() -> None:
 
 
 def test_format_breakdown_properties_all_keys_present() -> None:
-    breakdown = (PropertySchema(key="technology"), PropertySchema(key="company"))
+    breakdown = [PropertySchema(key="technology"), PropertySchema(key="company")]
     component_properties = {"technology": "gas", "company": "rhonepower"}
     assert _format_breakdown_properties(component_properties, breakdown) == "{(technology,gas),(company,rhonepower)}"
 
