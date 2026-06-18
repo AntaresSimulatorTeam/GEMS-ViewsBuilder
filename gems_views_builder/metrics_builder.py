@@ -19,8 +19,8 @@ from gems.study import Component  # type: ignore[import-untyped]
 
 from gems_views_builder.input.catalog import Metric, PropertySchema
 from gems_views_builder.input.library import Library
-from gems_views_builder.metrics import LocationAggregation
 from gems_views_builder.input.system import System
+from gems_views_builder.input.view_config import LocationAggregation
 from gems_views_builder.writer import Writer
 
 _METRIC_STRUCTURE_SCHEMA = pl.Schema(
@@ -131,7 +131,7 @@ class MetricStructureBuilder:
                         raw_locations = [raw_location] if isinstance(raw_location, str) else list(raw_location)
                         resolved_locations = self._resolve_location_aggregation(raw_locations)
                         if not resolved_locations:
-                            logger.debug(
+                            logging.debug(
                                 f"[{self.metric.id}] Component {component_id!r} has no locations after "
                                 "aggregation and was skipped"
                             )
@@ -177,8 +177,9 @@ def build_metric_structure(
     metric: Metric,
     library: Library,
     writer: Writer,
+    location_aggregation: LocationAggregation | None = None,
 ) -> MetricStructure:
     """Build the metric structure table, persist it via writer, and return a MetricStructure."""
-    table = MetricStructureBuilder(system, metric, library).build()
+    table = MetricStructureBuilder(system, metric, library, location_aggregation=location_aggregation).build()
     path = writer.write_metric_structure_table(table.dataframe, metric.id)
     return MetricStructure(path, pl.scan_parquet(path))

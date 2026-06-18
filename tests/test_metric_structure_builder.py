@@ -26,9 +26,9 @@ from gems_views_builder.input.catalog import (
     load_catalog,
 )
 from gems_views_builder.input.library import load_library
-from gems_views_builder.metrics import LocationAggregation
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.taxonomy import load_taxonomy
+from gems_views_builder.input.view_config import LocationAggregation
 from gems_views_builder.metrics_builder import (
     MetricStructureBuilder,
     MetricStructureTable,
@@ -337,11 +337,21 @@ def test_duplicate_locations_from_two_ports_produce_duplicate_rows(test_files_ro
 # ---------------------------------------------------------------------------
 
 
+def _location_aggregation_src(test_files_root: Path) -> Path:
+    candidate = test_files_root / "test_location_aggregation"
+    if candidate.is_dir():
+        return candidate
+    alt = test_files_root.parent / "tests" / "test_inputs" / "test_location_aggregation"
+    if alt.is_dir():
+        return alt
+    raise FileNotFoundError(f"test_location_aggregation fixture not found under {test_files_root}")
+
+
 @pytest.fixture(scope="module")
 def loc_agg_components(test_files_root: Path) -> dict[str, Any]:
-    fixture = test_files_root / "test_location_aggregation"
-    library = ModelLibrary.load(fixture / "library.yml")
-    system = InputSystem.load(fixture / "system.yml", library)
+    fixture = _location_aggregation_src(test_files_root)
+    library = load_library(fixture / "library.yml")
+    system = load_system(fixture)
     catalog = load_catalog(fixture / "catalogs" / "catalog.yml")
     taxonomy = load_taxonomy(fixture / "taxonomy.yml")
     return {"system": system, "catalog": catalog, "library": library, "taxonomy": taxonomy}
@@ -351,12 +361,10 @@ def _make_builder(
     components: dict[str, Any],
     location_aggregation: LocationAggregation | None = None,
 ) -> MetricStructureBuilder:
-    metric = get_catalog_metric(components["catalog"], "PRODUCTION")
+    metric = components["catalog"].get_metric("PRODUCTION")
     return MetricStructureBuilder(
         components["system"],
-        components["catalog"],
         metric,
-        components["taxonomy"],
         components["library"],
         location_aggregation=location_aggregation,
     )
@@ -404,13 +412,11 @@ def test_resolve_no_aggregation_passthrough(loc_agg_components: dict[str, Any]) 
 
 def test_build_with_country_aggregation_collapses_fr(loc_agg_components: dict[str, Any]) -> None:
     """gen_FR1 and gen_FR2 both resolve to '{FR}' via the country property."""
-    metric = get_catalog_metric(loc_agg_components["catalog"], "PRODUCTION")
+    metric = loc_agg_components["catalog"].get_metric("PRODUCTION")
     df = (
         MetricStructureBuilder(
             loc_agg_components["system"],
-            loc_agg_components["catalog"],
             metric,
-            loc_agg_components["taxonomy"],
             loc_agg_components["library"],
             location_aggregation=LocationAggregation(key="country"),
         )
@@ -424,13 +430,11 @@ def test_build_with_country_aggregation_collapses_fr(loc_agg_components: dict[st
 
 def test_build_with_drop_excludes_orphan(loc_agg_components: dict[str, Any]) -> None:
     """gen_orph has no country property; on_missing=drop excludes it."""
-    metric = get_catalog_metric(loc_agg_components["catalog"], "PRODUCTION")
+    metric = loc_agg_components["catalog"].get_metric("PRODUCTION")
     df = (
         MetricStructureBuilder(
             loc_agg_components["system"],
-            loc_agg_components["catalog"],
             metric,
-            loc_agg_components["taxonomy"],
             loc_agg_components["library"],
             location_aggregation=LocationAggregation(key="country", on_missing="drop"),
         )
@@ -458,9 +462,7 @@ def test_build_multiport_location_ports_with_aggregation(loc_agg_components: dic
     df = (
         MetricStructureBuilder(
             loc_agg_components["system"],
-            loc_agg_components["catalog"],
             metric,
-            loc_agg_components["taxonomy"],
             loc_agg_components["library"],
             location_aggregation=LocationAggregation(key="country"),
         )

@@ -68,7 +68,10 @@ def test_view_config_time_aggregation(test_dataset_dir: Path) -> None:
 
 
 def test_view_config_location_aggregation(test_files_root: Path) -> None:
-    config = ViewConfig.load(test_files_root / "test_location_aggregation" / "view_config.yml")
+    src = test_files_root / "test_location_aggregation"
+    if not src.is_dir():
+        src = test_files_root.parent / "tests" / "test_inputs" / "test_location_aggregation"
+    config = load_view_config(src / "view_config.yml")
     assert config.location_aggregation is not None
     assert config.location_aggregation.key == "country"
     assert config.location_aggregation.on_missing == "keep"

@@ -17,6 +17,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from gems_views_builder.input.catalog import Metric, PropertySchema, load_catalog
+from gems_views_builder.input.system import System, load_system
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_builder import _format_metric_location
 from gems_views_builder.views_builder import ViewBuilder
@@ -24,6 +26,35 @@ from gems_views_builder.views_builder import ViewBuilder
 
 def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
     return ViewBuilder(Loader(dataset_dir).load())
+
+
+def _location_aggregation_src(test_files_root: Path) -> Path:
+    candidate = test_files_root / "test_location_aggregation"
+    if candidate.is_dir():
+        return candidate
+    alt = test_files_root.parent / "tests" / "test_inputs" / "test_location_aggregation"
+    if alt.is_dir():
+        return alt
+    raise FileNotFoundError(f"test_location_aggregation fixture not found under {test_files_root}")
+
+
+def _metric_context(dataset_dir: Path, metric_id: str) -> tuple[Metric, System]:
+    catalog = load_catalog(dataset_dir / "catalogs" / "catalog.yml")
+    return catalog.get_metric(metric_id), load_system(dataset_dir)
+
+
+def _component_matches_filters(metric_filter: PropertySchema | None, component: object) -> bool:
+    if metric_filter is None:
+        return True
+    props = getattr(component, "properties", None) or {}
+    if not isinstance(props, dict):
+        return False
+    return bool(props.get(metric_filter.key) == metric_filter.value)
+
+
+def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
+    encoded = _format_metric_location((location,))
+    return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == encoded)).sort("view_date")
 
 
 @pytest.fixture()
@@ -41,20 +72,6 @@ def view_run(test_files_root: Path, tmp_path: Path) -> tuple[pl.DataFrame, Path]
     return pl.read_parquet(merged.file), dst
 
 
-def _component_matches_filters(metric_filter: PropertySchema | None, component: object) -> bool:
-    if metric_filter is None:
-        return True
-    props = getattr(component, "properties", None) or {}
-    if not isinstance(props, dict):
-        return False
-    return bool(props.get(metric_filter.key) == metric_filter.value)
-
-
-def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
-    encoded = _format_metric_location((location,))
-    return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == encoded)).sort("view_date")
-
-
 # ---------------------------------------------------------------------------
 # PROD
 # ---------------------------------------------------------------------------
@@ -63,11 +80,7 @@ def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
 def test_prod_busa_row_count(view_run: tuple[pl.DataFrame, Path]) -> None:
     view_result, dst = view_run
     rows = _metric_at(view_result, "PROD", "busA")
-
-    catalog = load_catalog(dst / "catalogs" / "catalog.yml")
-    metric = get_catalog_metric(catalog, "PROD")
-    library = ModelLibrary.load(dst / "library.yml")
-    system = InputSystem.load(dst / "system.yml", library)
+    metric, system = _metric_context(dst, "PROD")
     included = [
         cid
         for cid in ("generator_A1", "generator_A2")
@@ -84,10 +97,7 @@ def test_prod_busa_values(view_run: tuple[pl.DataFrame, Path]) -> None:
     view_result, dst = view_run
     # generator_A1.p(t) + generator_A2.p(t) = t + t = 2t
     rows = _metric_at(view_result, "PROD", "busA")
-    catalog = load_catalog(dst / "catalogs" / "catalog.yml")
-    metric = get_catalog_metric(catalog, "PROD")
-    library = ModelLibrary.load(dst / "library.yml")
-    system = InputSystem.load(dst / "system.yml", library)
+    metric, system = _metric_context(dst, "PROD")
     included = [
         cid
         for cid in ("generator_A1", "generator_A2")
@@ -104,10 +114,7 @@ def test_prod_busa_values(view_run: tuple[pl.DataFrame, Path]) -> None:
 def test_prod_busb_row_count(view_run: tuple[pl.DataFrame, Path]) -> None:
     view_result, dst = view_run
     rows = _metric_at(view_result, "PROD", "busB")
-    catalog = load_catalog(dst / "catalogs" / "catalog.yml")
-    metric = get_catalog_metric(catalog, "PROD")
-    library = ModelLibrary.load(dst / "library.yml")
-    system = InputSystem.load(dst / "system.yml", library)
+    metric, system = _metric_context(dst, "PROD")
     if not _component_matches_filters(metric.filter, system.get_component("generator_B1")):
         assert len(rows) == 0
         return
@@ -118,10 +125,7 @@ def test_prod_busb_values(view_run: tuple[pl.DataFrame, Path]) -> None:
     view_result, dst = view_run
     # generator_B1.p(t) = 100 - 2t
     rows = _metric_at(view_result, "PROD", "busB")
-    catalog = load_catalog(dst / "catalogs" / "catalog.yml")
-    metric = get_catalog_metric(catalog, "PROD")
-    library = ModelLibrary.load(dst / "library.yml")
-    system = InputSystem.load(dst / "system.yml", library)
+    metric, system = _metric_context(dst, "PROD")
     if not _component_matches_filters(metric.filter, system.get_component("generator_B1")):
         assert rows.is_empty()
         return
@@ -134,13 +138,11 @@ def test_prod_busb_values(view_run: tuple[pl.DataFrame, Path]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_load_busa_value(view_result: pl.DataFrame) -> None:
+def test_load_busa_value(view_run: tuple[pl.DataFrame, Path]) -> None:
+    view_result, dst = view_run
     # load_AL.active_load = 100 (not time-dependent).
     rows = _metric_at(view_result, "LOAD", "busA")
-    catalog = load_catalog(dst / "catalogs" / "catalog.yml")
-    metric = get_catalog_metric(catalog, "LOAD")
-    library = ModelLibrary.load(dst / "library.yml")
-    system = InputSystem.load(dst / "system.yml", library)
+    metric, system = _metric_context(dst, "LOAD")
     if not _component_matches_filters(metric.filter, system.get_component("load_AL")):
         assert len(rows) == 0
         return
@@ -164,10 +166,7 @@ def test_balance_busa_values(view_run: tuple[pl.DataFrame, Path]) -> None:
     view_result, dst = view_run
     # link_link_AB.p0_port.flow(t) = 100 - 2t (outflow from busA)
     rows = _metric_at(view_result, "BALANCE", "busA")
-    catalog = load_catalog(dst / "catalogs" / "catalog.yml")
-    metric = get_catalog_metric(catalog, "BALANCE")
-    library = ModelLibrary.load(dst / "library.yml")
-    system = InputSystem.load(dst / "system.yml", library)
+    metric, system = _metric_context(dst, "BALANCE")
     if not _component_matches_filters(metric.filter, system.get_component("link_link_AB")):
         assert len(rows) == 0
         return
@@ -180,10 +179,7 @@ def test_balance_busb_values(view_run: tuple[pl.DataFrame, Path]) -> None:
     view_result, dst = view_run
     # link_link_AB.p1_port.flow(t) = -(100 - 2t) (inflow into busB)
     rows = _metric_at(view_result, "BALANCE", "busB")
-    catalog = load_catalog(dst / "catalogs" / "catalog.yml")
-    metric = get_catalog_metric(catalog, "BALANCE")
-    library = ModelLibrary.load(dst / "library.yml")
-    system = InputSystem.load(dst / "system.yml", library)
+    metric, system = _metric_context(dst, "BALANCE")
     if not _component_matches_filters(metric.filter, system.get_component("link_link_AB")):
         assert len(rows) == 0
         return
@@ -247,13 +243,14 @@ def _loc_run(test_files_root: Path, tmp_path: Path, config_variant: str | None =
     config_variant: name of an alternative view_config file (without .yml) to
     copy over view_config.yml before running. None means use the default.
     """
-    src = test_files_root / "test_location_aggregation"
+    src = _location_aggregation_src(test_files_root)
     dst = tmp_path / f"loc_agg_{config_variant or 'default'}"
     shutil.copytree(src, dst)
     if config_variant is not None:
         shutil.copy(dst / f"{config_variant}.yml", dst / "view_config.yml")
-    ViewBuilder(dst).build()
-    return pl.read_parquet(next((dst / "results").glob("*.parquet")))
+    merged = _build_view_builder(dst).build()
+    assert merged.file is not None
+    return pl.read_parquet(merged.file)
 
 
 def test_country_collapse_fr(test_files_root: Path, tmp_path: Path) -> None:

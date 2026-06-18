@@ -39,6 +39,7 @@ class ViewBuilder:
                     metric,
                     self.input_data.library,
                     self.writer,
+                    location_aggregation=self.input_data.view_config.location_aggregation,
                 )
                 metric_views.append(self.aggregator.aggregate(self.input_data.filtered_st, structure, metric))
         merged = MergedView.merge_views(metric_views, self.writer)
