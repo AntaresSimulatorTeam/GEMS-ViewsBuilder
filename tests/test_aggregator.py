@@ -15,10 +15,14 @@ from pathlib import Path
 import polars as pl
 from pytest import approx
 
-from gems_views_builder.aggregator import Aggregator
-from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
-from gems_views_builder.input.simulation_table import FilteredSimulationTable
-from gems_views_builder.metrics_builder import MetricStructure
+from gems_views_builder import (
+    Aggregator,
+    FilteredSimulationTable,
+    Metric,
+    MetricStructure,
+    TermsOperator,
+    TimeOperator,
+)
 
 
 def _simu_lf(values: list[float]) -> pl.LazyFrame:

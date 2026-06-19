@@ -15,8 +15,12 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder import FilteredSimulationTable, load_calendar
-from gems_views_builder.input.simulation_table import filter_simulation_table, load_simulation_table
+from gems_views_builder import (
+    FilteredSimulationTable,
+    filter_simulation_table,
+    load_calendar,
+    load_simulation_table,
+)
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 

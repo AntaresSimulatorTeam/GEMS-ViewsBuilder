@@ -17,20 +17,20 @@ import polars as pl
 import pytest
 from gems.study import Component  # type: ignore[import-untyped]
 
-from gems_views_builder.input.catalog import (
+from gems_views_builder import (
     Metric,
+    MetricStructureBuilder,
+    MetricStructureTable,
     PropertySchema,
     Term,
     TermsOperator,
     TimeOperator,
     load_catalog,
+    load_library,
+    load_system,
+    load_taxonomy,
 )
-from gems_views_builder.input.library import load_library
-from gems_views_builder.input.system import load_system
-from gems_views_builder.input.taxonomy import load_taxonomy
 from gems_views_builder.metrics_builder import (
-    MetricStructureBuilder,
-    MetricStructureTable,
     _format_breakdown_properties,
     _format_metric_location,
 )

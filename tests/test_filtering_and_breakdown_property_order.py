@@ -21,12 +21,14 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.input.catalog import load_catalog
-from gems_views_builder.input.library import load_library
-from gems_views_builder.input.system import load_system
-from gems_views_builder.loader import Loader
-from gems_views_builder.metrics_builder import MetricStructureBuilder
-from gems_views_builder.views_builder import ViewBuilder
+from gems_views_builder import (
+    Loader,
+    MetricStructureBuilder,
+    ViewBuilder,
+    load_catalog,
+    load_library,
+    load_system,
+)
 
 # Same (technology, company) as filtering_and_breakdown, but YAML property order differs per component.
 _GAS_RHONEPOWER_GENERATORS = ("gas_1", "gas_2")

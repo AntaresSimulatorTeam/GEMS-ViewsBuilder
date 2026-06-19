@@ -17,9 +17,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.loader import Loader
+from gems_views_builder import Loader, ViewBuilder
 from gems_views_builder.metrics_builder import _format_metric_location
-from gems_views_builder.views_builder import ViewBuilder
 
 
 def _build_view_builder(dataset_dir: Path) -> ViewBuilder:

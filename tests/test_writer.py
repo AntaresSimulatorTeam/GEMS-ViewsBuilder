@@ -18,8 +18,8 @@ import polars as pl
 import pyarrow.parquet as pq
 import pytest
 
+from gems_views_builder import Writer
 from gems_views_builder.common import PARQUET_ROW_GROUP_SIZE
-from gems_views_builder.writer import Writer
 
 # Schema matching temporal aggregation chunk output
 _CHUNK_SCHEMA = {

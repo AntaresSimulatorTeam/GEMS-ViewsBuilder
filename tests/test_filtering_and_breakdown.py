@@ -22,8 +22,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.loader import Loader
-from gems_views_builder.views_builder import ViewBuilder
+from gems_views_builder import Loader, ViewBuilder
 
 # Generator instances in ``filtering_and_breakdown/system.yml`` (technology, company).
 _FILTERING_AND_BREAKDOWN_GEN_META: dict[str, tuple[str, str]] = {
