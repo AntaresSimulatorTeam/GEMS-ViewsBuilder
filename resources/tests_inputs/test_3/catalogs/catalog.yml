@@ -26,9 +26,6 @@ catalog:
         location-ports: p_balance_port
     terms-operator: sum
     time-operator: sum
-    breakdown-property:
-      key: business_view
-      value: default
 
   - id: LOAD
     terms:
@@ -37,9 +34,6 @@ catalog:
         location-ports: p_balance_port
     terms-operator: sum
     time-operator: sum
-    breakdown-property:
-      key: business_view
-      value: default
 
   - id: INSTALLED_PROD_CAPACITY
     terms:
@@ -48,9 +42,6 @@ catalog:
         location-ports: p_balance_port
     terms-operator: sum
     time-operator: sum
-    breakdown-property:
-      key: business_view
-      value: default
 
   - id: BALANCE
     terms:
@@ -62,6 +53,3 @@ catalog:
         location-ports: p1_port
     terms-operator: sum
     time-operator: sum
-    breakdown-property:
-      key: business_view
-      value: default
