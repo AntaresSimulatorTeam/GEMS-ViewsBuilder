@@ -7,7 +7,7 @@ from gems_views_builder.taxonomy import Taxonomy
 
 
 def validate_catalogs_against_taxonomy(catalogs: dict[str, Catalog], taxonomy: Taxonomy) -> None:
-    logging.info(f"Validating {len(catalogs)} catalog(s) against taxonomy {taxonomy.id!r}")
+    logging.debug(f"Validating {len(catalogs)} catalog(s) against taxonomy {taxonomy.id!r}")
     for catalog in catalogs.values():
         validate_catalog_against_taxonomy(catalog, taxonomy)
     logging.info(f"All catalogs are consistent with taxonomy {taxonomy.id!r}")
