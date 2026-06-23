@@ -42,5 +42,5 @@ class ViewBuilder:
                 )
                 metric_views.append(self.aggregator.aggregate(self.input_data.filtered_st, structure, metric))
         merged = MergedView.merge_views(metric_views, self.writer)
-        self.input_data.filtered_st.cleanup()
+        del self.input_data.filtered_st
         return merged

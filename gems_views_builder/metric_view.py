@@ -10,6 +10,7 @@
 #
 # This file is part of the Antares project.
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -20,5 +21,6 @@ class MetricView:
 
     file: Path
 
-    def cleanup(self) -> None:
+    def __del__(self) -> None:
+        logging.debug(f"Cleaning metric view {self.file}")
         self.file.unlink(missing_ok=True)

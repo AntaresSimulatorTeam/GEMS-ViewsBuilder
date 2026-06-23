@@ -25,22 +25,22 @@ class Writer:
     def __init__(self, input_data_path: Path) -> None:
         self.input_data_path = input_data_path
 
-    def merge_results(self, chunk_paths: list[Path]) -> Path | None:
-        logging.info(f"Merging {len(chunk_paths)} chunk(s) into results")
-        if not chunk_paths:
+    def merge_results(self, metric_views: list[MetricView]) -> Path | None:
+        logging.info(f"Merging {len(metric_views)} metric view(s) into results")
+        if not metric_views:
             return None
         results_dir = self.input_data_path / "results"
         results_dir.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         out_path = results_dir / f"view{timestamp}.parquet"
-        pl.scan_parquet(chunk_paths).sink_parquet(
+        pl.scan_parquet([v.file for v in metric_views]).sink_parquet(
             out_path,
             compression=PARQUET_COMPRESSION,
             compression_level=PARQUET_COMPRESSION_LEVEL,
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
-        for chunk_path in chunk_paths:
-            chunk_path.unlink(missing_ok=True)
+        for metric_view in metric_views:
+            del metric_view
         logging.info(f"Results merged into {out_path}")
         return out_path
 
@@ -67,4 +67,4 @@ class MergedView:
 
     @classmethod
     def merge_views(cls, metric_views: list[MetricView], writer: "Writer") -> "MergedView":
-        return cls(file=writer.merge_results([v.file for v in metric_views]))
+        return cls(file=writer.merge_results(metric_views))
