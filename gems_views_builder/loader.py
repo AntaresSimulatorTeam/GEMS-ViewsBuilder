@@ -24,8 +24,6 @@ from gems_views_builder.input.simulation_table import (
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.taxonomy import load_taxonomy
 from gems_views_builder.input.view_config import ViewConfig, load_view_config
-from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
-from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
 
 
 class Loader:
@@ -34,8 +32,6 @@ class Loader:
 
     def load(self) -> InputData:
         """Perform all input data I/O and return populated input data."""
-
-        StudyLayoutValidator(self.input_data_path).validate()
 
         logging.info(f"Loading inputs from {self.input_data_path}")
         view_config: ViewConfig = load_view_config(self.input_data_path / "view_config.yml")
@@ -54,8 +50,6 @@ class Loader:
             system=load_system(self.input_data_path),
             filtered_st=filtered_st,
         )
-
-        validate_catalogs_against_taxonomy(input_data.catalogs, input_data.taxonomy)
 
         logging.info("All inputs loaded successfully")
         return input_data
