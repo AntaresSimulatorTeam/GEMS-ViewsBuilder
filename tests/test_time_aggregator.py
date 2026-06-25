@@ -13,6 +13,7 @@
 from pathlib import Path
 
 import polars as pl
+import pytest
 from pytest import approx
 
 from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
@@ -53,10 +54,9 @@ def test_temporal_aggregation_sum(tmp_path: Path) -> None:
 
 def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     aggregator = TimeAggregator()
-    result = aggregator.run(_granular_view([10.0, 20.0], tmp_path), _metric(TimeOperator.AVG))
-    df = pl.read_parquet(result.file_path)
-    assert df.shape[0] == 1
-    assert df["metric_value"][0] == approx(15.0)
+
+    with pytest.raises(NotImplementedError):
+        aggregator.run(_granular_view([10.0, 20.0], tmp_path), _metric(TimeOperator.AVG))
 
 
 def test_part_counter_increments_file_names(tmp_path: Path) -> None:

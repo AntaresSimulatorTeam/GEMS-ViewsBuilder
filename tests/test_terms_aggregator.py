@@ -50,7 +50,7 @@ def _structure() -> MetricStructureTable:
             "metric_location": ["L"],
             "breakdown_properties": [""],
             "output": ["out"],
-            "weight_output_id": [1],
+            "weight_output_id": ["1"],
         },
         schema=METRIC_STRUCTURE_TABLE_SCHEMA,
     )
