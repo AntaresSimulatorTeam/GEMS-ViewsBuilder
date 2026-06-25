@@ -22,11 +22,11 @@ class TimeAggregator:
         """
         logging.info(f"[{metric.id}] Aggregating temporally with operator {metric.time_operator.value}")
         lazy_metric_view = pl.scan_parquet(metric_view.file_path)
-        time_agg = (
-            pl.col("granular_metric_value").sum()
-            if metric.time_operator == TimeOperator.SUM
-            else pl.col("granular_metric_value").mean()
-        ).alias("metric_value")
+        if metric.time_operator != TimeOperator.SUM:
+            raise NotImplementedError(
+                f"Temporal aggregation for metric {metric.id} is not supported for operator {metric.time_operator.value}"
+            )
+        time_agg = (pl.col("granular_metric_value").sum()).alias("metric_value")
         view_date_expr = pl.col("granular_date").alias("view_date")
         view = (
             lazy_metric_view.with_columns(view_date_expr)
