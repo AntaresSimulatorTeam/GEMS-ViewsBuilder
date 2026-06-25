@@ -22,7 +22,7 @@ from gems_views_builder.views_builder import ViewBuilder
 
 
 def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
-    return ViewBuilder(Loader(dataset_dir).load())
+    return ViewBuilder(Loader(dataset_dir, dataset_dir).load())
 
 
 @pytest.fixture()
@@ -36,8 +36,8 @@ def view_result(test_files_root: Path, tmp_path: Path) -> pl.DataFrame:
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
     merged = _build_view_builder(dst).build()
-    assert merged.file is not None
-    return pl.read_parquet(merged.file)
+    assert merged.result_path is not None
+    return pl.read_parquet(merged.result_path)
 
 
 def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:

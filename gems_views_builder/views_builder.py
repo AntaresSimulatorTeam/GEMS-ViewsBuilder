@@ -12,18 +12,28 @@
 
 """ViewBuilder."""
 
-from gems_views_builder.aggregator import Aggregator
+import logging
+
 from gems_views_builder.input.input_data import InputData
+from gems_views_builder.merged_view import MergedView
 from gems_views_builder.metric_view import MetricView
-from gems_views_builder.metrics_builder import build_metric_structure
-from gems_views_builder.writer import MergedView, Writer
+from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
+from gems_views_builder.terms_aggregator import TermsAggregator
+from gems_views_builder.time_aggregator import TimeAggregator
 
 
 class ViewBuilder:
     def __init__(self, input_data: InputData) -> None:
+        # # Input data of pipeline
         self.input_data = input_data
-        self.writer = Writer(input_data.input_data_path)
-        self.aggregator = Aggregator(input_data.input_data_path)
+        # # Builder which is reusable over metrics
+        self.metric_structure_table_builder = MetricStructureTableBuilder(
+            self.input_data.system, self.input_data.library
+        )
+        # # Aggregator for step 2B
+        self.terms_aggregator = TermsAggregator(self.input_data.filtered_st)
+        # # Aggregator for step 2C
+        self.time_aggregator = TimeAggregator()
 
     def build(self) -> MergedView:
         metric_views: list[MetricView] = []
@@ -33,14 +43,13 @@ class ViewBuilder:
                 try:
                     metric = catalog.get_metric(metric_id)
                 except ValueError:
+                    logging.warning(f"Metric {metric_id} not found in catalog {catalog_id}")
                     continue
-                structure = build_metric_structure(
-                    self.input_data.system,
-                    metric,
-                    self.input_data.library,
-                    self.writer,
-                )
-                metric_views.append(self.aggregator.aggregate(self.input_data.filtered_st, structure, metric))
-        merged = MergedView.merge_views(metric_views, self.writer)
-        del self.input_data.filtered_st
-        return merged
+
+                metric_structure_table = self.metric_structure_table_builder.build(metric)
+                metric_view = self.terms_aggregator.run(metric_structure_table, metric)
+                temporal_metric_view = self.time_aggregator.run(metric_view, metric)
+                metric_views.append(temporal_metric_view)
+
+        # # Final step merging all metric views into one
+        return MergedView(self.input_data.results_path, metric_views)

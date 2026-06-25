@@ -30,3 +30,6 @@ class InputData:
     library: Library
     system: System
     filtered_st: FilteredSimulationTable
+    results_path: Path
+    # # User will provide by CLI where to write results.
+    # # This is much better than storing it in input data path

@@ -44,15 +44,11 @@ from gems_views_builder.input.simulation_table import (
 from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
 from gems_views_builder.input.view_config import TimeAggregation, ViewConfig, load_view_config
+from gems_views_builder.merged_view import MergedView
+from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.metric_view import MetricView
-from gems_views_builder.metrics_builder import (
-    MetricStructure,
-    MetricStructureBuilder,
-    MetricStructureTable,
-    build_metric_structure,
-)
+from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.views_builder import ViewBuilder
-from gems_views_builder.writer import MergedView
 
 __all__ = [
     "Calendar",
@@ -86,10 +82,8 @@ __all__ = [
     "TimeAggregation",
     "ViewConfig",
     "load_view_config",
-    "MetricStructure",
-    "MetricStructureBuilder",
     "MetricStructureTable",
-    "build_metric_structure",
+    "MetricStructureTableBuilder",
     "MetricView",
     "MergedView",
     "ViewBuilder",

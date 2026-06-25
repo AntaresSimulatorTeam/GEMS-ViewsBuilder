@@ -27,8 +27,9 @@ from gems_views_builder.input.view_config import ViewConfig, load_view_config
 
 
 class Loader:
-    def __init__(self, input_data_path: Path) -> None:
+    def __init__(self, input_data_path: Path, results_path: Path) -> None:
         self.input_data_path = input_data_path
+        self.results_path = results_path
 
     def load(self) -> InputData:
         """Perform all input data I/O and return populated input data."""
@@ -49,6 +50,7 @@ class Loader:
             library=load_library(self.input_data_path / "library.yml"),
             system=load_system(self.input_data_path),
             filtered_st=filtered_st,
+            results_path=self.results_path,
         )
 
         logging.info("All inputs loaded successfully")

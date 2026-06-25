@@ -26,12 +26,12 @@ def test_loader_init_has_no_io() -> None:
     Constructor should not touch the filesystem (no glob/yaml/parquet reads).
     """
     missing = Path("/this/path/should/not/exist")
-    loader = Loader(missing)
+    loader = Loader(missing, missing / "results")
     assert loader.input_data_path == missing
 
 
 def test_loader_load_populates_input_data(test_dataset_dir: Path) -> None:
-    input_data = Loader(test_dataset_dir).load()
+    input_data = Loader(test_dataset_dir, test_dataset_dir / "results").load()
 
     assert isinstance(input_data, InputData)
     assert input_data.input_data_path == test_dataset_dir
@@ -44,7 +44,7 @@ def test_loader_load_populates_input_data(test_dataset_dir: Path) -> None:
 
 
 def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) -> None:
-    loader = Loader(test_dataset_dir)
+    loader = Loader(test_dataset_dir, test_dataset_dir / "results")
     input_data = loader.load()
 
     assert isinstance(input_data, InputData)

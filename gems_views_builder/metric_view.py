@@ -19,8 +19,8 @@ from pathlib import Path
 class MetricView:
     """Temporal aggregation result for a single metric, stored as a parquet file."""
 
-    file: Path
+    file_path: Path
 
     def __del__(self) -> None:
-        logging.debug(f"Cleaning metric view {self.file}")
-        self.file.unlink(missing_ok=True)
+        logging.debug(f"Cleaning metric view {self.file_path}")
+        self.file_path.unlink(missing_ok=True)
