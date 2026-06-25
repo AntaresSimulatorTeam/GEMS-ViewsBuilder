@@ -17,7 +17,7 @@ from pathlib import Path
 
 @dataclass
 class MetricView:
-    """Temporal aggregation result for a single metric, stored as a parquet file."""
+    """View for a single computed metric, stored as a parquet file."""
 
     file_path: Path
 

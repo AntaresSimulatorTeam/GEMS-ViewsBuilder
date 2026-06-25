@@ -28,7 +28,7 @@ METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
         "metric_location": pl.Utf8,
         "breakdown_properties": pl.Utf8,
         "output": pl.Utf8,
-        "weight_output_id": pl.Int64,  # # What will be value range here, probably we could use Int8 to save memory?
+        "weight_output_id": pl.Utf8,
     }
 )
 
