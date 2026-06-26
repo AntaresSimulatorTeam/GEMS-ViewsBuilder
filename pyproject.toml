@@ -30,7 +30,7 @@ classifiers = [
 ]
 
 [project.scripts]
-gems-views-builder = "gems_views_builder.cli:main"
+gems-views-builder = "gems_views_builder.__main__:main"
 
 [project.urls]
 Repository = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
