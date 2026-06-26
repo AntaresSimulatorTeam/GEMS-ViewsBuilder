@@ -13,7 +13,7 @@
 import logging
 from pathlib import Path
 
-from gems_views_builder.cli import build_parser
+from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import configure_logging
 from gems_views_builder.loader import Loader
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
@@ -44,13 +44,9 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose, log_dir=args.log_dir)
 
-    if not args.input_dir.is_dir():
-        logging.error(f"Input directory does not exist: {args.input_dir}")
-        return 2
-
-    if not args.results_dir.is_dir():
-        logging.error(f"Results directory does not exist: {args.results_dir}")
-        return 2
+    error = check_options(args)
+    if error is not None:
+        return error
 
     try:
         result_path = run(args.input_dir, args.results_dir)

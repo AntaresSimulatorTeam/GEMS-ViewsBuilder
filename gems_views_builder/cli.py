@@ -13,6 +13,7 @@
 """Command line interface for GEMS-ViewsBuilder."""
 
 import argparse
+import logging
 from pathlib import Path
 
 
@@ -47,3 +48,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable verbose console logging.",
     )
     return parser
+
+
+def check_options(args: argparse.Namespace) -> int | None:
+    if not args.input_dir.is_dir():
+        logging.error(f"Input directory does not exist: {args.input_dir}")
+        return 2
+    if not args.results_dir.is_dir():
+        logging.error(f"Results directory does not exist: {args.results_dir}")
+        return 2
+    return None
