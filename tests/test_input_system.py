@@ -27,8 +27,8 @@ def test_input_system_using(test_dataset_dir: Path) -> None:
     assert isinstance(input_system, SystemSchema)
 
 
-def test_locating_function_multiple_peers_returns_tuple(test_dataset_dir: Path) -> None:
-    """When a single port connects to multiple peers, get_location returns a tuple of all peer ids."""
+def test_locating_function_multiple_peers_raises(test_dataset_dir: Path) -> None:
+    """A single location port must resolve to a unique peer: multiple peers is an error."""
     system = load_system(test_dataset_dir)
 
     if not system.connections:
@@ -39,14 +39,12 @@ def test_locating_function_multiple_peers_returns_tuple(test_dataset_dir: Path) 
         return
 
     cid, pid = ambiguous[0]
-    result = system.get_location(cid, pid)
-    expected_peers = system._component_port_connections[(cid, pid)]
-    assert isinstance(result, tuple)
-    assert set(result) == expected_peers
+    with pytest.raises(ValueError):
+        system.get_location(cid, pid)
 
 
 def test_locating_function(test_dataset_dir: Path) -> None:
-    """LOCATING_FUNCTION: None -> component_id, string -> peer id, tuple -> tuple of peer ids."""
+    """LOCATING_FUNCTION: None -> component_id, string -> unique peer id (or error)."""
     assert (test_dataset_dir / "system.yml").exists()
     system = load_system(test_dataset_dir)
 
@@ -55,14 +53,14 @@ def test_locating_function(test_dataset_dir: Path) -> None:
     any_component_id = system.components[0].id
     assert system.get_location(any_component_id, None) == any_component_id
 
-    # location_port is string → one peer returns str, multiple peers returns tuple containing them.
+    # location_port is a string → it must resolve to exactly one peer (returned as a
+    # str). A port wired to multiple peers is ambiguous and raises for metric building.
     if not system._component_port_connections:
         pytest.skip("No connections in this dataset's system.yml")
 
     for (component, port), peers in system._component_port_connections.items():
-        result = system.get_location(component, port)
         if len(peers) == 1:
-            assert result == next(iter(peers))
+            assert system.get_location(component, port) == next(iter(peers))
         else:
-            assert isinstance(result, tuple)
-            assert set(result) == peers
+            with pytest.raises(ValueError):
+                system.get_location(component, port)

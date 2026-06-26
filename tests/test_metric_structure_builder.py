@@ -214,14 +214,13 @@ def test_balance_structure_component(test_3_components: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_single_port_multiple_peers_produces_one_row_per_peer(test_3_components: dict[str, Any]) -> None:
-    """A term with a single location_port that connects to multiple peers yields one merged row.
+def test_single_port_multiple_peers_raises(test_3_components: dict[str, Any]) -> None:
+    """A single location_port wired to multiple peers is ambiguous and must raise.
 
-    In test_3, busA.p_balance_port connects to generator_A1, generator_A2, load_AL, link_link_AB
-    and busB.p_balance_port connects to generator_B1, link_link_AB.
-    All peers for each bus are encoded in a single metric_location value.
+    In test_3, busA.p_balance_port connects to generator_A1, generator_A2, load_AL,
+    link_link_AB (and busB.p_balance_port to generator_B1, link_link_AB), so resolving
+    a single port to a unique locating peer is impossible here.
     """
-    system = test_3_components["system"]
     metric = Metric(
         id="BUS_PEER_TEST",
         terms=[
@@ -234,27 +233,12 @@ def test_single_port_multiple_peers_produces_one_row_per_peer(test_3_components:
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    df = (
+    with pytest.raises(ValueError):
         MetricStructureBuilder(
             test_3_components["system"],
             metric,
             test_3_components["library"],
-        )
-        .build()
-        .dataframe
-    )
-
-    bus_a_expected = {"generator_A1", "generator_A2", "load_AL", "link_link_AB"}
-    bus_a_rows = df.filter(pl.col("component") == "busA")
-    assert len(bus_a_rows) == 1
-    assert bus_a_rows["metric_location"][0] == _format_metric_location(system.get_location("busA", "p_balance_port"))
-    assert set(_parse_metric_location(bus_a_rows["metric_location"][0])) == bus_a_expected
-
-    bus_b_expected = {"generator_B1", "link_link_AB"}
-    bus_b_rows = df.filter(pl.col("component") == "busB")
-    assert len(bus_b_rows) == 1
-    assert bus_b_rows["metric_location"][0] == _format_metric_location(system.get_location("busB", "p_balance_port"))
-    assert set(_parse_metric_location(bus_b_rows["metric_location"][0])) == bus_b_expected
+        ).build()
 
 
 def test_get_location_tuple_of_ports_returns_peer_per_port(test_3_components: dict[str, Any]) -> None:
