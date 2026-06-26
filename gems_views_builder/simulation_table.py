@@ -10,6 +10,7 @@
 #
 # This file is part of the Antares project.
 
+import logging
 from pathlib import Path
 
 import polars as pl
@@ -75,8 +76,10 @@ class SimulationTable:
         return cls(simulation_table_file).load_into_self()
 
     def load_into_self(self) -> "SimulationTable":
+        logging.info(f"Loading simulation table from {self.file}")
         self._dataframe = pl.scan_parquet(self.file)
         self._check_simulation_table_columns()
+        logging.info(f"Simulation table {self.id!r} successfully loaded from {self.file}")
         return self
 
     def _check_simulation_table_columns(self) -> None:

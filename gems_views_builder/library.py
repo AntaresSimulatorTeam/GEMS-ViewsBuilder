@@ -12,6 +12,7 @@
 
 """Model library YAML with explicit local models"""
 
+import logging
 from pathlib import Path
 
 import yaml
@@ -94,23 +95,33 @@ class ModelLibrary:
         return cls(library_file_path).load_into_self()
 
     def load_into_self(self) -> "ModelLibrary":
+        logging.info(f"Loading model library from {self.file}")
         parsed = self._load_library_file(self.file)
         self.id = parsed.id
         self.description = parsed.description or ""
         self.port_types = parsed.port_types
         self.models = {m.id: m for m in parsed.models}
+        logging.info(
+            f"Library {self.id!r} loaded, containing {len(self.port_types)} port type(s) and {len(self.models)} model(s)"
+        )
         self.models_by_taxonomy_category = {}
         for m in parsed.models:
             if not m.taxonomy_category:
                 continue
             self.models_by_taxonomy_category.setdefault(m.taxonomy_category, []).append(m.id)
+        logging.debug(
+            f"Library indexing complete: {len(self.models_by_taxonomy_category)} taxonomy categor"
+            f"{'y' if len(self.models_by_taxonomy_category) == 1 else 'ies'}"
+        )
         return self
 
     def _load_library_file(self, library_file_path: Path) -> LibraryData:
+        logging.debug(f"Loading library YAML from {library_file_path}")
         with open(library_file_path, encoding="utf-8") as f:
             raw = yaml.safe_load(f)
         if "library" not in raw:
             raise ValueError(f"library.yml file {library_file_path} is missing the 'library' key at the root")
+        logging.debug("Library YAML parsed successfully")
         return LibraryData.model_validate(raw["library"])
 
     def get_model(self, model_id: str) -> ModelDefinition | None:

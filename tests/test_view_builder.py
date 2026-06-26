@@ -10,6 +10,7 @@
 #
 # This file is part of the Antares project.
 
+import logging
 import shutil
 from pathlib import Path
 
@@ -74,7 +75,7 @@ def test_prod_busb_values(view_result: pl.DataFrame) -> None:
 
 
 def test_load_busa_value(view_result: pl.DataFrame) -> None:
-    # load_AL.active_load = 100 (not time-dependent)
+    # load_AL.active_load = 100 (not time-dependent).
     rows = _metric_at(view_result, "LOAD", "busA")
     assert len(rows) == 1
     assert rows["metric_value"][0] == 100
@@ -105,3 +106,44 @@ def test_balance_busb_values(view_result: pl.DataFrame) -> None:
     assert len(rows) == 24
     expected = [-(100 - 2 * t) for t in range(1, 25)]
     assert rows["metric_value"].to_list() == expected
+
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+
+
+def test_log_messages_emitted_to_stdout(
+    test_files_root: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    src = test_files_root / "test_3"
+    dst = tmp_path / "test_3"
+    shutil.copytree(src, dst)
+
+    with caplog.at_level(logging.INFO):
+        ViewBuilder(dst).build()
+
+    repo_root = Path(__file__).resolve().parents[1]
+    log_directory = repo_root / "logs"
+    if not log_directory.exists() or not any(log_directory.glob("gems-views-builder-pipeline-run-*.log")):
+        raise FileNotFoundError(f"Log directory {log_directory} not found or does not contain any log files")
+
+    messages = [r.message for r in caplog.records]
+    assert any("Starting pipeline" in m for m in messages)
+    assert any("All inputs loaded" in m for m in messages)
+    assert any("Pipeline complete" in m for m in messages)
+
+
+def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> None:
+    src = test_files_root / "test_3"
+    dst = tmp_path / "test_3"
+    shutil.copytree(src, dst)
+
+    ViewBuilder(dst).build()
+
+    repo_root = Path(__file__).resolve().parents[1]
+    logs_dir = repo_root / "logs"
+    assert logs_dir.is_dir(), "logs/ directory was not created"
+    log_files = list(logs_dir.glob("gems-views-builder-pipeline-run-*.log"))
+    assert len(log_files) >= 1, f"Expected at least 1 log file, found {len(log_files)}"
+    assert max(f.stat().st_size for f in log_files) > 0, "All log files are empty"

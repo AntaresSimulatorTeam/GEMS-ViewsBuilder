@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from gems_views_builder.catalog import get_catalog_metric, load_catalog
+from gems_views_builder.catalog import load_catalog
 from gems_views_builder.library import ModelLibrary
 from gems_views_builder.metrics_builder import (
     MetricStructureBuilder,
@@ -41,7 +41,7 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
 
 
 def _build(metric_id: str, components: dict[str, Any]) -> "MetricStructureTable":
-    metric = get_catalog_metric(components["catalog"], metric_id)
+    metric = components["catalog"].get_metric(metric_id)
     return MetricStructureBuilder(
         components["system"],
         components["catalog"],

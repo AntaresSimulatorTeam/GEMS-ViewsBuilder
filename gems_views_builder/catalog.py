@@ -12,6 +12,7 @@
 
 """Catalog .yml parsing models and typed representation."""
 
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -88,6 +89,13 @@ class Catalog:
     location_taxonomy_category: str
     metrics: dict[str, Metric] = field(default_factory=dict)
 
+    def get_metric(self, metric_id: str) -> Metric:
+        logging.debug(f"Looking up metric {metric_id!r} in catalog {self.id!r}")
+        if metric_id not in self.metrics:
+            raise ValueError(f"Metric {metric_id} not found in catalog {self.id}")
+        logging.debug(f"Metric {metric_id!r} found in catalog {self.id!r}")
+        return self.metrics[metric_id]
+
 
 def _to_term(term_data: TermData) -> Term:
     return Term(
@@ -109,25 +117,33 @@ def _to_metric(metric_data: MetricData) -> Metric:
     )
 
 
+def load_catalogs(input_data_path: Path, catalog_ids: list[str]) -> dict[str, Catalog]:
+    catalogs_dir = input_data_path / "catalogs"
+    catalogs: dict[str, Catalog] = {}
+    for catalog_id in catalog_ids:
+        catalogs[catalog_id] = load_catalog(catalogs_dir / f"{catalog_id}.yml")
+    return catalogs
+
+
 def load_catalog(catalog_file_path: Path) -> Catalog:
+    logging.info(f"Loading catalog from {catalog_file_path}")
     parsed = _load_catalog_file(catalog_file_path)
-    return Catalog(
+    catalog = Catalog(
         id=parsed.id,
         taxonomy=parsed.taxonomy,
         location_taxonomy_category=parsed.location.taxonomy_category,
         metrics={metric.id: _to_metric(metric) for metric in parsed.metrics_definition},
     )
+    logging.info(
+        f"Catalog {catalog.id!r} loaded with taxonomy {catalog.taxonomy!r} and {len(catalog.metrics)} metric(s)"
+    )
+    return catalog
 
 
 def _load_catalog_file(catalog_file_path: Path) -> CatalogData:
+    logging.debug(f"Loading catalog YAML from {catalog_file_path}")
     with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     if "catalog" not in raw:
         raise ValueError(f"catalog.yml file {catalog_file_path} is missing the 'catalog' key at the root")
     return CatalogData.model_validate(raw["catalog"])
-
-
-def get_catalog_metric(catalog: Catalog, metric_id: str) -> Metric:
-    if metric_id not in catalog.metrics:
-        raise ValueError(f"Metric {metric_id} not found in catalog {catalog.id}")
-    return catalog.metrics[metric_id]

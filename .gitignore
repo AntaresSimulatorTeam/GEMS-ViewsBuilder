@@ -97,3 +97,6 @@ cython_debug/
 
 # PEP 582
 __pypackages__/
+
+# Ignore pipeline logs
+logs/

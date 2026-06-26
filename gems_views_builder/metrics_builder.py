@@ -10,6 +10,7 @@
 #
 # This file is part of the Antares project.
 
+import logging
 from dataclasses import dataclass
 
 import polars as pl
@@ -56,12 +57,24 @@ class MetricStructureBuilder:
         self.model_library = model_library
 
     def build(self) -> MetricStructureTable:
+        logging.debug(f"[{self.metric.id}] Building metric structure table ({len(self.metric.terms)} term(s))")
         rows: list[dict[str, object]] = []
         for term in self.metric.terms:
+            logging.debug(
+                f"[{self.metric.id}] Processing term for taxonomy category {term.taxonomy_category!r} "
+                f"and output {term.output_id!r}"
+            )
             model_ids = self.model_library.get_components_in_taxonomy_category(term.taxonomy_category)
+            logging.debug(
+                f"[{self.metric.id}] Found {len(model_ids)} model(s) in taxonomy category {term.taxonomy_category!r}"
+            )
             for model_id in model_ids:
                 qualified_ref = f"{self.model_library.id}.{model_id}"
-                for component_id in self.system.get_instances_by_model(qualified_ref):
+                component_ids = self.system.get_instances_by_model(qualified_ref)
+                logging.debug(
+                    f"[{self.metric.id}] Model {qualified_ref!r} resolves to {len(component_ids)} component instance(s)"
+                )
+                for component_id in component_ids:
                     # # locating function
                     metric_location = self.system.get_location(component_id, term.location_ports)
                     loc_str = metric_location if isinstance(metric_location, str) else "|".join(metric_location)
@@ -76,5 +89,7 @@ class MetricStructureBuilder:
                         }
                     )
         if not rows:
+            logging.info(f"[{self.metric.id}] No matching components found — metric structure table is empty")
             return MetricStructureTable(pl.DataFrame(schema=_METRIC_STRUCTURE_SCHEMA))
+        logging.info(f"[{self.metric.id}] Metric structure table built with {len(rows)} row(s)")
         return MetricStructureTable(pl.DataFrame(rows, schema=_METRIC_STRUCTURE_SCHEMA))
