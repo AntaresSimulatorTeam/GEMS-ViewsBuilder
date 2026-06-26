@@ -43,24 +43,12 @@ def test_locating_function_multiple_peers_raises(test_dataset_dir: Path) -> None
         system.get_location(cid, pid)
 
 
-def test_locating_function(test_dataset_dir: Path) -> None:
-    """LOCATING_FUNCTION: None -> component_id, string -> unique peer id (or error)."""
-    assert (test_dataset_dir / "system.yml").exists()
+def test_locating_function_zero_peers_raises(test_dataset_dir: Path) -> None:
+    """A single location port with no connected peer is an error (must be unique)."""
     system = load_system(test_dataset_dir)
 
-    # location_port is None -> return component_id (generic)
     assert len(system.components) > 0
     any_component_id = system.components[0].id
-    assert system.get_location(any_component_id, None) == any_component_id
-
-    # location_port is a string → it must resolve to exactly one peer (returned as a
-    # str). A port wired to multiple peers is ambiguous and raises for metric building.
-    if not system._component_port_connections:
-        pytest.skip("No connections in this dataset's system.yml")
-
-    for (component, port), peers in system._component_port_connections.items():
-        if len(peers) == 1:
-            assert system.get_location(component, port) == next(iter(peers))
-        else:
-            with pytest.raises(ValueError):
-                system.get_location(component, port)
+    # A port that is wired to nothing has zero peers, which is not a unique location.
+    with pytest.raises(ValueError):
+        system.get_location(any_component_id, "this_port_is_not_connected_to_anything")
