@@ -14,25 +14,25 @@ import logging
 from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
-from gems_views_builder.common import configure_logging
+from gems_views_builder.common import configure_logging, save
 from gems_views_builder.loader import Loader
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
 from gems_views_builder.views_builder import ViewBuilder
 
 
-def run(input_dir: Path, results_dir: Path) -> Path:
-    """Run the full pipeline and return the path to the merged view parquet."""
+def run(input_dir: Path, results_dir: Path) -> None:
+    """Run the full pipeline and save the results to the results directory."""
 
     # # Validate study layout
     StudyLayoutValidator(input_dir).validate()
     # # If everything is ok, load pipeline input
-    input_data = Loader(input_dir, results_dir).load()
+    input_data = Loader(input_dir).load()
     # # Validate catalogs against taxonomy
     validate_catalogs_against_taxonomy(input_data.catalogs, input_data.taxonomy)
 
-    merged_view = ViewBuilder(input_data).build()
-    return merged_view.result_path
+    metric_views = ViewBuilder(input_data).build()
+    save(metric_views, results_dir)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -49,12 +49,12 @@ def main(argv: list[str] | None = None) -> int:
         return error
 
     try:
-        result_path = run(args.input_dir, args.results_dir)
+        run(args.input_dir, args.results_dir)
     except Exception:
         logging.exception("View building failed")
         return 1
 
-    logging.info(f"View successfully written to {result_path}")
+    logging.info(f"View successfully written to {args.results_dir}")
     return 0
 
 

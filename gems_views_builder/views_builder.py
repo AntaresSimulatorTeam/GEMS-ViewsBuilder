@@ -15,7 +15,6 @@
 import logging
 
 from gems_views_builder.input.input_data import InputData
-from gems_views_builder.merged_view import MergedView
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.terms_aggregator import TermsAggregator
@@ -35,7 +34,7 @@ class ViewBuilder:
         # # Aggregator for step 2C
         self.time_aggregator = TimeAggregator()
 
-    def build(self) -> MergedView:
+    def build(self) -> list[MetricView]:
         metric_views: list[MetricView] = []
         for catalog_id, metric_ids in self.input_data.view_config.catalog_to_metrics.items():
             catalog = self.input_data.catalogs[catalog_id]
@@ -52,4 +51,4 @@ class ViewBuilder:
                 metric_views.append(temporal_metric_view)
 
         # # Final step merging all metric views into one
-        return MergedView(self.input_data.results_path, metric_views)
+        return metric_views

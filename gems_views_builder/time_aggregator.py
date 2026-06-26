@@ -1,7 +1,6 @@
 import logging
 import tempfile
 from pathlib import Path
-from shutil import rmtree
 
 import polars as pl
 
@@ -65,7 +64,3 @@ class TimeAggregator:
         )
         logging.info(f"[{metric.id}] Temporal aggregation written to {out_path}")
         return MetricView(out_path)
-
-    def __del__(self) -> None:
-        # # This is also safe because time aggregator is class member so it will be garbage collected when pipeline is finished
-        rmtree(self._temporal_aggregation_dir, ignore_errors=True)

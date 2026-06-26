@@ -17,12 +17,13 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from gems_views_builder.common import save
 from gems_views_builder.loader import Loader
 from gems_views_builder.views_builder import ViewBuilder
 
 
 def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
-    return ViewBuilder(Loader(dataset_dir, dataset_dir).load())
+    return ViewBuilder(Loader(dataset_dir).load())
 
 
 @pytest.fixture()
@@ -34,10 +35,14 @@ def view_result(test_files_root: Path, tmp_path: Path) -> pl.DataFrame:
     """
     src = test_files_root / "test_3"
     dst = tmp_path / "test_3"
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
     shutil.copytree(src, dst)
-    merged = _build_view_builder(dst).build()
-    assert merged.result_path is not None
-    return pl.read_parquet(merged.result_path)
+    metric_views = _build_view_builder(dst).build()
+    save(metric_views, results_dir)
+    result_files = list(results_dir.glob("view*.parquet"))
+    assert result_files, "No result parquet file written"
+    return pl.read_parquet(result_files[0])
 
 
 def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
@@ -125,8 +130,11 @@ def test_log_messages_emitted_to_stdout(
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
 
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
     with caplog.at_level(logging.INFO):
-        _build_view_builder(dst).build()
+        metric_views = _build_view_builder(dst).build()
+        save(metric_views, results_dir)
 
     repo_root = Path(__file__).resolve().parents[1]
     log_directory = repo_root / "logs"

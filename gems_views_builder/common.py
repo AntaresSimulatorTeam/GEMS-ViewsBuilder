@@ -18,6 +18,8 @@ from typing import Literal
 
 import polars as pl
 
+from gems_views_builder.metric_view import MetricView
+
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
 PARQUET_ROW_GROUP_SIZE = 64_000
@@ -56,3 +58,15 @@ def configure_logging(verbose: bool = False, log_dir: Path | None = None) -> Pat
     root.addHandler(console_handler)
     root.setLevel(logging.DEBUG if verbose else logging.INFO)
     return log_file
+
+
+def save(metric_views: list[MetricView], results_path: Path) -> None:
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+    result_path = results_path / f"view{timestamp}.parquet"
+    pl.scan_parquet([v.persistence_path for v in metric_views]).sink_parquet(
+        result_path,
+        compression=PARQUET_COMPRESSION,
+        compression_level=PARQUET_COMPRESSION_LEVEL,
+        row_group_size=PARQUET_ROW_GROUP_SIZE,
+    )
+    logging.info(f"Results merged into {result_path}")
