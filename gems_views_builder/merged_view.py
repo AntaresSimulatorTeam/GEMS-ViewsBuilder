@@ -28,7 +28,7 @@ class MergedView:
         logging.info(f"Merging {len(metric_views)} metric view(s) into results")
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         self.result_path = self.result_path / f"view{timestamp}.parquet"
-        pl.scan_parquet([v.file_path for v in metric_views]).sink_parquet(
+        pl.scan_parquet([v.persistence_path for v in metric_views]).sink_parquet(
             self.result_path,
             compression=PARQUET_COMPRESSION,
             compression_level=PARQUET_COMPRESSION_LEVEL,

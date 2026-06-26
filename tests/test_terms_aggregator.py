@@ -64,7 +64,7 @@ def _metric(terms_operator: TermsOperator) -> Metric:
 def test_terms_aggregation_sum(tmp_path: Path) -> None:
     aggregator = TermsAggregator(_filtered_st([2.0, 3.0], tmp_path))
     metric_view = aggregator.run(_structure(), _metric(TermsOperator.SUM))
-    df = pl.read_parquet(metric_view.file_path)
+    df = pl.read_parquet(metric_view.persistence_path)
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(5.0)
 
@@ -72,6 +72,6 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
 def test_terms_aggregation_avg(tmp_path: Path) -> None:
     aggregator = TermsAggregator(_filtered_st([2.0, 3.0], tmp_path))
     metric_view = aggregator.run(_structure(), _metric(TermsOperator.AVG))
-    df = pl.read_parquet(metric_view.file_path)
+    df = pl.read_parquet(metric_view.persistence_path)
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(2.5)

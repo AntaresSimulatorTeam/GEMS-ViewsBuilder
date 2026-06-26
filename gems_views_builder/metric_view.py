@@ -19,8 +19,8 @@ from pathlib import Path
 class MetricView:
     """View for a single computed metric, stored as a parquet file."""
 
-    file_path: Path
+    persistence_path: Path
 
     def __del__(self) -> None:
-        logging.debug(f"Cleaning metric view {self.file_path}")
-        self.file_path.unlink(missing_ok=True)
+        logging.debug(f"Cleaning metric view {self.persistence_path}")
+        self.persistence_path.unlink(missing_ok=True)

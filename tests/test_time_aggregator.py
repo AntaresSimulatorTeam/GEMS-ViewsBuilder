@@ -47,7 +47,7 @@ def _metric(time_operator: TimeOperator) -> Metric:
 def test_temporal_aggregation_sum(tmp_path: Path) -> None:
     aggregator = TimeAggregator()
     result = aggregator.run(_granular_view([10.0, 20.0], tmp_path), _metric(TimeOperator.SUM))
-    df = pl.read_parquet(result.file_path)
+    df = pl.read_parquet(result.persistence_path)
     assert df.shape[0] == 1
     assert df["metric_value"][0] == approx(30.0)
 
@@ -66,6 +66,6 @@ def test_part_counter_increments_file_names(tmp_path: Path) -> None:
     first = aggregator.run(_granular_view([1.0], tmp_path), metric)
     second = aggregator.run(_granular_view([1.0], tmp_path), metric)
 
-    assert first.file_path != second.file_path
-    assert first.file_path.name.endswith("-0.parquet")
-    assert second.file_path.name.endswith("-1.parquet")
+    assert first.persistence_path != second.persistence_path
+    assert first.persistence_path.name.endswith("-0.parquet")
+    assert second.persistence_path.name.endswith("-1.parquet")

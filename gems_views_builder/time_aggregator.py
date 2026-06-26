@@ -21,7 +21,7 @@ class TimeAggregator:
         Step 2.C from POC[temporal aggregation]: Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
         """
         logging.info(f"[{metric.id}] Aggregating temporally with operator {metric.time_operator.value}")
-        lazy_metric_view = pl.scan_parquet(metric_view.file_path)
+        lazy_metric_view = pl.scan_parquet(metric_view.persistence_path)
         if metric.time_operator != TimeOperator.SUM:
             raise NotImplementedError(
                 f"Temporal aggregation for metric {metric.id} is not supported for operator {metric.time_operator.value}"
