@@ -1,6 +1,8 @@
+import atexit
 import logging
 import tempfile
 from pathlib import Path
+from shutil import rmtree
 
 import polars as pl
 
@@ -11,9 +13,16 @@ from gems_views_builder.metric_view import MetricView
 
 class TimeAggregator:
     def __init__(self) -> None:
-        self._temporal_aggregation_dir = Path(tempfile.mkdtemp()) / "views" / "temporal_aggregation"
+        self._root_dir = Path(tempfile.mkdtemp())
+        self._temporal_aggregation_dir = self._root_dir / "views" / "temporal_aggregation"
         self._temporal_aggregation_dir.mkdir(parents=True, exist_ok=True)
         self._part_counter = 0
+        # # The temporal aggregation files are the pipeline's final output: they must
+        # # outlive this aggregator because save() reads them after build() returns and
+        # # the ViewBuilder (and this aggregator) has already been garbage collected.
+        # # Cleaning up in __del__ would delete them too early, so we defer removal of
+        # # the whole temp tree until interpreter exit instead.
+        atexit.register(rmtree, self._root_dir, True)
 
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         """

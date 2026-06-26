@@ -17,7 +17,8 @@ class TermsAggregator:
 
     def __init__(self, filtered_simulation_table: FilteredSimulationTable) -> None:
         self.filtered_simulation_table = filtered_simulation_table
-        self._metric_view_dir = Path(tempfile.mkdtemp()) / "views" / "metric_view"
+        self._root_dir = Path(tempfile.mkdtemp())
+        self._metric_view_dir = self._root_dir / "views" / "metric_view"
         self._metric_view_dir.mkdir(parents=True, exist_ok=True)
 
     def run(self, metric_structure_table: MetricStructureTable, metric: Metric) -> MetricView:
@@ -70,6 +71,4 @@ class TermsAggregator:
         return MetricView(out_path)
 
     def __del__(self) -> None:
-        # # Deletion of metric view directory
-        # # This is safe because term aggregator is class member so it will be garbage collected when pipeline is finished
-        rmtree(self._metric_view_dir, ignore_errors=True)
+        rmtree(self._root_dir, ignore_errors=True)
