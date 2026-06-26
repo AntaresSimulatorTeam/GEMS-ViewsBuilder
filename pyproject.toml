@@ -29,6 +29,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
+[project.scripts]
+gems-views-builder = "gems_views_builder.__main__:main"
+
 [project.urls]
 Repository = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
 "Bug Tracker" = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/issues"
