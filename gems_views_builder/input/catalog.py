@@ -126,14 +126,6 @@ def load_catalogs(input_data_path: Path, catalog_ids: list[str]) -> dict[str, Ca
     return catalogs
 
 
-def load_catalogs(input_data_path: Path, catalog_ids: list[str]) -> dict[str, Catalog]:
-    catalogs_dir = input_data_path / "catalogs"
-    catalogs: dict[str, Catalog] = {}
-    for catalog_id in catalog_ids:
-        catalogs[catalog_id] = load_catalog(catalogs_dir / f"{catalog_id}.yml")
-    return catalogs
-
-
 def load_catalog(catalog_file_path: Path) -> Catalog:
     logging.info(f"Loading catalog from {catalog_file_path}")
     parsed_catalog = load_catalog_file(catalog_file_path)
@@ -143,10 +135,6 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
         location_taxonomy_category=parsed_catalog.location.taxonomy_category,
         metrics={metric.id: to_metric(metric) for metric in parsed_catalog.metrics_definition},
     )
-    logging.info(
-        f"Catalog {catalog.id!r} loaded with taxonomy {catalog.taxonomy!r} and {len(catalog.metrics)} metric(s)"
-    )
-    return catalog
     logging.info(
         f"Catalog {catalog.id!r} loaded with taxonomy {catalog.taxonomy!r} and {len(catalog.metrics)} metric(s)"
     )
