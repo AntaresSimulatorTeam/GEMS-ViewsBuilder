@@ -50,5 +50,4 @@ class ViewBuilder:
                 temporal_metric_view = self.time_aggregator.run(metric_view, metric)
                 metric_views.append(temporal_metric_view)
 
-        # # Final step merging all metric views into one
         return metric_views
