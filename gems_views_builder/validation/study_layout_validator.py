@@ -12,7 +12,11 @@ class StudyLayoutValidator:
     - view_config.yml
     - library.yml
     - system.yml
+<<<<<<< HEAD
     - simulation_table.parquet
+=======
+    - simulation_table.parquet/csv (for debugging purposes)
+>>>>>>> origin/main
     - calendar.csv
     - catalogs directory with 1 * catalogs without strict name convention for now
     """

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Copyright (c) 2026, RTE (https://www.rte-france.com)
 #
 # See AUTHORS.txt
@@ -10,16 +11,27 @@
 #
 # This file is part of the Antares project.
 
+=======
+>>>>>>> origin/main
 """Validate consistency between loaded catalogs and the study taxonomy."""
 
 import logging
 
+<<<<<<< HEAD
 from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.taxonomy import Taxonomy
 
 
 def validate_catalogs_against_taxonomy(catalogs: dict[str, Catalog], taxonomy: Taxonomy) -> None:
     logging.info(f"Validating {len(catalogs)} catalog(s) against taxonomy {taxonomy.id!r}")
+=======
+from gems_views_builder.catalog import Catalog
+from gems_views_builder.taxonomy import Taxonomy
+
+
+def validate_catalogs_against_taxonomy(catalogs: dict[str, Catalog], taxonomy: Taxonomy) -> None:
+    logging.debug(f"Validating {len(catalogs)} catalog(s) against taxonomy {taxonomy.id!r}")
+>>>>>>> origin/main
     for catalog in catalogs.values():
         validate_catalog_against_taxonomy(catalog, taxonomy)
     logging.info(f"All catalogs are consistent with taxonomy {taxonomy.id!r}")
