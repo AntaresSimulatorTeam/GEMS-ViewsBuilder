@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
-from gems_views_builder.common import configure_logging, save
+from gems_views_builder.common import accumulate_on_disk, configure_logging
 from gems_views_builder.loader import Loader
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
@@ -32,7 +32,7 @@ def run(input_dir: Path, results_dir: Path) -> None:
     validate_catalogs_against_taxonomy(input_data.catalogs, input_data.taxonomy)
 
     metric_views = ViewBuilder(input_data).build()
-    save(metric_views, results_dir)
+    accumulate_on_disk(metric_views, results_dir)
 
 
 def main(argv: list[str] | None = None) -> int:

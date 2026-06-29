@@ -60,7 +60,7 @@ def configure_logging(verbose: bool = False, log_dir: Path | None = None) -> Pat
     return log_file
 
 
-def save(metric_views: list[MetricView], results_path: Path) -> None:
+def accumulate_on_disk(metric_views: list[MetricView], results_path: Path) -> None:
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     result_path = results_path / f"view{timestamp}.parquet"
     pl.scan_parquet([v.persistence_path for v in metric_views]).sink_parquet(

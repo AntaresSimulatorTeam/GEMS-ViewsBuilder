@@ -18,7 +18,7 @@ class TimeAggregator:
         self._temporal_aggregation_dir.mkdir(parents=True, exist_ok=True)
         self._part_counter = 0
         # # The temporal aggregation files are the pipeline's final output: they must
-        # # outlive this aggregator because save() reads them after build() returns and
+        # # outlive this aggregator because accumulate_on_disk() reads them after build() returns and
         # # the ViewBuilder (and this aggregator) has already been garbage collected.
         # # Cleaning up in __del__ would delete them too early, so we defer removal of
         # # the whole temp tree until interpreter exit instead.
