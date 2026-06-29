@@ -44,6 +44,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     log_file = make_log_file(log_dir=args.log_dir)
     configure_logging(verbose=args.verbose, log_file=log_file)
+    logging.info(f"Logging to {log_file}")
 
     error = check_options(args)
     if error is not None:

@@ -36,7 +36,7 @@ METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
 )
 
 
-LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
+LOG_DIR = Path.cwd() / "logs"
 
 
 def make_log_file(log_dir: Path | None = None) -> Path:
