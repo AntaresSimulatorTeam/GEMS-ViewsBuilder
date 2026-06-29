@@ -39,25 +39,28 @@ METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
 LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
 
 
-def configure_logging(verbose: bool = False, log_dir: Path | None = None) -> Path:
+def make_log_file(log_dir: Path | None = None) -> Path:
     log_dir = log_dir if log_dir is not None else LOG_DIR
     log_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H-%M-%S-%fZ")
-    log_file = log_dir / f"gems-views-builder-pipeline-run-{timestamp}.log"
+    return log_dir / f"gems-views-builder-pipeline-run-{timestamp}.log"
 
+
+def configure_logging(verbose: bool = False, log_file: Path | None = None) -> None:
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
-    file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
-    file_handler.setFormatter(formatter)
+    if log_file is not None:
+        file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
+        file_handler.setFormatter(formatter)
 
     console_handler = logging.StreamHandler(sys.stderr)
     console_handler.setFormatter(formatter)
 
-    root = logging.getLogger()
-    root.addHandler(file_handler)
-    root.addHandler(console_handler)
-    root.setLevel(logging.DEBUG if verbose else logging.INFO)
-    return log_file
+    logger = logging.getLogger()
+    if log_file is not None:
+        logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    logger.setLevel(logging.DEBUG if verbose else logging.INFO)
 
 
 def accumulate_on_disk(metric_views: list[MetricView], results_path: Path) -> None:

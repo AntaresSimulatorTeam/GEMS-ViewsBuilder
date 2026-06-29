@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
-from gems_views_builder.common import accumulate_on_disk, configure_logging
+from gems_views_builder.common import accumulate_on_disk, configure_logging, make_log_file
 from gems_views_builder.loader import Loader
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
@@ -42,7 +42,8 @@ def main(argv: list[str] | None = None) -> int:
     2 - Bad/Invalid command line usage/inputs
     """
     args = build_parser().parse_args(argv)
-    configure_logging(verbose=args.verbose, log_dir=args.log_dir)
+    log_file = make_log_file(log_dir=args.log_dir)
+    configure_logging(verbose=args.verbose, log_file=log_file)
 
     error = check_options(args)
     if error is not None:
