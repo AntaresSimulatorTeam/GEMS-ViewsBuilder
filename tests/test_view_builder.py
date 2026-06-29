@@ -17,8 +17,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.common import accumulate_on_disk
 from gems_views_builder.loader import Loader
+from gems_views_builder.view import accumulate_on_disk
 from gems_views_builder.views_builder import ViewBuilder
 
 

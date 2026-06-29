@@ -14,15 +14,16 @@ import logging
 from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
-from gems_views_builder.common import accumulate_on_disk, configure_logging, make_log_file
+from gems_views_builder.common import configure_logging
 from gems_views_builder.loader import Loader
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
+from gems_views_builder.view import accumulate_on_disk
 from gems_views_builder.views_builder import ViewBuilder
 
 
 def run(input_dir: Path, results_dir: Path) -> None:
-    """Run the full pipeline and save the results to the results directory."""
+    """Run the full pipeline and accumulate the results to the results directory."""
 
     # # Validate study layout
     StudyLayoutValidator(input_dir).validate()
@@ -42,9 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     2 - Bad/Invalid command line usage/inputs
     """
     args = build_parser().parse_args(argv)
-    log_file = make_log_file(log_dir=args.log_dir)
-    configure_logging(verbose=args.verbose, log_file=log_file)
-    logging.info(f"Logging to {log_file}")
+    configure_logging(verbose=args.verbose, log_dir=args.log_dir)
 
     error = check_options(args)
     if error is not None:

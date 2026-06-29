@@ -18,8 +18,6 @@ from typing import Literal
 
 import polars as pl
 
-from gems_views_builder.metric_view import MetricView
-
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
 PARQUET_ROW_GROUP_SIZE = 64_000
@@ -46,8 +44,10 @@ def make_log_file(log_dir: Path | None = None) -> Path:
     return log_dir / f"gems-views-builder-pipeline-run-{timestamp}.log"
 
 
-def configure_logging(verbose: bool = False, log_file: Path | None = None) -> None:
+def configure_logging(verbose: bool = False, log_dir: Path | None = None) -> None:
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
+    log_file = make_log_file(log_dir) if log_dir is not None else None
 
     if log_file is not None:
         file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
@@ -61,15 +61,3 @@ def configure_logging(verbose: bool = False, log_file: Path | None = None) -> No
         logger.addHandler(file_handler)
     logger.addHandler(console_handler)
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
-
-
-def accumulate_on_disk(metric_views: list[MetricView], results_path: Path) -> None:
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-    result_path = results_path / f"view{timestamp}.parquet"
-    pl.scan_parquet([v.persistence_path for v in metric_views]).sink_parquet(
-        result_path,
-        compression=PARQUET_COMPRESSION,
-        compression_level=PARQUET_COMPRESSION_LEVEL,
-        row_group_size=PARQUET_ROW_GROUP_SIZE,
-    )
-    logging.info(f"Results merged into {result_path}")
