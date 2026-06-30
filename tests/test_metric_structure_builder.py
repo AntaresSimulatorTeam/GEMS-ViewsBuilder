@@ -277,8 +277,8 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
     assert set(link_rows["output"].to_list()) == {"p0_port.flow"}
 
 
-def test_duplicate_locations_from_two_ports_produce_duplicate_rows(test_files_root: Path) -> None:
-    """When two ports resolve to the same peer, get_location and the structure table keep both entries."""
+def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row(test_files_root: Path) -> None:
+    """When two ports resolve to the same peer, the single structure row keeps both locations (busA twice)."""
     test_3 = test_files_root / "test_3"
     library = load_library(test_3 / "library.yml")
     system = load_system(test_3)

@@ -37,6 +37,7 @@ from gems_views_builder.input.catalog import (
     load_catalog,
     load_catalogs,
 )
+from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.library import Library, load_library
 from gems_views_builder.input.simulation_table import (
     FilteredSimulationTable,
