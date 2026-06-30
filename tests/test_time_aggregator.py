@@ -62,6 +62,11 @@ def test_parse_time_aggregation(aggregation: TimeAggregation | None, expected_wi
     assert TimeAggregator.parse_time_aggregation(aggregation) == expected_window
 
 
+def test_parse_time_aggregation_invalid_raises() -> None:
+    with pytest.raises(ValueError, match="Invalid time aggregation"):
+        TimeAggregator.parse_time_aggregation("decade")  # type: ignore[arg-type]
+
+
 def test_truncation_groups_by_window(tmp_path: Path) -> None:
     aggregator = TimeAggregator(TimeAggregation.DAY)
     rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]

@@ -83,16 +83,16 @@ class TimeAggregator:
 
     @staticmethod
     def parse_time_aggregation(time_aggregation: TimeAggregation | None) -> str:
-        match time_aggregation:
-            case TimeAggregation.HOUR:
-                return "1h"
-            case TimeAggregation.DAY:
-                return "1d"
-            case TimeAggregation.WEEK:
-                return "1w"
-            case TimeAggregation.MONTH:
-                return "1mo"
-            case TimeAggregation.YEAR:
-                return "1y"
-            case None:
-                return "no truncation"
+        if time_aggregation is None:
+            return "no truncation"
+        windows = {
+            TimeAggregation.HOUR: "1h",
+            TimeAggregation.DAY: "1d",
+            TimeAggregation.WEEK: "1w",
+            TimeAggregation.MONTH: "1mo",
+            TimeAggregation.YEAR: "1y",
+        }
+        try:
+            return windows[time_aggregation]
+        except KeyError:
+            raise ValueError(f"Invalid time aggregation: {time_aggregation}")
