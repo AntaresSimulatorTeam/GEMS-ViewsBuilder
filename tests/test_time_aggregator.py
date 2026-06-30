@@ -55,7 +55,7 @@ def _metric(time_operator: TimeOperator) -> Metric:
         (TimeAggregation.WEEK, "1w"),
         (TimeAggregation.MONTH, "1mo"),
         (TimeAggregation.YEAR, "1y"),
-        (None, "no truncation"),
+        (None, None),
     ],
 )
 def test_parse_time_aggregation(aggregation: TimeAggregation | None, expected_window: str) -> None:

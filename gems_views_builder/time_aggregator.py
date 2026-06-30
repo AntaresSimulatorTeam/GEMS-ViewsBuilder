@@ -11,10 +11,19 @@ from gems_views_builder.input.catalog import Metric, TimeOperator
 from gems_views_builder.input.view_config import TimeAggregation
 from gems_views_builder.metric_view import MetricView
 
+# # Polars truncate windows are strings like "1h", "1d", "1w", "1mo", "1y".
+TRUNCATE_WINDOWS: dict[TimeAggregation, str] = {
+    TimeAggregation.HOUR: "1h",
+    TimeAggregation.DAY: "1d",
+    TimeAggregation.WEEK: "1w",
+    TimeAggregation.MONTH: "1mo",
+    TimeAggregation.YEAR: "1y",
+}
+
 
 class TimeAggregator:
     def __init__(self, time_aggregation: TimeAggregation | None) -> None:
-        self.time_aggregation = self.parse_time_aggregation(time_aggregation)
+        self._time_aggregation = time_aggregation
         self._root_dir = Path(tempfile.mkdtemp())
         self._temporal_aggregation_dir = self._root_dir / "views" / "temporal_aggregation"
         self._temporal_aggregation_dir.mkdir(parents=True, exist_ok=True)
@@ -35,13 +44,13 @@ class TimeAggregator:
         time_agg = (
             pl.col("granular_metric_value").sum()
             if metric.time_operator == TimeOperator.SUM
-            else pl.col("granular_metric_value").mean() # AVG case, pydantic already validated correct input
+            else pl.col("granular_metric_value").mean()
         ).alias("metric_value")
         granular_date = pl.col("granular_date")
-        truncated = self.time_aggregation != "no truncation"
-        view_date_expr = (granular_date.dt.truncate(self.time_aggregation) if truncated else granular_date).alias(
-            "view_date"
-        )
+        truncate_window = self.parse_time_aggregation(self._time_aggregation)
+        view_date_expr = (
+            granular_date.dt.truncate(truncate_window) if truncate_window is not None else granular_date
+        ).alias("view_date")
 
         view = (
             lazy_metric_view.with_columns(view_date_expr)
@@ -82,17 +91,11 @@ class TimeAggregator:
         return MetricView(out_path)
 
     @staticmethod
-    def parse_time_aggregation(time_aggregation: TimeAggregation | None) -> str:
+    def parse_time_aggregation(time_aggregation: TimeAggregation | None) -> str | None:
+        """Return the Polars truncate window, or None when dates must not be truncated."""
         if time_aggregation is None:
-            return "no truncation"
-        windows = {
-            TimeAggregation.HOUR: "1h",
-            TimeAggregation.DAY: "1d",
-            TimeAggregation.WEEK: "1w",
-            TimeAggregation.MONTH: "1mo",
-            TimeAggregation.YEAR: "1y",
-        }
+            return None
         try:
-            return windows[time_aggregation]
+            return TRUNCATE_WINDOWS[time_aggregation]
         except KeyError:
-            raise ValueError(f"Invalid time aggregation: {time_aggregation}")
+            raise ValueError(f"Invalid time aggregation: {time_aggregation}") from None
