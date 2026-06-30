@@ -15,7 +15,7 @@ from typing import Any
 
 import polars as pl
 import pytest
-from gems.study import Component  # type: ignore[import-untyped]
+from gems.study import Component  # type: ignore
 
 from gems_views_builder import (
     Metric,
@@ -262,14 +262,11 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    df = (
-        MetricStructureTableBuilder(
-            test_3_components["system"],
-            test_3_components["library"],
-        )
-        .build(metric)
-        .dataframe.collect()
-    )
+    table = MetricStructureTableBuilder(
+        test_3_components["system"],
+        test_3_components["library"],
+    ).build(metric)
+    df = table.dataframe.collect()
 
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1
@@ -304,7 +301,8 @@ def test_duplicate_locations_from_two_ports_produce_duplicate_rows(test_files_ro
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    df = MetricStructureTableBuilder(system, library).build(metric).dataframe.collect()
+    table = MetricStructureTableBuilder(system, library).build(metric)
+    df = table.dataframe.collect()
 
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1

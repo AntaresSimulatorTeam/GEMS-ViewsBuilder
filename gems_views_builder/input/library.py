@@ -17,12 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-<<<<<<< HEAD
-import yaml
-from gems.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema  # type: ignore
-=======
 from gems.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema, parse_yaml_library  # type: ignore
->>>>>>> origin/main
 
 
 @dataclass
@@ -52,11 +47,7 @@ class Library:
             raise ValueError(f"Model {model_id} has no taxonomy category in library")
         return cast(str, model.taxonomy_category)
 
-<<<<<<< HEAD
-    def get_components_in_taxonomy_category(self, taxonomy_category: str) -> list[str]:
-=======
     def get_models_in_taxonomy_category(self, taxonomy_category: str) -> list[str]:
->>>>>>> origin/main
         return self.models_by_taxonomy_category.get(taxonomy_category, [])
 
 
@@ -80,14 +71,6 @@ def load_library_file(library_file_path: Path) -> LibrarySchema:
     # # Current blueprint of method inside gemspy is typing.TextIO idk why ?
     logging.debug(f"Loading library YAML from {library_file_path}")
     with open(library_file_path, encoding="utf-8") as f:
-<<<<<<< HEAD
-        raw = yaml.safe_load(f)
-    if "library" not in raw:
-        raise ValueError(f"library.yml file {library_file_path} is missing the 'library' key at the root")
-    logging.debug("Library YAML parsed successfully")
-    return LibrarySchema.model_validate(raw["library"])
-=======
         parsed = parse_yaml_library(f)
     logging.debug("Library YAML parsed successfully")
     return parsed
->>>>>>> origin/main

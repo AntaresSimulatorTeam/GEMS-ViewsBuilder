@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore
 
-from gems_views_builder import System as GemsViewsInputSystem
+from gems_views_builder.input.system import load_system
 
 
 def test_input_system_using(test_dataset_dir: Path) -> None:

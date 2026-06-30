@@ -22,13 +22,14 @@ import polars as pl
 import pytest
 
 from gems_views_builder import (
-    Loader,
-    MetricStructureBuilder,
+    MetricStructureTableBuilder,
     ViewBuilder,
     load_catalog,
     load_library,
-    load_system,
 )
+from gems_views_builder.input.system import load_system
+from gems_views_builder.loader import Loader
+from gems_views_builder.view import accumulate_on_disk
 
 # Same (technology, company) as filtering_and_breakdown, but YAML property order differs per component.
 _GAS_RHONEPOWER_GENERATORS = ("gas_1", "gas_2")
@@ -40,10 +41,12 @@ _MISSING_COUNTRY_TECH_BREAKDOWN = "{(country,None),(company,rhonepower),(technol
 def property_order_workspace(test_files_root: Path, tmp_path: Path) -> tuple[Path, pl.DataFrame]:
     src = test_files_root / "filtering_and_breakdown_property_order"
     dst = tmp_path / "filtering_and_breakdown_property_order"
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
     shutil.copytree(src, dst)
-    merged = ViewBuilder(Loader(dst).load()).build()
-    assert merged.file is not None
-    return dst, pl.read_parquet(merged.file)
+    metric_views = ViewBuilder(Loader(dst).load()).build()
+    view = accumulate_on_disk(metric_views, results_dir)
+    return dst, view.dataframe.collect()
 
 
 def _assert_totals_close(got: pl.DataFrame, exp: pl.DataFrame, *, msg: str = "") -> None:
@@ -109,7 +112,8 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     catalog = load_catalog(root / "catalogs" / "catalog.yml")
     metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")
 
-    df = MetricStructureBuilder(system, metric, library).build().dataframe
+    table = MetricStructureTableBuilder(system, library).build(metric)
+    df = table.dataframe.collect()
     partial = df.filter(pl.col("component") == "gen_company_only")
     assert partial.height == 1
     assert partial["breakdown_properties"][0] == _MISSING_COUNTRY_TECH_BREAKDOWN

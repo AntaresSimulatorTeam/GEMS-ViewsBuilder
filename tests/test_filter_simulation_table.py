@@ -87,7 +87,7 @@ def test_filter_simulation_table_writes_parquet(
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
+    filtered_table = filter_simulation_table(simulation_table, calendar, tmp_path)
     assert isinstance(filtered_table, FilteredSimulationTable)
 
     assert filtered_table.file_path.exists(), "Output parquet should be created"

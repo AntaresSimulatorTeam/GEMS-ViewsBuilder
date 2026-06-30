@@ -17,10 +17,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, cast
 
-from gems.model.resolve_library import resolve_library  # type: ignore[import-untyped]
-from gems.study import Component  # type: ignore[import-untyped]
-from gems.study.parsing import parse_yaml_components  # type: ignore[import-untyped]
-from gems.study.resolve_components import (  # type: ignore[import-untyped]
+from gems.model.resolve_library import resolve_library  # type: ignore
+from gems.study import Component  # type: ignore
+from gems.study.parsing import parse_yaml_components  # type: ignore
+from gems.study.resolve_components import (  # type: ignore
     System as GemsSystem,
 )
 from gems.study.resolve_components import (
