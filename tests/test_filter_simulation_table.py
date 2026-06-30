@@ -15,22 +15,21 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder import FilteredSimulationTable, SimulationTable, load_calendar
+from gems_views_builder import FilteredSimulationTable, load_calendar
+from gems_views_builder.input.simulation_table import filter_simulation_table, load_simulation_table
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 
 
 def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path) -> None:
     """Filtered result must satisfy: every row (absolute_time_index, block) in calendar, correct count, rows from sim table."""
-    calendar_file = test_dataset_dir / "calendar_file.csv"
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
-    calendar = load_calendar(calendar_file)
-    simulation_table = SimulationTable.load(simulation_table_file)
-    out_file = tmp_path / "filtered_logical.parquet"
+    calendar = load_calendar(test_dataset_dir, "calendar_file")
+    simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
+    filtered_table = filter_simulation_table(simulation_table, calendar, tmp_path)
     assert isinstance(filtered_table, FilteredSimulationTable)
-    filtered = pl.read_parquet(out_file)
+    filtered = pl.read_parquet(tmp_path / "simulation_table_filtered.parquet")
 
     # Time-dependent rows must have (absolute_time_index, block) in the calendar.
     # Non-time-dependent rows (null absolute_time_index) are passed through as-is.
@@ -57,11 +56,9 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
 
 def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dataset_dir: Path) -> None:
     """Rows whose block does not match the calendar's block for a given absolute_time_index are dropped."""
-    calendar_file = test_dataset_dir / "calendar_file.csv"
+    calendar = load_calendar(test_dataset_dir, "calendar_file")
     base_sim_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
-
-    calendar = load_calendar(calendar_file)
-    base_sim_table = SimulationTable.load(base_sim_table_file)
+    base_sim_table = load_simulation_table(base_sim_table_file)
 
     # Duplicate rows with block=2 so they do not match calendar (block=1)
     base_df = base_sim_table.dataframe.collect(engine="streaming")
@@ -69,12 +66,12 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     duplicated = base_df.with_columns(pl.lit(2).cast(block_dtype).alias("block"))
     sim_path_block2 = tmp_path / "simulation_table_block2_only.parquet"
     duplicated.write_parquet(sim_path_block2)
-    simulation_table = SimulationTable.load(sim_path_block2)
+    simulation_table = load_simulation_table(sim_path_block2)
 
-    out_file = tmp_path / "filtered_empty.parquet"
-    filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
+    intermediates_dir = tmp_path / "intermediates"
+    filtered_table = filter_simulation_table(simulation_table, calendar, intermediates_dir)
     assert isinstance(filtered_table, FilteredSimulationTable)
-    filtered = pl.read_parquet(out_file)
+    filtered = pl.read_parquet(intermediates_dir / "simulation_table_filtered.parquet")
     # Time-dependent rows with block=2 are all dropped; only non-time-dependent
     # rows (null absolute_time_index) are preserved regardless of block.
     non_time_dep_count = duplicated.filter(pl.col("absolute_time_index").is_null()).height
@@ -85,18 +82,15 @@ def test_filter_simulation_table_writes_parquet(
     tmp_path: Path,
     test_dataset_dir: Path,
 ) -> None:
-    """When output_path is set, the filtered table is written to parquet with expected content."""
-    calendar_file = test_dataset_dir / "calendar_file.csv"
+    """The filtered table is written to parquet with expected content."""
+    calendar = load_calendar(test_dataset_dir, "calendar_file")
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
-    calendar = load_calendar(calendar_file)
-    simulation_table = SimulationTable.load(simulation_table_file)
-    out_file = tmp_path / f"filtered_{calendar_file.stem}.parquet"
+    simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
-    assert isinstance(filtered_table, FilteredSimulationTable)
+    filtered_table = filter_simulation_table(simulation_table, calendar, tmp_path)
 
-    assert out_file.exists(), "Output parquet should be created"
-    written = pl.scan_parquet(out_file).collect()
+    assert filtered_table.file_path.exists(), "Output parquet should be created"
+    written = filtered_table.dataframe.collect()
     expected = (
         simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
@@ -123,4 +117,4 @@ def test_filter_simulation_table_invalid_file_format(test_dataset_dir: Path) -> 
         ValueError,
         match=r"Simulation table file '.*simulation_table--invalid\.csv' is not a parquet file",
     ):
-        SimulationTable(simulation_table_file)
+        load_simulation_table(simulation_table_file)

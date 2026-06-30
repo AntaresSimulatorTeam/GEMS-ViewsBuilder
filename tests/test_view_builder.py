@@ -17,7 +17,13 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.views import ViewBuilder
+from gems_views_builder.loader import Loader
+from gems_views_builder.view import accumulate_on_disk
+from gems_views_builder.views_builder import ViewBuilder
+
+
+def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
+    return ViewBuilder(Loader(dataset_dir).load())
 
 
 @pytest.fixture()
@@ -29,10 +35,14 @@ def view_result(test_files_root: Path, tmp_path: Path) -> pl.DataFrame:
     """
     src = test_files_root / "test_3"
     dst = tmp_path / "test_3"
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
     shutil.copytree(src, dst)
-    ViewBuilder(dst).build()
-    result_file = next((dst / "results").glob("*.parquet"))
-    return pl.read_parquet(result_file)
+    metric_views = _build_view_builder(dst).build()
+    accumulate_on_disk(metric_views, results_dir)
+    result_files = list(results_dir.glob("view*.parquet"))
+    assert result_files, "No result parquet file written"
+    return pl.read_parquet(result_files[0])
 
 
 def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
@@ -120,8 +130,11 @@ def test_log_messages_emitted_to_stdout(
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
 
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
     with caplog.at_level(logging.INFO):
-        ViewBuilder(dst).build()
+        metric_views = _build_view_builder(dst).build()
+        accumulate_on_disk(metric_views, results_dir)
 
     repo_root = Path(__file__).resolve().parents[1]
     log_directory = repo_root / "logs"
@@ -129,9 +142,11 @@ def test_log_messages_emitted_to_stdout(
         raise FileNotFoundError(f"Log directory {log_directory} not found or does not contain any log files")
 
     messages = [r.message for r in caplog.records]
-    assert any("Starting pipeline" in m for m in messages)
     assert any("All inputs loaded" in m for m in messages)
-    assert any("Pipeline complete" in m for m in messages)
+    assert any("All inputs loaded successfully" in m for m in messages), (
+        "Missing expected log: All inputs loaded successfully"
+    )
+    assert any("Results merged into" in m for m in messages), "Missing expected log: Results merged into"
 
 
 def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> None:
@@ -139,7 +154,7 @@ def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> Non
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
 
-    ViewBuilder(dst).build()
+    _build_view_builder(dst).build()
 
     repo_root = Path(__file__).resolve().parents[1]
     logs_dir = repo_root / "logs"
