@@ -1,0 +1,82 @@
+library:
+  id: country_models
+
+  port-types:
+    - id: flow
+      description: Power flow port
+      fields:
+        - id: flow
+
+  models:
+    - id: area
+      taxonomy-category: balance
+      ports:
+        - id: p_balance_port
+          type: flow
+      binding-constraints:
+        - id: p_balance
+          expression: sum_connections(p_balance_port.flow) = 0
+
+    - id: load
+      taxonomy-category: consumption
+      parameters:
+        - id: p_set
+          time-dependent: false
+          scenario-dependent: false
+      ports:
+        - id: p_balance_port
+          type: flow
+      port-field-definitions:
+        - port: p_balance_port
+          field: flow
+          definition: -p_set
+      extra-outputs:
+        - id: effective_load
+          expression: p_set
+
+    - id: generator
+      taxonomy-category: production
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+      variables:
+        - id: p
+          lower-bound: 0
+          upper-bound: p_max
+      ports:
+        - id: p_balance_port
+          type: flow
+      port-field-definitions:
+        - port: p_balance_port
+          field: flow
+          definition: p
+      constraints:
+        - id: max_dispatch
+          expression: p <= p_max
+      objective-contributions:
+        - id: operational_objective
+          expression: sum(p)
+
+    - id: link
+      taxonomy-category: link
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+      variables:
+        - id: p0
+          lower-bound: 0
+          upper-bound: p_max
+      ports:
+        - id: p0_port
+          type: flow
+        - id: p1_port
+          type: flow
+      port-field-definitions:
+        - port: p0_port
+          field: flow
+          definition: p0
+        - port: p1_port
+          field: flow
+          definition: -p0

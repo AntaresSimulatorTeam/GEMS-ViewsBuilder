@@ -27,7 +27,9 @@ class ViewBuilder:
         self.input_data = input_data
         # # Builder which is reusable over metrics
         self.metric_structure_table_builder = MetricStructureTableBuilder(
-            self.input_data.system, self.input_data.library
+            self.input_data.system,
+            self.input_data.library,
+            location_aggregation=self.input_data.view_config.location_aggregation,
         )
         # # Aggregator for step 2B
         self.terms_aggregator = TermsAggregator(self.input_data.filtered_st)
@@ -44,7 +46,6 @@ class ViewBuilder:
                 except ValueError:
                     logging.warning(f"Metric {metric_id} not found in catalog {catalog_id}")
                     continue
-
                 metric_structure_table = self.metric_structure_table_builder.build(metric)
                 metric_view = self.terms_aggregator.run(metric_structure_table, metric)
                 temporal_metric_view = self.time_aggregator.run(metric_view, metric)

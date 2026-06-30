@@ -19,6 +19,7 @@ from gems_views_builder.common import METRIC_STRUCTURE_TABLE_SCHEMA
 from gems_views_builder.input.catalog import Metric, PropertySchema
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.system import System
+from gems_views_builder.input.view_config import LocationAggregation
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
 
@@ -54,9 +55,32 @@ class MetricStructureTableBuilder:
         self,
         system: System,
         model_library: Library,
+        location_aggregation: LocationAggregation | None = None,
     ) -> None:
         self.system = system
         self.model_library = model_library
+        self.location_aggregation = location_aggregation
+
+    def _resolve_location_aggregation(self, locations: list[str]) -> list[str]:
+        """Filter and relabel raw location component IDs using the configured property key.
+
+        Each location is resolved independently. Locations where the property is
+        undeclared are replaced with ``<unknown>`` (on_missing='keep') or
+        excluded (on_missing='drop'). When no location_aggregation is configured
+        the list is returned unchanged.
+        """
+        cfg = self.location_aggregation
+        if cfg is None:
+            return locations
+        result: list[str] = []
+        for loc in locations:
+            val = self.system.get_component(loc).properties.get(cfg.key)
+            if val is not None:
+                result.append(val)
+            elif cfg.on_missing == "keep":
+                result.append("<unknown>")
+            # else on_missing == "drop": skip this location
+        return result
 
     def build(self, metric: Metric) -> MetricStructureTable:
         logging.debug(f"[{metric.id}] Building metric structure table ({len(metric.terms)} term(s))")
@@ -81,8 +105,19 @@ class MetricStructureTableBuilder:
 
                     # # Decide does the component matches the filter, if yes they will contribute to the metric
                     if _check_filter_matches(component, metric.filter):
-                        metric_location = _format_metric_location(
-                            self.system.get_location(component_id, term.location_ports)
+                        raw_location = self.system.get_location(component_id, term.location_ports)
+                        raw_locations = [raw_location] if isinstance(raw_location, str) else list(raw_location)
+                        resolved_locations = self._resolve_location_aggregation(raw_locations)
+                        if not resolved_locations:
+                            logging.debug(
+                                f"[{metric.id}] Component {component_id!r} has no locations after "
+                                "aggregation and was skipped"
+                            )
+                            continue
+                        metric_location = (
+                            resolved_locations[0]
+                            if len(resolved_locations) == 1
+                            else _format_metric_location(tuple(resolved_locations))
                         )
                         breakdown_properties = _format_breakdown_properties(component.properties, metric.breakdown)
                         rows_data.append(

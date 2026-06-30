@@ -12,6 +12,7 @@
 
 from pathlib import Path
 
+from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
@@ -41,6 +42,10 @@ def test_loader_load_populates_input_data(test_dataset_dir: Path) -> None:
     assert isinstance(input_data.library, Library)
     assert isinstance(input_data.system, System)
     assert isinstance(input_data.filtered_st, FilteredSimulationTable)
+    assert input_data.catalogs
+    for catalog_id in input_data.view_config.catalog_ids:
+        assert catalog_id in input_data.catalogs
+        assert isinstance(input_data.catalogs[catalog_id], Catalog)
 
 
 def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) -> None:

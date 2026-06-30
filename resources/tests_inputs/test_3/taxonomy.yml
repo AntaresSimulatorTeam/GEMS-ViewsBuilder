@@ -12,10 +12,14 @@ taxonomy:
       ports:
         - id: p_balance_port
         - id: q_balance_port
+      properties:
+        - id: business_view
 
     - id: production
       ports:
         - id: p_balance_port
+      properties:
+        - id: business_view
 
     - id: storage
       ports:
@@ -25,6 +29,8 @@ taxonomy:
       ports:
         - id: p0_port
         - id: p1_port
+      properties:
+        - id: business_view
 
     - id: coupling
       ports:
