@@ -38,7 +38,7 @@ class Scope(ViewBuilderBasedModel):
 
 
 class Aggregation(ViewBuilderBasedModel):
-    time: TimeAggregation
+    time: TimeAggregation | None = None
 
 
 class CatalogRef(ViewBuilderBasedModel):
