@@ -42,10 +42,9 @@ def _format_breakdown_properties(component_properties: dict[str, str], breakdown
 
 
 def _format_metric_location(locations: str | tuple[str, ...]) -> str:
-    locs = (locations,) if isinstance(locations, str) else locations
-    if not locs:
-        return "{}"
-    return "{" + ",".join(locs) + "}"
+    if isinstance(locations, str):
+        return locations
+    return "(" + ",".join(locations) + ")"
 
 
 class MetricStructureTableBuilder:

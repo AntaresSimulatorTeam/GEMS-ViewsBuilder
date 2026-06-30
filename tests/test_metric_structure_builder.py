@@ -83,25 +83,26 @@ def test_format_breakdown_properties_empty_breakdown() -> None:
 
 
 def test_format_metric_location_single() -> None:
-    assert _format_metric_location(("busA",)) == "{busA}"
+    assert _format_metric_location("busA") == "busA"
 
 
 def test_format_metric_location_multiple() -> None:
-    assert _format_metric_location(("busA", "busB")) == "{busA,busB}"
+    assert _format_metric_location(("busA", "busB")) == "(busA,busB)"
 
 
 def test_format_metric_location_preserves_duplicates() -> None:
-    assert _format_metric_location(("busA", "busA")) == "{busA,busA}"
+    assert _format_metric_location(("busA", "busA")) == "(busA,busA)"
 
 
 def test_format_metric_location_empty() -> None:
-    assert _format_metric_location(()) == "{}"
+    assert _format_metric_location(()) == "()"
 
 
 def _parse_metric_location(encoded: str) -> list[str]:
-    assert encoded.startswith("{") and encoded.endswith("}")
-    inner = encoded[1:-1]
-    return [] if not inner else inner.split(",")
+    if encoded.startswith("(") and encoded.endswith(")"):
+        inner = encoded[1:-1]
+        return [] if not inner else [part.strip() for part in inner.split(",")]
+    return [encoded.strip('"')]
 
 
 def _component_matches_filters(metric_filter: PropertySchema | None, component: Component) -> bool:
@@ -149,8 +150,7 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
         if len(comp_rows) == 0:
             continue
         resolved = system.get_location(comp, "p_balance_port")
-        raw_locations = (resolved,) if isinstance(resolved, str) else resolved
-        assert comp_rows["metric_location"].to_list() == [_format_metric_location(raw_locations)]
+        assert comp_rows["metric_location"].to_list() == [_format_metric_location(resolved)]
 
 
 def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
@@ -178,7 +178,7 @@ def test_load_structure_component_and_location(
         return
     component_rows = df.filter(pl.col("component") == "load_AL")
     assert len(component_rows) == 1
-    assert component_rows["metric_location"][0] == "{busA}"
+    assert component_rows["metric_location"][0] == "busA"
     assert set(component_rows["output"].to_list()) == {"active_load"}
 
 
@@ -197,8 +197,8 @@ def test_balance_structure_locations(test_3_components: dict[str, Any]) -> None:
     if len(df) == 0:
         return
     link_rows = df.filter(pl.col("component") == "link_link_AB")
-    assert link_rows.filter(pl.col("output") == "p0_port.flow")["metric_location"][0] == "{busA}"
-    assert link_rows.filter(pl.col("output") == "p1_port.flow")["metric_location"][0] == "{busB}"
+    assert link_rows.filter(pl.col("output") == "p0_port.flow")["metric_location"][0] == "busA"
+    assert link_rows.filter(pl.col("output") == "p1_port.flow")["metric_location"][0] == "busB"
 
 
 def test_balance_structure_component(test_3_components: dict[str, Any]) -> None:
@@ -306,5 +306,5 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
 
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1
-    assert link_rows["metric_location"][0] == "{busA,busA}"
+    assert link_rows["metric_location"][0] == "(busA,busA)"
     assert _parse_metric_location(link_rows["metric_location"][0]) == ["busA", "busA"]
