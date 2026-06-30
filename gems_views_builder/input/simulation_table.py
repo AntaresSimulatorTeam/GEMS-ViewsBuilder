@@ -61,8 +61,8 @@ class FilteredSimulationTable:
     file_path: Path
     dataframe: pl.LazyFrame
 
-    def cleanup(self) -> None:
-        logging.info(f"Cleaning filtered simulation table {self.file_path}")
+    def __del__(self) -> None:
+        logging.debug(f"Cleaning filtered simulation table {self.file_path}")
         self.file_path.unlink(missing_ok=True)
 
 

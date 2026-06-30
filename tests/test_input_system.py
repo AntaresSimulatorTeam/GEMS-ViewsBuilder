@@ -11,11 +11,12 @@
 # This file is part of the Antares project.
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore
 
-from gems_views_builder.input.system import load_system
+from gems_views_builder.input.system import System, load_system
 
 
 def test_input_system_using(test_dataset_dir: Path) -> None:
@@ -27,8 +28,8 @@ def test_input_system_using(test_dataset_dir: Path) -> None:
     assert isinstance(input_system, SystemSchema)
 
 
-def test_locating_function_multiple_peers_returns_tuple(test_dataset_dir: Path) -> None:
-    """When a single port connects to multiple peers, get_location returns a tuple of all peer ids."""
+def test_locating_function_multiple_peers_raises(test_dataset_dir: Path) -> None:
+    """A single location port must resolve to a unique peer: multiple peers is an error."""
     system = load_system(test_dataset_dir)
 
     if not system.connections:
@@ -39,30 +40,35 @@ def test_locating_function_multiple_peers_returns_tuple(test_dataset_dir: Path) 
         return
 
     cid, pid = ambiguous[0]
-    result = system.get_location(cid, pid)
-    expected_peers = system._component_port_connections[(cid, pid)]
-    assert isinstance(result, tuple)
-    assert set(result) == expected_peers
+    with pytest.raises(ValueError):
+        system.get_location(cid, pid)
 
 
-def test_locating_function(test_dataset_dir: Path) -> None:
-    """LOCATING_FUNCTION: None -> component_id, string -> peer id, tuple -> tuple of peer ids."""
-    assert (test_dataset_dir / "system.yml").exists()
+def test_locating_function_zero_peers_raises(test_dataset_dir: Path) -> None:
+    """A single location port with no connected peer is an error (must be unique)."""
     system = load_system(test_dataset_dir)
 
-    # location_port is None -> return component_id (generic)
     assert len(system.components) > 0
     any_component_id = system.components[0].id
-    assert system.get_location(any_component_id, None) == any_component_id
+    # A port that is wired to nothing has zero peers, which is not a unique location.
+    with pytest.raises(ValueError):
+        system.get_location(any_component_id, "this_port_is_not_connected_to_anything")
 
-    # location_port is string → one peer returns str, multiple peers returns tuple containing them.
-    if not system._component_port_connections:
-        pytest.skip("No connections in this dataset's system.yml")
 
-    for (component, port), peers in system._component_port_connections.items():
-        result = system.get_location(component, port)
-        if len(peers) == 1:
-            assert result == next(iter(peers))
-        else:
-            assert isinstance(result, tuple)
-            assert set(result) == peers
+def test_get_location_zero_peers_raises_in_memory() -> None:
+    """get_location raises when a port has no wired peer (built without dataset files)."""
+    gems_system = SimpleNamespace(
+        components=[
+            SimpleNamespace(id="area", model="basic_lib.area"),
+            SimpleNamespace(id="gen", model="basic_lib.gen"),
+        ],
+        connections=[
+            SimpleNamespace(component1="gen", port1="balance_port", component2="area", port2="balance_port"),
+        ],
+    )
+    system = System(gems_system)
+    with pytest.raises(
+        ValueError,
+        match=r"Expected exactly one peer component for component 'area' on port 'spillage_port', but found 0",
+    ):
+        system.get_location("area", "spillage_port")

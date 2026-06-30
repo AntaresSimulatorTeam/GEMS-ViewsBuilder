@@ -13,14 +13,15 @@
 from pathlib import Path
 
 import pytest
-from gems.model.parsing import (  # type: ignore[import-untyped]
+
+from gems_views_builder import (
+    Library,
     ModelPortSchema,
     ModelSchema,
     ParameterSchema,
     VariableSchema,
+    load_library,
 )
-
-from gems_views_builder.input.library import Library, load_library
 
 
 def _library_path(test_dataset_dir: Path) -> Path | None:

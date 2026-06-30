@@ -93,7 +93,7 @@ class Metric:
     terms: list[Term]
     terms_operator: TermsOperator
     time_operator: TimeOperator
-    breakdown: tuple[PropertySchema, ...] | None = None
+    breakdown: list[PropertySchema] | None = None
     filter: PropertySchema | None = None
 
 
@@ -128,7 +128,7 @@ def to_metric(metric_data: MetricData) -> Metric:
         terms=[to_term(term) for term in metric_data.terms],
         terms_operator=metric_data.terms_operator,
         time_operator=metric_data.time_operator,
-        breakdown=tuple(metric_data.breakdown) if metric_data.breakdown else None,
+        breakdown=list(metric_data.breakdown) if metric_data.breakdown else None,
         filter=metric_data.filter,
     )
 

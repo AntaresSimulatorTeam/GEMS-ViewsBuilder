@@ -15,23 +15,22 @@ from typing import Any
 
 import polars as pl
 import pytest
-from gems.study import Component  # type: ignore[import-untyped]
+from gems.study import Component  # type: ignore
 
-from gems_views_builder.input.catalog import (
+from gems_views_builder import (
     Metric,
     PropertySchema,
     Term,
     TermsOperator,
     TimeOperator,
     load_catalog,
+    load_library,
+    load_taxonomy,
 )
-from gems_views_builder.input.library import load_library
 from gems_views_builder.input.system import load_system
-from gems_views_builder.input.taxonomy import load_taxonomy
 from gems_views_builder.input.view_config import LocationAggregation
-from gems_views_builder.metrics_builder import (
-    MetricStructureBuilder,
-    MetricStructureTable,
+from gems_views_builder.metrics_structure_builder import (
+    MetricStructureTableBuilder,
     _format_breakdown_properties,
     _format_metric_location,
 )
@@ -52,21 +51,21 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
     }
 
 
-def _build(metric_id: str, components: dict[str, Any]) -> "MetricStructureTable":
+def _build(metric_id: str, components: dict[str, Any]) -> pl.DataFrame:
     metric = components["catalog"].get_metric(metric_id)
-    return MetricStructureBuilder(
+    table = MetricStructureTableBuilder(
         components["system"],
-        metric,
         components["library"],
-    ).build()
+    ).build(metric)
+    return table.dataframe.collect()
 
 
 def test_format_breakdown_properties_missing_keys_use_none_literal() -> None:
-    breakdown = (
+    breakdown = [
         PropertySchema(key="country"),
         PropertySchema(key="company"),
         PropertySchema(key="technology"),
-    )
+    ]
     component_properties = {"company": "rhonepower"}
     assert (
         _format_breakdown_properties(component_properties, breakdown)
@@ -75,7 +74,7 @@ def test_format_breakdown_properties_missing_keys_use_none_literal() -> None:
 
 
 def test_format_breakdown_properties_all_keys_present() -> None:
-    breakdown = (PropertySchema(key="technology"), PropertySchema(key="company"))
+    breakdown = [PropertySchema(key="technology"), PropertySchema(key="company")]
     component_properties = {"technology": "gas", "company": "rhonepower"}
     assert _format_breakdown_properties(component_properties, breakdown) == "{(technology,gas),(company,rhonepower)}"
 
@@ -85,25 +84,26 @@ def test_format_breakdown_properties_empty_breakdown() -> None:
 
 
 def test_format_metric_location_single() -> None:
-    assert _format_metric_location(("busA",)) == "{busA}"
+    assert _format_metric_location("busA") == "busA"
 
 
 def test_format_metric_location_multiple() -> None:
-    assert _format_metric_location(("busA", "busB")) == "{busA,busB}"
+    assert _format_metric_location(("busA", "busB")) == "(busA,busB)"
 
 
 def test_format_metric_location_preserves_duplicates() -> None:
-    assert _format_metric_location(("busA", "busA")) == "{busA,busA}"
+    assert _format_metric_location(("busA", "busA")) == "(busA,busA)"
 
 
 def test_format_metric_location_empty() -> None:
-    assert _format_metric_location(()) == "{}"
+    assert _format_metric_location(()) == "()"
 
 
 def _parse_metric_location(encoded: str) -> list[str]:
-    assert encoded.startswith("{") and encoded.endswith("}")
-    inner = encoded[1:-1]
-    return [] if not inner else inner.split(",")
+    if encoded.startswith("(") and encoded.endswith(")"):
+        inner = encoded[1:-1]
+        return [] if not inner else [part.strip() for part in inner.split(",")]
+    return [encoded.strip('"')]
 
 
 def _component_matches_filters(metric_filter: PropertySchema | None, component: Component) -> bool:
@@ -129,13 +129,13 @@ def _count_expected_rows(metric_id: str, component_ids: list[str], components: d
 
 
 def test_prod_structure_row_count(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components).dataframe
+    df = _build("PROD", test_3_components)
     candidates = ["generator_A1", "generator_A2", "generator_B1"]
     assert len(df) == _count_expected_rows("PROD", candidates, test_3_components)
 
 
 def test_prod_structure_components(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components).dataframe
+    df = _build("PROD", test_3_components)
     metric = test_3_components["catalog"].get_metric("PROD")
     system = test_3_components["system"]
     candidates = ["generator_A1", "generator_A2", "generator_B1"]
@@ -144,19 +144,18 @@ def test_prod_structure_components(test_3_components: dict[str, Any]) -> None:
 
 
 def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components).dataframe
+    df = _build("PROD", test_3_components)
     system = test_3_components["system"]
     for comp in ("generator_A1", "generator_A2", "generator_B1"):
         comp_rows = df.filter(pl.col("component") == comp)
         if len(comp_rows) == 0:
             continue
         resolved = system.get_location(comp, "p_balance_port")
-        raw_locations = (resolved,) if isinstance(resolved, str) else resolved
-        assert comp_rows["metric_location"].to_list() == [_format_metric_location(raw_locations)]
+        assert comp_rows["metric_location"].to_list() == [_format_metric_location(resolved)]
 
 
 def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components).dataframe
+    df = _build("PROD", test_3_components)
     if len(df) == 0:
         return
     assert set(df["output"].to_list()) == {"p"}
@@ -168,19 +167,19 @@ def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
 
 
 def test_load_structure_row_count(test_3_components: dict[str, Any]) -> None:
-    df = _build("LOAD", test_3_components).dataframe
+    df = _build("LOAD", test_3_components)
     assert len(df) == _count_expected_rows("LOAD", ["load_AL"], test_3_components)
 
 
 def test_load_structure_component_and_location(
     test_3_components: dict[str, Any],
 ) -> None:
-    df = _build("LOAD", test_3_components).dataframe
+    df = _build("LOAD", test_3_components)
     if len(df) == 0:
         return
     component_rows = df.filter(pl.col("component") == "load_AL")
     assert len(component_rows) == 1
-    assert component_rows["metric_location"][0] == "{busA}"
+    assert component_rows["metric_location"][0] == "busA"
     assert set(component_rows["output"].to_list()) == {"active_load"}
 
 
@@ -190,21 +189,21 @@ def test_load_structure_component_and_location(
 
 
 def test_balance_structure_row_count(test_3_components: dict[str, Any]) -> None:
-    df = _build("BALANCE", test_3_components).dataframe
+    df = _build("BALANCE", test_3_components)
     assert len(df) == _count_expected_rows("BALANCE", ["link_link_AB"], test_3_components)
 
 
 def test_balance_structure_locations(test_3_components: dict[str, Any]) -> None:
-    df = _build("BALANCE", test_3_components).dataframe
+    df = _build("BALANCE", test_3_components)
     if len(df) == 0:
         return
     link_rows = df.filter(pl.col("component") == "link_link_AB")
-    assert link_rows.filter(pl.col("output") == "p0_port.flow")["metric_location"][0] == "{busA}"
-    assert link_rows.filter(pl.col("output") == "p1_port.flow")["metric_location"][0] == "{busB}"
+    assert link_rows.filter(pl.col("output") == "p0_port.flow")["metric_location"][0] == "busA"
+    assert link_rows.filter(pl.col("output") == "p1_port.flow")["metric_location"][0] == "busB"
 
 
 def test_balance_structure_component(test_3_components: dict[str, Any]) -> None:
-    df = _build("BALANCE", test_3_components).dataframe
+    df = _build("BALANCE", test_3_components)
     if len(df) == 0:
         return
     assert set(df["component"].to_list()) == {"link_link_AB"}
@@ -215,14 +214,13 @@ def test_balance_structure_component(test_3_components: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_single_port_multiple_peers_produces_one_row_per_peer(test_3_components: dict[str, Any]) -> None:
-    """A term with a single location_port that connects to multiple peers yields one merged row.
+def test_single_port_multiple_peers_raises(test_3_components: dict[str, Any]) -> None:
+    """A single location_port wired to multiple peers is ambiguous and must raise.
 
-    In test_3, busA.p_balance_port connects to generator_A1, generator_A2, load_AL, link_link_AB
-    and busB.p_balance_port connects to generator_B1, link_link_AB.
-    All peers for each bus are encoded in a single metric_location value.
+    In test_3, busA.p_balance_port connects to generator_A1, generator_A2, load_AL,
+    link_link_AB (and busB.p_balance_port to generator_B1, link_link_AB), so resolving
+    a single port to a unique locating peer is impossible here.
     """
-    system = test_3_components["system"]
     metric = Metric(
         id="BUS_PEER_TEST",
         terms=[
@@ -235,27 +233,11 @@ def test_single_port_multiple_peers_produces_one_row_per_peer(test_3_components:
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    df = (
-        MetricStructureBuilder(
+    with pytest.raises(ValueError):
+        MetricStructureTableBuilder(
             test_3_components["system"],
-            metric,
             test_3_components["library"],
-        )
-        .build()
-        .dataframe
-    )
-
-    bus_a_expected = {"generator_A1", "generator_A2", "load_AL", "link_link_AB"}
-    bus_a_rows = df.filter(pl.col("component") == "busA")
-    assert len(bus_a_rows) == 1
-    assert bus_a_rows["metric_location"][0] == _format_metric_location(system.get_location("busA", "p_balance_port"))
-    assert set(_parse_metric_location(bus_a_rows["metric_location"][0])) == bus_a_expected
-
-    bus_b_expected = {"generator_B1", "link_link_AB"}
-    bus_b_rows = df.filter(pl.col("component") == "busB")
-    assert len(bus_b_rows) == 1
-    assert bus_b_rows["metric_location"][0] == _format_metric_location(system.get_location("busB", "p_balance_port"))
-    assert set(_parse_metric_location(bus_b_rows["metric_location"][0])) == bus_b_expected
+        ).build(metric)
 
 
 def test_get_location_tuple_of_ports_returns_peer_per_port(test_3_components: dict[str, Any]) -> None:
@@ -281,15 +263,11 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    df = (
-        MetricStructureBuilder(
-            test_3_components["system"],
-            metric,
-            test_3_components["library"],
-        )
-        .build()
-        .dataframe
-    )
+    table = MetricStructureTableBuilder(
+        test_3_components["system"],
+        test_3_components["library"],
+    ).build(metric)
+    df = table.dataframe.collect()
 
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1
@@ -300,8 +278,8 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
     assert set(link_rows["output"].to_list()) == {"p0_port.flow"}
 
 
-def test_duplicate_locations_from_two_ports_produce_duplicate_rows(test_files_root: Path) -> None:
-    """When two ports resolve to the same peer, get_location and the structure table keep both entries."""
+def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row(test_files_root: Path) -> None:
+    """When two ports resolve to the same peer, the single structure row keeps both locations (busA twice)."""
     test_3 = test_files_root / "test_3"
     library = load_library(test_3 / "library.yml")
     system = load_system(test_3)
@@ -324,11 +302,12 @@ def test_duplicate_locations_from_two_ports_produce_duplicate_rows(test_files_ro
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    df = MetricStructureBuilder(system, metric, library).build().dataframe
+    table = MetricStructureTableBuilder(system, library).build(metric)
+    df = table.dataframe.collect()
 
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1
-    assert link_rows["metric_location"][0] == "{busA,busA}"
+    assert link_rows["metric_location"][0] == "(busA,busA)"
     assert _parse_metric_location(link_rows["metric_location"][0]) == ["busA", "busA"]
 
 
@@ -360,11 +339,9 @@ def loc_agg_components(test_files_root: Path) -> dict[str, Any]:
 def _make_builder(
     components: dict[str, Any],
     location_aggregation: LocationAggregation | None = None,
-) -> MetricStructureBuilder:
-    metric = components["catalog"].get_metric("PRODUCTION")
-    return MetricStructureBuilder(
+) -> MetricStructureTableBuilder:
+    return MetricStructureTableBuilder(
         components["system"],
-        metric,
         components["library"],
         location_aggregation=location_aggregation,
     )
@@ -411,42 +388,34 @@ def test_resolve_no_aggregation_passthrough(loc_agg_components: dict[str, Any]) 
 
 
 def test_build_with_country_aggregation_collapses_fr(loc_agg_components: dict[str, Any]) -> None:
-    """gen_FR1 and gen_FR2 both resolve to '{FR}' via the country property."""
+    """gen_FR1 and gen_FR2 both resolve to 'FR' via the country property."""
     metric = loc_agg_components["catalog"].get_metric("PRODUCTION")
-    df = (
-        MetricStructureBuilder(
-            loc_agg_components["system"],
-            metric,
-            loc_agg_components["library"],
-            location_aggregation=LocationAggregation(key="country"),
-        )
-        .build()
-        .dataframe
-    )
-    fr_rows = df.filter(pl.col("metric_location") == "{FR}")
+    table = MetricStructureTableBuilder(
+        loc_agg_components["system"],
+        loc_agg_components["library"],
+        location_aggregation=LocationAggregation(key="country"),
+    ).build(metric)
+    df = table.dataframe.collect()
+    fr_rows = df.filter(pl.col("metric_location") == "FR")
     assert set(fr_rows["component"].to_list()) == {"gen_FR1", "gen_FR2"}
-    assert df.filter(pl.col("metric_location").is_in(["{area_FR1}", "{area_FR2}"])).is_empty()
+    assert df.filter(pl.col("metric_location").is_in(["area_FR1", "area_FR2"])).is_empty()
 
 
 def test_build_with_drop_excludes_orphan(loc_agg_components: dict[str, Any]) -> None:
     """gen_orph has no country property; on_missing=drop excludes it."""
     metric = loc_agg_components["catalog"].get_metric("PRODUCTION")
-    df = (
-        MetricStructureBuilder(
-            loc_agg_components["system"],
-            metric,
-            loc_agg_components["library"],
-            location_aggregation=LocationAggregation(key="country", on_missing="drop"),
-        )
-        .build()
-        .dataframe
-    )
+    table = MetricStructureTableBuilder(
+        loc_agg_components["system"],
+        loc_agg_components["library"],
+        location_aggregation=LocationAggregation(key="country", on_missing="drop"),
+    ).build(metric)
+    df = table.dataframe.collect()
     assert "gen_orph" not in df["component"].to_list()
     assert "<unknown>" not in df["metric_location"].to_list()
 
 
 def test_build_multiport_location_ports_with_aggregation(loc_agg_components: dict[str, Any]) -> None:
-    """A term with location_ports=(p0_port, p1_port) on link_FRDE produces one row with '{FR,DE}'."""
+    """A term with location_ports=(p0_port, p1_port) on link_FRDE produces one row with '(FR,DE)'."""
     metric = Metric(
         id="LINK_COUNTRY_TEST",
         terms=[
@@ -459,18 +428,14 @@ def test_build_multiport_location_ports_with_aggregation(loc_agg_components: dic
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    df = (
-        MetricStructureBuilder(
-            loc_agg_components["system"],
-            metric,
-            loc_agg_components["library"],
-            location_aggregation=LocationAggregation(key="country"),
-        )
-        .build()
-        .dataframe
-    )
+    table = MetricStructureTableBuilder(
+        loc_agg_components["system"],
+        loc_agg_components["library"],
+        location_aggregation=LocationAggregation(key="country"),
+    ).build(metric)
+    df = table.dataframe.collect()
     link_rows = df.filter(pl.col("component") == "link_FRDE")
     assert len(link_rows) == 1
-    assert link_rows["metric_location"][0] == "{FR,DE}"
+    assert link_rows["metric_location"][0] == "(FR,DE)"
     assert "area_FR1" not in link_rows["metric_location"][0]
     assert "area_DE" not in link_rows["metric_location"][0]

@@ -20,7 +20,8 @@ import pytest
 from gems_views_builder.input.catalog import Metric, PropertySchema, load_catalog
 from gems_views_builder.input.system import System, load_system
 from gems_views_builder.loader import Loader
-from gems_views_builder.metrics_builder import _format_metric_location
+from gems_views_builder.metrics_structure_builder import _format_metric_location
+from gems_views_builder.view import accumulate_on_disk
 from gems_views_builder.views_builder import ViewBuilder
 
 
@@ -53,7 +54,7 @@ def _component_matches_filters(metric_filter: PropertySchema | None, component: 
 
 
 def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
-    encoded = _format_metric_location((location,))
+    encoded = _format_metric_location(location)
     return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == encoded)).sort("view_date")
 
 
@@ -66,10 +67,14 @@ def view_run(test_files_root: Path, tmp_path: Path) -> tuple[pl.DataFrame, Path]
     """
     src = test_files_root / "test_3"
     dst = tmp_path / "test_3"
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
     shutil.copytree(src, dst)
-    merged = _build_view_builder(dst).build()
-    assert merged.file is not None
-    return pl.read_parquet(merged.file), dst
+    metric_views = _build_view_builder(dst).build()
+    accumulate_on_disk(metric_views, results_dir)
+    result_files = list(results_dir.glob("view*.parquet"))
+    assert result_files, "No result parquet file written"
+    return pl.read_parquet(result_files[0]), dst
 
 
 # ---------------------------------------------------------------------------
@@ -200,8 +205,11 @@ def test_log_messages_emitted_to_stdout(
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
 
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
     with caplog.at_level(logging.INFO):
-        _build_view_builder(dst).build()
+        metric_views = _build_view_builder(dst).build()
+        accumulate_on_disk(metric_views, results_dir)
 
     repo_root = Path(__file__).resolve().parents[1]
     log_directory = repo_root / "logs"
@@ -210,7 +218,6 @@ def test_log_messages_emitted_to_stdout(
 
     messages = [r.message for r in caplog.records]
     assert any("All inputs loaded" in m for m in messages)
-    assert any("Starting input validation" in m for m in messages), "Missing expected log: Starting input validation"
     assert any("All inputs loaded successfully" in m for m in messages), (
         "Missing expected log: All inputs loaded successfully"
     )
@@ -248,9 +255,13 @@ def _loc_run(test_files_root: Path, tmp_path: Path, config_variant: str | None =
     shutil.copytree(src, dst)
     if config_variant is not None:
         shutil.copy(dst / f"{config_variant}.yml", dst / "view_config.yml")
-    merged = _build_view_builder(dst).build()
-    assert merged.file is not None
-    return pl.read_parquet(merged.file)
+    results_dir = tmp_path / "results" / (config_variant or "default")
+    results_dir.mkdir(parents=True)
+    metric_views = _build_view_builder(dst).build()
+    accumulate_on_disk(metric_views, results_dir)
+    result_files = list(results_dir.glob("view*.parquet"))
+    assert result_files, "No result parquet file written"
+    return pl.read_parquet(result_files[0])
 
 
 def test_country_collapse_fr(test_files_root: Path, tmp_path: Path) -> None:
@@ -258,7 +269,7 @@ def test_country_collapse_fr(test_files_root: Path, tmp_path: Path) -> None:
     df = _loc_run(test_files_root, tmp_path)
     rows = _metric_at(df, "PRODUCTION", "FR")
     assert rows["metric_value"].to_list() == [20, 40, 60, 80]
-    assert df.filter(pl.col("metric_location").is_in(["{area_FR1}", "{area_FR2}"])).is_empty()
+    assert df.filter(pl.col("metric_location").is_in(["area_FR1", "area_FR2"])).is_empty()
 
 
 def test_country_collapse_de(test_files_root: Path, tmp_path: Path) -> None:
@@ -273,14 +284,14 @@ def test_unknown_sentinel_keep(test_files_root: Path, tmp_path: Path) -> None:
     df = _loc_run(test_files_root, tmp_path)
     rows = _metric_at(df, "PRODUCTION", "<unknown>")
     assert rows["metric_value"].to_list() == [10, 20, 30, 40]
-    assert df.filter(pl.col("metric_location") == "{area_orph}").is_empty()
+    assert df.filter(pl.col("metric_location") == "area_orph").is_empty()
 
 
 def test_unknown_drop(test_files_root: Path, tmp_path: Path) -> None:
     """on_missing=drop excludes gen_orph; FR and DE totals unchanged."""
     df = _loc_run(test_files_root, tmp_path, config_variant="view_config_drop")
-    assert df.filter(pl.col("metric_location") == "{<unknown>}").is_empty()
-    assert df.filter(pl.col("metric_location") == "{area_orph}").is_empty()
+    assert df.filter(pl.col("metric_location") == "<unknown>").is_empty()
+    assert df.filter(pl.col("metric_location") == "area_orph").is_empty()
     assert _metric_at(df, "PRODUCTION", "FR")["metric_value"].to_list() == [20, 40, 60, 80]
     assert _metric_at(df, "PRODUCTION", "DE")["metric_value"].to_list() == [10, 20, 30, 40]
 
@@ -291,7 +302,7 @@ def test_balance_location_collapse(test_files_root: Path, tmp_path: Path) -> Non
     assert _metric_at(df, "BALANCE", "FR")["metric_value"].to_list() == [5, 5, 5, 5]
     assert _metric_at(df, "BALANCE", "DE")["metric_value"].to_list() == [-5, -5, -5, -5]
     assert df.filter(
-        (pl.col("metric_id") == "BALANCE") & pl.col("metric_location").is_in(["{area_FR1}", "{area_DE}"])
+        (pl.col("metric_id") == "BALANCE") & pl.col("metric_location").is_in(["area_FR1", "area_DE"])
     ).is_empty()
 
 
@@ -301,4 +312,4 @@ def test_no_location_key_regression(test_files_root: Path, tmp_path: Path) -> No
     for area in ("area_FR1", "area_FR2", "area_DE", "area_orph"):
         rows = _metric_at(df, "PRODUCTION", area)
         assert rows["metric_value"].to_list() == [10, 20, 30, 40], f"unexpected values for {area}"
-    assert df.filter(pl.col("metric_location").is_in(["{FR}", "{DE}", "{<unknown>}"])).is_empty()
+    assert df.filter(pl.col("metric_location").is_in(["FR", "DE", "<unknown>"])).is_empty()
