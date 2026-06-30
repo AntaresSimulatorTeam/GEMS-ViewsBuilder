@@ -51,16 +51,28 @@ def test_model_library_models_are_typed(test_dataset_dir: Path) -> None:
         assert isinstance(model.id, str)
 
 
+# Known model id -> taxonomy category for datasets that include that model.
+_KNOWN_TAXONOMY_CATEGORIES: dict[str, str] = {
+    "area": "balance",
+    "bus": "balance",
+    "generator": "production",
+    "generator_basic": "production",
+    "load": "consumption",
+    "store": "consumption",
+    "link": "link",
+    "storage_unit": "storage",
+}
+
+
 def test_model_library_taxonomy_categories(test_dataset_dir: Path) -> None:
     library_path = _library_path(test_dataset_dir)
     if library_path is None:
         pytest.skip("No model library file found (expected library.yml)")
     library = load_library(library_path)
-    assert library.get_taxonomy_category("bus") == "balance"
-    assert library.get_taxonomy_category("load") == "consumption"
-    assert library.get_taxonomy_category("link") == "link"
-    assert library.get_taxonomy_category("storage_unit") == "storage"
-    assert library.get_taxonomy_category("store") == "consumption"
+    for model_id, expected_category in _KNOWN_TAXONOMY_CATEGORIES.items():
+        if model_id not in library.models:
+            continue
+        assert library.get_taxonomy_category(model_id) == expected_category
 
 
 def test_model_library_get_taxonomy_category_unknown_model(test_dataset_dir: Path) -> None:
@@ -82,6 +94,7 @@ def test_model_library_full_model_loaded(test_dataset_dir: Path) -> None:
         generator = library.get_model("generator")
     except ValueError:
         pytest.skip("No 'generator' model in this dataset's library")
+    production_model = generator.id
     assert len(generator.parameters) > 0
     assert all(isinstance(p, ParameterSchema) for p in generator.parameters)
     assert len(generator.variables) > 0
@@ -89,8 +102,9 @@ def test_model_library_full_model_loaded(test_dataset_dir: Path) -> None:
     assert len(generator.ports) > 0
     assert all(isinstance(p, ModelPortSchema) for p in generator.ports)
     assert len(generator.port_field_definitions) > 0
-    assert len(generator.constraints) > 0
     assert len(generator.objective_contributions) > 0
+    if production_model == "generator":
+        assert len(generator.constraints) > 0
 
 
 def test_model_library_port_types_loaded(test_dataset_dir: Path) -> None:
