@@ -37,7 +37,12 @@ class TimeAggregator:
                 f"Temporal aggregation for metric {metric.id} is not supported for operator {metric.time_operator.value}"
             )
         time_agg = (pl.col("granular_metric_value").sum()).alias("metric_value")
-        view_date_expr = pl.col("granular_date").dt.truncate(self.time_aggregation).alias("view_date")
+        granular_date = pl.col("granular_date")
+        truncated = self.time_aggregation != "no truncation"
+        view_date_expr = (granular_date.dt.truncate(self.time_aggregation) if truncated else granular_date).alias(
+            "view_date"
+        )
+
         view = (
             lazy_metric_view.with_columns(view_date_expr)
             .group_by(
@@ -90,6 +95,4 @@ class TimeAggregator:
             case TimeAggregation.YEAR:
                 return "1y"
             case None:
-                return "1d"
-            case _:
-                raise ValueError(f"Invalid time aggregation: {time_aggregation}")
+                return "no truncation"

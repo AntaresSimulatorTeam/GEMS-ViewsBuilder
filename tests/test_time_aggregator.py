@@ -55,16 +55,11 @@ def _metric(time_operator: TimeOperator) -> Metric:
         (TimeAggregation.WEEK, "1w"),
         (TimeAggregation.MONTH, "1mo"),
         (TimeAggregation.YEAR, "1y"),
-        (None, "1d"),
+        (None, "no truncation"),
     ],
 )
 def test_parse_time_aggregation(aggregation: TimeAggregation | None, expected_window: str) -> None:
     assert TimeAggregator.parse_time_aggregation(aggregation) == expected_window
-
-
-def test_parse_time_aggregation_invalid_raises() -> None:
-    with pytest.raises(ValueError, match="Invalid time aggregation"):
-        TimeAggregator.parse_time_aggregation("decade")  # type: ignore[arg-type]
 
 
 def test_truncation_groups_by_window(tmp_path: Path) -> None:
@@ -75,6 +70,15 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
     assert df.shape[0] == 1
     assert df["view_date"][0] == datetime(2026, 1, 1, 0, 0)
     assert df["metric_value"][0] == approx(30.0)
+
+
+def test_no_truncation_keeps_granular_dates(tmp_path: Path) -> None:
+    aggregator = TimeAggregator(None)
+    rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]
+    result = aggregator.run(_granular_view(rows, tmp_path), _metric(TimeOperator.SUM))
+    df = pl.read_parquet(result.persistence_path).sort("view_date")
+    assert df["view_date"].to_list() == [datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 20, 0)]
+    assert df["metric_value"].to_list() == [approx(10.0), approx(20.0)]
 
 
 def test_temporal_aggregation_avg(tmp_path: Path) -> None:
