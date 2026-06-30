@@ -8,11 +8,13 @@ import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 from gems_views_builder.input.catalog import Metric, TimeOperator
+from gems_views_builder.input.view_config import TimeAggregation
 from gems_views_builder.metric_view import MetricView
 
 
 class TimeAggregator:
-    def __init__(self) -> None:
+    def __init__(self, time_aggregation: TimeAggregation | None) -> None:
+        self.time_aggregation = self.parse_time_aggregation(time_aggregation)
         self._root_dir = Path(tempfile.mkdtemp())
         self._temporal_aggregation_dir = self._root_dir / "views" / "temporal_aggregation"
         self._temporal_aggregation_dir.mkdir(parents=True, exist_ok=True)
@@ -35,7 +37,7 @@ class TimeAggregator:
                 f"Temporal aggregation for metric {metric.id} is not supported for operator {metric.time_operator.value}"
             )
         time_agg = (pl.col("granular_metric_value").sum()).alias("metric_value")
-        view_date_expr = pl.col("granular_date").alias("view_date")
+        view_date_expr = pl.col("granular_date").dt.truncate(self.time_aggregation).alias("view_date")
         view = (
             lazy_metric_view.with_columns(view_date_expr)
             .group_by(
@@ -73,3 +75,21 @@ class TimeAggregator:
         )
         logging.info(f"[{metric.id}] Temporal aggregation written to {out_path}")
         return MetricView(out_path)
+
+    @staticmethod
+    def parse_time_aggregation(time_aggregation: TimeAggregation | None) -> str:
+        match time_aggregation:
+            case TimeAggregation.HOUR:
+                return "1h"
+            case TimeAggregation.DAY:
+                return "1d"
+            case TimeAggregation.WEEK:
+                return "1w"
+            case TimeAggregation.MONTH:
+                return "1mo"
+            case TimeAggregation.YEAR:
+                return "1y"
+            case None:
+                return "1d"
+            case _:
+                raise ValueError(f"Invalid time aggregation: {time_aggregation}")
