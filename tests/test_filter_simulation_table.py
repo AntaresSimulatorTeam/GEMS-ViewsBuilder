@@ -88,6 +88,7 @@ def test_filter_simulation_table_writes_parquet(
     simulation_table = load_simulation_table(simulation_table_file)
 
     filtered_table = filter_simulation_table(simulation_table, calendar, tmp_path)
+    assert isinstance(filtered_table, FilteredSimulationTable)
 
     assert filtered_table.file_path.exists(), "Output parquet should be created"
     written = filtered_table.dataframe.collect()

@@ -18,6 +18,7 @@ from enum import Enum
 from pathlib import Path
 
 import yaml
+from pydantic import field_validator
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
 
@@ -44,13 +45,27 @@ class TermData(ViewBuilderBasedModel):
     weight_output_id: str | None = None
 
 
+class PropertySchema(ViewBuilderBasedModel):
+    """Reference to a system/taxonomy property by key; value is required only for metric filters."""
+
+    key: str
+    value: str | None = None
+
+
 class MetricData(ViewBuilderBasedModel):
     id: str
     terms: list[TermData]
     terms_operator: TermsOperator
     time_operator: TimeOperator
-    breakdown_property: str | None = None
-    filter: tuple[str, str] | None = None
+    breakdown: list[PropertySchema] | None = None
+    filter: PropertySchema | None = None
+
+    @field_validator("filter")
+    @classmethod
+    def validate_filter(cls, value: PropertySchema | None) -> PropertySchema | None:
+        if value is not None and value.value is None:
+            raise ValueError("metric filter property must include a value")
+        return value
 
 
 class CatalogLocationData(ViewBuilderBasedModel):
@@ -78,8 +93,8 @@ class Metric:
     terms: list[Term]
     terms_operator: TermsOperator
     time_operator: TimeOperator
-    breakdown_property: str | None = None
-    filter: tuple[str, str] | None = None
+    breakdown: list[PropertySchema] | None = None
+    filter: PropertySchema | None = None
 
 
 @dataclass
@@ -113,7 +128,7 @@ def to_metric(metric_data: MetricData) -> Metric:
         terms=[to_term(term) for term in metric_data.terms],
         terms_operator=metric_data.terms_operator,
         time_operator=metric_data.time_operator,
-        breakdown_property=metric_data.breakdown_property,
+        breakdown=list(metric_data.breakdown) if metric_data.breakdown else None,
         filter=metric_data.filter,
     )
 

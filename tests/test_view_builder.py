@@ -18,6 +18,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder.loader import Loader
+from gems_views_builder.metrics_structure_builder import _format_metric_location
 from gems_views_builder.view import accumulate_on_disk
 from gems_views_builder.views_builder import ViewBuilder
 
@@ -46,7 +47,8 @@ def view_result(test_files_root: Path, tmp_path: Path) -> pl.DataFrame:
 
 
 def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
-    return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == location)).sort("view_date")
+    encoded = _format_metric_location(location)
+    return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == encoded)).sort("view_date")
 
 
 # ---------------------------------------------------------------------------
