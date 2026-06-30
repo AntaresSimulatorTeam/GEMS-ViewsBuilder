@@ -20,7 +20,14 @@ from gems.model.parsing import (  # type: ignore[import-untyped]
     VariableSchema,
 )
 
-from gems_views_builder import Library, load_library
+from gems_views_builder import (
+    Library,
+    ModelPortSchema,
+    ModelSchema,
+    ParameterSchema,
+    VariableSchema,
+    load_library,
+)
 
 
 def _library_path(test_dataset_dir: Path) -> Path | None:
@@ -68,10 +75,11 @@ def test_model_library_taxonomy_categories(test_dataset_dir: Path) -> None:
     if library_path is None:
         pytest.skip("No model library file found (expected library.yml)")
     library = load_library(library_path)
-    for model_id, expected_category in _KNOWN_TAXONOMY_CATEGORIES.items():
-        if model_id not in library.models:
-            continue
-        assert library.get_taxonomy_category(model_id) == expected_category
+    assert library.get_taxonomy_category("bus") == "balance"
+    assert library.get_taxonomy_category("load") == "consumption"
+    assert library.get_taxonomy_category("link") == "link"
+    assert library.get_taxonomy_category("storage_unit") == "storage"
+    assert library.get_taxonomy_category("store") == "consumption"
 
 
 def test_model_library_get_taxonomy_category_unknown_model(test_dataset_dir: Path) -> None:

@@ -15,12 +15,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder import (
-    FilteredSimulationTable,
-    filter_simulation_table,
-    load_calendar,
-    load_simulation_table,
-)
+from gems_views_builder import FilteredSimulationTable, load_calendar
+from gems_views_builder.input.simulation_table import filter_simulation_table, load_simulation_table
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 
@@ -91,11 +87,11 @@ def test_filter_simulation_table_writes_parquet(
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filter_simulation_table(simulation_table, calendar, tmp_path)
-    out_file = tmp_path / "simulation_table_filtered.parquet"
+    filtered_table = simulation_table.filter_simulation_table(calendar, output_path=out_file)
+    assert isinstance(filtered_table, FilteredSimulationTable)
 
-    assert out_file.exists(), "Output parquet should be created"
-    written = pl.scan_parquet(out_file).collect()
+    assert filtered_table.file_path.exists(), "Output parquet should be created"
+    written = filtered_table.dataframe.collect()
     expected = (
         simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))

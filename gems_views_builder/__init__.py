@@ -26,7 +26,6 @@ from gems.model.parsing import (  # type: ignore
     VariableSchema,
 )
 
-from gems_views_builder.aggregator import Aggregator
 from gems_views_builder.input.calendar import Calendar, load_calendar
 from gems_views_builder.input.catalog import (
     Catalog,
@@ -38,7 +37,6 @@ from gems_views_builder.input.catalog import (
     load_catalog,
     load_catalogs,
 )
-from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.library import Library, load_library
 from gems_views_builder.input.simulation_table import (
     FilteredSimulationTable,
@@ -46,22 +44,15 @@ from gems_views_builder.input.simulation_table import (
     filter_simulation_table,
     load_simulation_table,
 )
-from gems_views_builder.input.system import System, load_system
+from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
 from gems_views_builder.input.view_config import TimeAggregation, ViewConfig, load_view_config
-from gems_views_builder.loader import Loader
+from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.metric_view import MetricView
-from gems_views_builder.metrics_builder import (
-    MetricStructure,
-    MetricStructureBuilder,
-    MetricStructureTable,
-    build_metric_structure,
-)
+from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.views_builder import ViewBuilder
-from gems_views_builder.writer import MergedView, Writer
 
 __all__ = [
-    "Aggregator",
     "Calendar",
     "load_calendar",
     "FilteredSimulationTable",
@@ -96,15 +87,9 @@ __all__ = [
     "TimeAggregation",
     "ViewConfig",
     "load_view_config",
-    "MetricStructure",
-    "MetricStructureBuilder",
     "MetricStructureTable",
-    "build_metric_structure",
+    "MetricStructureTableBuilder",
     "MetricView",
-    "Loader",
-    "MergedView",
     "ViewBuilder",
-    "Writer",
     "System",
-    "load_system",
 ]

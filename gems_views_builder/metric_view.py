@@ -10,15 +10,17 @@
 #
 # This file is part of the Antares project.
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
 
 @dataclass
 class MetricView:
-    """Temporal aggregation result for a single metric, stored as a parquet file."""
+    """View for a single computed metric, stored as a parquet file."""
 
-    file: Path
+    persistence_path: Path
 
-    def cleanup(self) -> None:
-        self.file.unlink(missing_ok=True)
+    def __del__(self) -> None:
+        logging.debug(f"Cleaning metric view {self.persistence_path}")
+        self.persistence_path.unlink(missing_ok=True)

@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder.validation import EXACT_FILES, StudyLayoutValidator
+from gems_views_builder.validation.study_layout_validator import EXACT_FILES, StudyLayoutValidator
 
 
 def _write_minimal_valid_input_data(root: Path) -> None:

@@ -12,15 +12,13 @@
 
 from pathlib import Path
 
-from gems_views_builder import (
-    FilteredSimulationTable,
-    InputData,
-    Library,
-    Loader,
-    System,
-    Taxonomy,
-    ViewConfig,
-)
+from gems_views_builder.input.input_data import InputData
+from gems_views_builder.input.library import Library
+from gems_views_builder.input.simulation_table import FilteredSimulationTable
+from gems_views_builder.input.system import System
+from gems_views_builder.input.taxonomy import Taxonomy
+from gems_views_builder.input.view_config import ViewConfig
+from gems_views_builder.loader import Loader
 
 
 def test_loader_init_has_no_io() -> None:

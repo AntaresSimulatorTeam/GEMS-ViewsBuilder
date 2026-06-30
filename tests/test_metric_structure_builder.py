@@ -19,18 +19,17 @@ from gems.study import Component  # type: ignore[import-untyped]
 
 from gems_views_builder import (
     Metric,
-    MetricStructureBuilder,
-    MetricStructureTable,
     PropertySchema,
     Term,
     TermsOperator,
     TimeOperator,
     load_catalog,
     load_library,
-    load_system,
     load_taxonomy,
 )
-from gems_views_builder.metrics_builder import (
+from gems_views_builder.input.system import load_system
+from gems_views_builder.metrics_structure_builder import (
+    MetricStructureTableBuilder,
     _format_breakdown_properties,
     _format_metric_location,
 )
@@ -51,13 +50,13 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
     }
 
 
-def _build(metric_id: str, components: dict[str, Any]) -> "MetricStructureTable":
+def _build(metric_id: str, components: dict[str, Any]) -> pl.DataFrame:
     metric = components["catalog"].get_metric(metric_id)
-    return MetricStructureBuilder(
+    table = MetricStructureTableBuilder(
         components["system"],
-        metric,
         components["library"],
-    ).build()
+    ).build(metric)
+    return table.dataframe.collect()
 
 
 def test_format_breakdown_properties_missing_keys_use_none_literal() -> None:
@@ -128,13 +127,13 @@ def _count_expected_rows(metric_id: str, component_ids: list[str], components: d
 
 
 def test_prod_structure_row_count(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components).dataframe
+    df = _build("PROD", test_3_components)
     candidates = ["generator_A1", "generator_A2", "generator_B1"]
     assert len(df) == _count_expected_rows("PROD", candidates, test_3_components)
 
 
 def test_prod_structure_components(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components).dataframe
+    df = _build("PROD", test_3_components)
     metric = test_3_components["catalog"].get_metric("PROD")
     system = test_3_components["system"]
     candidates = ["generator_A1", "generator_A2", "generator_B1"]
@@ -143,7 +142,7 @@ def test_prod_structure_components(test_3_components: dict[str, Any]) -> None:
 
 
 def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components).dataframe
+    df = _build("PROD", test_3_components)
     system = test_3_components["system"]
     for comp in ("generator_A1", "generator_A2", "generator_B1"):
         comp_rows = df.filter(pl.col("component") == comp)
@@ -155,7 +154,7 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
 
 
 def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components).dataframe
+    df = _build("PROD", test_3_components)
     if len(df) == 0:
         return
     assert set(df["output"].to_list()) == {"p"}
@@ -167,14 +166,14 @@ def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
 
 
 def test_load_structure_row_count(test_3_components: dict[str, Any]) -> None:
-    df = _build("LOAD", test_3_components).dataframe
+    df = _build("LOAD", test_3_components)
     assert len(df) == _count_expected_rows("LOAD", ["load_AL"], test_3_components)
 
 
 def test_load_structure_component_and_location(
     test_3_components: dict[str, Any],
 ) -> None:
-    df = _build("LOAD", test_3_components).dataframe
+    df = _build("LOAD", test_3_components)
     if len(df) == 0:
         return
     component_rows = df.filter(pl.col("component") == "load_AL")
@@ -189,12 +188,12 @@ def test_load_structure_component_and_location(
 
 
 def test_balance_structure_row_count(test_3_components: dict[str, Any]) -> None:
-    df = _build("BALANCE", test_3_components).dataframe
+    df = _build("BALANCE", test_3_components)
     assert len(df) == _count_expected_rows("BALANCE", ["link_link_AB"], test_3_components)
 
 
 def test_balance_structure_locations(test_3_components: dict[str, Any]) -> None:
-    df = _build("BALANCE", test_3_components).dataframe
+    df = _build("BALANCE", test_3_components)
     if len(df) == 0:
         return
     link_rows = df.filter(pl.col("component") == "link_link_AB")
@@ -203,7 +202,7 @@ def test_balance_structure_locations(test_3_components: dict[str, Any]) -> None:
 
 
 def test_balance_structure_component(test_3_components: dict[str, Any]) -> None:
-    df = _build("BALANCE", test_3_components).dataframe
+    df = _build("BALANCE", test_3_components)
     if len(df) == 0:
         return
     assert set(df["component"].to_list()) == {"link_link_AB"}
@@ -234,11 +233,10 @@ def test_single_port_multiple_peers_raises(test_3_components: dict[str, Any]) ->
         time_operator=TimeOperator.SUM,
     )
     with pytest.raises(ValueError):
-        MetricStructureBuilder(
+        MetricStructureTableBuilder(
             test_3_components["system"],
-            metric,
             test_3_components["library"],
-        ).build()
+        ).build(metric)
 
 
 def test_get_location_tuple_of_ports_returns_peer_per_port(test_3_components: dict[str, Any]) -> None:
@@ -265,13 +263,12 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
         time_operator=TimeOperator.SUM,
     )
     df = (
-        MetricStructureBuilder(
+        MetricStructureTableBuilder(
             test_3_components["system"],
-            metric,
             test_3_components["library"],
         )
-        .build()
-        .dataframe
+        .build(metric)
+        .dataframe.collect()
     )
 
     link_rows = df.filter(pl.col("component") == "link_link_AB")
@@ -307,7 +304,7 @@ def test_duplicate_locations_from_two_ports_produce_duplicate_rows(test_files_ro
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    df = MetricStructureBuilder(system, metric, library).build().dataframe
+    df = MetricStructureTableBuilder(system, library).build(metric).dataframe.collect()
 
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1
