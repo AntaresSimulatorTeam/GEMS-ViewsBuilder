@@ -19,8 +19,8 @@ from gems_views_builder.common import METRIC_STRUCTURE_TABLE_SCHEMA
 from gems_views_builder.input.catalog import Metric, PropertySchema
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.system import System
-from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.input.view_config import LocationAggregation
+from gems_views_builder.metric_structure_table import MetricStructureTable
 
 
 def _check_filter_matches(component: Component, filter: PropertySchema | None) -> bool:
