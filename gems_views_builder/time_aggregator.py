@@ -13,7 +13,7 @@ from gems_views_builder.metric_view import MetricView
 
 
 class TimeAggregator:
-    def __init__(self, time_aggregation: TimeAggregation | None) -> None:
+    def __init__(self, time_aggregation: TimeAggregation) -> None:
         self.time_aggregation = self.parse_time_aggregation(time_aggregation)
         self._root_dir = Path(tempfile.mkdtemp())
         self._temporal_aggregation_dir = self._root_dir / "views" / "temporal_aggregation"
@@ -32,11 +32,14 @@ class TimeAggregator:
         """
         logging.info(f"[{metric.id}] Aggregating temporally with operator {metric.time_operator.value}")
         lazy_metric_view = pl.scan_parquet(metric_view.persistence_path)
-        if metric.time_operator != TimeOperator.SUM:
+        if metric.time_operator == TimeOperator.SUM:
+            time_agg = (pl.col("granular_metric_value").sum()).alias("metric_value")
+        elif metric.time_operator == TimeOperator.AVG:
+            time_agg = (pl.col("granular_metric_value").mean()).alias("metric_value")
+        else:
             raise NotImplementedError(
                 f"Temporal aggregation for metric {metric.id} is not supported for operator {metric.time_operator.value}"
             )
-        time_agg = (pl.col("granular_metric_value").sum()).alias("metric_value")
         granular_date = pl.col("granular_date")
         truncated = self.time_aggregation != "no truncation"
         view_date_expr = (granular_date.dt.truncate(self.time_aggregation) if truncated else granular_date).alias(
@@ -62,7 +65,7 @@ class TimeAggregator:
                     "breakdown_properties",
                     "view_date",
                     "scenario",
-                    "metric_value",
+                    pl.col("metric_value").cast(pl.Float64),
                 ]
             )
         )

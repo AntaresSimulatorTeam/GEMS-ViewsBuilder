@@ -75,6 +75,8 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
     assert df.shape[0] == 1
     assert df["view_date"][0] == datetime(2026, 1, 1, 0, 0)
     assert df["metric_value"][0] == approx(30.0)
+    assert df["metric_value"].dtype == pl.Float64
+    assert df["metric_value"].dtype == pl.Float64
 
 
 def test_no_truncation_keeps_granular_dates(tmp_path: Path) -> None:
@@ -89,9 +91,11 @@ def test_no_truncation_keeps_granular_dates(tmp_path: Path) -> None:
 def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     aggregator = TimeAggregator(TimeAggregation.DAY)
     rows = [(datetime(2026, 1, 1, 1, 0), 10.0), (datetime(2026, 1, 1, 2, 0), 20.0)]
-
-    with pytest.raises(NotImplementedError):
-        aggregator.run(_granular_view(rows, tmp_path), _metric(TimeOperator.AVG))
+    result = aggregator.run(_granular_view(rows, tmp_path), _metric(TimeOperator.AVG))
+    df = pl.read_parquet(result.persistence_path)
+    assert df.shape[0] == 1
+    assert df["view_date"][0] == datetime(2026, 1, 1, 0, 0)
+    assert df["metric_value"][0] == approx(15.0)  # mean(10.0, 20.0)
 
 
 def test_part_counter_increments_file_names(tmp_path: Path) -> None:
