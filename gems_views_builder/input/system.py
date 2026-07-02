@@ -168,6 +168,10 @@ class System:
         logging.debug(f"Resolved location for component {component_0_id!r} via port {location_port!r} to {peer!r}")
         return peer
 
+    def get_model_id_from_component(self, component: Component) -> str:
+        """Return the local model id (without library prefix) for a resolved component."""
+        return str(component.model.id.rsplit(".", 1)[-1])
+
 
 def load_system(input_data_path: Path) -> System:
     logging.info("Loading system")

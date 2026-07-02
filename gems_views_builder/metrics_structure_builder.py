@@ -60,6 +60,14 @@ class MetricStructureTableBuilder:
         self.model_library = model_library
         self.location_taxonomy_category = location_taxonomy_category
 
+    def _location_component_matches_taxonomy_category(self, location_component_id: str) -> bool:
+        """Return True when the located component's model belongs to the view location taxonomy category."""
+        if self.location_taxonomy_category is None:
+            return True
+        location_component = self.system.get_component(location_component_id)
+        model_id = self.system.get_model_id_from_component(location_component)
+        return self.model_library.get_taxonomy_category(model_id) == self.location_taxonomy_category
+
     def build(self, metric: Metric) -> MetricStructureTable:
         logging.debug(f"[{metric.id}] Building metric structure table ({len(metric.terms)} term(s))")
         rows_data: list[dict[str, object]] = []
@@ -80,18 +88,14 @@ class MetricStructureTableBuilder:
                 )
                 for component_id in component_ids:
                     component = self.system.get_component(component_id)
-
-                    # # Decide does the component matches the filter, if yes they will contribute to the metric
                     if _check_filter_matches(component, metric.filter):
                         raw_location = self.system.get_location(component_id, term.location_ports)
                         raw_locations = [raw_location] if isinstance(raw_location, str) else list(raw_location)
-                        if not all(self._location_matches_taxonomy_category(loc_id) for loc_id in raw_locations):
-                            logging.debug(
-                                f"[{metric.id}] Component {component_id!r} location(s) {raw_locations!r} "
-                                f"did not match location taxonomy category "
-                                f"{self.location_taxonomy_category!r} and was skipped"
+                        for loc_id in raw_locations:
+                            assert self._location_component_matches_taxonomy_category(loc_id), (
+                                f"Metric {metric.id!r} term {term.output_id!r}: location component {loc_id!r} "
+                                f"must belong to taxonomy category {self.location_taxonomy_category!r}"
                             )
-                            continue
                         metric_location = (
                             raw_locations[0]
                             if len(raw_locations) == 1
