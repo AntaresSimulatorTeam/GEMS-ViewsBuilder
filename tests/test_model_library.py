@@ -58,7 +58,7 @@ _KNOWN_TAXONOMY_CATEGORIES: dict[str, str] = {
     "generator": "production",
     "generator_basic": "production",
     "load": "consumption",
-    "store": "consumption",
+    "store": "storage",
     "link": "link",
     "storage_unit": "storage",
 }
