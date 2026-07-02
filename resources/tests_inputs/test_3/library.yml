@@ -404,7 +404,7 @@ library:
           expression: sum(marginal_cost * p_dispatch + spill_cost*spill + marginal_cost_storage * state_of_charge) 
 
     - id: store
-      taxonomy-category: consumption
+      taxonomy-category: storage
       #Model for PyPSA store: https://pypsa.readthedocs.io/en/latest/user-guide/components.html#store
       parameters:
         #- id: type # This parameter is not used in the Gems model
