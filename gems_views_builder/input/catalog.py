@@ -133,7 +133,7 @@ def to_metric(metric_data: MetricData) -> Metric:
     )
 
 
-def load_catalogs(input_data_path: Path, catalog_ids: list[str]) -> dict[str, Catalog]:
+def load_catalogs(input_data_path: Path, catalog_ids: set[str]) -> dict[str, Catalog]:
     catalogs_dir = input_data_path / "catalogs"
     catalogs: dict[str, Catalog] = {}
     for catalog_id in catalog_ids:
@@ -158,6 +158,8 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
 
 def load_catalog_file(catalog_file_path: Path) -> CatalogData:
     logging.debug(f"Loading catalog YAML from {catalog_file_path}")
+    if not catalog_file_path.exists():
+        raise FileNotFoundError(f"Catalog file {catalog_file_path} not found")
     with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     if "catalog" not in raw:

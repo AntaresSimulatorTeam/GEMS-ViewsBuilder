@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 
 from gems_views_builder.input.calendar import load_calendar
-from gems_views_builder.input.catalog import load_catalogs
+from gems_views_builder.input.catalog import Catalog, load_catalogs
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.library import load_library
 from gems_views_builder.input.simulation_table import (
@@ -36,6 +36,9 @@ class Loader:
         logging.info(f"Loading inputs from {self.input_data_path}")
         view_config: ViewConfig = load_view_config(self.input_data_path / "view_config.yml")
 
+        catalogs: dict[str, Catalog] = load_catalogs(self.input_data_path, view_config.catalog_ids)
+        view_config.fetch_metrics(catalogs)
+
         simulation_table = load_simulation_table(next(self.input_data_path.glob("simulation_table*.parquet")))
         calendar = load_calendar(self.input_data_path, view_config.calendar_id)
         intermediates_dir = self.input_data_path / "views" / "intermediate"
@@ -45,7 +48,6 @@ class Loader:
             input_data_path=self.input_data_path,
             taxonomy=load_taxonomy(self.input_data_path / "taxonomy.yml"),
             view_config=view_config,
-            catalogs=load_catalogs(self.input_data_path, view_config.catalog_ids),
             library=load_library(self.input_data_path / "library.yml"),
             system=load_system(self.input_data_path),
             filtered_st=filtered_st,

@@ -12,8 +12,6 @@
 
 """ViewBuilder."""
 
-import logging
-
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
@@ -36,18 +34,10 @@ class ViewBuilder:
 
     def build(self) -> list[MetricView]:
         metric_views: list[MetricView] = []
-        for catalog_id, metric_ids in self.input_data.view_config.catalog_to_metrics.items():
-            catalog = self.input_data.catalogs[catalog_id]
-            for metric_id in metric_ids:
-                try:
-                    metric = catalog.get_metric(metric_id)
-                except ValueError:
-                    logging.warning(f"Metric {metric_id} not found in catalog {catalog_id}")
-                    continue
-
-                metric_structure_table = self.metric_structure_table_builder.build(metric)
-                metric_view = self.terms_aggregator.run(metric_structure_table, metric)
-                temporal_metric_view = self.time_aggregator.run(metric_view, metric)
-                metric_views.append(temporal_metric_view)
+        for metric in self.input_data.view_config.metrics:
+            metric_structure_table = self.metric_structure_table_builder.build(metric)
+            metric_view = self.terms_aggregator.run(metric_structure_table, metric)
+            temporal_metric_view = self.time_aggregator.run(metric_view, metric)
+            metric_views.append(temporal_metric_view)
 
         return metric_views

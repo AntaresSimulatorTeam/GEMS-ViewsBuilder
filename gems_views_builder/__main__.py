@@ -30,7 +30,7 @@ def run(input_dir: Path, results_dir: Path) -> None:
     # # If everything is ok, load pipeline input
     input_data = Loader(input_dir).load()
     # # Validate catalogs against taxonomy
-    validate_catalogs_against_taxonomy(input_data.catalogs, input_data.taxonomy)
+    validate_catalogs_against_taxonomy(input_dir, input_data.view_config.catalog_ids, input_data.taxonomy)
 
     metric_views = ViewBuilder(input_data).build()
     accumulate_on_disk(metric_views, results_dir)

@@ -38,9 +38,9 @@ def test_view_config_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
 def test_view_config_metrics_are_pairs(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
     config = load_view_config(config_path)
-    for catalog_id, metrics in config.catalog_to_metrics.items():
+    for catalog_id, metrics in config.metric_ids_by_catalog.items():
         assert isinstance(catalog_id, str)
-        assert isinstance(metrics, list)
+        assert isinstance(metrics, set)
         assert all(isinstance(metric, str) for metric in metrics)
 
 
@@ -48,8 +48,8 @@ def test_view_config_known_values(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
-    assert config.catalog_ids == ["catalog"]
-    metrics = config.catalog_to_metrics["catalog"]
+    assert config.catalog_ids == {"catalog"}
+    metrics = config.metric_ids_by_catalog["catalog"]
     assert "LOAD" in metrics
     if test_dataset_dir.name == "test_3":
         assert "PROD" in metrics
