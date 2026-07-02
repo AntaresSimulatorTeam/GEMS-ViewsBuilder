@@ -19,10 +19,7 @@ class MetricStructureTable:
     # # One edge case here is that directories never be cleaned up, only will be cleaned while calling destructor
     def __init__(self, rows: list[dict[str, object]], metric_id: str) -> None:
         self._tmp_root = Path(tempfile.mkdtemp())
-        if len(rows) == 0:
-            logging.info(f"[{metric_id}] No matching components found — metric structure table is empty")
-        else:
-            logging.info(f"[{metric_id}] Metric structure table built with {len(rows)} rows")
+        logging.info(f"[{metric_id}] Metric structure table has {len(rows)} rows")
 
         self.rows = pl.DataFrame(rows, schema=METRIC_STRUCTURE_TABLE_SCHEMA)
         metric_structure_dir = self._tmp_root / "views" / "metric_structure"
