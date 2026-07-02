@@ -12,10 +12,8 @@
 
 import logging
 
-import polars as pl
 from gems.study import Component  # type: ignore
 
-from gems_views_builder.common import METRIC_STRUCTURE_TABLE_SCHEMA
 from gems_views_builder.input.catalog import Metric, PropertySchema
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.system import System
@@ -70,7 +68,7 @@ class MetricStructureTableBuilder:
 
     def build(self, metric: Metric) -> MetricStructureTable:
         logging.debug(f"[{metric.id}] Building metric structure table ({len(metric.terms)} term(s))")
-        rows_data: list[dict[str, object]] = []
+        rows: list[dict[str, object]] = []
         for term in metric.terms:
             logging.debug(
                 f"[{metric.id}] Processing term for taxonomy category {term.taxonomy_category!r} "
@@ -102,7 +100,7 @@ class MetricStructureTableBuilder:
                             else _format_metric_location(tuple(raw_locations))
                         )
                         breakdown_properties = _format_breakdown_properties(component.properties, metric.breakdown)
-                        rows_data.append(
+                        rows.append(
                             {
                                 "metric_id": metric.id,
                                 "component": component_id,
@@ -117,5 +115,4 @@ class MetricStructureTableBuilder:
                             f"[{metric.id}] Component {component_id!r} did not match metric filter and was skipped"
                         )
 
-        rows = pl.DataFrame(rows_data, schema=METRIC_STRUCTURE_TABLE_SCHEMA)
         return MetricStructureTable(rows, metric.id)
