@@ -28,6 +28,7 @@ from gems_views_builder import (
     load_library,
 )
 from gems_views_builder.input.system import load_system
+from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.loader import Loader
 from gems_views_builder.view import accumulate_on_disk
 
@@ -110,9 +111,14 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     library = load_library(root / "library.yml")
     system = load_system(root)
     catalog = load_catalog(root / "catalogs" / "catalog.yml")
+    view_config = load_view_config(root / "view_config.yml")
     metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")
 
-    table = MetricStructureTableBuilder(system, library).build(metric)
+    table = MetricStructureTableBuilder(
+        system,
+        library,
+        view_config.location_taxonomy_category,
+    ).build(metric)
     df = table.dataframe.collect()
     partial = df.filter(pl.col("component") == "gen_company_only")
     assert partial.height == 1

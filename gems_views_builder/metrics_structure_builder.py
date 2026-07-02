@@ -54,9 +54,11 @@ class MetricStructureTableBuilder:
         self,
         system: System,
         model_library: Library,
+        location_taxonomy_category: str | None,
     ) -> None:
         self.system = system
         self.model_library = model_library
+        self.location_taxonomy_category = location_taxonomy_category
 
     def build(self, metric: Metric) -> MetricStructureTable:
         logging.debug(f"[{metric.id}] Building metric structure table ({len(metric.terms)} term(s))")
@@ -81,8 +83,19 @@ class MetricStructureTableBuilder:
 
                     # # Decide does the component matches the filter, if yes they will contribute to the metric
                     if _check_filter_matches(component, metric.filter):
-                        metric_location = _format_metric_location(
-                            self.system.get_location(component_id, term.location_ports)
+                        raw_location = self.system.get_location(component_id, term.location_ports)
+                        raw_locations = [raw_location] if isinstance(raw_location, str) else list(raw_location)
+                        if not all(self._location_matches_taxonomy_category(loc_id) for loc_id in raw_locations):
+                            logging.debug(
+                                f"[{metric.id}] Component {component_id!r} location(s) {raw_locations!r} "
+                                f"did not match location taxonomy category "
+                                f"{self.location_taxonomy_category!r} and was skipped"
+                            )
+                            continue
+                        metric_location = (
+                            raw_locations[0]
+                            if len(raw_locations) == 1
+                            else _format_metric_location(tuple(raw_locations))
                         )
                         breakdown_properties = _format_breakdown_properties(component.properties, metric.breakdown)
                         rows_data.append(

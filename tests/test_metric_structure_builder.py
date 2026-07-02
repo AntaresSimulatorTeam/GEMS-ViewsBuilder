@@ -28,6 +28,7 @@ from gems_views_builder import (
     load_taxonomy,
 )
 from gems_views_builder.input.system import load_system
+from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.metrics_structure_builder import (
     MetricStructureTableBuilder,
     _format_breakdown_properties,
@@ -42,11 +43,13 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
     taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
     library = load_library(test_3 / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
+    view_config = load_view_config(test_3 / "view_config.yml")
     return {
         "system": system,
         "taxonomy": taxonomy,
         "library": library,
         "catalog": catalog,
+        "location_taxonomy_category": view_config.location_taxonomy_category,
     }
 
 
@@ -55,6 +58,7 @@ def _build(metric_id: str, components: dict[str, Any]) -> pl.DataFrame:
     table = MetricStructureTableBuilder(
         components["system"],
         components["library"],
+        components["location_taxonomy_category"],
     ).build(metric)
     return table.dataframe.collect()
 
@@ -236,6 +240,7 @@ def test_single_port_multiple_peers_raises(test_3_components: dict[str, Any]) ->
         MetricStructureTableBuilder(
             test_3_components["system"],
             test_3_components["library"],
+            test_3_components["location_taxonomy_category"],
         ).build(metric)
 
 
@@ -265,6 +270,7 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
     table = MetricStructureTableBuilder(
         test_3_components["system"],
         test_3_components["library"],
+        test_3_components["location_taxonomy_category"],
     ).build(metric)
     df = table.dataframe.collect()
 
@@ -301,7 +307,12 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    table = MetricStructureTableBuilder(system, library).build(metric)
+    view_config = load_view_config(test_3 / "view_config.yml")
+    table = MetricStructureTableBuilder(
+        system,
+        library,
+        view_config.location_taxonomy_category,
+    ).build(metric)
     df = table.dataframe.collect()
 
     link_rows = df.filter(pl.col("component") == "link_link_AB")

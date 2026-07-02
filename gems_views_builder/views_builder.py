@@ -27,7 +27,7 @@ class ViewBuilder:
         self.input_data = input_data
         # # Builder which is reusable over metrics
         self.metric_structure_table_builder = MetricStructureTableBuilder(
-            self.input_data.system, self.input_data.library
+            self.input_data.system, self.input_data.library, self.input_data.view_config.location_taxonomy_category
         )
         # # Aggregator for step 2B
         self.terms_aggregator = TermsAggregator(self.input_data.filtered_st)
