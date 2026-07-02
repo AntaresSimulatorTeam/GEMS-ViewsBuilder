@@ -16,6 +16,7 @@ from types import SimpleNamespace
 import pytest
 from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore
 
+from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import System, load_system
 
 
@@ -30,7 +31,7 @@ def test_input_system_using(test_dataset_dir: Path) -> None:
 
 def test_locating_function_multiple_peers_raises(test_dataset_dir: Path) -> None:
     """A single location port must resolve to a unique peer: multiple peers is an error."""
-    system = load_system(test_dataset_dir)
+    system = load_system(test_dataset_dir, resolve_libraries(test_dataset_dir / "library.yml"))
 
     if not system.connections:
         return
@@ -46,7 +47,7 @@ def test_locating_function_multiple_peers_raises(test_dataset_dir: Path) -> None
 
 def test_locating_function_zero_peers_raises(test_dataset_dir: Path) -> None:
     """A single location port with no connected peer is an error (must be unique)."""
-    system = load_system(test_dataset_dir)
+    system = load_system(test_dataset_dir, resolve_libraries(test_dataset_dir / "library.yml"))
 
     assert len(system.components) > 0
     any_component_id = system.components[0].id

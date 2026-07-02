@@ -27,6 +27,7 @@ from gems_views_builder import (
     load_catalog,
     load_library,
 )
+from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.loader import Loader
@@ -109,7 +110,7 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     """
     root = test_files_root / "filtering_and_breakdown_property_order"
     library = load_library(root / "library.yml")
-    system = load_system(root)
+    system = load_system(root, resolve_libraries(root / "library.yml"))
     catalog = load_catalog(root / "catalogs" / "catalog.yml")
     view_config = load_view_config(root / "view_config.yml")
     metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")

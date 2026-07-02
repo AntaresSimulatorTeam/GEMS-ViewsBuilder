@@ -17,7 +17,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, cast
 
-from gems.model.resolve_library import resolve_library  # type: ignore
+from gems.model.library import Library as GemsLibrary  # type: ignore
 from gems.study import Component  # type: ignore
 from gems.study.parsing import parse_yaml_components  # type: ignore
 from gems.study.resolve_components import (  # type: ignore
@@ -26,8 +26,6 @@ from gems.study.resolve_components import (  # type: ignore
 from gems.study.resolve_components import (
     resolve_system,
 )
-
-from gems_views_builder.input.library import load_library_file
 
 
 class System:
@@ -173,14 +171,11 @@ class System:
         return str(component.model.id.rsplit(".", 1)[-1])
 
 
-def load_system(input_data_path: Path) -> System:
+def load_system(input_data_path: Path, resolved_libs: dict[str, GemsLibrary]) -> System:
     logging.info("Loading system")
     system_path = input_data_path / "system.yml"
-    library_path = input_data_path / "library.yml"
     with open(system_path, encoding="utf-8") as f:
         parsed = parse_yaml_components(f)
-    library_schema = load_library_file(library_path)
-    resolved_libs = resolve_library([library_schema])
     resolved = resolve_system(parsed, resolved_libs)
     logging.info(f"System loaded and resolved from {system_path}")
     return System(cast(GemsSystem, resolved))

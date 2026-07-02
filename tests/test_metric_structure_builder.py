@@ -27,6 +27,7 @@ from gems_views_builder import (
     load_library,
     load_taxonomy,
 )
+from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.metrics_structure_builder import (
@@ -39,7 +40,7 @@ from gems_views_builder.metrics_structure_builder import (
 @pytest.fixture(scope="module")
 def test_3_components(test_files_root: Path) -> dict[str, Any]:
     test_3 = test_files_root / "test_3"
-    system = load_system(test_3)
+    system = load_system(test_3, resolve_libraries(test_3 / "library.yml"))
     taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
     library = load_library(test_3 / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
@@ -287,7 +288,7 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
     """When two ports resolve to the same peer, the single structure row keeps both locations (busA twice)."""
     test_3 = test_files_root / "test_3"
     library = load_library(test_3 / "library.yml")
-    system = load_system(test_3)
+    system = load_system(test_3, resolve_libraries(test_3 / "library.yml"))
 
     # Default test_3 wiring uses p0_port -> busA and p1_port -> busB; force both ports to busA here.
     system._component_port_connections[("link_link_AB", "p0_port")] = {"busA"}
