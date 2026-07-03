@@ -125,15 +125,15 @@ def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
 def group_metrics_by_catalog(catalog_ids: set[str], metric_ids: list[MetricId]) -> dict[str, set[str]]:
     logging.debug(f"Grouping {len(metric_ids)} metric id(s) by catalog")
     metric_ids_by_catalog: dict[str, set[str]] = defaultdict(set)
-    for metric_ref in metric_ids:
-        if "." not in metric_ref.id or metric_ref.id.startswith(".") or metric_ref.id.endswith("."):
+    for metric_id in metric_ids:
+        if "." not in metric_id.id or metric_id.id.startswith(".") or metric_id.id.endswith("."):
             raise ValueError(
-                f"Invalid metric id '{metric_ref.id}'. "
+                f"Invalid metric id '{metric_id.id}'. "
                 f"Expected format '<catalog_id>.<metric_id>' for catalog {catalog_ids}"
             )
-        catalog_id, metric_id = metric_ref.id.split(".", 1)
+        catalog_id, metric_id_value = metric_id.id.split(".", 1)
         if catalog_id not in catalog_ids:
             raise ValueError(f"Catalog {catalog_id!r} not found in view config")
-        metric_ids_by_catalog[catalog_id].add(metric_id)
+        metric_ids_by_catalog[catalog_id].add(metric_id_value)
         logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
     return metric_ids_by_catalog
