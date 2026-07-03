@@ -111,14 +111,12 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         raise ValueError(
             f"view_config.yml '{raw_view_config.id}': no calendar configured in scope. One calendar must be configured in scope"
         )
-
-    catalog_ids = {c.id for c in raw_view_config.catalog}
     view_config = ViewConfig(
         id=raw_view_config.id,
         input_data_path=input_data_path,
         calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
-        catalog_ids=catalog_ids,
+        catalog_ids={c.id for c in raw_view_config.catalog},
         time_aggregation=raw_view_config.aggregation[0].time if raw_view_config.aggregation else None,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
     )
