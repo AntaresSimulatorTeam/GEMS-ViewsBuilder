@@ -84,5 +84,7 @@ view:
 """.strip()
     )
 
+    config = load_view_config(invalid_config)
+
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        load_view_config(invalid_config)
+        config.fetch_metrics({})
