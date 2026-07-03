@@ -66,13 +66,30 @@ class ViewConfig:
     location_taxonomy_category: str | None = None
     catalog_ids: set[str] = field(default_factory=set)
     time_aggregation: TimeAggregation | None = None
-    metrics: list[Metric] = field(default_factory=list)  # This will be empty at first load of View Config
-    metric_ids_by_catalog: dict[str, set[str]] = field(default_factory=dict)
+    metric_ids: list[str] = field(default_factory=list)
+    metrics: list[Metric] = field(default_factory=list)
 
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
-        for catalog_id in self.metric_ids_by_catalog.keys():
-            for metric_id in self.metric_ids_by_catalog[catalog_id]:
+        metric_ids_by_catalog = self._group_metrics_by_catalog()
+        for catalog_id in metric_ids_by_catalog:
+            for metric_id in metric_ids_by_catalog[catalog_id]:
                 self.metrics.append(catalogs[catalog_id].get_metric(metric_id))
+
+    def _group_metrics_by_catalog(self) -> dict[str, set[str]]:
+        logging.debug(f"Grouping {len(self.metric_ids)} metric id(s) by catalog")
+        metric_ids_by_catalog: dict[str, set[str]] = defaultdict(set)
+        for metric_ref in self.metric_ids:
+            if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
+                raise ValueError(
+                    f"Invalid metric id '{metric_ref}'. "
+                    f"Expected format '<catalog_id>.<metric_id>' for catalog {self.catalog_ids}"
+                )
+            catalog_id, metric_id = metric_ref.split(".", 1)
+            if catalog_id not in self.catalog_ids:
+                raise ValueError(f"Catalog {catalog_id!r} not found in view config")
+            metric_ids_by_catalog[catalog_id].add(metric_id)
+            logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
+        return metric_ids_by_catalog
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
@@ -103,11 +120,12 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         location_taxonomy_category=location_taxonomy_category,
         catalog_ids=catalog_ids,
         time_aggregation=raw_view_config.aggregation[0].time if raw_view_config.aggregation else None,
-        metric_ids_by_catalog=group_metrics_by_catalog(catalog_ids, raw_view_config.metrics),
+        metric_ids=[metric.id for metric in raw_view_config.metrics],
     )
+    view_config._group_metrics_by_catalog()
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
-        f"catalogs={len(view_config.catalog_ids)}, metric groups={len(view_config.metric_ids_by_catalog)}"
+        f"catalogs={len(view_config.catalog_ids)}, metrics={len(view_config.metric_ids)}"
     )
     return view_config
 
@@ -120,20 +138,3 @@ def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
         raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
     logging.info(f"View config YAML parsed successfully from {view_file_path}")
     return RawViewConfig.model_validate(raw["view"])
-
-
-def group_metrics_by_catalog(catalog_ids: set[str], metric_ids: list[MetricId]) -> dict[str, set[str]]:
-    logging.debug(f"Grouping {len(metric_ids)} metric id(s) by catalog")
-    metric_ids_by_catalog: dict[str, set[str]] = defaultdict(set)
-    for metric_id in metric_ids:
-        if "." not in metric_id.id or metric_id.id.startswith(".") or metric_id.id.endswith("."):
-            raise ValueError(
-                f"Invalid metric id '{metric_id.id}'. "
-                f"Expected format '<catalog_id>.<metric_id>' for catalog {catalog_ids}"
-            )
-        catalog_id, metric_id_value = metric_id.id.split(".", 1)
-        if catalog_id not in catalog_ids:
-            raise ValueError(f"Catalog {catalog_id!r} not found in view config")
-        metric_ids_by_catalog[catalog_id].add(metric_id_value)
-        logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
-    return metric_ids_by_catalog

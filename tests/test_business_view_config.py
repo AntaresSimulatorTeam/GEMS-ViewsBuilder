@@ -35,13 +35,15 @@ def test_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
         assert isinstance(catalog_id, str)
 
 
-def test_metrics_are_pairs(test_dataset_dir: Path) -> None:
+def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
     config = load_view_config(config_path)
-    for catalog_id, metrics in config.metric_ids_by_catalog.items():
-        assert isinstance(catalog_id, str)
-        assert isinstance(metrics, set)
-        assert all(isinstance(metric, str) for metric in metrics)
+    for metric_id in config.metric_ids:
+        assert isinstance(metric_id, str)
+        assert "." in metric_id
+        catalog_id, metric_name = metric_id.split(".", 1)
+        assert catalog_id in config.catalog_ids
+        assert metric_name
 
 
 def test_known_values(test_dataset_dir: Path) -> None:
@@ -49,14 +51,14 @@ def test_known_values(test_dataset_dir: Path) -> None:
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.catalog_ids == {"catalog"}
-    metrics = config.metric_ids_by_catalog["catalog"]
-    assert "LOAD" in metrics
+    metric_names = {metric_id.split(".", 1)[1] for metric_id in config.metric_ids}
+    assert "LOAD" in metric_names
     if test_dataset_dir.name == "test_3":
-        assert "PROD" in metrics
-        assert "BALANCE" in metrics
+        assert "PROD" in metric_names
+        assert "BALANCE" in metric_names
     else:
-        assert "PRODUCTION" in metrics
-        assert "NUCLEAR_PRODUCTION" in metrics
+        assert "PRODUCTION" in metric_names
+        assert "NUCLEAR_PRODUCTION" in metric_names
 
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
