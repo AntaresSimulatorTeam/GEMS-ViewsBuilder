@@ -128,7 +128,7 @@ def group_metrics_by_catalog(catalog_ids: set[str], metric_ids: list[MetricId]) 
     for metric_ref in metric_ids:
         if "." not in metric_ref.id or metric_ref.id.startswith(".") or metric_ref.id.endswith("."):
             raise ValueError(
-                f"Invalid metric id '{metric_id.id}'. "
+                f"Invalid metric id '{metric_ref.id}'. "
                 f"Expected format '<catalog_id>.<metric_id>' for catalog {catalog_ids}"
             )
         catalog_id, metric_id = metric_ref.id.split(".", 1)
