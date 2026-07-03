@@ -42,20 +42,20 @@ class Aggregation(ViewBuilderBasedModel):
     time: TimeAggregation | None = None
 
 
-class CatalogRef(ViewBuilderBasedModel):
+class CatalogId(ViewBuilderBasedModel):
     id: str
 
 
-class MetricRef(ViewBuilderBasedModel):
+class MetricId(ViewBuilderBasedModel):
     id: str
 
 
-class ViewData(ViewBuilderBasedModel):
+class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: list[Scope]
     aggregation: list[Aggregation]
-    catalog: list[CatalogRef]
-    metrics: list[MetricRef]
+    catalog: list[CatalogId]
+    metrics: list[MetricId]
 
 
 @dataclass
@@ -77,33 +77,33 @@ class ViewConfig:
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
-    parsed = load_view_file(config_file_path)
+    raw_view_config = load_raw_view_config_file(config_file_path)
     input_data_path = config_file_path.parent
     location_taxonomy_category = next(
-        (item.taxonomy_category for item in parsed.scope if item.taxonomy_category),
+        (item.taxonomy_category for item in raw_view_config.scope if item.taxonomy_category),
         None,
     )
     if location_taxonomy_category is None:
         raise ValueError(
-            f"view_config.yml '{parsed.id}': no 'taxonomy-category' found in scope. "
+            f"view_config.yml '{raw_view_config.id}': no 'taxonomy-category' found in scope. "
             f"At least one scope entry must define a taxonomy-category"
         )
 
-    calendar_id = next((item.calendar for item in parsed.scope if item.calendar), None)
+    calendar_id = next((item.calendar for item in raw_view_config.scope if item.calendar), None)
     if calendar_id is None:
         raise ValueError(
-            f"view_config.yml '{parsed.id}': no calendar configured in scope. One calendar must be configured in scope"
+            f"view_config.yml '{raw_view_config.id}': no calendar configured in scope. One calendar must be configured in scope"
         )
 
-    catalog_ids = {c.id for c in parsed.catalog}
+    catalog_ids = {c.id for c in raw_view_config.catalog}
     view_config = ViewConfig(
-        id=parsed.id,
+        id=raw_view_config.id,
         input_data_path=input_data_path,
         calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
         catalog_ids=catalog_ids,
-        time_aggregation=parsed.aggregation[0].time if parsed.aggregation else None,
-        metric_ids_by_catalog=group_metrics_by_catalog(catalog_ids, parsed.metrics),
+        time_aggregation=raw_view_config.aggregation[0].time if raw_view_config.aggregation else None,
+        metric_ids_by_catalog=group_metrics_by_catalog(catalog_ids, raw_view_config.metrics),
     )
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
@@ -112,28 +112,28 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
     return view_config
 
 
-def load_view_file(view_file_path: Path) -> ViewData:
+def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
     logging.info(f"Parsing view config YAML from {view_file_path}")
     with open(view_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     if "view" not in raw:
         raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
     logging.info(f"View config YAML parsed successfully from {view_file_path}")
-    return ViewData.model_validate(raw["view"])
+    return RawViewConfig.model_validate(raw["view"])
 
 
-def group_metrics_by_catalog(catalog_ids: set[str], metric_references: list[MetricRef]) -> dict[str, set[str]]:
-    logging.debug(f"Grouping {len(metric_references)} metric reference(s) by catalog")
+def group_metrics_by_catalog(catalog_ids: set[str], metric_ids: list[MetricId]) -> dict[str, set[str]]:
+    logging.debug(f"Grouping {len(metric_ids)} metric id(s) by catalog")
     metric_ids_by_catalog: dict[str, set[str]] = defaultdict(set)
-    for metric_reference in metric_references:
-        if "." not in metric_reference.id or metric_reference.id.startswith(".") or metric_reference.id.endswith("."):
+    for metric_ref in metric_ids:
+        if "." not in metric_ref.id or metric_ref.id.startswith(".") or metric_ref.id.endswith("."):
             raise ValueError(
-                f"Invalid metric id '{metric_reference.id}'. "
+                f"Invalid metric id '{metric_id.id}'. "
                 f"Expected format '<catalog_id>.<metric_id>' for catalog {catalog_ids}"
             )
-        catalog_id, metric_id = metric_reference.id.split(".", 1)
+        catalog_id, metric_id = metric_ref.id.split(".", 1)
         if catalog_id not in catalog_ids:
             raise ValueError(f"Catalog {catalog_id!r} not found in view config")
         metric_ids_by_catalog[catalog_id].add(metric_id)
-        logging.debug(f"Mapped metric {metric_reference.id!r} to catalog {catalog_id!r}")
+        logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
     return metric_ids_by_catalog
