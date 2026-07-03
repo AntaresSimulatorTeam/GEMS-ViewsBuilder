@@ -18,11 +18,11 @@ from gems_views_builder.common import configure_logging
 from gems_views_builder.loader import Loader
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
-from gems_views_builder.view import accumulate_on_disk
+from gems_views_builder.view import OutputFormat, accumulate_on_disk
 from gems_views_builder.views_builder import ViewBuilder
 
 
-def run(input_dir: Path, results_dir: Path) -> None:
+def run(input_dir: Path, results_dir: Path, output_format: OutputFormat = "parquet") -> None:
     """Run the full pipeline and accumulate the results to the results directory."""
 
     # # Validate study layout
@@ -33,7 +33,7 @@ def run(input_dir: Path, results_dir: Path) -> None:
     validate_catalogs_against_taxonomy(input_dir, input_data.view_config.catalog_ids, input_data.taxonomy)
 
     metric_views = ViewBuilder(input_data).build()
-    accumulate_on_disk(metric_views, results_dir)
+    accumulate_on_disk(metric_views, results_dir, output_format)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -50,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
         return error
 
     try:
-        run(args.input_dir, args.results_dir)
+        run(args.input_dir, args.results_dir, args.output_format)
     except Exception:
         logging.exception("View building failed")
         return 1

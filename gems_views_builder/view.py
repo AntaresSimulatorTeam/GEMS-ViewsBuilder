@@ -14,11 +14,14 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal
 
 import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 from gems_views_builder.metric_view import MetricView
+
+OutputFormat = Literal["parquet", "csv"]
 
 
 @dataclass
@@ -27,14 +30,27 @@ class View:
     # # Here we could store ViewConfig in future versions
 
 
-def accumulate_on_disk(metric_views: list[MetricView], results_path: Path) -> View:
+def accumulate_on_disk(
+    metric_views: list[MetricView], results_path: Path, output_format: OutputFormat = "parquet"
+) -> View:
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-    result_path = results_path / f"view{timestamp}.parquet"
-    pl.scan_parquet([v.persistence_path for v in metric_views]).sink_parquet(
-        result_path,
-        compression=PARQUET_COMPRESSION,
-        compression_level=PARQUET_COMPRESSION_LEVEL,
-        row_group_size=PARQUET_ROW_GROUP_SIZE,
-    )
+    merged = pl.scan_parquet([v.persistence_path for v in metric_views])
+
+    if output_format == "parquet":
+        result_path = results_path / f"view{timestamp}.parquet"
+        merged.sink_parquet(
+            result_path,
+            compression=PARQUET_COMPRESSION,
+            compression_level=PARQUET_COMPRESSION_LEVEL,
+            row_group_size=PARQUET_ROW_GROUP_SIZE,
+        )
+        dataframe = pl.scan_parquet(result_path)
+    elif output_format == "csv":
+        result_path = results_path / f"view{timestamp}.csv"
+        merged.sink_csv(result_path)
+        dataframe = pl.scan_csv(result_path)
+    else:
+        raise ValueError(f"Unsupported output format: {output_format!r}")
+
     logging.info(f"Results merged into {result_path}")
-    return View(dataframe=pl.scan_parquet(result_path))
+    return View(dataframe=dataframe)
