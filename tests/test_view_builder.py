@@ -121,6 +121,32 @@ def test_balance_busb_values(view_result: pl.DataFrame) -> None:
 
 
 # ---------------------------------------------------------------------------
+# CSV simulation table
+# ---------------------------------------------------------------------------
+
+
+def test_workflow_runs_with_csv_simulation_table(test_files_root: Path, tmp_path: Path) -> None:
+    """The full Loader -> ViewBuilder -> accumulate_on_disk workflow runs when the
+    simulation table is provided as a CSV file instead of parquet."""
+    src = test_files_root / "test_3"
+    dst = tmp_path / "test_3"
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
+    shutil.copytree(src, dst)
+
+    parquet_file = next(dst.glob("simulation_table*.parquet"))
+    pl.read_parquet(parquet_file).write_csv(parquet_file.with_suffix(".csv"))
+    parquet_file.unlink()
+
+    metric_views = _build_view_builder(dst).build()
+    accumulate_on_disk(metric_views, results_dir)
+
+    result_files = list(results_dir.glob("view*.parquet"))
+    assert result_files, "No result parquet file written"
+    assert pl.read_parquet(result_files[0]).height > 0
+
+
+# ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
 

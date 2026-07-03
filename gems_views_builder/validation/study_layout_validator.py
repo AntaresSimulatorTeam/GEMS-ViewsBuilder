@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 EXACT_FILES = ["taxonomy.yml", "view_config.yml", "library.yml", "system.yml"]
-PREFIX_FILES = {"calendar": ".csv", "simulation_table": ".parquet"}
+PREFIX_FILES = {"calendar": (".csv",), "simulation_table": (".parquet", ".csv")}
 
 
 class StudyLayoutValidator:
@@ -53,7 +53,7 @@ class StudyLayoutValidator:
             if not (self.input_data_path / filename).is_file():
                 raise FileNotFoundError(f"Required file '{filename}' not found in {self.input_data_path}")
 
-        for prefix, expected_suffix in PREFIX_FILES.items():
+        for prefix, expected_suffixes in PREFIX_FILES.items():
             logging.info(f"Checking presence of file with prefix {prefix!r}")
             matches = list(self.input_data_path.glob(f"{prefix}*"))
             if not matches:
@@ -64,8 +64,9 @@ class StudyLayoutValidator:
                     f"Expected exactly one file starting with '{prefix}' in {self.input_data_path}, found: {names}"
                 )
             match = matches[0]
-            if match.suffix != expected_suffix:
-                raise ValueError(f"File '{match.name}' starting with '{prefix}' must be a '{expected_suffix}' file")
+            if match.suffix not in expected_suffixes:
+                allowed = " or ".join(f"'{suffix}'" for suffix in expected_suffixes)
+                raise ValueError(f"File '{match.name}' starting with '{prefix}' must be a {allowed} file")
             logging.info(f"Found {match.name} for prefix {prefix!r}")
 
     def validate(self) -> None:
