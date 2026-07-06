@@ -86,12 +86,8 @@ class TimeAggregator:
 
 def granular_date_expression(time_aggregation: TimeAggregation | None) -> pl.Expr:
     if time_aggregation:
-        try:
-            return pl.col("granular_date").dt.truncate(TRUNCATE_WINDOWS[time_aggregation]).alias("view_date")
-        except KeyError:
-            raise ValueError(f"Invalid time aggregation: {time_aggregation}") from None
-    else:
-        return pl.col("granular_date").alias("view_date")
+        return pl.col("granular_date").dt.truncate(TRUNCATE_WINDOWS[time_aggregation]).alias("view_date")
+    return pl.col("granular_date").alias("view_date")
 
 
 def time_aggregation_expression(time_operator: TimeOperator) -> pl.Expr:

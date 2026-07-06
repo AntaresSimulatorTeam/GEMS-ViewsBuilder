@@ -80,11 +80,6 @@ def test_granular_date_expression(
     assert _apply_date_expr(input_date, aggregation) == expected_date
 
 
-def test_granular_date_expression_invalid_raises() -> None:
-    with pytest.raises(ValueError, match="Invalid time aggregation"):
-        granular_date_expression(object())  # type: ignore[arg-type]
-
-
 @pytest.mark.parametrize(
     ("time_operator", "values", "expected"),
     [
