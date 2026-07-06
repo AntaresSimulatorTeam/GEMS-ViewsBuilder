@@ -65,7 +65,4 @@ def check_options(args: argparse.Namespace) -> int | None:
     if not args.results_dir.is_dir():
         logging.error(f"Results directory does not exist: {args.results_dir}")
         return 2
-    if args.output_format not in {"parquet", "csv"}:
-        logging.error(f"Invalid output format: {args.output_format}")
-        return 2
     return None

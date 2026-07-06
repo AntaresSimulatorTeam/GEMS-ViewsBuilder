@@ -21,8 +21,8 @@ class ViewSinkerFactory:
 
     def make(self) -> ViewSinker:
         if self.output_format == "parquet":
-            return ParquetViewSinker(self.output_path, self.output_format)
+            return ParquetViewSinker(self.output_path)
         elif self.output_format == "csv":
-            return CsvViewSinker(self.output_path, self.output_format)
+            return CsvViewSinker(self.output_path)
         else:
             raise ValueError(f"Invalid output format: {self.output_format}")
