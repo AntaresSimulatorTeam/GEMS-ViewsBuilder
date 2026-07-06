@@ -32,7 +32,7 @@ def run(input_dir: Path, view_sinker: ViewSinker) -> None:
     validate_catalogs_against_taxonomy(input_dir, input_data.view_config.catalog_ids, input_data.taxonomy)
 
     metric_views = ViewBuilder(input_data).build()
-    accumulate_on_disk(metric_views, view_sinker)  # Here we will send only sinker
+    accumulate_on_disk(metric_views, view_sinker)
 
 
 def main(argv: list[str] | None = None) -> int:
