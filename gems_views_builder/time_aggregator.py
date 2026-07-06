@@ -41,19 +41,12 @@ class TimeAggregator:
         """
         logging.info(f"[{metric.id}] Aggregating temporally with operator {metric.time_operator.value}")
         lazy_metric_view = pl.scan_parquet(metric_view.persistence_path)
-        time_agg = (
-            pl.col("granular_metric_value").sum()
-            if metric.time_operator == TimeOperator.SUM
-            else pl.col("granular_metric_value").mean()
-        ).alias("metric_value")
-        granular_date = pl.col("granular_date")
-        truncate_window = self.parse_time_aggregation(self._time_aggregation)
-        view_date_expr = (
-            granular_date.dt.truncate(truncate_window) if truncate_window is not None else granular_date
-        ).alias("view_date")
+
+        agg_expr = time_aggregation_expression(metric.time_operator)
+        date_expr = granular_date_expression(self._time_aggregation)
 
         view = (
-            lazy_metric_view.with_columns(view_date_expr)
+            lazy_metric_view.with_columns(date_expr)
             .group_by(
                 [
                     "metric_id",
@@ -63,7 +56,7 @@ class TimeAggregator:
                     "view_date",
                 ]
             )
-            .agg(time_agg)
+            .agg(agg_expr)
             .select(
                 [
                     "metric_id",
@@ -90,12 +83,20 @@ class TimeAggregator:
         logging.info(f"[{metric.id}] Temporal aggregation written to {out_path}")
         return MetricView(out_path)
 
-    @staticmethod
-    def parse_time_aggregation(time_aggregation: TimeAggregation | None) -> str | None:
-        """Return the Polars truncate window, or None when dates must not be truncated."""
-        if time_aggregation is None:
-            return None
+
+def granular_date_expression(time_aggregation: TimeAggregation | None) -> pl.Expr:
+    if time_aggregation:
         try:
-            return TRUNCATE_WINDOWS[time_aggregation]
+            return pl.col("granular_date").dt.truncate(TRUNCATE_WINDOWS[time_aggregation]).alias("view_date")
         except KeyError:
             raise ValueError(f"Invalid time aggregation: {time_aggregation}") from None
+    else:
+        return pl.col("granular_date").alias("view_date")
+
+
+def time_aggregation_expression(time_operator: TimeOperator) -> pl.Expr:
+    return (
+        pl.col("granular_metric_value").sum()
+        if time_operator == TimeOperator.SUM
+        else pl.col("granular_metric_value").mean()
+    ).alias("metric_value")

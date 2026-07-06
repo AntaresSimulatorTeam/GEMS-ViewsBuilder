@@ -20,7 +20,21 @@ from pytest import approx
 from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
 from gems_views_builder.input.view_config import TimeAggregation
 from gems_views_builder.metric_view import MetricView
-from gems_views_builder.time_aggregator import TimeAggregator
+from gems_views_builder.time_aggregator import (
+    TimeAggregator,
+    granular_date_expression,
+    time_aggregation_expression,
+)
+
+
+def _apply_date_expr(dates: list[datetime], aggregation: TimeAggregation | None) -> list[datetime]:
+    df = pl.DataFrame({"granular_date": dates}, schema={"granular_date": pl.Datetime})
+    return df.with_columns(granular_date_expression(aggregation)).get_column("view_date").to_list()
+
+
+def _apply_agg_expr(values: list[float], time_operator: TimeOperator) -> float:
+    df = pl.DataFrame({"granular_metric_value": values})
+    return float(df.select(time_aggregation_expression(time_operator)).item())
 
 
 def _granular_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> MetricView:
@@ -48,23 +62,57 @@ def _metric(time_operator: TimeOperator) -> Metric:
 
 
 @pytest.mark.parametrize(
-    ("aggregation", "expected_window"),
+    ("aggregation", "input_dates", "expected_dates"),
     [
-        (TimeAggregation.HOUR, "1h"),
-        (TimeAggregation.DAY, "1d"),
-        (TimeAggregation.WEEK, "1w"),
-        (TimeAggregation.MONTH, "1mo"),
-        (TimeAggregation.YEAR, "1y"),
-        (None, None),
+        (
+            TimeAggregation.HOUR,
+            [datetime(2026, 1, 1, 3, 30), datetime(2026, 1, 1, 3, 45)],
+            [datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 3, 0)],
+        ),
+        (
+            TimeAggregation.DAY,
+            [datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 20, 0)],
+            [datetime(2026, 1, 1, 0, 0), datetime(2026, 1, 1, 0, 0)],
+        ),
+        (
+            TimeAggregation.MONTH,
+            [datetime(2026, 1, 15, 10, 0), datetime(2026, 1, 28, 20, 0)],
+            [datetime(2026, 1, 1, 0, 0), datetime(2026, 1, 1, 0, 0)],
+        ),
+        (
+            TimeAggregation.YEAR,
+            [datetime(2026, 3, 15, 10, 0), datetime(2026, 11, 28, 20, 0)],
+            [datetime(2026, 1, 1, 0, 0), datetime(2026, 1, 1, 0, 0)],
+        ),
+        (
+            None,
+            [datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 20, 0)],
+            [datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 20, 0)],
+        ),
     ],
 )
-def test_parse_time_aggregation(aggregation: TimeAggregation | None, expected_window: str) -> None:
-    assert TimeAggregator.parse_time_aggregation(aggregation) == expected_window
+def test_granular_date_expression(
+    aggregation: TimeAggregation | None,
+    input_dates: list[datetime],
+    expected_dates: list[datetime],
+) -> None:
+    assert _apply_date_expr(input_dates, aggregation) == expected_dates
 
 
-def test_parse_time_aggregation_invalid_raises() -> None:
+def test_granular_date_expression_invalid_raises() -> None:
     with pytest.raises(ValueError, match="Invalid time aggregation"):
-        TimeAggregator.parse_time_aggregation("decade")  # type: ignore[arg-type]
+        granular_date_expression(object())  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("time_operator", "values", "expected"),
+    [
+        (TimeOperator.SUM, [10.0, 20.0], 30.0),
+        (TimeOperator.AVG, [10.0, 20.0], 15.0),
+    ],
+)
+def test_time_aggregation_expression(time_operator: TimeOperator, values: list[float], expected: float) -> None:
+    assert _apply_agg_expr(values, time_operator) == approx(expected)
 
 
 def test_truncation_groups_by_window(tmp_path: Path) -> None:
@@ -75,7 +123,6 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
     assert df.shape[0] == 1
     assert df["view_date"][0] == datetime(2026, 1, 1, 0, 0)
     assert df["metric_value"][0] == approx(30.0)
-    assert df["metric_value"].dtype == pl.Float64
     assert df["metric_value"].dtype == pl.Float64
 
 
