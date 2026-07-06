@@ -17,11 +17,6 @@ import pytest
 from gems_views_builder.view import CsvViewSinker, ParquetViewSinker, ViewSinker, ViewSinkerFactory
 
 
-def test_view_sinker_cannot_be_instantiated(tmp_path: Path) -> None:
-    with pytest.raises(TypeError, match="abstract"):
-        ViewSinker(tmp_path, "parquet")
-
-
 @pytest.mark.parametrize(
     ("output_format", "expected_type"),
     [

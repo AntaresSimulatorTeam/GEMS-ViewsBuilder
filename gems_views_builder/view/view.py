@@ -15,7 +15,7 @@ from dataclasses import dataclass
 import polars as pl
 
 from gems_views_builder.metric_view import MetricView
-from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
+
 
 @dataclass
 class View:
@@ -23,7 +23,7 @@ class View:
     # # Here we could store ViewConfig in future versions
 
 
-
+from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
 
 
 def accumulate_on_disk(metric_views: list[MetricView], sinker: ViewSinker) -> View:
