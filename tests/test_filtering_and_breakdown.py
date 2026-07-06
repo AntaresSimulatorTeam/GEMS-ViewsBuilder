@@ -24,7 +24,7 @@ import pytest
 
 from gems_views_builder import ViewBuilder
 from gems_views_builder.loader import Loader
-from gems_views_builder.view import accumulate_on_disk
+from gems_views_builder.view import ViewSinkerFactory, accumulate_on_disk
 
 # Generator instances in ``filtering_and_breakdown/system.yml`` (technology, company).
 _FILTERING_AND_BREAKDOWN_GEN_META: dict[str, tuple[str, str]] = {
@@ -46,7 +46,8 @@ def filtering_and_breakdown_workspace(test_files_root: Path, tmp_path: Path) -> 
     results_dir.mkdir()
     shutil.copytree(src, dst)
     metric_views = ViewBuilder(Loader(dst).load()).build()
-    view = accumulate_on_disk(metric_views, results_dir, "parquet")
+    sinker = ViewSinkerFactory(results_dir, "parquet").make()
+    view = accumulate_on_disk(metric_views, sinker)
     return dst, view.dataframe.collect()
 
 
