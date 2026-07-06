@@ -45,12 +45,10 @@ def accumulate_on_disk(
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
         dataframe = pl.scan_parquet(result_path)
-    elif output_format == "csv":
+    else:
         result_path = results_path / f"view{timestamp}.csv"
         merged.sink_csv(result_path)
         dataframe = pl.scan_csv(result_path)
-    else:
-        raise ValueError(f"Unsupported output format: {output_format!r}")
 
     logging.info(f"Results merged into {result_path}")
     return View(dataframe=dataframe)
