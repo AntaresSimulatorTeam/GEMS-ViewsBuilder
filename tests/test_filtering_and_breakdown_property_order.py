@@ -47,7 +47,7 @@ def property_order_workspace(test_files_root: Path, tmp_path: Path) -> tuple[Pat
     results_dir.mkdir()
     shutil.copytree(src, dst)
     metric_views = ViewBuilder(Loader(dst).load()).build()
-    view = accumulate_on_disk(metric_views, results_dir)
+    view = accumulate_on_disk(metric_views, results_dir, "parquet")
     return dst, view.dataframe.collect()
 
 

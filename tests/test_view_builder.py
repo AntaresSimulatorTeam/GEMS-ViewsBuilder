@@ -40,7 +40,7 @@ def view_result(test_files_root: Path, tmp_path: Path) -> pl.DataFrame:
     results_dir.mkdir()
     shutil.copytree(src, dst)
     metric_views = _build_view_builder(dst).build()
-    accumulate_on_disk(metric_views, results_dir)
+    accumulate_on_disk(metric_views, results_dir, "parquet")
     result_files = list(results_dir.glob("view*.parquet"))
     assert result_files, "No result parquet file written"
     return pl.read_parquet(result_files[0])
@@ -158,7 +158,7 @@ def test_log_messages_emitted_to_stdout(
     results_dir.mkdir()
     with caplog.at_level(logging.INFO):
         metric_views = _build_view_builder(dst).build()
-        accumulate_on_disk(metric_views, results_dir)
+        accumulate_on_disk(metric_views, results_dir, "parquet")
 
     repo_root = Path(__file__).resolve().parents[1]
     log_directory = repo_root / "logs"

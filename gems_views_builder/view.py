@@ -14,14 +14,11 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
 
 import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 from gems_views_builder.metric_view import MetricView
-
-OutputFormat = Literal["parquet", "csv"]
 
 
 @dataclass
@@ -30,14 +27,12 @@ class View:
     # # Here we could store ViewConfig in future versions
 
 
-def accumulate_on_disk(
-    metric_views: list[MetricView], results_path: Path, output_format: OutputFormat = "parquet"
-) -> View:
+def accumulate_on_disk(metric_views: list[MetricView], results_path: Path, output_format: str) -> View:
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     merged = pl.scan_parquet([v.persistence_path for v in metric_views])
 
     if output_format == "parquet":
-        result_path = results_path / f"view{timestamp}.parquet"
+        result_path = results_path / f"view{timestamp}.{output_format}"
         merged.sink_parquet(
             result_path,
             compression=PARQUET_COMPRESSION,
@@ -46,7 +41,7 @@ def accumulate_on_disk(
         )
         dataframe = pl.scan_parquet(result_path)
     else:
-        result_path = results_path / f"view{timestamp}.csv"
+        result_path = results_path / f"view{timestamp}.{output_format}"
         merged.sink_csv(result_path)
         dataframe = pl.scan_csv(result_path)
 

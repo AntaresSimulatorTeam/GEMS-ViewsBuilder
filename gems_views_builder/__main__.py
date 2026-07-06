@@ -18,11 +18,11 @@ from gems_views_builder.common import configure_logging
 from gems_views_builder.loader import Loader
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
-from gems_views_builder.view import OutputFormat, accumulate_on_disk
+from gems_views_builder.view import accumulate_on_disk
 from gems_views_builder.views_builder import ViewBuilder
 
 
-def run(input_dir: Path, results_dir: Path, output_format: OutputFormat = "parquet") -> None:
+def run(input_dir: Path, results_dir: Path, output_format: str) -> None:
     """Run the full pipeline and accumulate the results to the results directory."""
 
     # # Validate study layout
