@@ -31,7 +31,7 @@ from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.loader import Loader
-from gems_views_builder.view import ViewSinkerFactory, accumulate_on_disk
+from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
 
 # Same (technology, company) as filtering_and_breakdown, but YAML property order differs per component.
 _GAS_RHONEPOWER_GENERATORS = ("gas_1", "gas_2")
@@ -47,7 +47,7 @@ def property_order_workspace(test_files_root: Path, tmp_path: Path) -> tuple[Pat
     results_dir.mkdir()
     shutil.copytree(src, dst)
     metric_views = ViewBuilder(Loader(dst).load()).build()
-    sinker = ViewSinkerFactory(results_dir, "parquet").make()
+    sinker = ParquetViewSinker(results_dir)
     view = accumulate_on_disk(metric_views, sinker)
     return dst, view.dataframe.collect()
 

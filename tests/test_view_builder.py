@@ -19,7 +19,7 @@ import pytest
 
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_structure_builder import _format_metric_location
-from gems_views_builder.view import ViewBuilder, ViewSinkerFactory, accumulate_on_disk
+from gems_views_builder.view import CsvViewSinker, ParquetViewSinker, ViewBuilder, accumulate_on_disk
 
 
 def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
@@ -39,7 +39,7 @@ def view_result(test_files_root: Path, tmp_path: Path) -> pl.DataFrame:
     results_dir.mkdir()
     shutil.copytree(src, dst)
     metric_views = _build_view_builder(dst).build()
-    sinker = ViewSinkerFactory(results_dir, "parquet").make()
+    sinker = ParquetViewSinker(results_dir)
     accumulate_on_disk(metric_views, sinker)
     result_files = list(results_dir.glob("view*.parquet"))
     assert result_files, "No result parquet file written"
@@ -126,7 +126,7 @@ def test_balance_busb_values(view_result: pl.DataFrame) -> None:
 
 
 def test_accumulate_on_disk_writes_csv(test_files_root: Path, tmp_path: Path) -> None:
-    """ViewSinkerFactory with csv format writes a csv result instead of parquet."""
+    """CsvViewSinker writes a csv result instead of parquet."""
     src = test_files_root / "test_3"
     dst = tmp_path / "test_3"
     results_dir = tmp_path / "results"
@@ -134,7 +134,7 @@ def test_accumulate_on_disk_writes_csv(test_files_root: Path, tmp_path: Path) ->
     shutil.copytree(src, dst)
 
     metric_views = _build_view_builder(dst).build()
-    sinker = ViewSinkerFactory(results_dir, "csv").make()
+    sinker = CsvViewSinker(results_dir)
     accumulate_on_disk(metric_views, sinker)
 
     result_files = list(results_dir.glob("view*.csv"))
@@ -159,7 +159,7 @@ def test_log_messages_emitted_to_stdout(
     results_dir.mkdir()
     with caplog.at_level(logging.INFO):
         metric_views = _build_view_builder(dst).build()
-        sinker = ViewSinkerFactory(results_dir, "parquet").make()
+        sinker = ParquetViewSinker(results_dir)
         accumulate_on_disk(metric_views, sinker)
 
     repo_root = Path(__file__).resolve().parents[1]
