@@ -17,14 +17,9 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_structure_builder import _format_metric_location
 from gems_views_builder.view import accumulate_on_disk
-from gems_views_builder.views_builder import ViewBuilder
-
-
-def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
-    return ViewBuilder(Loader(dataset_dir).load())
+from tests.conftest import build_view_builder
 
 
 @pytest.fixture()
@@ -39,7 +34,7 @@ def view_result(test_files_root: Path, tmp_path: Path) -> pl.DataFrame:
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     shutil.copytree(src, dst)
-    metric_views = _build_view_builder(dst).build()
+    metric_views = build_view_builder(dst).build()
     accumulate_on_disk(metric_views, results_dir)
     result_files = list(results_dir.glob("view*.parquet"))
     assert result_files, "No result parquet file written"
@@ -135,7 +130,7 @@ def test_log_messages_emitted_to_stdout(
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     with caplog.at_level(logging.INFO):
-        metric_views = _build_view_builder(dst).build()
+        metric_views = build_view_builder(dst).build()
         accumulate_on_disk(metric_views, results_dir)
 
     repo_root = Path(__file__).resolve().parents[1]
@@ -156,7 +151,7 @@ def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> Non
     dst = tmp_path / "test_3"
     shutil.copytree(src, dst)
 
-    _build_view_builder(dst).build()
+    build_view_builder(dst).build()
 
     repo_root = Path(__file__).resolve().parents[1]
     logs_dir = repo_root / "logs"

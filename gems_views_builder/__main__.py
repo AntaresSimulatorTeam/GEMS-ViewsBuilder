@@ -16,6 +16,7 @@ from pathlib import Path
 from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import configure_logging
 from gems_views_builder.loader import Loader
+from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
 from gems_views_builder.view import accumulate_on_disk
@@ -29,10 +30,16 @@ def run(input_dir: Path, results_dir: Path) -> None:
     StudyLayoutValidator(input_dir).validate()
     # # If everything is ok, load pipeline input
     input_data = Loader(input_dir).load()
+
+    # # Here we will update the input data e.g. system components
+
+    metric_structure_table_builder = MetricStructureTableBuilder(
+        input_data.system, input_data.library, input_data.view_config.location_taxonomy_category
+    )
     # # Validate catalogs against taxonomy
     validate_catalogs_against_taxonomy(input_dir, input_data.view_config.catalog_ids, input_data.taxonomy)
 
-    metric_views = ViewBuilder(input_data).build()
+    metric_views = ViewBuilder(input_data, metric_structure_table_builder).build()
     accumulate_on_disk(metric_views, results_dir)
 
 

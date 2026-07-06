@@ -16,9 +16,23 @@ from typing import cast
 import pytest
 
 from gems_views_builder.common import configure_logging
+from gems_views_builder.loader import Loader
+from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
+from gems_views_builder.views_builder import ViewBuilder
 
 RESOURCES_TEST_FILES_ROOT = Path(__file__).resolve().parent.parent / "resources"
 TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
+
+
+def build_view_builder(dataset_dir: Path) -> ViewBuilder:
+    """Load a dataset directory and return a configured ``ViewBuilder``."""
+    input_data = Loader(dataset_dir).load()
+    metric_structure_table_builder = MetricStructureTableBuilder(
+        input_data.system,
+        input_data.library,
+        input_data.view_config.location_taxonomy_category,
+    )
+    return ViewBuilder(input_data, metric_structure_table_builder)
 
 
 @pytest.fixture(scope="session", autouse=True)
