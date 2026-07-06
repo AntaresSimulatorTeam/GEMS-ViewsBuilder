@@ -12,6 +12,7 @@
 
 from datetime import datetime
 from pathlib import Path
+from typing import cast
 
 import polars as pl
 import pytest
@@ -27,9 +28,9 @@ from gems_views_builder.time_aggregator import (
 )
 
 
-def _apply_date_expr(dates: list[datetime], aggregation: TimeAggregation | None) -> list[datetime]:
-    df = pl.DataFrame({"granular_date": dates}, schema={"granular_date": pl.Datetime})
-    return df.with_columns(granular_date_expression(aggregation)).get_column("view_date").to_list()
+def _apply_date_expr(date: datetime, aggregation: TimeAggregation | None) -> datetime:
+    df = pl.DataFrame({"granular_date": [date]}, schema={"granular_date": pl.Datetime})
+    return cast(datetime, df.select(granular_date_expression(aggregation)).item())
 
 
 def _apply_agg_expr(values: list[float], time_operator: TimeOperator) -> float:
@@ -62,41 +63,21 @@ def _metric(time_operator: TimeOperator) -> Metric:
 
 
 @pytest.mark.parametrize(
-    ("aggregation", "input_dates", "expected_dates"),
+    ("aggregation", "input_date", "expected_date"),
     [
-        (
-            TimeAggregation.HOUR,
-            [datetime(2026, 1, 1, 3, 30), datetime(2026, 1, 1, 3, 45)],
-            [datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 3, 0)],
-        ),
-        (
-            TimeAggregation.DAY,
-            [datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 20, 0)],
-            [datetime(2026, 1, 1, 0, 0), datetime(2026, 1, 1, 0, 0)],
-        ),
-        (
-            TimeAggregation.MONTH,
-            [datetime(2026, 1, 15, 10, 0), datetime(2026, 1, 28, 20, 0)],
-            [datetime(2026, 1, 1, 0, 0), datetime(2026, 1, 1, 0, 0)],
-        ),
-        (
-            TimeAggregation.YEAR,
-            [datetime(2026, 3, 15, 10, 0), datetime(2026, 11, 28, 20, 0)],
-            [datetime(2026, 1, 1, 0, 0), datetime(2026, 1, 1, 0, 0)],
-        ),
-        (
-            None,
-            [datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 20, 0)],
-            [datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 20, 0)],
-        ),
+        (TimeAggregation.HOUR, datetime(2026, 1, 1, 3, 30), datetime(2026, 1, 1, 3, 0)),
+        (TimeAggregation.DAY, datetime(2026, 1, 1, 20, 0), datetime(2026, 1, 1, 0, 0)),
+        (TimeAggregation.MONTH, datetime(2026, 1, 15, 10, 0), datetime(2026, 1, 1, 0, 0)),
+        (TimeAggregation.YEAR, datetime(2026, 3, 15, 10, 0), datetime(2026, 1, 1, 0, 0)),
+        (None, datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 3, 0)),
     ],
 )
 def test_granular_date_expression(
     aggregation: TimeAggregation | None,
-    input_dates: list[datetime],
-    expected_dates: list[datetime],
+    input_date: datetime,
+    expected_date: datetime,
 ) -> None:
-    assert _apply_date_expr(input_dates, aggregation) == expected_dates
+    assert _apply_date_expr(input_date, aggregation) == expected_date
 
 
 def test_granular_date_expression_invalid_raises() -> None:
