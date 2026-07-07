@@ -16,6 +16,13 @@ from typing import cast
 import pytest
 
 from gems_views_builder.common import configure_logging
+from gems_views_builder.input.component import (
+    Component,
+    build_component_port_connections,
+    find_components_taxonomy_categories,
+    group_components_by_taxonomy_category,
+    save_component_port_connections,
+)
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.views_builder import ViewBuilder
@@ -27,10 +34,17 @@ TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
 def build_view_builder(dataset_dir: Path) -> ViewBuilder:
     """Load a dataset directory and return a configured ``ViewBuilder``."""
     input_data = Loader(dataset_dir).load()
+
+    components = [Component(component) for component in input_data.system.components]
+    find_components_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
+    components_by_taxonomy_category = group_components_by_taxonomy_category(components)
+
+    component_port_connections = build_component_port_connections(input_data.system.connections)
+    save_component_port_connections(components, component_port_connections)
+
     metric_structure_table_builder = MetricStructureTableBuilder(
-        input_data.system,
-        input_data.library,
         input_data.view_config.location_taxonomy_category,
+        components_by_taxonomy_category,
     )
     return ViewBuilder(input_data, metric_structure_table_builder)
 

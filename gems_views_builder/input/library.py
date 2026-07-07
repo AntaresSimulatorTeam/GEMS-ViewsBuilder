@@ -66,9 +66,7 @@ def load_library(library_file_path: Path) -> Library:
             cat: [m.id for m in parsed.models if m.taxonomy_category == cat]
             for cat in {m.taxonomy_category for m in parsed.models if m.taxonomy_category}
         },
-        taxonomy_category_by_model={
-            m.id: m.taxonomy_category for m in parsed.models if m.taxonomy_category
-        },
+        taxonomy_category_by_model={m.id: m.taxonomy_category for m in parsed.models if m.taxonomy_category},
     )
 
 

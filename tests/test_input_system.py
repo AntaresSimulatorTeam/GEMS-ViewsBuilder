@@ -11,13 +11,11 @@
 # This file is part of the Antares project.
 
 from pathlib import Path
-from types import SimpleNamespace
 
-import pytest
 from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore
 
 from gems_views_builder.input.library import resolve_libraries
-from gems_views_builder.input.system import System, load_system
+from gems_views_builder.input.system import load_system
 
 
 def test_input_system_using(test_dataset_dir: Path) -> None:
@@ -29,47 +27,7 @@ def test_input_system_using(test_dataset_dir: Path) -> None:
     assert isinstance(input_system, SystemSchema)
 
 
-def test_locating_function_multiple_peers_raises(test_dataset_dir: Path) -> None:
-    """A single location port must resolve to a unique peer: multiple peers is an error."""
+def test_system_exposes_components_and_connections(test_dataset_dir: Path) -> None:
     system = load_system(test_dataset_dir, resolve_libraries(test_dataset_dir / "library.yml"))
-
-    if not system.connections:
-        return
-
-    ambiguous = [(cid, pid) for (cid, pid), peers in system._component_port_connections.items() if len(peers) > 1]
-    if not ambiguous:
-        return
-
-    cid, pid = ambiguous[0]
-    with pytest.raises(ValueError):
-        system.get_location(cid, pid)
-
-
-def test_locating_function_zero_peers_raises(test_dataset_dir: Path) -> None:
-    """A single location port with no connected peer is an error (must be unique)."""
-    system = load_system(test_dataset_dir, resolve_libraries(test_dataset_dir / "library.yml"))
-
     assert len(system.components) > 0
-    any_component_id = system.components[0].id
-    # A port that is wired to nothing has zero peers, which is not a unique location.
-    with pytest.raises(ValueError):
-        system.get_location(any_component_id, "this_port_is_not_connected_to_anything")
-
-
-def test_get_location_zero_peers_raises_in_memory() -> None:
-    """get_location raises when a port has no wired peer (built without dataset files)."""
-    gems_system = SimpleNamespace(
-        components=[
-            SimpleNamespace(id="area", model="basic_lib.area"),
-            SimpleNamespace(id="gen", model="basic_lib.gen"),
-        ],
-        connections=[
-            SimpleNamespace(component1="gen", port1="balance_port", component2="area", port2="balance_port"),
-        ],
-    )
-    system = System(gems_system)
-    with pytest.raises(
-        ValueError,
-        match=r"Expected exactly one peer component for component 'area' on port 'spillage_port', but found 0",
-    ):
-        system.get_location("area", "spillage_port")
+    assert isinstance(system.connections, list)

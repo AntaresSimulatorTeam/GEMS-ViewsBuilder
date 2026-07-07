@@ -1,10 +1,12 @@
-from dataclasses import dataclass, field
+import logging
 from collections import defaultdict
-from typing import Any
-from gems.study import Component as GemsComponent
+from dataclasses import dataclass, field
+from typing import Any, cast
+
+from gems.study import Component as GemsComponent  # type: ignore
 
 from gems_views_builder.input.catalog import PropertySchema
-import logging
+
 
 @dataclass
 class Component:
@@ -16,7 +18,8 @@ class Component:
 
     raw_component: GemsComponent
     taxonomy_category: str | None = None
-    connections: set[tuple[str, str]] = field(default_factory=set)
+    # port_id -> set of peer component ids connected on that port
+    connections: dict[str, set[str]] = field(default_factory=dict)
 
     @property
     def id(self) -> str:
@@ -29,10 +32,50 @@ class Component:
 
     @property
     def properties(self) -> dict[str, str]:
-        return self.raw_component.properties
+        return cast(dict[str, str], self.raw_component.properties)
 
     def set_taxonomy_category(self, taxonomy_category: str) -> None:
         self.taxonomy_category = taxonomy_category
+
+    def get_location(self, location_ports: str | tuple[str, ...] | None) -> str | tuple[str, ...]:
+        """Resolve the component's location for the given location port(s).
+
+        - None: the component is its own location.
+        - single port: the unique peer connected on that port.
+        - tuple of ports: one unique peer per port, in order.
+        """
+        if location_ports is None:
+            return self.id
+        if isinstance(location_ports, str):
+            return self._resolve_unique_location(location_ports)
+        return tuple(self._resolve_unique_location(port) for port in location_ports)
+
+    def _resolve_unique_location(self, location_port: str) -> str:
+        """Return the UNIQUE peer connected on ``location_port`` (O(1) lookup)."""
+        peers = self.connections.get(location_port, set())
+        if len(peers) != 1:
+            raise ValueError(
+                f"Expected exactly one peer component for component {self.id!r} "
+                f"on port {location_port!r}, but found {len(peers)}: {tuple(peers)!r}"
+            )
+        return next(iter(peers))
+
+    def _format_breakdown_properties(self, breakdown: list[PropertySchema] | None) -> str:
+        if not breakdown:
+            return "{}"
+        pairs: list[str] = []
+        for prop in breakdown:
+            key = prop.key
+            if key not in self.properties:
+                pairs.append(f"({key},None)")
+            else:
+                pairs.append(f"({key},{self.properties[key]})")
+        return "{" + ",".join(pairs) + "}"
+
+    def check_component_filter_matches(self, filter: PropertySchema | None) -> bool:
+        if filter is None:
+            return True
+        return bool(self.properties.get(filter.key) == filter.value)
 
 
 def find_components_taxonomy_categories(
@@ -41,22 +84,22 @@ def find_components_taxonomy_categories(
     for component in components:
         component.taxonomy_category = taxonomy_category_by_model[component.model_id]
 
-def group_components_by_taxonomy_category(components: list[Component]) -> dict[str, list[Component]]:
-    components_by_taxonomy_category = defaultdict(list)
+
+def group_components_by_taxonomy_category(components: list[Component]) -> dict[str, dict[str, Component]]:
+    """Group components by taxonomy category. Requires ``find_components_taxonomy_categories`` to have run first."""
+    components_by_taxonomy_category: dict[str, dict[str, Component]] = defaultdict(dict)
     for component in components:
-        components_by_taxonomy_category[component.taxonomy_category].append(component)
+        components_by_taxonomy_category[cast(str, component.taxonomy_category)][component.id] = component
     return components_by_taxonomy_category
 
-def check_component_filter_matches(component: Component, filter: PropertySchema | None) -> bool:
-    if filter is None:
-        return True
-    return bool(component.properties.get(filter.key) == filter.value)
 
-
-def save_component_port_connections(components: list[Component], component_port_connections: dict[str, set[tuple[str, str]]]) -> None:
+def save_component_port_connections(
+    components: list[Component], component_port_connections: dict[str, dict[str, set[str]]]
+) -> None:
     for component in components:
         if component.id in component_port_connections:
             component.connections = component_port_connections[component.id]
+
 
 def endpoint(conn: Any, idx: int) -> tuple[str, str] | None:
     """
@@ -77,12 +120,16 @@ def endpoint(conn: Any, idx: int) -> tuple[str, str] | None:
         return None
     return comp, port
 
-def build_component_port_connections(connections: list[Any]) -> dict[str, set[tuple[str, str]]]:
+
+def build_component_port_connections(connections: list[Any]) -> dict[str, dict[str, set[str]]]:
     """
-    One time build which will be used to save information inside component object
+    One time build which will be used to save information inside component object.
+
+    Shape: component_id -> {port_id -> {peer_component_ids}}, so each component can
+    resolve a location by port in O(1).
     """
     logging.info("Building component-port connection index")
-    component_port_connections: dict[str, set[tuple[str, str]]] = defaultdict(set)
+    component_port_connections: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
     for connection in connections:
         e1 = endpoint(connection, 1)
         e2 = endpoint(connection, 2)
@@ -98,8 +145,8 @@ def build_component_port_connections(connections: list[Any]) -> dict[str, set[tu
         if c1 == c2:
             continue
 
-        component_port_connections[c1].add((p1,c2))
-        component_port_connections[c2].add((p2,c1))
+        component_port_connections[c1][p1].add(c2)
+        component_port_connections[c2][p2].add(c1)
 
     logging.info(f"Built component-port connection index with {len(component_port_connections)} entry(ies)")
     return component_port_connections

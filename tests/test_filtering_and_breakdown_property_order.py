@@ -26,6 +26,13 @@ from gems_views_builder import (
     load_catalog,
     load_library,
 )
+from gems_views_builder.input.component import (
+    Component,
+    build_component_port_connections,
+    find_components_taxonomy_categories,
+    group_components_by_taxonomy_category,
+    save_component_port_connections,
+)
 from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
@@ -114,10 +121,15 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     view_config = load_view_config(root / "view_config.yml")
     metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")
 
+    components = [Component(component) for component in system.components]
+    find_components_taxonomy_categories(components, library.taxonomy_category_by_model)
+    components_by_taxonomy_category = group_components_by_taxonomy_category(components)
+    component_port_connections = build_component_port_connections(system.connections)
+    save_component_port_connections(components, component_port_connections)
+
     table = MetricStructureTableBuilder(
-        system,
-        library,
         view_config.location_taxonomy_category,
+        components_by_taxonomy_category,
     ).build(metric)
     df = table.dataframe.collect()
     partial = df.filter(pl.col("component") == "gen_company_only")
