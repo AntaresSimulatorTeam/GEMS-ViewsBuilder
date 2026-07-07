@@ -34,6 +34,7 @@ class Library:
     port_types: list[PortTypeSchema]
     models: dict[str, ModelSchema]
     models_by_taxonomy_category: dict[str, list[str]]
+    taxonomy_category_by_model: dict[str, str]
 
     def get_model(self, model_id: str) -> ModelSchema:
         """Return the full model definition, or None if not found."""
@@ -64,6 +65,9 @@ def load_library(library_file_path: Path) -> Library:
         models_by_taxonomy_category={
             cat: [m.id for m in parsed.models if m.taxonomy_category == cat]
             for cat in {m.taxonomy_category for m in parsed.models if m.taxonomy_category}
+        },
+        taxonomy_category_by_model={
+            m.id: m.taxonomy_category for m in parsed.models if m.taxonomy_category
         },
     )
 

@@ -18,12 +18,10 @@ from gems_views_builder.input.catalog import Metric, PropertySchema
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.system import System
 from gems_views_builder.metric_structure_table import MetricStructureTable
+from gems_views_builder.input.component import check_component_filter_matches
 
 
-def _check_filter_matches(component: Component, filter: PropertySchema | None) -> bool:
-    if filter is None:
-        return True
-    return bool(component.properties.get(filter.key) == filter.value)
+
 
 
 def _format_breakdown_properties(component_properties: dict[str, str], breakdown: list[PropertySchema] | None) -> str:
@@ -53,11 +51,12 @@ class MetricStructureTableBuilder:
         system: System,
         model_library: Library,
         location_taxonomy_category: str | None,
+        components_by_taxonomy_category: dict[str, list[Component]],
     ) -> None:
         self.system = system
         self.model_library = model_library
         self.location_taxonomy_category = location_taxonomy_category
-
+        self.components_by_taxonomy_category = components_by_taxonomy_category # this is mainly for operating
     def _location_component_matches_taxonomy_category(self, location_component_id: str) -> bool:
         """Return True when the located component's model belongs to the view location taxonomy category."""
         if self.location_taxonomy_category is None:
@@ -74,11 +73,28 @@ class MetricStructureTableBuilder:
                 f"[{metric.id}] Processing term for taxonomy category {term.taxonomy_category!r} "
                 f"and output {term.output_id!r}"
             )
+
+            for component in self.components_by_taxonomy_category[term.taxonomy_category]:
+                if check_component_filter_matches(component, metric.filter):
+                    # # Now in components we have connections 
+                    # # Now we need here to get location from component
+                    # # component.get_location(term.location_ports) and component needs to answer on this in O(1)
+                    pass
+                else:
+                    logging.debug(
+                            f"[{metric.id}] Component {component_id!r} did not match metric filter and was skipped"
+                        )
+                
+                # # Here I have regular component
+
+            # # Component needs to know which taxonomy category it belongs to
             model_ids = self.model_library.get_models_in_taxonomy_category(term.taxonomy_category)
             logging.debug(
                 f"[{metric.id}] Found {len(model_ids)} model(s) in taxonomy category {term.taxonomy_category!r}"
             )
+
             for model_id in model_ids:
+                # # This needs to be transfered to component responsibility
                 qualified_ref = f"{self.model_library.id}.{model_id}"
                 component_ids = self.system.get_instances_by_model(qualified_ref)
                 logging.debug(
@@ -86,10 +102,14 @@ class MetricStructureTableBuilder:
                 )
                 for component_id in component_ids:
                     component = self.system.get_component(component_id)
-                    if _check_filter_matches(component, metric.filter):
+
+                    # # Tgis information needs to be held in component
+                    if check_component_filter_matches(component, metric.filter):
+                        # # This needs to be hered because it's processed bt term
                         raw_location = self.system.get_location(component_id, term.location_ports)
                         raw_locations = [raw_location] if isinstance(raw_location, str) else list(raw_location)
                         for loc_id in raw_locations:
+                            # # This needs to be moved inside component responsibility
                             assert self._location_component_matches_taxonomy_category(loc_id), (
                                 f"Metric {metric.id!r} term {term.output_id!r}: location component {loc_id!r} "
                                 f"must belong to taxonomy category {self.location_taxonomy_category!r}"

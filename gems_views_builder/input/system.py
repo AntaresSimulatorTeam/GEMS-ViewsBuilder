@@ -39,6 +39,7 @@ class System:
             f"Initializing input system with {len(self.components)} component(s) "
             f"and {len(self.connections)} connection(s)"
         )
+        # # This 2 dictionaries also
         self._components_by_model: dict[str, list[str]] = self._models_to_components()
         self._component_port_connections: dict[tuple[str, str], set[str]] = self.build_component_port_connections()
         logging.info(
@@ -50,6 +51,7 @@ class System:
     def components(self) -> list[Component]:
         return list(self._system.components)
 
+    # # This could be removed from here 
     @property
     def connections(self) -> list[Any]:
         return cast(list[Any], getattr(self._system, "connections", None) or [])
@@ -72,6 +74,7 @@ class System:
         logging.info(f"Built model-to-components index with {len(groups)} qualified model reference(s)")
         return groups
 
+    # # This could be removed from here 
     def build_component_port_connections(self) -> dict[tuple[str, str], set[str]]:
         """
         Iterate over connections and for each component and port add other side of connection in dictionary
@@ -123,15 +126,17 @@ class System:
         """Return every peer component id connected to ``(component_id, port_id)``."""
         return tuple(self._component_port_connections.get((component_id, port_id), ()))
 
+    # # This could be removed from here 
     def get_instances_by_model(self, qualified_model_ref: str) -> list[str]:
         """Return component instance IDs for the given qualified model reference."""
         instances = list(self._components_by_model.get(qualified_model_ref, []))
         logging.debug(f"Resolved {len(instances)} instance(s) for model reference {qualified_model_ref!r}")
         return instances
 
+    # # This could be removed from here 
     def get_component(self, component_id: str) -> Component:
         return cast(Component, self._system.get_component(component_id))
-
+    
     def get_location(
         self,
         component_0_id: str,
@@ -166,6 +171,7 @@ class System:
         logging.debug(f"Resolved location for component {component_0_id!r} via port {location_port!r} to {peer!r}")
         return peer
 
+    # # This could be removed from here 
     def get_model_id_from_component(self, component: Component) -> str:
         """Return the local model id (without library prefix) for a resolved component."""
         return str(component.model.id.rsplit(".", 1)[-1])
