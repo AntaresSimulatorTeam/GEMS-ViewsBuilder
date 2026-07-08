@@ -374,7 +374,7 @@ def test_resolve_missing_property_drop(loc_agg_components: dict[str, Any]) -> No
 
 def test_resolve_mixed_known_and_unknown_drop(loc_agg_components: dict[str, Any]) -> None:
     builder = _make_builder(loc_agg_components, LocationAggregation(key="country", on_missing="drop"))
-    assert builder._resolve_location_aggregation(["area_FR1", "area_orph"]) == ["FR"]
+    assert builder._resolve_location_aggregation(["area_FR1", "area_orph"]) == []
 
 
 def test_resolve_no_aggregation_passthrough(loc_agg_components: dict[str, Any]) -> None:

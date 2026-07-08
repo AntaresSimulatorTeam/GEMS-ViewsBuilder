@@ -69,17 +69,19 @@ class MetricStructureTableBuilder:
         excluded (on_missing='drop'). When no location_aggregation is configured
         the list is returned unchanged.
         """
-        cfg = self.location_aggregation
-        if cfg is None:
+        location = self.location_aggregation
+        if location is None:
             return locations
         result: list[str] = []
         for loc in locations:
-            val = self.system.get_component(loc).properties.get(cfg.key)
+            val = self.system.get_component(loc).properties.get(location.key)
             if val is not None:
                 result.append(val)
-            elif cfg.on_missing == "keep":
+            elif location.on_missing == "keep":
                 result.append("<unknown>")
-            # else on_missing == "drop": skip this location
+            elif location.on_missing == "drop":
+                return []
+
         return result
 
     def build(self, metric: Metric) -> MetricStructureTable:
