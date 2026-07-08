@@ -60,7 +60,7 @@ class MetricStructureTableBuilder:
                             "metric_id": metric.id,
                             "component": component.id,
                             "metric_location": _format_metric_location(component_contribution_locations),
-                            "breakdown_properties": component._format_breakdown_properties(metric.breakdown),
+                            "breakdown_properties": component.format_breakdown_properties(metric.breakdown),
                             "output": term.output_id,
                             "weight_output_id": 1,
                         }

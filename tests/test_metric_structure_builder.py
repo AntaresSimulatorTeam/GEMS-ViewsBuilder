@@ -96,20 +96,18 @@ def test_format_breakdown_properties_missing_keys_use_none_literal() -> None:
         PropertySchema(key="technology"),
     ]
     component = make_component({"company": "rhonepower"})
-    assert (
-        component._format_breakdown_properties(breakdown) == "{(country,None),(company,rhonepower),(technology,None)}"
-    )
+    assert component.format_breakdown_properties(breakdown) == "{(country,None),(company,rhonepower),(technology,None)}"
 
 
 def test_format_breakdown_properties_all_keys_present() -> None:
     breakdown = [PropertySchema(key="technology"), PropertySchema(key="company")]
     component = make_component({"technology": "gas", "company": "rhonepower"})
-    assert component._format_breakdown_properties(breakdown) == "{(technology,gas),(company,rhonepower)}"
+    assert component.format_breakdown_properties(breakdown) == "{(technology,gas),(company,rhonepower)}"
 
 
 def test_format_breakdown_properties_empty_breakdown() -> None:
     component = make_component({"company": "x"})
-    assert component._format_breakdown_properties(None) == "{}"
+    assert component.format_breakdown_properties(None) == "{}"
 
 
 def test_format_metric_location_single() -> None:

@@ -60,7 +60,7 @@ class Component:
             )
         return next(iter(peers))
 
-    def _format_breakdown_properties(self, breakdown: list[PropertySchema] | None) -> str:
+    def format_breakdown_properties(self, breakdown: list[PropertySchema] | None) -> str:
         if not breakdown:
             return "{}"
         pairs: list[str] = []
