@@ -3,7 +3,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, cast
 
-from gems.study import Component as GemsComponent  # type: ignore
+from gems.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.catalog import PropertySchema
 
@@ -16,7 +16,7 @@ class Component:
     Connections to other components
     """
 
-    raw_component: GemsComponent
+    raw_component: GemsPyComponent
     taxonomy_category: str | None = None
     # port_id -> set of peer component ids connected on that port
     connections: dict[str, set[str]] = field(default_factory=dict)

@@ -14,9 +14,18 @@ import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import polars as pl
+from gems.study import Component as GemsPyComponent  # type: ignore
+
+from gems_views_builder.input.component import (
+    Component,
+    build_component_port_connections,
+    find_components_taxonomy_categories,
+    group_components_by_taxonomy_category,
+    save_component_port_connections,
+)
 
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
@@ -58,3 +67,28 @@ def configure_logging(verbose: bool = False, log_dir: Path | None = None) -> Non
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
+
+
+def preprocess_system_components(
+    system_connections: list[Any],
+    gemspy_components: list[GemsPyComponent],
+    taxonomy_category_by_model: dict[str, str],
+) -> dict[str, dict[str, Component]]:
+    # # Convert GemsPy components to GVB components
+    # # Prepare it for fill
+    components = [Component(component) for component in gemspy_components]
+
+    # # Fill GVB components with their own taxonomy category, pulled from library
+    find_components_taxonomy_categories(components, taxonomy_category_by_model)
+
+    # # Group components by taxonomy category
+    components_by_taxonomy_category = group_components_by_taxonomy_category(components)
+
+    # # Build component-port connection index
+    # # Shape: component_id -> {port_id -> {peer_component_ids}}, so each component can
+    # # resolve a location by port in O(1).
+    component_port_connections = build_component_port_connections(system_connections)
+    # # Save connections inside GVB components
+    save_component_port_connections(components, component_port_connections)
+
+    return components_by_taxonomy_category

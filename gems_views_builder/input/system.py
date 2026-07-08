@@ -18,10 +18,10 @@ from pathlib import Path
 from typing import Any, cast
 
 from gems.model.library import Library as GemsLibrary  # type: ignore
-from gems.study import Component as GemsComponent  # type: ignore
+from gems.study import Component as GemsPyComponent  # type: ignore
 from gems.study.parsing import parse_yaml_components  # type: ignore
 from gems.study.resolve_components import (  # type: ignore
-    System as GemsSystem,
+    System as GemsPySystem,
 )
 from gems.study.resolve_components import (
     resolve_system,
@@ -33,7 +33,7 @@ class System:
     Compose a Gems System and expose ViewsBuilder-specific helpers.
     """
 
-    def __init__(self, system: GemsSystem) -> None:
+    def __init__(self, system: GemsPySystem) -> None:
         self._system = system
         logging.info(
             f"Initializing input system with {len(self.components)} component(s) "
@@ -41,7 +41,7 @@ class System:
         )
 
     @property
-    def components(self) -> list[GemsComponent]:
+    def components(self) -> list[GemsPyComponent]:
         return list(self._system.components)
 
     @property
@@ -78,4 +78,4 @@ def load_system(input_data_path: Path, resolved_libs: dict[str, GemsLibrary]) ->
         parsed = parse_yaml_components(f)
     resolved = resolve_system(parsed, resolved_libs)
     logging.info(f"System loaded and resolved from {system_path}")
-    return System(cast(GemsSystem, resolved))
+    return System(cast(GemsPySystem, resolved))

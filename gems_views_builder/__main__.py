@@ -14,14 +14,7 @@ import logging
 from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
-from gems_views_builder.common import configure_logging
-from gems_views_builder.input.component import (
-    Component,
-    build_component_port_connections,
-    find_components_taxonomy_categories,
-    group_components_by_taxonomy_category,
-    save_component_port_connections,
-)
+from gems_views_builder.common import configure_logging, preprocess_system_components
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
@@ -35,22 +28,14 @@ def run(input_dir: Path, results_dir: Path) -> None:
 
     # # Validate study layout
     StudyLayoutValidator(input_dir).validate()
+
     # # If everything is ok, load pipeline input
     input_data = Loader(input_dir).load()
 
-    components = [Component(component) for component in input_data.system.components]
-    # # Here we will update the input data e.g. system components
-    # # e.g. we will chanin all needed informations
-    # # In library we have only model of component
-    # # In system e.g. component we have both
-    find_components_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
-
-    # # Group components by taxonomy category
-    components_by_taxonomy_category = group_components_by_taxonomy_category(components)
-
-    # # Build component-port connection index
-    component_port_connections = build_component_port_connections(input_data.system.connections)
-    save_component_port_connections(components, component_port_connections)
+    # # Create GVB components from system raw components
+    components_by_taxonomy_category = preprocess_system_components(
+        input_data.system.connections, input_data.system.components, input_data.library.taxonomy_category_by_model
+    )
 
     # # Only one instance of MetricStructureTableBuilder is needed
     metric_structure_table_builder = MetricStructureTableBuilder(
