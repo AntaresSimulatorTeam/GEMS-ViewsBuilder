@@ -51,28 +51,26 @@ class MetricStructureTableBuilder:
                 f"and output {term.output_id!r}"
             )
 
-            for component_id, component in self.components_by_taxonomy_category[term.taxonomy_category].items():
-                if component.match(metric.filter):
-                    location = component.get_location(location_ports=term.location_ports)
+            for c_id, c in self.components_by_taxonomy_category[term.taxonomy_category].items():
+                if c.match(metric.filter):
+                    location = c.get_location(location_ports=term.location_ports)
                     self._location_components_match_taxonomy_category(location)
                     rows.append(
                         {
                             "metric_id": metric.id,
-                            "component": component.id,
-                            "metric_location": _format_metric_location(location),
-                            "breakdown_properties": component.format_breakdown_properties(metric.breakdown),
+                            "component": c.id,
+                            "metric_location": format_metric_location(location),
+                            "breakdown_properties": c.format_breakdown_properties(metric.breakdown),
                             "output": term.output_id,
                             "weight_output_id": 1,
                         }
                     )
                 else:
-                    logging.debug(
-                        f"[{metric.id}] Component {component_id!r} did not match metric filter and was skipped"
-                    )
+                    logging.debug(f"[{metric.id}] Component {c_id!r} did not match metric filter and was skipped")
         return MetricStructureTable(rows, metric.id)
 
 
-def _format_metric_location(locations: str | tuple[str, ...]) -> str:
+def format_metric_location(locations: str | tuple[str, ...]) -> str:
     if isinstance(locations, str):
         return locations
     return "(" + ",".join(locations) + ")"

@@ -39,7 +39,7 @@ from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.metrics_structure_builder import (
     MetricStructureTableBuilder,
-    _format_metric_location,
+    format_metric_location,
 )
 
 
@@ -111,19 +111,19 @@ def test_format_breakdown_properties_empty_breakdown() -> None:
 
 
 def test_format_metric_location_single() -> None:
-    assert _format_metric_location("busA") == "busA"
+    assert format_metric_location("busA") == "busA"
 
 
 def test_format_metric_location_multiple() -> None:
-    assert _format_metric_location(("busA", "busB")) == "(busA,busB)"
+    assert format_metric_location(("busA", "busB")) == "(busA,busB)"
 
 
 def test_format_metric_location_preserves_duplicates() -> None:
-    assert _format_metric_location(("busA", "busA")) == "(busA,busA)"
+    assert format_metric_location(("busA", "busA")) == "(busA,busA)"
 
 
 def test_format_metric_location_empty() -> None:
-    assert _format_metric_location(()) == "()"
+    assert format_metric_location(()) == "()"
 
 
 def _parse_metric_location(encoded: str) -> list[str]:
@@ -176,7 +176,7 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
         if len(comp_rows) == 0:
             continue
         resolved = components_by_id[comp].get_location("p_balance_port")
-        assert comp_rows["metric_location"].to_list() == [_format_metric_location(resolved)]
+        assert comp_rows["metric_location"].to_list() == [format_metric_location(resolved)]
 
 
 def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
@@ -296,7 +296,7 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
 
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1
-    assert link_rows["metric_location"][0] == _format_metric_location(
+    assert link_rows["metric_location"][0] == format_metric_location(
         components_by_id["link_link_AB"].get_location(("p0_port", "p1_port"))
     )
     assert set(_parse_metric_location(link_rows["metric_location"][0])) == {"busA", "busB"}
