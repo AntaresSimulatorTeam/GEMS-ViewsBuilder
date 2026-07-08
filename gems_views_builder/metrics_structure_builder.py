@@ -52,14 +52,14 @@ class MetricStructureTableBuilder:
             )
 
             for component_id, component in self.components_by_taxonomy_category[term.taxonomy_category].items():
-                if component.check_component_filter_matches(metric.filter):
-                    component_contribution_locations = component.get_location(location_ports=term.location_ports)
-                    self._location_components_match_taxonomy_category(component_contribution_locations)
+                if component.match(metric.filter):
+                    location = component.get_location(location_ports=term.location_ports)
+                    self._location_components_match_taxonomy_category(location)
                     rows.append(
                         {
                             "metric_id": metric.id,
                             "component": component.id,
-                            "metric_location": _format_metric_location(component_contribution_locations),
+                            "metric_location": _format_metric_location(location),
                             "breakdown_properties": component.format_breakdown_properties(metric.breakdown),
                             "output": term.output_id,
                             "weight_output_id": 1,

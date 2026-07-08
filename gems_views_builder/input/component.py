@@ -72,7 +72,7 @@ class Component:
                 pairs.append(f"({key},{self.properties[key]})")
         return "{" + ",".join(pairs) + "}"
 
-    def check_component_filter_matches(self, filter: PropertySchema | None) -> bool:
+    def match(self, filter: PropertySchema | None) -> bool:
         if filter is None:
             return True
         return bool(self.properties.get(filter.key) == filter.value)

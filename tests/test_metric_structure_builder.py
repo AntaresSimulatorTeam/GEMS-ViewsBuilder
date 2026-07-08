@@ -135,7 +135,7 @@ def _parse_metric_location(encoded: str) -> list[str]:
 
 def _component_matches_filters(metric_filter: PropertySchema | None, component: Component) -> bool:
     """Match the filter clause against component properties."""
-    return component.check_component_filter_matches(metric_filter)
+    return component.match(metric_filter)
 
 
 # ---------------------------------------------------------------------------
