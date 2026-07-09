@@ -46,6 +46,10 @@ class CatalogId(ViewBuilderBasedModel):
     id: str
 
 
+class TaxonomyId(ViewBuilderBasedModel):
+    id: str
+
+
 class MetricId(ViewBuilderBasedModel):
     id: str
 
@@ -55,6 +59,7 @@ class RawViewConfig(ViewBuilderBasedModel):
     scope: list[Scope]
     aggregation: list[Aggregation]
     catalog: list[CatalogId]
+    taxonomy: list[TaxonomyId]
     metrics: list[MetricId]
 
 
@@ -63,6 +68,7 @@ class ViewConfig:
     id: str
     input_data_path: Path
     calendar_id: str
+    taxonomy_id: str
     location_taxonomy_category: str | None = None
     catalog_ids: set[str] = field(default_factory=set)
     time_aggregation: TimeAggregation | None = None
@@ -111,6 +117,18 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         raise ValueError(
             f"view_config.yml '{raw_view_config.id}': no calendar configured in scope. One calendar must be configured in scope"
         )
+
+    if len(raw_view_config.taxonomy) == 0:
+        raise ValueError(
+            f"view_config.yml '{raw_view_config.id}': no taxonomy id configured in taxonomy. "
+            f"One taxonomy id must be configured in taxonomy"
+        )
+    if len(raw_view_config.taxonomy) > 1:
+        raise ValueError(
+            f"view_config.yml '{raw_view_config.id}': multiple taxonomy ids found in taxonomy. "
+            f"Only one taxonomy id must be configured in taxonomy"
+        )
+
     view_config = ViewConfig(
         id=raw_view_config.id,
         input_data_path=input_data_path,
@@ -119,6 +137,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         catalog_ids={c.id for c in raw_view_config.catalog},
         time_aggregation=raw_view_config.aggregation[0].time if raw_view_config.aggregation else None,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
+        taxonomy_id=raw_view_config.taxonomy[0].id,
     )
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "

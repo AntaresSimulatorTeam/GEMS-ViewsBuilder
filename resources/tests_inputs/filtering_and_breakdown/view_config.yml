@@ -14,6 +14,9 @@ view:
   catalog: #Pointer to "catalogs" = "Business Metrics definitions files".
       - id: catalog
 
+  taxonomy:
+    - id: my_taxonomy
+
   metrics:  #reference to the selected metric among the catalog
       - id: catalog.PRODUCTION
       - id: catalog.LOAD
