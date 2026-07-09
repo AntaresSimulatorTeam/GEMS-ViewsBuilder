@@ -23,19 +23,17 @@ class MetricStructureTableBuilder:
     def __init__(
         self,
         location_taxonomy_category: str | None,
-        components_by_taxonomy_category: dict[
-            str, list[Component]
-        ],  # taxonomy category -> components
+        components_by_taxono: dict[str, list[Component]],  # taxonomy category -> components
     ) -> None:
         self.location_taxonomy_category = location_taxonomy_category
-        self.components_by_taxonomy_category = components_by_taxonomy_category  # this is mainly for operating
+        self.components_by_taxono = components_by_taxono  # this is mainly for operating
 
     def _location_components_match_taxonomy_category(self, location_components: str | tuple[str, ...]) -> None:
         if self.location_taxonomy_category is None:
             return
 
         location_component_ids = (location_components,) if isinstance(location_components, str) else location_components
-        component_ids = {c.id for c in self.components_by_taxonomy_category[self.location_taxonomy_category]}
+        component_ids = {c.id for c in self.components_by_taxono[self.location_taxonomy_category]}
         for location_component_id in location_component_ids:
             if location_component_id not in component_ids:
                 raise ValueError(
@@ -51,7 +49,7 @@ class MetricStructureTableBuilder:
                 f"and output {term.output_id!r}"
             )
 
-            for c in self.components_by_taxonomy_category[term.taxonomy_category]:
+            for c in self.components_by_taxono[term.taxonomy_category]:
                 if c.match(metric.filter):
                     location = c.get_location(location_ports=term.location_ports)
                     self._location_components_match_taxonomy_category(location)

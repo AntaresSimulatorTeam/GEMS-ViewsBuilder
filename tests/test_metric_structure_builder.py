@@ -310,9 +310,7 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
     system = load_system(test_3, resolve_libraries(test_3 / "library.yml"))
     components_by_taxonomy_category = build_components_by_taxonomy_category(system, library)
     components_by_id = {
-        component.id: component
-        for components in components_by_taxonomy_category.values()
-        for component in components
+        component.id: component for components in components_by_taxonomy_category.values() for component in components
     }
 
     # Default test_3 wiring uses p0_port -> busA and p1_port -> busB; force both ports to busA here.
