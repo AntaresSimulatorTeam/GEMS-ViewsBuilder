@@ -23,12 +23,12 @@ from gems_views_builder.views_builder import ViewBuilder
 
 AGGREGATION_BLOCK = "  aggregation:\n    - time: hour\n"
 
-# test_3/calendar_file.csv spans 2025-01-01 01:00 .. 2025-01-02 00:00 (24 granular hours).
-HOURLY_DATES = [datetime(2025, 1, 1, h) for h in range(1, 24)] + [datetime(2025, 1, 2)]
+# test_3/calendar_file.csv spans 2025-01-01 00:00 .. 2025-01-01 23:00 (24 granular hours).
+HOURLY_DATES = [datetime(2025, 1, 1, h) for h in range(24)]
 
 EXPECTED_DATES_BY_AGGREGATION = {
     TimeAggregation.HOUR: HOURLY_DATES,
-    TimeAggregation.DAY: [datetime(2025, 1, 1), datetime(2025, 1, 2)],
+    TimeAggregation.DAY: [datetime(2025, 1, 1)],
     TimeAggregation.WEEK: [datetime(2024, 12, 30)],
     TimeAggregation.MONTH: [datetime(2025, 1, 1)],
     TimeAggregation.YEAR: [datetime(2025, 1, 1)],
