@@ -33,9 +33,17 @@ class TimeAggregation(Enum):
     YEAR = "year"
 
 
+class Location(ViewBuilderBasedModel):
+    taxonomy_category: str
+
+
+class Calendar(ViewBuilderBasedModel):
+    id: str
+
+
 class Scope(ViewBuilderBasedModel):
-    taxonomy_category: str | None = Field(None, alias="taxonomy-category")
-    calendar: str | None = None
+    location: Location | None = None
+    calendar: Calendar | None = None
 
 
 class Aggregation(ViewBuilderBasedModel):
@@ -56,10 +64,10 @@ class MetricId(ViewBuilderBasedModel):
 
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
-    scope: list[Scope]
+    scope: list[Scope] = Field(min_length=2, max_length=2)
     aggregation: list[Aggregation]
-    catalog: list[CatalogId]
-    taxonomy: list[TaxonomyId]
+    catalog: list[CatalogId] = Field(min_length=1, max_length=1)
+    taxonomy: list[TaxonomyId] = Field(min_length=1, max_length=1)
     metrics: list[MetricId]
 
 
@@ -69,7 +77,7 @@ class ViewConfig:
     input_data_path: Path
     calendar_id: str
     taxonomy_id: str
-    location_taxonomy_category: str | None = None
+    location_taxonomy_category: str
     catalog_ids: set[str] = field(default_factory=set)
     time_aggregation: TimeAggregation | None = None
     metric_ids: list[str] = field(default_factory=list)
@@ -99,39 +107,20 @@ class ViewConfig:
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
+    from gems_views_builder.validation.raw_view_config_validator import RawViewConfigValidator
+
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
-    input_data_path = config_file_path.parent
+    RawViewConfigValidator(raw_view_config).validate()
+
     location_taxonomy_category = next(
-        (item.taxonomy_category for item in raw_view_config.scope if item.taxonomy_category),
-        None,
+        item.location.taxonomy_category for item in raw_view_config.scope if item.location is not None
     )
-    if location_taxonomy_category is None:
-        raise ValueError(
-            f"view_config.yml '{raw_view_config.id}': no 'taxonomy-category' found in scope. "
-            f"At least one scope entry must define a taxonomy-category"
-        )
-
-    calendar_id = next((item.calendar for item in raw_view_config.scope if item.calendar), None)
-    if calendar_id is None:
-        raise ValueError(
-            f"view_config.yml '{raw_view_config.id}': no calendar configured in scope. One calendar must be configured in scope"
-        )
-
-    if len(raw_view_config.taxonomy) == 0:
-        raise ValueError(
-            f"view_config.yml '{raw_view_config.id}': no taxonomy id configured in taxonomy. "
-            f"One taxonomy id must be configured in taxonomy"
-        )
-    if len(raw_view_config.taxonomy) > 1:
-        raise ValueError(
-            f"view_config.yml '{raw_view_config.id}': multiple taxonomy ids found in taxonomy. "
-            f"Only one taxonomy id must be configured in taxonomy"
-        )
+    calendar_id = next(item.calendar.id for item in raw_view_config.scope if item.calendar is not None)
 
     view_config = ViewConfig(
         id=raw_view_config.id,
-        input_data_path=input_data_path,
+        input_data_path=config_file_path.parent,
         calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalog},

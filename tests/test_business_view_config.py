@@ -19,8 +19,13 @@ from gems_views_builder import TimeAggregation, ViewConfig, load_view_config
 
 
 def test_loads(test_dataset_dir: Path) -> None:
+    # Arrange
     config_path = test_dataset_dir / "view_config.yml"
+
+    # Act
     config = load_view_config(config_path)
+
+    # Assert
     assert isinstance(config, ViewConfig)
     assert isinstance(config.id, str)
     assert isinstance(config.location_taxonomy_category, str)
@@ -31,15 +36,25 @@ def test_loads(test_dataset_dir: Path) -> None:
 
 
 def test_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
+    # Arrange
     config_path = test_dataset_dir / "view_config.yml"
+
+    # Act
     config = load_view_config(config_path)
+
+    # Assert
     for catalog_id in config.catalog_ids:
         assert isinstance(catalog_id, str)
 
 
 def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
+    # Arrange
     config_path = test_dataset_dir / "view_config.yml"
+
+    # Act
     config = load_view_config(config_path)
+
+    # Assert
     for metric_id in config.metric_ids:
         assert isinstance(metric_id, str)
         assert "." in metric_id
@@ -49,7 +64,10 @@ def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
 
 
 def test_known_values(test_dataset_dir: Path) -> None:
+    # Arrange / Act
     config = load_view_config(test_dataset_dir / "view_config.yml")
+
+    # Assert
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.taxonomy_id == "my_taxonomy"
@@ -65,19 +83,25 @@ def test_known_values(test_dataset_dir: Path) -> None:
 
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
+    # Arrange / Act
     config = load_view_config(test_dataset_dir / "view_config.yml")
+
+    # Assert
     assert config.time_aggregation == TimeAggregation.HOUR
 
 
 def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
+    # Arrange
     invalid_config = tmp_path / "view_config.yml"
     invalid_config.write_text(
         """
 view:
   id: invalid_metric_format
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    - location:
+        taxonomy-category: balance
+    - calendar:
+        id: calendar_file
   aggregation:
     - time: hour
   catalog:
@@ -88,22 +112,25 @@ view:
     - id: invalid_metric_id
 """.strip()
     )
-
     config = load_view_config(invalid_config)
 
+    # Act / Assert
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
         config.fetch_metrics({})
 
 
 def test_raises_on_missing_taxonomy_section(tmp_path: Path) -> None:
+    # Arrange
     config_path = tmp_path / "view_config.yml"
     config_path.write_text(
         """
 view:
   id: missing_taxonomy
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    - location:
+        taxonomy-category: balance
+    - calendar:
+        id: calendar_file
   aggregation:
     - time: hour
   catalog:
@@ -113,19 +140,23 @@ view:
 """.strip()
     )
 
+    # Act / Assert
     with pytest.raises(ValidationError):
         load_view_config(config_path)
 
 
 def test_raises_on_empty_taxonomy_list(tmp_path: Path) -> None:
+    # Arrange
     config_path = tmp_path / "view_config.yml"
     config_path.write_text(
         """
 view:
   id: empty_taxonomy
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    - location:
+        taxonomy-category: balance
+    - calendar:
+        id: calendar_file
   aggregation:
     - time: hour
   catalog:
@@ -136,19 +167,23 @@ view:
 """.strip()
     )
 
-    with pytest.raises(ValueError, match="no taxonomy id configured"):
+    # Act / Assert
+    with pytest.raises(ValidationError):
         load_view_config(config_path)
 
 
 def test_raises_on_multiple_taxonomy_ids(tmp_path: Path) -> None:
+    # Arrange
     config_path = tmp_path / "view_config.yml"
     config_path.write_text(
         """
 view:
   id: multiple_taxonomies
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    - location:
+        taxonomy-category: balance
+    - calendar:
+        id: calendar_file
   aggregation:
     - time: hour
   catalog:
@@ -161,5 +196,6 @@ view:
 """.strip()
     )
 
-    with pytest.raises(ValueError, match="multiple taxonomy ids"):
+    # Act / Assert
+    with pytest.raises(ValidationError):
         load_view_config(config_path)

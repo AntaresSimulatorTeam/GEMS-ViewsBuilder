@@ -4,9 +4,10 @@ view:
 
   scope:
     - location:
-      taxonomy-category: balance # category of the taxonomy, the components of which serves as locational objects. Main case is 'area'.
+        taxonomy-category: balance # category of the taxonomy, the components of which serves as locational objects. Main case is 'area'.
 
-    - calendar: calendar_file # change this in for test purposes
+    - calendar:
+        id: calendar_file # change this in for test purposes
 
   aggregation:
     - time: hour
