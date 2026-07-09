@@ -37,17 +37,14 @@ class Component:
     def set_taxonomy_category(self, taxonomy_category: str) -> None:
         self.taxonomy_category = taxonomy_category
 
-    def _get_location(self, location_ports: str | tuple[str, ...] | None) -> str | tuple[str, ...]:
-        """Resolve the component's location for the given location port(s).
+    def _get_locations(self, location_ports: tuple[str, ...] | None) -> tuple[str, ...]:
+        """Resolve the component's location(s) for the given location port(s).
 
         - None: the component is its own location.
-        - single port: the unique peer connected on that port.
-        - tuple of ports: one unique peer per port, in order.
+        - one peer is resolved per port, in order.
         """
         if location_ports is None:
-            return self.id
-        if isinstance(location_ports, str):
-            return self._resolve_unique_location(location_ports)
+            return (self.id,)
         return tuple(self._resolve_unique_location(port) for port in location_ports)
 
     def _resolve_unique_location(self, location_port: str) -> str:

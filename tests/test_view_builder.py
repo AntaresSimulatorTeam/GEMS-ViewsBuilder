@@ -43,7 +43,7 @@ def view_result(test_3_study: Path) -> pl.DataFrame:
 
 
 def metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
-    encoded = format_metric_location(location)
+    encoded = format_metric_location((location,))
     return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == encoded)).sort("view_date")
 
 

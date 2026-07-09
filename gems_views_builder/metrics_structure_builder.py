@@ -28,14 +28,13 @@ class MetricStructureTableBuilder:
         self.location_taxonomy_category = location_taxonomy_category
         self.components_by_taxono = components_by_taxono  # this is mainly for operating
 
-    def _location_components_match_taxonomy_category(self, location_components: str | tuple[str, ...]) -> None:
+    def _location_components_match_taxonomy_category(self, location_components: tuple[str, ...]) -> None:
         # # This will break computation so we need to perform it before running pipeline
         if self.location_taxonomy_category is None:
             return
 
-        location_component_ids = (location_components,) if isinstance(location_components, str) else location_components
         component_ids = {c.id for c in self.components_by_taxono[self.location_taxonomy_category]}
-        for location_component_id in location_component_ids:
+        for location_component_id in location_components:
             if location_component_id not in component_ids:
                 raise ValueError(
                     f"Location component {location_component_id!r} must belong to taxonomy category {self.location_taxonomy_category!r}"
@@ -52,13 +51,13 @@ class MetricStructureTableBuilder:
 
             for c in self.components_by_taxono[term.taxonomy_category]:
                 if c.match(metric.filter):
-                    location = c._get_location(location_ports=term.location_ports)
-                    self._location_components_match_taxonomy_category(location)
+                    locations = c._get_locations(location_ports=term.location_ports)
+                    self._location_components_match_taxonomy_category(locations)
                     rows.append(
                         {
                             "metric_id": metric.id,
                             "component": c.id,
-                            "metric_location": format_metric_location(location),
+                            "metric_location": format_metric_location(locations),
                             "breakdown_properties": c.format_breakdown_properties(metric.breakdown),
                             "output": term.output_id,
                             "weight_output_id": 1,
@@ -69,7 +68,7 @@ class MetricStructureTableBuilder:
         return MetricStructureTable(rows, metric.id)
 
 
-def format_metric_location(locations: str | tuple[str, ...]) -> str:
-    if isinstance(locations, str):
-        return locations # This will also changed when we have simplified get location function
+def format_metric_location(locations: tuple[str, ...]) -> str:
+    if len(locations) == 1:
+        return locations[0]
     return "(" + ",".join(locations) + ")"

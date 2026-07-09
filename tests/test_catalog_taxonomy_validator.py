@@ -54,6 +54,6 @@ def test_validate_catalog_against_taxonomy_raises_on_unknown_metric_category(tes
 def test_validate_catalog_against_taxonomy_raises_on_unknown_location_port(test_dataset_dir: Path) -> None:
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
-    next(iter(catalog.metrics.values())).terms[0].location_ports = "unknown_port"
+    next(iter(catalog.metrics.values())).terms[0].location_ports = ("unknown_port",)
     with pytest.raises(ValueError, match="uses location-port"):
         validate_catalog_against_taxonomy(catalog, taxonomy)

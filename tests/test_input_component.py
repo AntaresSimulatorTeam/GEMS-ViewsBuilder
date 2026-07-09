@@ -49,7 +49,7 @@ def test_locating_function_multiple_peers_raises(test_dataset_dir: Path) -> None
     component = ambiguous[0]
     port = next(port for port, peers in component.connections.items() if len(peers) > 1)
     with pytest.raises(ValueError):
-        component._get_location(port)
+        component._get_locations((port,))
 
 
 def test_locating_function_zero_peers_raises(test_dataset_dir: Path) -> None:
@@ -59,7 +59,7 @@ def test_locating_function_zero_peers_raises(test_dataset_dir: Path) -> None:
     component = Component(system.components[0])
     # A port that is wired to nothing has zero peers, which is not a unique location.
     with pytest.raises(ValueError):
-        component._get_location("this_port_is_not_connected_to_anything")
+        component._get_locations(("this_port_is_not_connected_to_anything",))
 
 
 def test_get_location_zero_peers_raises_in_memory() -> None:
@@ -76,12 +76,12 @@ def test_get_location_zero_peers_raises_in_memory() -> None:
         ValueError,
         match=r"Expected exactly one peer component for component 'area' on port 'spillage_port', but found 0",
     ):
-        area._get_location("spillage_port")
+        area._get_locations(("spillage_port",))
 
 
 def test_get_location_none_returns_own_id() -> None:
     component = Component(make_raw_component("area", "basic_lib.area"))
-    assert component._get_location(None) == "area"
+    assert component._get_locations(None) == ("area",)
 
 
 def test_find_components_taxonomy_categories() -> None:
