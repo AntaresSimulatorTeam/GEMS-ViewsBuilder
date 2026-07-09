@@ -9,16 +9,6 @@
 # SPDX-License-Identifier: MPL-2.0
 #
 # This file is part of the Antares project.
-
-"""End-to-end coverage for the `aggregation[].time` field of view_config.yml.
-
-Unlike tests/test_time_aggregator.py (which exercises TimeAggregator directly on a
-synthetic MetricView), this drives the full YAML-driven pipeline
-(Loader -> ViewBuilder -> accumulate_on_disk) to confirm that the value parsed from the
-YAML file actually truncates `view_date` to the expected calendar window, for every
-TimeAggregation enum member plus the "not configured" case.
-"""
-
 import shutil
 from datetime import datetime
 from pathlib import Path
