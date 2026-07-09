@@ -29,6 +29,7 @@ class MetricStructureTableBuilder:
         self.components_by_taxono = components_by_taxono  # this is mainly for operating
 
     def _location_components_match_taxonomy_category(self, location_components: str | tuple[str, ...]) -> None:
+        # # This will break computation so we need to perform it before running pipeline
         if self.location_taxonomy_category is None:
             return
 
@@ -70,5 +71,5 @@ class MetricStructureTableBuilder:
 
 def format_metric_location(locations: str | tuple[str, ...]) -> str:
     if isinstance(locations, str):
-        return locations
+        return locations # This will also changed when we have simplified get location function
     return "(" + ",".join(locations) + ")"
