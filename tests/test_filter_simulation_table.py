@@ -112,10 +112,10 @@ def test_filter_simulation_table_writes_parquet(
 
 
 def test_filter_simulation_table_invalid_file_format(test_dataset_dir: Path) -> None:
-    """When a non-parquet file is provided, an error is raised."""
-    simulation_table_file = test_dataset_dir / "simulation_table--invalid.csv"
+    """When a non-parquet, non-csv file is provided, an error is raised."""
+    simulation_table_file = test_dataset_dir / "simulation_table--invalid.txt"
     with pytest.raises(
         ValueError,
-        match=r"Simulation table file '.*simulation_table--invalid\.csv' is not a parquet file",
+        match=r"Simulation table file '.*simulation_table--invalid\.txt' is not a parquet or csv file",
     ):
         load_simulation_table(simulation_table_file)

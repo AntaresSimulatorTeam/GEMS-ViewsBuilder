@@ -17,127 +17,108 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.loader import Loader
+from gems_views_builder.__main__ import run
 from gems_views_builder.metrics_structure_builder import _format_metric_location
-from gems_views_builder.view import accumulate_on_disk
-from gems_views_builder.views_builder import ViewBuilder
+from gems_views_builder.view import CsvViewSinker, ParquetViewSinker
 
 
-def _build_view_builder(dataset_dir: Path) -> ViewBuilder:
-    return ViewBuilder(Loader(dataset_dir).load())
+def copy_study_in_tmp(src: Path, tmp_path: Path) -> Path:
+    dst = tmp_path / src.name
+    shutil.copytree(src, dst)
+    return dst
 
 
 @pytest.fixture()
-def view_result(test_files_root: Path, tmp_path: Path) -> pl.DataFrame:
-    """
-    Run ViewBuilder.build() on a fresh copy of test_3 and return the result DataFrame.
-    A copy is used so ViewBuilder's intermediate writes do not pollute the shared
-    session-scoped test_files_root directory.
-    """
-    src = test_files_root / "test_3"
-    dst = tmp_path / "test_3"
-    results_dir = tmp_path / "results"
-    results_dir.mkdir()
-    shutil.copytree(src, dst)
-    metric_views = _build_view_builder(dst).build()
-    accumulate_on_disk(metric_views, results_dir)
-    result_files = list(results_dir.glob("view*.parquet"))
+def test_3_study(test_files_root: Path, tmp_path: Path) -> Path:
+    return copy_study_in_tmp(test_files_root / "test_3", tmp_path)
+
+
+@pytest.fixture()
+def view_result(test_3_study: Path) -> pl.DataFrame:
+    sinker = ParquetViewSinker(test_3_study)
+    run(test_3_study, sinker)
+    result_files = list(test_3_study.glob("view*.parquet"))
     assert result_files, "No result parquet file written"
     return pl.read_parquet(result_files[0])
 
 
-def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
+def metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
     encoded = _format_metric_location(location)
     return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == encoded)).sort("view_date")
 
 
-# ---------------------------------------------------------------------------
-# PROD
-# ---------------------------------------------------------------------------
-
-
-def test_prod_busa_row_count(view_result: pl.DataFrame) -> None:
-    rows = _metric_at(view_result, "PROD", "busA")
-    # one row per timestep t in {1, ..., 24}
+def test_build_view__prod_at_bus_a__returns_24_hourly_rows(view_result: pl.DataFrame) -> None:
+    rows = metric_at(view_result, "PROD", "busA")
     assert len(rows) == 24
 
 
-def test_prod_busa_values(view_result: pl.DataFrame) -> None:
-    # generator_A1.p(t) + generator_A2.p(t) = t + t = 2t
-    rows = _metric_at(view_result, "PROD", "busA")
+def test_build_view__prod_at_bus_a__sums_generators_as_2t(view_result: pl.DataFrame) -> None:
+    rows = metric_at(view_result, "PROD", "busA")
     expected = [2 * t for t in range(1, 25)]
     assert rows["metric_value"].to_list() == expected
 
 
-def test_prod_busb_row_count(view_result: pl.DataFrame) -> None:
-    rows = _metric_at(view_result, "PROD", "busB")
+def test_build_view__prod_at_bus_b__returns_24_hourly_rows(view_result: pl.DataFrame) -> None:
+    rows = metric_at(view_result, "PROD", "busB")
     assert len(rows) == 24
 
 
-def test_prod_busb_values(view_result: pl.DataFrame) -> None:
-    # generator_B1.p(t) = 100 - 2t
-    rows = _metric_at(view_result, "PROD", "busB")
+def test_build_view__prod_at_bus_b__matches_generator_b1(view_result: pl.DataFrame) -> None:
+    rows = metric_at(view_result, "PROD", "busB")
     expected = [100 - 2 * t for t in range(1, 25)]
     assert rows["metric_value"].to_list() == expected
 
 
-# ---------------------------------------------------------------------------
-# LOAD
-# ---------------------------------------------------------------------------
-
-
-def test_load_busa_value(view_result: pl.DataFrame) -> None:
-    # load_AL.active_load = 100 (not time-dependent).
-    rows = _metric_at(view_result, "LOAD", "busA")
+def test_build_view__load_at_bus_a__returns_constant_100(view_result: pl.DataFrame) -> None:
+    rows = metric_at(view_result, "LOAD", "busA")
     assert len(rows) == 1
     assert rows["metric_value"][0] == 100
 
 
-def test_load_busb_absent(view_result: pl.DataFrame) -> None:
-    # No consumption component connected to busB
-    rows = _metric_at(view_result, "LOAD", "busB")
+def test_build_view__load_at_bus_b__has_no_rows(view_result: pl.DataFrame) -> None:
+    rows = metric_at(view_result, "LOAD", "busB")
     assert len(rows) == 0
 
 
-# ---------------------------------------------------------------------------
-# BALANCE
-# ---------------------------------------------------------------------------
-
-
-def test_balance_busa_values(view_result: pl.DataFrame) -> None:
-    # link_link_AB.p0_port.flow(t) = 100 - 2t (outflow from busA)
-    rows = _metric_at(view_result, "BALANCE", "busA")
+def test_build_view__balance_at_bus_a__matches_link_outflow(view_result: pl.DataFrame) -> None:
+    rows = metric_at(view_result, "BALANCE", "busA")
     assert len(rows) == 24
     expected = [100 - 2 * t for t in range(1, 25)]
     assert rows["metric_value"].to_list() == expected
 
 
-def test_balance_busb_values(view_result: pl.DataFrame) -> None:
-    # link_link_AB.p1_port.flow(t) = -(100 - 2t) (inflow into busB)
-    rows = _metric_at(view_result, "BALANCE", "busB")
+def test_build_view__balance_at_bus_b__matches_link_inflow(view_result: pl.DataFrame) -> None:
+    rows = metric_at(view_result, "BALANCE", "busB")
     assert len(rows) == 24
     expected = [-(100 - 2 * t) for t in range(1, 25)]
     assert rows["metric_value"].to_list() == expected
 
 
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
+def test_build_view_from_parquet_simu_table__print_it_in_csv__check_view_format(test_3_study: Path) -> None:
+    # Arrange
+    sinker = CsvViewSinker(test_3_study)
+
+    # Act
+    run(test_3_study, sinker)
+
+    # Assert
+    result_files = list(test_3_study.glob("view*.csv"))
+    assert result_files, "No result csv file written"
+    assert not list(test_3_study.glob("view*.parquet")), "Unexpected parquet file written"
+    assert pl.read_csv(result_files[0]).height > 0
 
 
-def test_log_messages_emitted_to_stdout(
-    test_files_root: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
+def test_build_view__run_pipeline__emits_expected_log_messages(
+    test_3_study: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    src = test_files_root / "test_3"
-    dst = tmp_path / "test_3"
-    shutil.copytree(src, dst)
+    # Arrange
+    sinker = ParquetViewSinker(test_3_study)
 
-    results_dir = tmp_path / "results"
-    results_dir.mkdir()
+    # Act
     with caplog.at_level(logging.INFO):
-        metric_views = _build_view_builder(dst).build()
-        accumulate_on_disk(metric_views, results_dir)
+        run(test_3_study, sinker)
 
+    # Assert
     repo_root = Path(__file__).resolve().parents[1]
     log_directory = repo_root / "logs"
     if not log_directory.exists() or not any(log_directory.glob("gems-views-builder-pipeline-run-*.log")):
@@ -151,13 +132,14 @@ def test_log_messages_emitted_to_stdout(
     assert any("Results merged into" in m for m in messages), "Missing expected log: Results merged into"
 
 
-def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> None:
-    src = test_files_root / "test_3"
-    dst = tmp_path / "test_3"
-    shutil.copytree(src, dst)
+def test_build_view__run_pipeline__creates_log_file(test_3_study: Path) -> None:
+    # Arrange
+    sinker = ParquetViewSinker(test_3_study)
 
-    _build_view_builder(dst).build()
+    # Act
+    run(test_3_study, sinker)
 
+    # Assert
     repo_root = Path(__file__).resolve().parents[1]
     logs_dir = repo_root / "logs"
     assert logs_dir.is_dir(), "logs/ directory was not created"
