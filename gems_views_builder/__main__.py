@@ -15,8 +15,10 @@ from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import configure_logging
+from gems_views_builder.input.catalog import load_catalogs
 from gems_views_builder.loader import Loader
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
+from gems_views_builder.validation.catalog_view_config_validator import validate_catalogs_against_view_config
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
 from gems_views_builder.validation.view_config_taxonomy import ViewConfigTaxonomyValidator
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
@@ -32,8 +34,10 @@ def run(input_dir: Path, view_sinker: ViewSinker) -> None:
 
     ViewConfigTaxonomyValidator(input_data.taxonomy, input_data.view_config).validate()
 
-    # # Validate catalogs against taxonomy
-    validate_catalogs_against_taxonomy(input_dir, input_data.view_config.catalog_ids, input_data.taxonomy)
+    # # Validate catalogs against taxonomy and view config
+    catalogs = load_catalogs(input_dir, input_data.view_config.catalog_ids)
+    validate_catalogs_against_taxonomy(catalogs, input_data.taxonomy)
+    validate_catalogs_against_view_config(catalogs, input_data.view_config)
 
     metric_views = ViewBuilder(input_data).build()
     accumulate_on_disk(metric_views, view_sinker)
