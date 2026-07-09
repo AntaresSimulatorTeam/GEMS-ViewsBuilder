@@ -51,7 +51,7 @@ class MetricStructureTableBuilder:
 
             for c in self.components_by_taxono[term.taxonomy_category]:
                 if c.match(metric.filter):
-                    location = c.get_location(location_ports=term.location_ports)
+                    location = c._get_location(location_ports=term.location_ports)
                     self._location_components_match_taxonomy_category(location)
                     rows.append(
                         {

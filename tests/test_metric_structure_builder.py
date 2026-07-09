@@ -175,7 +175,7 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
         comp_rows = df.filter(pl.col("component") == comp)
         if len(comp_rows) == 0:
             continue
-        resolved = components_by_id[comp].get_location("p_balance_port")
+        resolved = components_by_id[comp]._get_location("p_balance_port")
         assert comp_rows["metric_location"].to_list() == [format_metric_location(resolved)]
 
 
@@ -268,7 +268,7 @@ def test_single_port_multiple_peers_raises(test_3_components: dict[str, Any]) ->
 def test_get_location_tuple_of_ports_returns_peer_per_port(test_3_components: dict[str, Any]) -> None:
     """Each port in a location_ports tuple resolves to its connected peer(s)."""
     components_by_id = test_3_components["components_by_id"]
-    locations = components_by_id["link_link_AB"].get_location(("p0_port", "p1_port"))
+    locations = components_by_id["link_link_AB"]._get_location(("p0_port", "p1_port"))
     assert isinstance(locations, tuple)
     assert locations == ("busA", "busB")
 
@@ -297,7 +297,7 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1
     assert link_rows["metric_location"][0] == format_metric_location(
-        components_by_id["link_link_AB"].get_location(("p0_port", "p1_port"))
+        components_by_id["link_link_AB"]._get_location(("p0_port", "p1_port"))
     )
     assert set(_parse_metric_location(link_rows["metric_location"][0])) == {"busA", "busB"}
     assert set(link_rows["output"].to_list()) == {"p0_port.flow"}
@@ -317,7 +317,7 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
     components_by_id["link_link_AB"].connections["p0_port"] = {"busA"}
     components_by_id["link_link_AB"].connections["p1_port"] = {"busA"}
 
-    assert components_by_id["link_link_AB"].get_location(("p0_port", "p1_port")) == ("busA", "busA")
+    assert components_by_id["link_link_AB"]._get_location(("p0_port", "p1_port")) == ("busA", "busA")
 
     metric = Metric(
         id="DUP_PEER_VIA_TWO_PORTS",

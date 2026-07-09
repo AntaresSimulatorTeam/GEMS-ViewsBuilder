@@ -37,7 +37,7 @@ class Component:
     def set_taxonomy_category(self, taxonomy_category: str) -> None:
         self.taxonomy_category = taxonomy_category
 
-    def get_location(self, location_ports: str | tuple[str, ...] | None) -> str | tuple[str, ...]:
+    def _get_location(self, location_ports: str | tuple[str, ...] | None) -> str | tuple[str, ...]:
         """Resolve the component's location for the given location port(s).
 
         - None: the component is its own location.
