@@ -13,7 +13,6 @@
 """System wrapper with helper methods for component lookup."""
 
 import logging
-from collections import defaultdict
 from pathlib import Path
 from typing import Any, cast
 
@@ -47,28 +46,6 @@ class System:
     @property
     def connections(self) -> list[Any]:
         return cast(list[Any], getattr(self._system, "connections", None) or [])
-
-    # # This could be removed also
-    # # I would like to keep this function as reminder
-    # # When time comes we will be able to have multiple libraries as input so we need to keep distinction
-    # # between components which will have same id but they will be in different libraries with different definitions
-    def _models_to_components(self) -> dict[str, list[str]]:
-        """
-        Map each component ``model`` reference to the list of component ids using it.
-        - Parsed input system: a string like ``<library_id>.<model_id>``.
-        Qualified names keep components apart across libraries when the same role (e.g. a generator) behaves differently per library.
-        |--> Good practice for future
-        """
-        logging.info("Building model-to-components index")
-        groups: defaultdict[str, list[str]] = defaultdict(list)
-        for component in self.components:
-            model_ref = getattr(component, "model", None)
-            key = model_ref if isinstance(model_ref, str) else getattr(model_ref, "id", None)
-            if not isinstance(key, str) or "." not in key:
-                continue
-            groups[key].append(component.id)
-        logging.info(f"Built model-to-components index with {len(groups)} qualified model reference(s)")
-        return groups
 
 
 def load_system(input_data_path: Path, resolved_libs: dict[str, GemsLibrary]) -> System:
