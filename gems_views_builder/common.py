@@ -73,7 +73,7 @@ def preprocess_system_components(
     system_connections: list[Any],
     gemspy_components: list[GemsPyComponent],
     taxonomy_category_by_model: dict[str, str],
-) -> dict[str, dict[str, Component]]:
+) -> dict[str, list[Component]]:
     # # Convert GemsPy components to GVB components
     # # Prepare it for fill
     components = [Component(component) for component in gemspy_components]

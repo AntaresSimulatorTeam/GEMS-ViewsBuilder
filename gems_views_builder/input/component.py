@@ -85,11 +85,11 @@ def find_components_taxonomy_categories(
         component.taxonomy_category = taxonomy_category_by_model[component.model_id]
 
 
-def group_components_by_taxonomy_category(components: list[Component]) -> dict[str, dict[str, Component]]:
+def group_components_by_taxonomy_category(components: list[Component]) -> dict[str, list[Component]]:
     """Group components by taxonomy category. Requires ``find_components_taxonomy_categories`` to have run first."""
-    components_by_taxonomy_category: dict[str, dict[str, Component]] = defaultdict(dict)
+    components_by_taxonomy_category: dict[str, list[Component]] = defaultdict(list)
     for component in components:
-        components_by_taxonomy_category[cast(str, component.taxonomy_category)][component.id] = component
+        components_by_taxonomy_category[cast(str, component.taxonomy_category)].append(component)
     return components_by_taxonomy_category
 
 

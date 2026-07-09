@@ -24,8 +24,8 @@ class MetricStructureTableBuilder:
         self,
         location_taxonomy_category: str | None,
         components_by_taxonomy_category: dict[
-            str, dict[str, Component]
-        ],  # taxonomy category -> component id -> component
+            str, list[Component]
+        ],  # taxonomy category -> components
     ) -> None:
         self.location_taxonomy_category = location_taxonomy_category
         self.components_by_taxonomy_category = components_by_taxonomy_category  # this is mainly for operating
@@ -35,9 +35,9 @@ class MetricStructureTableBuilder:
             return
 
         location_component_ids = (location_components,) if isinstance(location_components, str) else location_components
-        components = self.components_by_taxonomy_category[self.location_taxonomy_category]
+        component_ids = {c.id for c in self.components_by_taxonomy_category[self.location_taxonomy_category]}
         for location_component_id in location_component_ids:
-            if location_component_id not in components:
+            if location_component_id not in component_ids:
                 raise ValueError(
                     f"Location component {location_component_id!r} must belong to taxonomy category {self.location_taxonomy_category!r}"
                 )
@@ -51,7 +51,7 @@ class MetricStructureTableBuilder:
                 f"and output {term.output_id!r}"
             )
 
-            for c_id, c in self.components_by_taxonomy_category[term.taxonomy_category].items():
+            for c in self.components_by_taxonomy_category[term.taxonomy_category]:
                 if c.match(metric.filter):
                     location = c.get_location(location_ports=term.location_ports)
                     self._location_components_match_taxonomy_category(location)
@@ -66,7 +66,7 @@ class MetricStructureTableBuilder:
                         }
                     )
                 else:
-                    logging.debug(f"[{metric.id}] Component {c_id!r} did not match metric filter and was skipped")
+                    logging.debug(f"[{metric.id}] Component {c.id!r} did not match metric filter and was skipped")
         return MetricStructureTable(rows, metric.id)
 
 

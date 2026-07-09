@@ -43,7 +43,7 @@ from gems_views_builder.metrics_structure_builder import (
 )
 
 
-def _build_components_by_taxonomy_category(system: Any, library: Any) -> dict[str, dict[str, Component]]:
+def build_components_by_taxonomy_category(system: Any, library: Any) -> dict[str, list[Component]]:
     components = [Component(component) for component in system.components]
     find_components_taxonomy_categories(components, library.taxonomy_category_by_model)
     components_by_taxonomy_category = group_components_by_taxonomy_category(components)
@@ -60,7 +60,7 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
     library = load_library(test_3 / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     view_config = load_view_config(test_3 / "view_config.yml")
-    components_by_taxonomy_category = _build_components_by_taxonomy_category(system, library)
+    components_by_taxonomy_category = build_components_by_taxonomy_category(system, library)
     return {
         "system": system,
         "taxonomy": taxonomy,
@@ -71,12 +71,12 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
         "components_by_id": {
             component.id: component
             for components in components_by_taxonomy_category.values()
-            for component in components.values()
+            for component in components
         },
     }
 
 
-def _build(metric_id: str, components: dict[str, Any]) -> pl.DataFrame:
+def build(metric_id: str, components: dict[str, Any]) -> pl.DataFrame:
     metric = components["catalog"].get_metric(metric_id)
     table = MetricStructureTableBuilder(
         components["location_taxonomy_category"],
@@ -154,13 +154,13 @@ def _count_expected_rows(metric_id: str, component_ids: list[str], components: d
 
 
 def test_prod_structure_row_count(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components)
+    df = build("PROD", test_3_components)
     candidates = ["generator_A1", "generator_A2", "generator_B1"]
     assert len(df) == _count_expected_rows("PROD", candidates, test_3_components)
 
 
 def test_prod_structure_components(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components)
+    df = build("PROD", test_3_components)
     metric = test_3_components["catalog"].get_metric("PROD")
     components_by_id = test_3_components["components_by_id"]
     candidates = ["generator_A1", "generator_A2", "generator_B1"]
@@ -169,7 +169,7 @@ def test_prod_structure_components(test_3_components: dict[str, Any]) -> None:
 
 
 def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components)
+    df = build("PROD", test_3_components)
     components_by_id = test_3_components["components_by_id"]
     for comp in ("generator_A1", "generator_A2", "generator_B1"):
         comp_rows = df.filter(pl.col("component") == comp)
@@ -180,7 +180,7 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
 
 
 def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
-    df = _build("PROD", test_3_components)
+    df = build("PROD", test_3_components)
     if len(df) == 0:
         return
     assert set(df["output"].to_list()) == {"p"}
@@ -192,14 +192,14 @@ def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
 
 
 def test_load_structure_row_count(test_3_components: dict[str, Any]) -> None:
-    df = _build("LOAD", test_3_components)
+    df = build("LOAD", test_3_components)
     assert len(df) == _count_expected_rows("LOAD", ["load_AL"], test_3_components)
 
 
 def test_load_structure_component_and_location(
     test_3_components: dict[str, Any],
 ) -> None:
-    df = _build("LOAD", test_3_components)
+    df = build("LOAD", test_3_components)
     if len(df) == 0:
         return
     component_rows = df.filter(pl.col("component") == "load_AL")
@@ -214,12 +214,12 @@ def test_load_structure_component_and_location(
 
 
 def test_balance_structure_row_count(test_3_components: dict[str, Any]) -> None:
-    df = _build("BALANCE", test_3_components)
+    df = build("BALANCE", test_3_components)
     assert len(df) == _count_expected_rows("BALANCE", ["link_link_AB"], test_3_components)
 
 
 def test_balance_structure_locations(test_3_components: dict[str, Any]) -> None:
-    df = _build("BALANCE", test_3_components)
+    df = build("BALANCE", test_3_components)
     if len(df) == 0:
         return
     link_rows = df.filter(pl.col("component") == "link_link_AB")
@@ -228,7 +228,7 @@ def test_balance_structure_locations(test_3_components: dict[str, Any]) -> None:
 
 
 def test_balance_structure_component(test_3_components: dict[str, Any]) -> None:
-    df = _build("BALANCE", test_3_components)
+    df = build("BALANCE", test_3_components)
     if len(df) == 0:
         return
     assert set(df["component"].to_list()) == {"link_link_AB"}
@@ -308,11 +308,11 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
     test_3 = test_files_root / "test_3"
     library = load_library(test_3 / "library.yml")
     system = load_system(test_3, resolve_libraries(test_3 / "library.yml"))
-    components_by_taxonomy_category = _build_components_by_taxonomy_category(system, library)
+    components_by_taxonomy_category = build_components_by_taxonomy_category(system, library)
     components_by_id = {
         component.id: component
         for components in components_by_taxonomy_category.values()
-        for component in components.values()
+        for component in components
     }
 
     # Default test_3 wiring uses p0_port -> busA and p1_port -> busB; force both ports to busA here.

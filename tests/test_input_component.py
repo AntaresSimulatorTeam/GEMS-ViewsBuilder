@@ -98,8 +98,8 @@ def test_group_components_by_taxonomy_category() -> None:
     components[0].taxonomy_category = "production"
     components[1].taxonomy_category = "balance"
     grouped = group_components_by_taxonomy_category(components)
-    assert set(grouped["production"]) == {"gen_1"}
-    assert set(grouped["balance"]) == {"bus_1"}
+    assert {c.id for c in grouped["production"]} == {"gen_1"}
+    assert {c.id for c in grouped["balance"]} == {"bus_1"}
 
 
 def test_match() -> None:
