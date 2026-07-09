@@ -25,7 +25,7 @@ from gems_views_builder.input.component import (
 )
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
-from gems_views_builder.views_builder import ViewBuilder
+from gems_views_builder.view import ViewBuilder
 
 RESOURCES_TEST_FILES_ROOT = Path(__file__).resolve().parent.parent / "resources"
 TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
