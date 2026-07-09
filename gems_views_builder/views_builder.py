@@ -32,7 +32,7 @@ class ViewBuilder:
         # # Aggregator for step 2B
         self.terms_aggregator = TermsAggregator(self.input_data.filtered_st)
         # # Aggregator for step 2C
-        self.time_aggregator = TimeAggregator()
+        self.time_aggregator = TimeAggregator(self.input_data.view_config.time_aggregation)
 
     def build(self) -> list[MetricView]:
         metric_views: list[MetricView] = []
