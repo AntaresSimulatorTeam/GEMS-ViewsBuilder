@@ -28,3 +28,9 @@ class ViewConfigTaxonomyValidator:
                 f"View config {self.view_config.id!r} references taxonomy {self.view_config.taxonomy_id!r}, "
                 f"but study taxonomy id is {self.taxonomy.id!r}"
             )
+        category_ids = {category.id for category in self.taxonomy.categories}
+        if self.view_config.location_taxonomy_category not in category_ids:
+            raise ValueError(
+                f"View config {self.view_config.id!r} scope location taxonomy category "
+                f"{self.view_config.location_taxonomy_category!r} is not a category of taxonomy {self.taxonomy.id!r}"
+            )
