@@ -8,11 +8,22 @@ import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 from gems_views_builder.input.catalog import Metric, TimeOperator
+from gems_views_builder.input.view_config import TimeAggregation
 from gems_views_builder.metric_view import MetricView
+
+# # Polars truncate windows are strings like "1h", "1d", "1w", "1mo", "1y".
+TRUNCATE_WINDOWS: dict[TimeAggregation, str] = {
+    TimeAggregation.HOUR: "1h",
+    TimeAggregation.DAY: "1d",
+    TimeAggregation.WEEK: "1w",
+    TimeAggregation.MONTH: "1mo",
+    TimeAggregation.YEAR: "1y",
+}
 
 
 class TimeAggregator:
-    def __init__(self) -> None:
+    def __init__(self, time_aggregation: TimeAggregation | None) -> None:
+        self._time_aggregation = time_aggregation
         self._root_dir = Path(tempfile.mkdtemp())
         self._temporal_aggregation_dir = self._root_dir / "views" / "temporal_aggregation"
         self._temporal_aggregation_dir.mkdir(parents=True, exist_ok=True)
@@ -30,14 +41,12 @@ class TimeAggregator:
         """
         logging.info(f"[{metric.id}] Aggregating temporally with operator {metric.time_operator.value}")
         lazy_metric_view = pl.scan_parquet(metric_view.persistence_path)
-        if metric.time_operator != TimeOperator.SUM:
-            raise NotImplementedError(
-                f"Temporal aggregation for metric {metric.id} is not supported for operator {metric.time_operator.value}"
-            )
-        time_agg = (pl.col("granular_metric_value").sum()).alias("metric_value")
-        view_date_expr = pl.col("granular_date").alias("view_date")
+
+        agg_expr = time_aggregation_expression(metric.time_operator)
+        date_expr = granular_date_expression(self._time_aggregation)
+
         view = (
-            lazy_metric_view.with_columns(view_date_expr)
+            lazy_metric_view.with_columns(date_expr)
             .group_by(
                 [
                     "metric_id",
@@ -47,7 +56,7 @@ class TimeAggregator:
                     "view_date",
                 ]
             )
-            .agg(time_agg)
+            .agg(agg_expr)
             .select(
                 [
                     "metric_id",
@@ -55,7 +64,7 @@ class TimeAggregator:
                     "breakdown_properties",
                     "view_date",
                     "scenario",
-                    "metric_value",
+                    pl.col("metric_value").cast(pl.Float64),
                 ]
             )
         )
@@ -73,3 +82,17 @@ class TimeAggregator:
         )
         logging.info(f"[{metric.id}] Temporal aggregation written to {out_path}")
         return MetricView(out_path)
+
+
+def granular_date_expression(time_aggregation: TimeAggregation | None) -> pl.Expr:
+    if time_aggregation:
+        return pl.col("granular_date").dt.truncate(TRUNCATE_WINDOWS[time_aggregation]).alias("view_date")
+    return pl.col("granular_date").alias("view_date")
+
+
+def time_aggregation_expression(time_operator: TimeOperator) -> pl.Expr:
+    return (
+        pl.col("granular_metric_value").sum()
+        if time_operator == TimeOperator.SUM
+        else pl.col("granular_metric_value").mean()
+    ).alias("metric_value")
