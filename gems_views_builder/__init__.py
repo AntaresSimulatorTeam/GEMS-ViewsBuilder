@@ -51,7 +51,7 @@ from gems_views_builder.input.view_config import TimeAggregation, ViewConfig, lo
 from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
-from gems_views_builder.views_builder import ViewBuilder
+from gems_views_builder.view import ViewBuilder
 
 __all__ = [
     "Calendar",

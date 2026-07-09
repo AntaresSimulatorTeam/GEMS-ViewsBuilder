@@ -39,7 +39,7 @@ class Loader:
         catalogs: dict[str, Catalog] = load_catalogs(self.input_data_path, view_config.catalog_ids)
         view_config.fetch_metrics(catalogs)
 
-        simulation_table = load_simulation_table(next(self.input_data_path.glob("simulation_table*.parquet")))
+        simulation_table = load_simulation_table(next(self.input_data_path.glob("simulation_table*")))
         calendar = load_calendar(self.input_data_path, view_config.calendar_id)
         intermediates_dir = self.input_data_path / "views" / "intermediate"
         filtered_st = filter_simulation_table(simulation_table, calendar, intermediates_dir)

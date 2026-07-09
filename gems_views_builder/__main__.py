@@ -19,11 +19,10 @@ from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
-from gems_views_builder.view import accumulate_on_disk
-from gems_views_builder.views_builder import ViewBuilder
+from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
-def run(input_dir: Path, results_dir: Path) -> None:
+def run(input_dir: Path, view_sinker: ViewSinker) -> None:
     """Run the full pipeline and accumulate the results to the results directory."""
 
     # # Validate study layout
@@ -57,13 +56,14 @@ def main(argv: list[str] | None = None) -> int:
     """
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose, log_dir=args.log_dir)
+    view_sinker = ViewSinkerFactory(args.results_dir, args.output_format).make()
 
     error = check_options(args)
     if error is not None:
         return error
 
     try:
-        run(args.input_dir, args.results_dir)
+        run(args.input_dir, view_sinker)
     except Exception:
         logging.exception("View building failed")
         return 1
