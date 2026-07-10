@@ -19,7 +19,7 @@ from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
     find_components_taxonomy_categories,
-    group_components_by_taxonomy_category,
+    group_components_by_taxon,
     save_component_port_connections,
 )
 from gems_views_builder.input.library import resolve_libraries
@@ -97,7 +97,7 @@ def test_group_components_by_taxonomy_category() -> None:
     ]
     components[0].taxonomy_category = "production"
     components[1].taxonomy_category = "balance"
-    grouped = group_components_by_taxonomy_category(components)
+    grouped = group_components_by_taxon(components)
     assert {c.id for c in grouped["production"]} == {"gen_1"}
     assert {c.id for c in grouped["balance"]} == {"bus_1"}
 

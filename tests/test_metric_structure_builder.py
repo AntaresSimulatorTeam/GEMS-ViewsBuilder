@@ -31,7 +31,7 @@ from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
     find_components_taxonomy_categories,
-    group_components_by_taxonomy_category,
+    group_components_by_taxon,
     save_component_port_connections,
 )
 from gems_views_builder.input.library import resolve_libraries
@@ -46,10 +46,10 @@ from gems_views_builder.metrics_structure_builder import (
 def build_components_by_taxonomy_category(system: Any, library: Any) -> dict[str, list[Component]]:
     components = [Component(component) for component in system.components]
     find_components_taxonomy_categories(components, library.taxonomy_category_by_model)
-    components_by_taxonomy_category = group_components_by_taxonomy_category(components)
+    components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
     save_component_port_connections(components, component_port_connections)
-    return components_by_taxonomy_category
+    return components_by_taxon
 
 
 @pytest.fixture(scope="module")
@@ -60,18 +60,16 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
     library = load_library(test_3 / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     view_config = load_view_config(test_3 / "view_config.yml")
-    components_by_taxonomy_category = build_components_by_taxonomy_category(system, library)
+    components_by_taxon = build_components_by_taxonomy_category(system, library)
     return {
         "system": system,
         "taxonomy": taxonomy,
         "library": library,
         "catalog": catalog,
         "location_taxonomy_category": view_config.location_taxonomy_category,
-        "components_by_taxonomy_category": components_by_taxonomy_category,
+        "components_by_taxon": components_by_taxon,
         "components_by_id": {
-            component.id: component
-            for components in components_by_taxonomy_category.values()
-            for component in components
+            component.id: component for components in components_by_taxon.values() for component in components
         },
     }
 
@@ -80,7 +78,7 @@ def build(metric_id: str, components: dict[str, Any]) -> pl.DataFrame:
     metric = components["catalog"].get_metric(metric_id)
     table = MetricStructureTableBuilder(
         components["location_taxonomy_category"],
-        components["components_by_taxonomy_category"],
+        components["components_by_taxon"],
     ).build(metric)
     return table.dataframe.collect()
 
@@ -261,7 +259,7 @@ def test_single_port_multiple_peers_raises(test_3_components: dict[str, Any]) ->
     with pytest.raises(ValueError):
         MetricStructureTableBuilder(
             test_3_components["location_taxonomy_category"],
-            test_3_components["components_by_taxonomy_category"],
+            test_3_components["components_by_taxon"],
         ).build(metric)
 
 
@@ -290,7 +288,7 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
     )
     table = MetricStructureTableBuilder(
         test_3_components["location_taxonomy_category"],
-        test_3_components["components_by_taxonomy_category"],
+        test_3_components["components_by_taxon"],
     ).build(metric)
     df = table.dataframe.collect()
 
@@ -308,9 +306,9 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
     test_3 = test_files_root / "test_3"
     library = load_library(test_3 / "library.yml")
     system = load_system(test_3, resolve_libraries(test_3 / "library.yml"))
-    components_by_taxonomy_category = build_components_by_taxonomy_category(system, library)
+    components_by_taxon = build_components_by_taxonomy_category(system, library)
     components_by_id = {
-        component.id: component for components in components_by_taxonomy_category.values() for component in components
+        component.id: component for components in components_by_taxon.values() for component in components
     }
 
     # Default test_3 wiring uses p0_port -> busA and p1_port -> busB; force both ports to busA here.
@@ -334,7 +332,7 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
     view_config = load_view_config(test_3 / "view_config.yml")
     table = MetricStructureTableBuilder(
         view_config.location_taxonomy_category,
-        components_by_taxonomy_category,
+        components_by_taxon,
     ).build(metric)
     df = table.dataframe.collect()
 

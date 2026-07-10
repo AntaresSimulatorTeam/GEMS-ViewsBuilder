@@ -20,7 +20,7 @@ from gems_views_builder.common import (
     supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
-from gems_views_builder.input.component import group_components_by_taxonomy_category
+from gems_views_builder.input.component import group_components_by_taxon
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
@@ -41,12 +41,12 @@ def run(input_dir: Path, view_sinker: ViewSinker) -> None:
     components = create_components(input_data.system.components)
     supply_components_with_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
     supply_components_with_port_connections(components, input_data.system.connections)
-    components_by_taxonomy_category = group_components_by_taxonomy_category(components)
+    components_by_taxon = group_components_by_taxon(components)
 
     # # Only one instance of MetricStructureTableBuilder is needed
     metric_structure_table_builder = MetricStructureTableBuilder(
         input_data.view_config.location_taxonomy_category,
-        components_by_taxonomy_category,
+        components_by_taxon,
     )
     # # Validate catalogs against taxonomy
     validate_catalogs_against_taxonomy(input_dir, input_data.view_config.catalog_ids, input_data.taxonomy)

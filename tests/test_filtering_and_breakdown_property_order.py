@@ -30,7 +30,7 @@ from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
     find_components_taxonomy_categories,
-    group_components_by_taxonomy_category,
+    group_components_by_taxon,
     save_component_port_connections,
 )
 from gems_views_builder.input.library import resolve_libraries
@@ -124,13 +124,13 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
 
     components = [Component(component) for component in system.components]
     find_components_taxonomy_categories(components, library.taxonomy_category_by_model)
-    components_by_taxonomy_category = group_components_by_taxonomy_category(components)
+    components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
     save_component_port_connections(components, component_port_connections)
 
     table = MetricStructureTableBuilder(
         view_config.location_taxonomy_category,
-        components_by_taxonomy_category,
+        components_by_taxon,
     ).build(metric)
     df = table.dataframe.collect()
     partial = df.filter(pl.col("component") == "gen_company_only")
