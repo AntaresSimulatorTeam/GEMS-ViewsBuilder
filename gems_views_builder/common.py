@@ -23,7 +23,6 @@ from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
     find_components_taxonomy_categories,
-    group_components_by_taxonomy_category,
     save_component_port_connections,
 )
 
@@ -69,26 +68,19 @@ def configure_logging(verbose: bool = False, log_dir: Path | None = None) -> Non
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
 
 
-def preprocess_system_components(
-    system_connections: list[Any],
-    gemspy_components: list[GemsPyComponent],
-    taxonomy_category_by_model: dict[str, str],
-) -> dict[str, list[Component]]:
-    # # Convert GemsPy components to GVB components
-    # # Prepare it for fill
-    components = [Component(component) for component in gemspy_components]
+def create_components(gemspy_components: list[GemsPyComponent]) -> list[Component]:
+    return [Component(component) for component in gemspy_components]
 
-    # # Fill GVB components with their own taxonomy category, pulled from library
+
+def supply_components_with_taxonomy_categories(
+    components: list[Component], taxonomy_category_by_model: dict[str, str]
+) -> None:
     find_components_taxonomy_categories(components, taxonomy_category_by_model)
 
-    # # Group components by taxonomy category
-    components_by_taxonomy_category = group_components_by_taxonomy_category(components)
 
+def supply_components_with_port_connections(components: list[Component], system_connections: list[Any]) -> None:
     # # Build component-port connection index
     # # Shape: component_id -> {port_id -> {peer_component_ids}}, so each component can
     # # resolve a location by port in O(1).
     component_port_connections = build_component_port_connections(system_connections)
-    # # Save connections inside GVB components
     save_component_port_connections(components, component_port_connections)
-
-    return components_by_taxonomy_category
