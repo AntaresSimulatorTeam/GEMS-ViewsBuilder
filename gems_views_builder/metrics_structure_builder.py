@@ -22,22 +22,22 @@ class MetricStructureTableBuilder:
 
     def __init__(
         self,
-        location_taxonomy_category: str | None,
+        scope_taxon_category: str | None,
         components_by_taxon: dict[str, list[Component]],  # taxonomy category -> components
     ) -> None:
-        self.location_taxonomy_category = location_taxonomy_category
+        self.scope_taxon_category = scope_taxon_category
         self.components_by_taxon = components_by_taxon  # this is mainly for operating
 
     def _location_components_match_taxonomy_category(self, location_components: tuple[str, ...]) -> None:
         # # This will break computation so we need to perform it before running pipeline
-        if self.location_taxonomy_category is None:
+        if self.scope_taxon_category is None:
             return
 
-        component_ids = {c.id for c in self.components_by_taxon[self.location_taxonomy_category]}
+        component_ids = {c.id for c in self.components_by_taxon[self.scope_taxon_category]}
         for location_component_id in location_components:
             if location_component_id not in component_ids:
                 raise ValueError(
-                    f"Location component {location_component_id!r} must belong to taxonomy category {self.location_taxonomy_category!r}"
+                    f"Location component {location_component_id!r} must belong to taxonomy category {self.scope_taxon_category!r}"
                 )
 
     def build(self, metric: Metric) -> MetricStructureTable:

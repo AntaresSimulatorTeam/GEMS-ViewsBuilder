@@ -66,7 +66,7 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
         "taxonomy": taxonomy,
         "library": library,
         "catalog": catalog,
-        "location_taxonomy_category": view_config.location_taxonomy_category,
+        "scope_taxon_category": view_config.scope_taxon_category,
         "components_by_taxon": components_by_taxon,
         "components_by_id": {
             component.id: component for components in components_by_taxon.values() for component in components
@@ -77,7 +77,7 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
 def build(metric_id: str, components: dict[str, Any]) -> pl.DataFrame:
     metric = components["catalog"].get_metric(metric_id)
     table = MetricStructureTableBuilder(
-        components["location_taxonomy_category"],
+        components["scope_taxon_category"],
         components["components_by_taxon"],
     ).build(metric)
     return table.dataframe.collect()
@@ -258,7 +258,7 @@ def test_single_port_multiple_peers_raises(test_3_components: dict[str, Any]) ->
     )
     with pytest.raises(ValueError):
         MetricStructureTableBuilder(
-            test_3_components["location_taxonomy_category"],
+            test_3_components["scope_taxon_category"],
             test_3_components["components_by_taxon"],
         ).build(metric)
 
@@ -287,7 +287,7 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
         time_operator=TimeOperator.SUM,
     )
     table = MetricStructureTableBuilder(
-        test_3_components["location_taxonomy_category"],
+        test_3_components["scope_taxon_category"],
         test_3_components["components_by_taxon"],
     ).build(metric)
     df = table.dataframe.collect()
@@ -331,7 +331,7 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
     )
     view_config = load_view_config(test_3 / "view_config.yml")
     table = MetricStructureTableBuilder(
-        view_config.location_taxonomy_category,
+        view_config.scope_taxon_category,
         components_by_taxon,
     ).build(metric)
     df = table.dataframe.collect()

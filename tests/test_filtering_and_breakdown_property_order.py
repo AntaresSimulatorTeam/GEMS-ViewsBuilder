@@ -129,7 +129,7 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     save_component_port_connections(components, component_port_connections)
 
     table = MetricStructureTableBuilder(
-        view_config.location_taxonomy_category,
+        view_config.scope_taxon_category,
         components_by_taxon,
     ).build(metric)
     df = table.dataframe.collect()

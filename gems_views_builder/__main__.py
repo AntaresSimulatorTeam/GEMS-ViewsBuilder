@@ -45,7 +45,7 @@ def run(input_dir: Path, view_sinker: ViewSinker) -> None:
 
     # # Only one instance of MetricStructureTableBuilder is needed
     metric_structure_table_builder = MetricStructureTableBuilder(
-        input_data.view_config.location_taxonomy_category,
+        input_data.view_config.scope_taxon_category,
         components_by_taxon,
     )
     # # Validate catalogs against taxonomy

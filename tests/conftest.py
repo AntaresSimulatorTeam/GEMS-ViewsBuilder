@@ -43,7 +43,7 @@ def build_view_builder(dataset_dir: Path) -> ViewBuilder:
     save_component_port_connections(components, component_port_connections)
 
     metric_structure_table_builder = MetricStructureTableBuilder(
-        input_data.view_config.location_taxonomy_category,
+        input_data.view_config.scope_taxon_category,
         components_by_taxon,
     )
     return ViewBuilder(input_data, metric_structure_table_builder)
