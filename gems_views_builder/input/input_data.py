@@ -10,9 +10,10 @@
 #
 # This file is part of the Antares project.
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
+from gems_views_builder.input.component import Component
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.input.system import System
@@ -28,3 +29,4 @@ class InputData:
     library: Library
     system: System
     filtered_st: FilteredSimulationTable
+    components: list[Component] = field(default_factory=list)

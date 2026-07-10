@@ -14,9 +14,16 @@ import logging
 from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
-from gems_views_builder.common import configure_logging
+from gems_views_builder.common import (
+    configure_logging,
+    create_components,
+    supply_components_with_port_connections,
+    supply_components_with_taxonomy_categories,
+)
+from gems_views_builder.input.component import group_components_by_taxonomy_category
 from gems_views_builder.input.catalog import load_catalogs
 from gems_views_builder.loader import Loader
+from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.catalog_view_config_validator import validate_catalogs_against_view_config
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
@@ -29,17 +36,30 @@ def run(input_dir: Path, view_sinker: ViewSinker) -> None:
 
     # # Validate study layout
     StudyLayoutValidator(input_dir).validate()
+
     # # If everything is ok, load pipeline input
     input_data = Loader(input_dir).load()
 
     ViewConfigTaxonomyValidator(input_data.taxonomy, input_data.view_config).validate()
 
+
+    # # Create GVB components from system raw components
+    components = create_components(input_data.system.components)
+    supply_components_with_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
+    supply_components_with_port_connections(components, input_data.system.connections)
+    components_by_taxonomy_category = group_components_by_taxonomy_category(components)
+
+    # # Only one instance of MetricStructureTableBuilder is needed
+    metric_structure_table_builder = MetricStructureTableBuilder(
+        input_data.view_config.location_taxonomy_category,
+        components_by_taxonomy_category,
+    )
     # # Validate catalogs against taxonomy and view config
     catalogs = load_catalogs(input_dir, input_data.view_config.catalog_ids)
     validate_catalogs_against_taxonomy(catalogs, input_data.taxonomy)
     validate_catalogs_against_view_config(catalogs, input_data.view_config)
 
-    metric_views = ViewBuilder(input_data).build()
+    metric_views = ViewBuilder(input_data, metric_structure_table_builder).build()
     accumulate_on_disk(metric_views, view_sinker)
 
 
