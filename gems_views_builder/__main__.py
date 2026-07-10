@@ -20,8 +20,8 @@ from gems_views_builder.common import (
     supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
-from gems_views_builder.input.component import group_components_by_taxonomy_category
 from gems_views_builder.input.catalog import load_catalogs
+from gems_views_builder.input.component import group_components_by_taxonomy_category
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
@@ -40,8 +40,12 @@ def run(input_dir: Path, view_sinker: ViewSinker) -> None:
     # # If everything is ok, load pipeline input
     input_data = Loader(input_dir).load()
 
+    # # This could be grouped,now main is messy
     ViewConfigTaxonomyValidator(input_data.taxonomy, input_data.view_config).validate()
-
+    # # Validate catalogs against taxonomy and view config
+    catalogs = load_catalogs(input_dir, input_data.view_config.catalog_ids)
+    validate_catalogs_against_taxonomy(catalogs, input_data.taxonomy)
+    validate_catalogs_against_view_config(catalogs, input_data.view_config)
 
     # # Create GVB components from system raw components
     components = create_components(input_data.system.components)
@@ -54,10 +58,6 @@ def run(input_dir: Path, view_sinker: ViewSinker) -> None:
         input_data.view_config.location_taxonomy_category,
         components_by_taxonomy_category,
     )
-    # # Validate catalogs against taxonomy and view config
-    catalogs = load_catalogs(input_dir, input_data.view_config.catalog_ids)
-    validate_catalogs_against_taxonomy(catalogs, input_data.taxonomy)
-    validate_catalogs_against_view_config(catalogs, input_data.view_config)
 
     metric_views = ViewBuilder(input_data, metric_structure_table_builder).build()
     accumulate_on_disk(metric_views, view_sinker)
