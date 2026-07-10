@@ -22,6 +22,7 @@ from gems.study import Component as GemsPyComponent  # type: ignore
 from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
+    compute_component_locations,
     find_components_taxonomy_categories,
     save_component_port_connections,
 )
@@ -84,3 +85,9 @@ def supply_components_with_port_connections(components: list[Component], system_
     # # resolve a location by port in O(1).
     component_port_connections = build_component_port_connections(system_connections)
     save_component_port_connections(components, component_port_connections)
+
+
+def supply_components_with_locations(components: list[Component], scope_taxon_category: str) -> None:
+    # # Resolve, for every component's port, its unique location within scope_taxon_category.
+    # # Done once up front so ambiguous locations are caught before building any metric structure table.
+    compute_component_locations(components, scope_taxon_category)

@@ -22,23 +22,11 @@ class MetricStructureTableBuilder:
 
     def __init__(
         self,
-        scope_taxon_category: str | None,
+        scope_taxon_category: str,
         components_by_taxon: dict[str, list[Component]],  # taxonomy category -> components
     ) -> None:
         self.scope_taxon_category = scope_taxon_category
         self.components_by_taxon = components_by_taxon  # this is mainly for operating
-
-    def _location_components_match_taxonomy_category(self, location_components: tuple[str, ...]) -> None:
-        # # This will break computation so we need to perform it before running pipeline
-        if self.scope_taxon_category is None:
-            return
-
-        component_ids = {c.id for c in self.components_by_taxon[self.scope_taxon_category]}
-        for location_component_id in location_components:
-            if location_component_id not in component_ids:
-                raise ValueError(
-                    f"Location component {location_component_id!r} must belong to taxonomy category {self.scope_taxon_category!r}"
-                )
 
     def build(self, metric: Metric) -> MetricStructureTable:
         logging.debug(f"[{metric.id}] Building metric structure table ({len(metric.terms)} term(s))")
@@ -50,25 +38,15 @@ class MetricStructureTableBuilder:
             )
 
             for c in self.components_by_taxon[term.taxonomy_category]:
-                if c.match(metric.filter):
-                    locations = c._get_locations(location_ports=term.location_ports)
-                    self._location_components_match_taxonomy_category(locations)
+                if c.match(metric.filter) and c.is_located_at(term.location_ports, self.scope_taxon_category):
                     rows.append(
                         {
                             "metric_id": metric.id,
                             "component": c.id,
-                            "metric_location": format_metric_location(locations),
+                            "metric_location": c.formatted_locations(term.location_ports, self.scope_taxon_category),
                             "breakdown_properties": c.format_breakdown_properties(metric.breakdown),
                             "output": term.output_id,
                             "weight_output_id": 1,
                         }
                     )
-                else:
-                    logging.debug(f"[{metric.id}] Component {c.id!r} did not match metric filter and was skipped")
         return MetricStructureTable(rows, metric.id)
-
-
-def format_metric_location(locations: tuple[str, ...]) -> str:
-    if len(locations) == 1:
-        return locations[0]
-    return "(" + ",".join(locations) + ")"

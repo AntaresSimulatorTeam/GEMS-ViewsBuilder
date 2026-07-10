@@ -30,25 +30,28 @@ from gems_views_builder import (
 from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
+    compute_component_locations,
     find_components_taxonomy_categories,
+    format_metric_location,
     group_components_by_taxon,
     save_component_port_connections,
 )
 from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
-from gems_views_builder.metrics_structure_builder import (
-    MetricStructureTableBuilder,
-    format_metric_location,
-)
+from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
-def build_components_by_taxonomy_category(system: Any, library: Any) -> dict[str, list[Component]]:
+def build_components_by_taxonomy_category(
+    system: Any, library: Any, scope_taxon_category: str | None = None
+) -> dict[str, list[Component]]:
     components = [Component(component) for component in system.components]
     find_components_taxonomy_categories(components, library.taxonomy_category_by_model)
     components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
     save_component_port_connections(components, component_port_connections)
+    if scope_taxon_category is not None:
+        compute_component_locations(components, scope_taxon_category)
     return components_by_taxon
 
 
@@ -60,7 +63,7 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
     library = load_library(test_3 / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     view_config = load_view_config(test_3 / "view_config.yml")
-    components_by_taxon = build_components_by_taxonomy_category(system, library)
+    components_by_taxon = build_components_by_taxonomy_category(system, library, view_config.scope_taxon_category)
     return {
         "system": system,
         "taxonomy": taxonomy,
@@ -173,7 +176,9 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
         comp_rows = df.filter(pl.col("component") == comp)
         if len(comp_rows) == 0:
             continue
-        resolved = components_by_id[comp]._get_locations(("p_balance_port",))
+        resolved = components_by_id[comp].resolve_locations(
+            ("p_balance_port",), test_3_components["scope_taxon_category"]
+        )
         assert comp_rows["metric_location"].to_list() == [format_metric_location(resolved)]
 
 
@@ -237,13 +242,17 @@ def test_balance_structure_component(test_3_components: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_single_port_multiple_peers_raises(test_3_components: dict[str, Any]) -> None:
-    """A single location_port wired to multiple peers is ambiguous and must raise.
+def test_single_port_multiple_peers_of_other_categories_are_skipped_not_raised(
+    test_3_components: dict[str, Any],
+) -> None:
+    """A port wired to several peers is only ambiguous when more than one of them belongs to the
+    view's scope taxonomy category (here "balance").
 
     In test_3, busA.p_balance_port connects to generator_A1, generator_A2, load_AL,
-    link_link_AB (and busB.p_balance_port to generator_B1, link_link_AB), so resolving
-    a single port to a unique locating peer is impossible here.
+    link_link_AB, none of which is a "balance" component, so no location can be resolved for
+    busA on that port: it must be skipped rather than raise.
     """
+    # Arrange
     metric = Metric(
         id="BUS_PEER_TEST",
         terms=[
@@ -256,17 +265,44 @@ def test_single_port_multiple_peers_raises(test_3_components: dict[str, Any]) ->
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    with pytest.raises(ValueError):
-        MetricStructureTableBuilder(
-            test_3_components["scope_taxon_category"],
-            test_3_components["components_by_taxon"],
-        ).build(metric)
+    builder = MetricStructureTableBuilder(
+        test_3_components["scope_taxon_category"],
+        test_3_components["components_by_taxon"],
+    )
+
+    # Act
+    table = builder.build(metric)
+
+    # Assert
+    assert table.dataframe.collect().height == 0
+
+
+def test_compute_component_locations_raises_on_genuine_ambiguity(test_files_root: Path) -> None:
+    """Two peers on the same port both belonging to the scope taxonomy category is an actual
+    inconsistency and must raise during the up-front location precomputation."""
+    # Arrange
+    test_3 = test_files_root / "test_3"
+    library = load_library(test_3 / "library.yml")
+    system = load_system(test_3, resolve_libraries(test_3 / "library.yml"))
+    components = [Component(component) for component in system.components]
+    find_components_taxonomy_categories(components, library.taxonomy_category_by_model)
+    component_port_connections = build_component_port_connections(system.connections)
+    save_component_port_connections(components, component_port_connections)
+    components_by_id = {component.id: component for component in components}
+    # Force link_link_AB's p0_port to be wired to both busA and busB (both "balance").
+    components_by_id["link_link_AB"].connections["p0_port"] = {"busA", "busB"}
+
+    # Act / Assert
+    with pytest.raises(ValueError, match="p0_port"):
+        compute_component_locations(components, "balance")
 
 
 def test_get_location_tuple_of_ports_returns_peer_per_port(test_3_components: dict[str, Any]) -> None:
     """Each port in a location_ports tuple resolves to its connected peer(s)."""
     components_by_id = test_3_components["components_by_id"]
-    locations = components_by_id["link_link_AB"]._get_locations(("p0_port", "p1_port"))
+    locations = components_by_id["link_link_AB"].resolve_locations(
+        ("p0_port", "p1_port"), test_3_components["scope_taxon_category"]
+    )
     assert isinstance(locations, tuple)
     assert locations == ("busA", "busB")
 
@@ -295,7 +331,9 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1
     assert link_rows["metric_location"][0] == format_metric_location(
-        components_by_id["link_link_AB"]._get_locations(("p0_port", "p1_port"))
+        components_by_id["link_link_AB"].resolve_locations(
+            ("p0_port", "p1_port"), test_3_components["scope_taxon_category"]
+        )
     )
     assert set(_parse_metric_location(link_rows["metric_location"][0])) == {"busA", "busB"}
     assert set(link_rows["output"].to_list()) == {"p0_port.flow"}
@@ -303,19 +341,24 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
 
 def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row(test_files_root: Path) -> None:
     """When two ports resolve to the same peer, the single structure row keeps both locations (busA twice)."""
+    # Arrange
     test_3 = test_files_root / "test_3"
     library = load_library(test_3 / "library.yml")
     system = load_system(test_3, resolve_libraries(test_3 / "library.yml"))
+    view_config = load_view_config(test_3 / "view_config.yml")
     components_by_taxon = build_components_by_taxonomy_category(system, library)
     components_by_id = {
         component.id: component for components in components_by_taxon.values() for component in components
     }
 
-    # Default test_3 wiring uses p0_port -> busA and p1_port -> busB; force both ports to busA here.
+    # Default test_3 wiring uses p0_port -> busA and p1_port -> busB; force both ports to busA here,
+    # then recompute locations so the precomputed dictionary reflects the forced wiring.
     components_by_id["link_link_AB"].connections["p0_port"] = {"busA"}
     components_by_id["link_link_AB"].connections["p1_port"] = {"busA"}
-
-    assert components_by_id["link_link_AB"]._get_locations(("p0_port", "p1_port")) == ("busA", "busA")
+    compute_component_locations(list(components_by_id.values()), view_config.scope_taxon_category)
+    assert components_by_id["link_link_AB"].resolve_locations(
+        ("p0_port", "p1_port"), view_config.scope_taxon_category
+    ) == ("busA", "busA")
 
     metric = Metric(
         id="DUP_PEER_VIA_TWO_PORTS",
@@ -329,13 +372,13 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    view_config = load_view_config(test_3 / "view_config.yml")
-    table = MetricStructureTableBuilder(
-        view_config.scope_taxon_category,
-        components_by_taxon,
-    ).build(metric)
+    builder = MetricStructureTableBuilder(view_config.scope_taxon_category, components_by_taxon)
+
+    # Act
+    table = builder.build(metric)
     df = table.dataframe.collect()
 
+    # Assert
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1
     assert link_rows["metric_location"][0] == "(busA,busA)"

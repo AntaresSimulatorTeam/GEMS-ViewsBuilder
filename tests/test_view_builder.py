@@ -18,7 +18,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder.__main__ import run
-from gems_views_builder.metrics_structure_builder import format_metric_location
+from gems_views_builder.input.component import format_metric_location
 from gems_views_builder.view import CsvViewSinker, ParquetViewSinker
 
 

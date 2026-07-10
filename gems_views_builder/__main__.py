@@ -17,6 +17,7 @@ from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import (
     configure_logging,
     create_components,
+    supply_components_with_locations,
     supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
@@ -41,6 +42,7 @@ def run(input_dir: Path, view_sinker: ViewSinker) -> None:
     components = create_components(input_data.system.components)
     supply_components_with_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
     supply_components_with_port_connections(components, input_data.system.connections)
+    supply_components_with_locations(components, input_data.view_config.scope_taxon_category)
     components_by_taxon = group_components_by_taxon(components)
 
     # # Only one instance of MetricStructureTableBuilder is needed

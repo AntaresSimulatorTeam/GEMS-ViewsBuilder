@@ -19,6 +19,7 @@ from gems_views_builder.common import configure_logging
 from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
+    compute_component_locations,
     find_components_taxonomy_categories,
     group_components_by_taxon,
     save_component_port_connections,
@@ -41,6 +42,7 @@ def build_view_builder(dataset_dir: Path) -> ViewBuilder:
 
     component_port_connections = build_component_port_connections(input_data.system.connections)
     save_component_port_connections(components, component_port_connections)
+    compute_component_locations(components, input_data.view_config.scope_taxon_category)
 
     metric_structure_table_builder = MetricStructureTableBuilder(
         input_data.view_config.scope_taxon_category,

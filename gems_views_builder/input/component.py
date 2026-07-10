@@ -20,6 +20,10 @@ class Component:
     taxonomy_category: str | None = None
     # port_id -> set of peer component ids connected on that port
     connections: dict[str, set[str]] = field(default_factory=dict)
+    # (port_id, taxonomy_category) -> unique peer component id located on that port for that
+    # taxonomy category. Populated by ``compute_component_locations``. Absence of a key means no
+    # peer on that port belongs to that taxonomy category (no location can be determined there).
+    locations: dict[tuple[str, str], str] = field(default_factory=dict)
 
     @property
     def id(self) -> str:
@@ -37,25 +41,26 @@ class Component:
     def set_taxonomy_category(self, taxonomy_category: str) -> None:
         self.taxonomy_category = taxonomy_category
 
-    def _get_locations(self, location_ports: tuple[str, ...] | None) -> tuple[str, ...]:
-        """Resolve the component's location(s) for the given location port(s).
+    def is_located_at(self, location_ports: tuple[str, ...] | None, taxonomy_category: str) -> bool:
+        """Whether every port in ``location_ports`` has a resolved location for ``taxonomy_category``.
 
-        - None: the component is its own location.
-        - one peer is resolved per port, in order.
+        ``location_ports`` of ``None`` means the component is its own location: always true.
         """
         if location_ports is None:
-            return (self.id,)
-        return tuple(self._resolve_unique_location(port) for port in location_ports)
+            return True
+        located = all((port, taxonomy_category) in self.locations for port in location_ports)
+        if not located:
+            logging.debug(f"Component {self.id!r} has no resolved location for taxonomy category {taxonomy_category!r}")
+        return located
 
-    def _resolve_unique_location(self, location_port: str) -> str:
-        """Return the UNIQUE peer connected on ``location_port`` (O(1) lookup)."""
-        peers = self.connections.get(location_port, set())
-        if len(peers) != 1:
-            raise ValueError(
-                f"Expected exactly one peer component for component {self.id!r} "
-                f"on port {location_port!r}, but found {len(peers)}: {tuple(peers)!r}"
-            )
-        return next(iter(peers))
+    def resolve_locations(self, location_ports: tuple[str, ...] | None, taxonomy_category: str) -> tuple[str, ...]:
+        """Return the resolved location(s) for ``location_ports``, previously checked via ``is_located_at``."""
+        if location_ports is None:
+            return (self.id,)
+        return tuple(self.locations[(port, taxonomy_category)] for port in location_ports)
+
+    def formatted_locations(self, location_ports: tuple[str, ...] | None, taxonomy_category: str) -> str:
+        return format_metric_location(self.resolve_locations(location_ports, taxonomy_category))
 
     def format_breakdown_properties(self, breakdown: list[PropertySchema] | None) -> str:
         if not breakdown:
@@ -72,7 +77,10 @@ class Component:
     def match(self, filter: PropertySchema | None) -> bool:
         if filter is None:
             return True
-        return bool(self.properties.get(filter.key) == filter.value)
+        matched = bool(self.properties.get(filter.key) == filter.value)
+        if not matched:
+            logging.debug(f"Component {self.id!r} did not match metric filter and was skipped")
+        return matched
 
 
 def find_components_taxonomy_categories(
@@ -147,3 +155,39 @@ def build_component_port_connections(connections: list[Any]) -> dict[str, dict[s
 
     logging.info(f"Built component-port connection index with {len(component_port_connections)} entry(ies)")
     return component_port_connections
+
+
+def compute_component_locations(components: list[Component], taxonomy_category: str) -> None:
+    """Precompute, for every component's port, the unique peer belonging to taxonomy_category.
+
+    Requires find_components_taxonomy_categories and save_component_port_connections to have
+    already run. For each (component, port), among the peers connected on that port, only those
+    belonging to ``taxonomy_category`` are considered:
+    - zero matching peers: no location is stored for that port (components referencing it are
+      later skipped when building the metric structure table);
+    - exactly one: it is stored as the resolved location;
+    - more than one: a genuine inconsistency, raised immediately rather than later during table
+      building.
+    """
+    logging.info(f"Resolving component locations for taxonomy category {taxonomy_category!r}")
+    components_by_id = {component.id: component for component in components}
+    for component in components:
+        for port_id, peer_ids in component.connections.items():
+            matching_peers = [
+                peer_id for peer_id in peer_ids if components_by_id[peer_id].taxonomy_category == taxonomy_category
+            ]
+            if len(matching_peers) > 1:
+                raise ValueError(
+                    f"Component {component.id!r} port {port_id!r} has {len(matching_peers)} peers "
+                    f"belonging to taxonomy category {taxonomy_category!r}: {tuple(sorted(matching_peers))!r}, "
+                    f"expected at most one"
+                )
+            if len(matching_peers) == 1:
+                component.locations[(port_id, taxonomy_category)] = matching_peers[0]
+    logging.info(f"Component locations resolved for taxonomy category {taxonomy_category!r}")
+
+
+def format_metric_location(locations: tuple[str, ...]) -> str:
+    if len(locations) == 1:
+        return locations[0]
+    return "(" + ",".join(locations) + ")"
