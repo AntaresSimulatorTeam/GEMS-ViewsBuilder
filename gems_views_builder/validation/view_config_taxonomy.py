@@ -23,13 +23,19 @@ class ViewConfigTaxonomyValidator:
     view_config: ViewConfig
 
     def validate(self) -> None:
+        self._match_taxonomy_id()
+        self._validate_location_taxonomy_category()
+        # # More checks
+
+    def _match_taxonomy_id(self) -> None:
         if self.taxonomy.id != self.view_config.taxonomy_id:
             raise ValueError(
                 f"View config {self.view_config.id!r} references taxonomy {self.view_config.taxonomy_id!r}, "
                 f"but study taxonomy id is {self.taxonomy.id!r}"
             )
-        category_ids = {category.id for category in self.taxonomy.categories}
-        if self.view_config.location_taxonomy_category not in category_ids:
+    def _validate_location_taxonomy_category(self) -> None:
+        categories = self.taxonomy.get_taxonomy_categories()
+        if self.view_config.location_taxonomy_category not in set(categories.keys()):
             raise ValueError(
                 f"View config {self.view_config.id!r} scope location taxonomy category "
                 f"{self.view_config.location_taxonomy_category!r} is not a category of taxonomy {self.taxonomy.id!r}"

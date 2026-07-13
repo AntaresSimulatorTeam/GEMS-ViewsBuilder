@@ -53,6 +53,8 @@ class Taxonomy:
     description: str = ""
     categories: list[TaxonomyCategory] = field(default_factory=list)
 
+    def get_taxonomy_categories(self) -> dict[str, TaxonomyCategory]:
+        return {category.id: category for category in self.categories}
 
 def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
     logging.info(f"Loading taxonomy from {taxonomy_file_path}")
