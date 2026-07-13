@@ -67,8 +67,8 @@ class RawViewConfig(ViewBuilderBasedModel):
     taxonomy: list[TaxonomyId] = Field(min_length=1, max_length=1)
     scope: list[Scope] = Field(min_length=2, max_length=2)
     aggregation: list[Aggregation]
-    catalog: list[CatalogId] = Field(min_length=1, max_length=1)
-    metrics: list[MetricId]
+    catalog: list[CatalogId] = Field(min_length=1)  # We need minimum one catalog and metric
+    metrics: list[MetricId] = Field(min_length=1)  # in fact if we don't have it GVB process is useless
 
 
 @dataclass
