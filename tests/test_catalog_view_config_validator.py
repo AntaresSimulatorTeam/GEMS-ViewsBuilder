@@ -17,8 +17,7 @@ import pytest
 from gems_views_builder.input.catalog import load_catalog, load_catalogs
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.validation.catalog_view_config_validator import (
-    CatalogViewConfigValidator,
-    validate_catalogs_against_view_config,
+    CatalogsViewConfigValidator,
 )
 
 
@@ -26,7 +25,7 @@ def test_catalog_view_config_validator_passes_for_test_dataset(test_dataset_dir:
     # Arrange
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    validator = CatalogViewConfigValidator(catalog, view_config)
+    validator = CatalogsViewConfigValidator([catalog], view_config)
 
     # Act
     validator.validate()
@@ -42,7 +41,7 @@ def test_validate_catalogs_against_view_config_passes_for_test_dataset(test_data
     catalogs = load_catalogs(test_dataset_dir, view_config.catalog_ids)
 
     # Act / Assert
-    validate_catalogs_against_view_config(catalogs, view_config)
+    CatalogsViewConfigValidator(catalogs, view_config).validate()
 
 
 def test_catalog_view_config_validator_raises_on_taxonomy_id_mismatch(test_dataset_dir: Path) -> None:
@@ -50,7 +49,7 @@ def test_catalog_view_config_validator_raises_on_taxonomy_id_mismatch(test_datas
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     catalog.taxonomy = "wrong_taxonomy"
-    validator = CatalogViewConfigValidator(catalog, view_config)
+    validator = CatalogsViewConfigValidator([catalog], view_config)
 
     # Act / Assert
     with pytest.raises(ValueError, match="references taxonomy"):
@@ -64,7 +63,7 @@ def test_catalog_view_config_validator_raises_on_location_category_mismatch(
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     catalog.location_taxonomy_category = "wrong_category"
-    validator = CatalogViewConfigValidator(catalog, view_config)
+    validator = CatalogsViewConfigValidator([catalog], view_config)
 
     # Act / Assert
     with pytest.raises(ValueError, match="location taxonomy category"):

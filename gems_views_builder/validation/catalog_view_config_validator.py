@@ -20,29 +20,28 @@ from gems_views_builder.input.view_config import ViewConfig
 
 
 @dataclass
-class CatalogViewConfigValidator:
-    catalog: Catalog
+class CatalogsViewConfigValidator:
+    catalogs: list[Catalog]
     view_config: ViewConfig
 
     def validate(self) -> None:
-        logging.info(f"Validating catalog {self.catalog.id!r} against view config {self.view_config.id!r}")
-        if self.catalog.taxonomy != self.view_config.taxonomy_id:
+        logging.info(f"Validating {len(self.catalogs)} catalog(s) against view config {self.view_config.id!r}")
+        for catalog in self.catalogs:
+            self._validate_catalog_against_view_config(catalog)
+        logging.info(f"All catalogs are consistent with view config {self.view_config.id!r}")
+
+    def _validate_catalog_against_view_config(self, catalog: Catalog) -> None:
+        logging.info(f"Validating catalog {catalog.id!r} against view config {self.view_config.id!r}")
+        if catalog.taxonomy != self.view_config.taxonomy_id:
             raise ValueError(
-                f"Catalog {self.catalog.id!r} references taxonomy {self.catalog.taxonomy!r}, "
+                f"Catalog {catalog.id!r} references taxonomy {catalog.taxonomy!r}, "
                 f"but view config {self.view_config.id!r} references taxonomy "
                 f"{self.view_config.taxonomy_id!r}"
             )
-        if self.catalog.location_taxonomy_category != self.view_config.location_taxonomy_category:
+        if catalog.location_taxonomy_category != self.view_config.location_taxonomy_category:
             raise ValueError(
-                f"Catalog {self.catalog.id!r} location taxonomy category "
-                f"{self.catalog.location_taxonomy_category!r} does not match view config "
+                f"Catalog {catalog.id!r} location taxonomy category "
+                f"{catalog.location_taxonomy_category!r} does not match view config "
                 f"{self.view_config.id!r} location taxonomy category "
                 f"{self.view_config.location_taxonomy_category!r}"
             )
-
-
-def validate_catalogs_against_view_config(catalogs: list[Catalog], view_config: ViewConfig) -> None:
-    logging.info(f"Validating {len(catalogs)} catalog(s) against view config {view_config.id!r}")
-    for catalog in catalogs:
-        CatalogViewConfigValidator(catalog, view_config).validate()
-    logging.info(f"All catalogs are consistent with view config {view_config.id!r}")
