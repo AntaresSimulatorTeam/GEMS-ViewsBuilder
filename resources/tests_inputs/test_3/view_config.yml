@@ -2,6 +2,9 @@ view:
 
   id: view_area
 
+  taxonomy:
+    - id: my_taxonomy
+
   scope:
     - location:
         taxonomy-category: balance # category of the taxonomy, the components of which serves as locational objects. Main case is 'area'.
@@ -15,8 +18,6 @@ view:
   catalog: #Pointer to "catalogs" = "Business Metrics definitions files".
       - id: catalog
 
-  taxonomy:
-    - id: my_taxonomy
 
   metrics:  #reference to the selected metric among the catalog
       - id: catalog.PROD

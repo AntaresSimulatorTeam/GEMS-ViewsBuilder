@@ -64,10 +64,10 @@ class MetricId(ViewBuilderBasedModel):
 
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
+    taxonomy: list[TaxonomyId] = Field(min_length=1, max_length=1)
     scope: list[Scope] = Field(min_length=2, max_length=2)
     aggregation: list[Aggregation]
     catalog: list[CatalogId] = Field(min_length=1, max_length=1)
-    taxonomy: list[TaxonomyId] = Field(min_length=1, max_length=1)
     metrics: list[MetricId]
 
 
