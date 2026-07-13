@@ -12,6 +12,7 @@
 
 from pathlib import Path
 
+from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
@@ -31,7 +32,7 @@ def test_loader_init_has_no_io() -> None:
 
 
 def test_loader_load_populates_input_data(test_dataset_dir: Path) -> None:
-    input_data = Loader(test_dataset_dir).load()
+    input_data, catalogs = Loader(test_dataset_dir).load()
 
     assert isinstance(input_data, InputData)
     assert input_data.input_data_path == test_dataset_dir
@@ -40,11 +41,14 @@ def test_loader_load_populates_input_data(test_dataset_dir: Path) -> None:
     assert isinstance(input_data.library, Library)
     assert isinstance(input_data.system, System)
     assert isinstance(input_data.filtered_st, FilteredSimulationTable)
+    assert isinstance(catalogs, list)
+    assert len(catalogs) > 0
+    assert all(isinstance(catalog, Catalog) for catalog in catalogs)
 
 
 def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) -> None:
     loader = Loader(test_dataset_dir)
-    input_data = loader.load()
+    input_data, catalogs = loader.load()
 
     assert isinstance(input_data, InputData)
     assert input_data.input_data_path == test_dataset_dir
@@ -53,3 +57,6 @@ def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) ->
     assert isinstance(input_data.library, Library)
     assert isinstance(input_data.system, System)
     assert isinstance(input_data.filtered_st, FilteredSimulationTable)
+    assert isinstance(catalogs, list)
+    assert len(catalogs) > 0
+    assert all(isinstance(catalog, Catalog) for catalog in catalogs)

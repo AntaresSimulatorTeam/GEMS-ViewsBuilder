@@ -33,7 +33,7 @@ TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
 
 def build_view_builder(dataset_dir: Path) -> ViewBuilder:
     """Load a dataset directory and return a configured ``ViewBuilder``."""
-    input_data = Loader(dataset_dir).load()
+    input_data, _catalogs = Loader(dataset_dir).load()
 
     components = [Component(component) for component in input_data.system.components]
     find_components_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
