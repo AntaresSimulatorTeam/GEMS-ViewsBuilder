@@ -116,7 +116,7 @@ view:
 
     # Act / Assert
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        config.fetch_metrics({})
+        config.fetch_metrics([])
 
 
 def test_raises_on_missing_taxonomy_section(tmp_path: Path) -> None:

@@ -36,7 +36,7 @@ class Loader:
         logging.info(f"Loading inputs from {self.input_data_path}")
         view_config: ViewConfig = load_view_config(self.input_data_path / "view_config.yml")
 
-        catalogs: dict[str, Catalog] = load_catalogs(self.input_data_path, view_config.catalog_ids)
+        catalogs: list[Catalog] = load_catalogs(self.input_data_path, view_config.catalog_ids)
         view_config.fetch_metrics(catalogs)
 
         simulation_table = load_simulation_table(next(self.input_data_path.glob("simulation_table*")))

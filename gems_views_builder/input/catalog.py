@@ -135,11 +135,18 @@ def to_metric(metric_data: MetricData) -> Metric:
     )
 
 
-def load_catalogs(input_data_path: Path, catalog_ids: set[str]) -> dict[str, Catalog]:
+def load_catalogs(input_data_path: Path, catalog_ids: set[str]) -> list[Catalog]:
+    """Load catalogs by view-config id (YAML filename stem). Catalog.id must match that id."""
     catalogs_dir = input_data_path / "catalogs"
-    catalogs: dict[str, Catalog] = {}
+    catalogs: list[Catalog] = []
     for catalog_id in catalog_ids:
-        catalogs[catalog_id] = load_catalog(catalogs_dir / f"{catalog_id}.yml")
+        catalog = load_catalog(catalogs_dir / f"{catalog_id}.yml")
+        if catalog.id != catalog_id:
+            raise ValueError(
+                f"Catalog file '{catalog_id}.yml' has id {catalog.id!r}, "
+                f"but view config references it as {catalog_id!r}"
+            )
+        catalogs.append(catalog)
     return catalogs
 
 

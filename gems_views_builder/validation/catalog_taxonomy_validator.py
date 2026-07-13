@@ -18,9 +18,9 @@ from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.taxonomy import Taxonomy
 
 
-def validate_catalogs_against_taxonomy(catalogs: dict[str, Catalog], taxonomy: Taxonomy) -> None:
+def validate_catalogs_against_taxonomy(catalogs: list[Catalog], taxonomy: Taxonomy) -> None:
     logging.info(f"Validating {len(catalogs)} catalog(s) against taxonomy {taxonomy.id!r}")
-    for catalog in catalogs.values():
+    for catalog in catalogs:
         validate_catalog_against_taxonomy(catalog, taxonomy)
     logging.info(f"All catalogs are consistent with taxonomy {taxonomy.id!r}")
 

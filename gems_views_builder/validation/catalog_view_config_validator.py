@@ -41,8 +41,8 @@ class CatalogViewConfigValidator:
             )
 
 
-def validate_catalogs_against_view_config(catalogs: dict[str, Catalog], view_config: ViewConfig) -> None:
+def validate_catalogs_against_view_config(catalogs: list[Catalog], view_config: ViewConfig) -> None:
     logging.info(f"Validating {len(catalogs)} catalog(s) against view config {view_config.id!r}")
-    for catalog in catalogs.values():
+    for catalog in catalogs:
         CatalogViewConfigValidator(catalog, view_config).validate()
     logging.info(f"All catalogs are consistent with view config {view_config.id!r}")
