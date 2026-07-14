@@ -83,7 +83,7 @@ class CatalogData(ViewBuilderBasedModel):
 class Term:
     taxonomy_category: str
     output_id: str
-    location_ports: str | tuple[str, ...] | None
+    location_ports: tuple[str, ...] | None
     weight_output_id: str | None = None
 
 
@@ -117,7 +117,9 @@ def to_term(term_data: TermData) -> Term:
     return Term(
         taxonomy_category=term_data.taxonomy_category,
         output_id=term_data.output_id,
-        location_ports=term_data.location_ports,
+        location_ports=(term_data.location_ports,)
+        if isinstance(term_data.location_ports, str)
+        else term_data.location_ports,
         weight_output_id=term_data.weight_output_id,
     )
 
@@ -133,7 +135,7 @@ def to_metric(metric_data: MetricData) -> Metric:
     )
 
 
-def load_catalogs(input_data_path: Path, catalog_ids: list[str]) -> dict[str, Catalog]:
+def load_catalogs(input_data_path: Path, catalog_ids: set[str]) -> dict[str, Catalog]:
     catalogs_dir = input_data_path / "catalogs"
     catalogs: dict[str, Catalog] = {}
     for catalog_id in catalog_ids:
@@ -158,6 +160,8 @@ def load_catalog(catalog_file_path: Path) -> Catalog:
 
 def load_catalog_file(catalog_file_path: Path) -> CatalogData:
     logging.debug(f"Loading catalog YAML from {catalog_file_path}")
+    if not catalog_file_path.exists():
+        raise FileNotFoundError(f"Catalog file {catalog_file_path} not found")
     with open(catalog_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     if "catalog" not in raw:

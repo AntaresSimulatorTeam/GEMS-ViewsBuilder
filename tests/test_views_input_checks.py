@@ -68,9 +68,16 @@ def test_validate_raises_when_simulation_table_missing(tmp_path: Path) -> None:
 def test_validate_raises_when_simulation_table_has_wrong_suffix(tmp_path: Path) -> None:
     _write_minimal_valid_input_data(tmp_path)
     (tmp_path / "simulation_table.parquet").unlink()
-    (tmp_path / "simulation_table.csv").touch()
-    with pytest.raises(ValueError, match="must be a '.parquet' file"):
+    (tmp_path / "simulation_table.txt").touch()
+    with pytest.raises(ValueError, match=r"must be a '.parquet' or '.csv' file"):
         StudyLayoutValidator(tmp_path).validate()
+
+
+def test_validate_passes_when_simulation_table_is_csv(tmp_path: Path) -> None:
+    _write_minimal_valid_input_data(tmp_path)
+    (tmp_path / "simulation_table.parquet").unlink()
+    (tmp_path / "simulation_table.csv").touch()
+    StudyLayoutValidator(tmp_path).validate()
 
 
 def test_validate_raises_when_catalogs_directory_missing(tmp_path: Path) -> None:

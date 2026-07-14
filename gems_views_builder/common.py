@@ -14,9 +14,18 @@ import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import polars as pl
+from gems.study import Component as GemsPyComponent  # type: ignore
+
+from gems_views_builder.input.component import (
+    Component,
+    build_component_port_connections,
+    compute_component_locations,
+    find_components_taxonomy_categories,
+    save_component_port_connections,
+)
 
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
@@ -58,3 +67,27 @@ def configure_logging(verbose: bool = False, log_dir: Path | None = None) -> Non
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
+
+
+def create_components(gemspy_components: list[GemsPyComponent]) -> list[Component]:
+    return [Component(component) for component in gemspy_components]
+
+
+def supply_components_with_taxonomy_categories(
+    components: list[Component], taxonomy_category_by_model: dict[str, str]
+) -> None:
+    find_components_taxonomy_categories(components, taxonomy_category_by_model)
+
+
+def supply_components_with_port_connections(components: list[Component], system_connections: list[Any]) -> None:
+    # # Build component-port connection index
+    # # Shape: component_id -> {port_id -> {peer_component_ids}}, so each component can
+    # # resolve a location by port in O(1).
+    component_port_connections = build_component_port_connections(system_connections)
+    save_component_port_connections(components, component_port_connections)
+
+
+def supply_components_with_locations(components: list[Component], scope_taxon_category: str) -> None:
+    # # Resolve, for every component's port, its unique location within scope_taxon_category.
+    # # Done once up front so ambiguous locations are caught before building any metric structure table.
+    compute_component_locations(components, scope_taxon_category)

@@ -46,7 +46,7 @@ def test_catalog_terms_are_typed(test_dataset_dir: Path) -> None:
             assert isinstance(term, Term)
             assert isinstance(term.taxonomy_category, str)
             assert isinstance(term.output_id, str)
-            assert term.location_ports is None or isinstance(term.location_ports, (str, tuple))
+            assert term.location_ports is None or isinstance(term.location_ports, tuple)
 
 
 def test_catalog_known_metrics(test_dataset_dir: Path) -> None:

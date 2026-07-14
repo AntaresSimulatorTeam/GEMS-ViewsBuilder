@@ -15,7 +15,6 @@ from pathlib import Path
 import polars as pl
 from pytest import approx
 
-from gems_views_builder.common import METRIC_STRUCTURE_TABLE_SCHEMA
 from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.metric_structure_table import MetricStructureTable
@@ -43,17 +42,16 @@ def _filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationTable
 
 def _structure() -> MetricStructureTable:
     """Metric structure mapping comp/out to metric M at location L."""
-    rows = pl.DataFrame(
+    rows: list[dict[str, object]] = [
         {
-            "metric_id": ["M"],
-            "component": ["comp"],
-            "metric_location": ["L"],
-            "breakdown_properties": [""],
-            "output": ["out"],
-            "weight_output_id": ["1"],
-        },
-        schema=METRIC_STRUCTURE_TABLE_SCHEMA,
-    )
+            "metric_id": "M",
+            "component": "comp",
+            "metric_location": "L",
+            "breakdown_properties": "",
+            "output": "out",
+            "weight_output_id": "1",
+        }
+    ]
     return MetricStructureTable(rows, "M")
 
 

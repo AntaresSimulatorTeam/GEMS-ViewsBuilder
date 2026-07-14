@@ -36,6 +36,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where the merged result parquet will be written.",
     )
     parser.add_argument(
+        "-f",
+        "--output-format",
+        dest="output_format",
+        choices=["parquet", "csv"],
+        default="parquet",
+        help="Format of the merged result file (default: parquet).",
+    )
+    parser.add_argument(
         "-l",
         "--log-dir",
         type=Path,

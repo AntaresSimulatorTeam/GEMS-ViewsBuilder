@@ -38,7 +38,6 @@ def test_loader_load_populates_input_data(test_dataset_dir: Path) -> None:
     assert input_data.input_data_path == test_dataset_dir
     assert isinstance(input_data.taxonomy, Taxonomy)
     assert isinstance(input_data.view_config, ViewConfig)
-    assert isinstance(input_data.catalogs, dict)
     assert isinstance(input_data.library, Library)
     assert isinstance(input_data.system, System)
     assert isinstance(input_data.filtered_st, FilteredSimulationTable)
@@ -56,7 +55,6 @@ def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) ->
     assert input_data.input_data_path == test_dataset_dir
     assert isinstance(input_data.taxonomy, Taxonomy)
     assert isinstance(input_data.view_config, ViewConfig)
-    assert isinstance(input_data.catalogs, dict)
     assert isinstance(input_data.library, Library)
     assert isinstance(input_data.system, System)
     assert isinstance(input_data.filtered_st, FilteredSimulationTable)

@@ -17,52 +17,54 @@ import pytest
 from gems_views_builder import TimeAggregation, ViewConfig, load_view_config
 
 
-def test_view_config_loads(test_dataset_dir: Path) -> None:
+def test_loads(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
     config = load_view_config(config_path)
     assert isinstance(config, ViewConfig)
     assert isinstance(config.id, str)
-    assert isinstance(config.location_taxonomy_category, str)
+    assert isinstance(config.scope_taxon_category, str)
     assert isinstance(config.calendar_id, str)
     assert len(config.catalog_ids) > 0
     assert config.input_data_path == test_dataset_dir
 
 
-def test_view_config_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
+def test_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
     config = load_view_config(config_path)
     for catalog_id in config.catalog_ids:
         assert isinstance(catalog_id, str)
 
 
-def test_view_config_metrics_are_pairs(test_dataset_dir: Path) -> None:
+def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
     config = load_view_config(config_path)
-    for catalog_id, metrics in config.catalog_to_metrics.items():
-        assert isinstance(catalog_id, str)
-        assert isinstance(metrics, list)
-        assert all(isinstance(metric, str) for metric in metrics)
+    for metric_id in config.metric_ids:
+        assert isinstance(metric_id, str)
+        assert "." in metric_id
+        catalog_id, metric_name = metric_id.split(".", 1)
+        assert catalog_id in config.catalog_ids
+        assert metric_name
 
 
-def test_view_config_known_values(test_dataset_dir: Path) -> None:
+def test_known_values(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
     assert config.id == "view_area"
-    assert config.location_taxonomy_category == "balance"
-    assert config.catalog_ids == ["catalog"]
-    metrics = config.catalog_to_metrics["catalog"]
-    assert "LOAD" in metrics
+    assert config.scope_taxon_category == "balance"
+    assert config.catalog_ids == {"catalog"}
+    metric_names = {metric_id.split(".", 1)[1] for metric_id in config.metric_ids}
+    assert "LOAD" in metric_names
     if test_dataset_dir.name == "test_3":
-        assert "PROD" in metrics
-        assert "BALANCE" in metrics
+        assert "PROD" in metric_names
+        assert "BALANCE" in metric_names
     elif test_dataset_dir.name == "test_location_aggregation":
         assert "PRODUCTION" in metrics
         assert "BALANCE" in metrics
     else:
-        assert "PRODUCTION" in metrics
-        assert "NUCLEAR_PRODUCTION" in metrics
+        assert "PRODUCTION" in metric_names
+        assert "NUCLEAR_PRODUCTION" in metric_names
 
 
-def test_view_config_time_aggregation(test_dataset_dir: Path) -> None:
+def test_time_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
     assert config.time_aggregation == TimeAggregation.HOUR
 
@@ -77,7 +79,17 @@ def test_view_config_location_aggregation(test_files_root: Path) -> None:
     assert config.location_aggregation.on_missing == "keep"
 
 
-def test_view_config_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
+def test_view_config_location_aggregation(test_files_root: Path) -> None:
+    src = test_files_root / "test_location_aggregation"
+    if not src.is_dir():
+        src = test_files_root.parent / "tests" / "test_inputs" / "test_location_aggregation"
+    config = load_view_config(src / "view_config.yml")
+    assert config.location_aggregation is not None
+    assert config.location_aggregation.key == "country"
+    assert config.location_aggregation.on_missing == "keep"
+
+
+def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
     invalid_config = tmp_path / "view_config.yml"
     invalid_config.write_text(
         """
@@ -95,5 +107,7 @@ view:
 """.strip()
     )
 
+    config = load_view_config(invalid_config)
+
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        load_view_config(invalid_config)
+        config.fetch_metrics({})

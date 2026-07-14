@@ -23,13 +23,22 @@ import pytest
 
 from gems_views_builder import (
     MetricStructureTableBuilder,
-    ViewBuilder,
     load_catalog,
     load_library,
 )
+from gems_views_builder.input.component import (
+    Component,
+    build_component_port_connections,
+    compute_component_locations,
+    find_components_taxonomy_categories,
+    group_components_by_taxon,
+    save_component_port_connections,
+)
+from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
-from gems_views_builder.loader import Loader
-from gems_views_builder.view import accumulate_on_disk
+from gems_views_builder.input.view_config import load_view_config
+from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
+from tests.conftest import build_view_builder
 
 # Same (technology, company) as filtering_and_breakdown, but YAML property order differs per component.
 _GAS_RHONEPOWER_GENERATORS = ("gas_1", "gas_2")
@@ -44,8 +53,9 @@ def property_order_workspace(test_files_root: Path, tmp_path: Path) -> tuple[Pat
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     shutil.copytree(src, dst)
-    metric_views = ViewBuilder(Loader(dst).load()).build()
-    view = accumulate_on_disk(metric_views, results_dir)
+    metric_views = build_view_builder(dst).build()
+    sinker = ParquetViewSinker(results_dir)
+    view = accumulate_on_disk(metric_views, sinker)
     return dst, view.dataframe.collect()
 
 
@@ -108,11 +118,22 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     """
     root = test_files_root / "filtering_and_breakdown_property_order"
     library = load_library(root / "library.yml")
-    system = load_system(root)
+    system = load_system(root, resolve_libraries(root / "library.yml"))
     catalog = load_catalog(root / "catalogs" / "catalog.yml")
+    view_config = load_view_config(root / "view_config.yml")
     metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")
 
-    table = MetricStructureTableBuilder(system, library).build(metric)
+    components = [Component(component) for component in system.components]
+    find_components_taxonomy_categories(components, library.taxonomy_category_by_model)
+    components_by_taxon = group_components_by_taxon(components)
+    component_port_connections = build_component_port_connections(system.connections)
+    save_component_port_connections(components, component_port_connections)
+    compute_component_locations(components, view_config.scope_taxon_category)
+
+    table = MetricStructureTableBuilder(
+        view_config.scope_taxon_category,
+        components_by_taxon,
+    ).build(metric)
     df = table.dataframe.collect()
     partial = df.filter(pl.col("component") == "gen_company_only")
     assert partial.height == 1

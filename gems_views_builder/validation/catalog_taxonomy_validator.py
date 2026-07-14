@@ -13,14 +13,16 @@
 """Validate consistency between loaded catalogs and the study taxonomy."""
 
 import logging
+from pathlib import Path
 
-from gems_views_builder.input.catalog import Catalog
+from gems_views_builder.input.catalog import Catalog, load_catalog
 from gems_views_builder.input.taxonomy import Taxonomy
 
 
-def validate_catalogs_against_taxonomy(catalogs: dict[str, Catalog], taxonomy: Taxonomy) -> None:
-    logging.info(f"Validating {len(catalogs)} catalog(s) against taxonomy {taxonomy.id!r}")
-    for catalog in catalogs.values():
+def validate_catalogs_against_taxonomy(input_data_path: Path, catalog_ids: set[str], taxonomy: Taxonomy) -> None:
+    logging.info(f"Validating {len(catalog_ids)} catalog(s) against taxonomy {taxonomy.id!r}")
+    for catalog_id in catalog_ids:
+        catalog = load_catalog(input_data_path / "catalogs" / f"{catalog_id}.yml")
         validate_catalog_against_taxonomy(catalog, taxonomy)
     logging.info(f"All catalogs are consistent with taxonomy {taxonomy.id!r}")
 
@@ -49,9 +51,10 @@ def validate_catalog_against_taxonomy(catalog: Catalog, taxonomy: Taxonomy) -> N
 
             if term.location_ports is not None:
                 category_ports = category_ports_by_id[term.taxonomy_category]
-                if term.location_ports not in category_ports:
+                unknown_ports = [port for port in term.location_ports if port not in category_ports]
+                if unknown_ports:
                     raise ValueError(
-                        f"Catalog {catalog.id!r} metric {metric.id!r} uses location-port "
-                        f"{term.location_ports!r}, which is not defined on taxonomy category "
+                        f"Catalog {catalog.id!r} metric {metric.id!r} uses location-port(s) "
+                        f"{unknown_ports!r}, which is not defined on taxonomy category "
                         f"{term.taxonomy_category!r} in taxonomy {taxonomy.id!r}"
                     )

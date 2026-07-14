@@ -5,24 +5,27 @@ from pathlib import Path
 
 import polars as pl
 
-from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
+from gems_views_builder.common import (
+    METRIC_STRUCTURE_TABLE_SCHEMA,
+    PARQUET_COMPRESSION,
+    PARQUET_COMPRESSION_LEVEL,
+    PARQUET_ROW_GROUP_SIZE,
+)
 
 
 class MetricStructureTable:
     """On-disk metric structure table, ready for lazy scanning."""
 
     # # One edge case here is that directories never be cleaned up, only will be cleaned while calling destructor
-    def __init__(self, rows: pl.DataFrame, metric_id: str) -> None:
+    def __init__(self, rows: list[dict[str, object]], metric_id: str) -> None:
         self._tmp_root = Path(tempfile.mkdtemp())
-        if rows.is_empty():
-            logging.info(f"[{metric_id}] No matching components found — metric structure table is empty")
-        else:
-            logging.info(f"[{metric_id}] Metric structure table built with {len(rows)} row(s)")
+        logging.info(f"[{metric_id}] Metric structure table has {len(rows)} rows")
 
+        self.rows = pl.DataFrame(rows, schema=METRIC_STRUCTURE_TABLE_SCHEMA)
         metric_structure_dir = self._tmp_root / "views" / "metric_structure"
         metric_structure_dir.mkdir(parents=True, exist_ok=True)
         file_path = metric_structure_dir / f"{metric_id}.parquet"
-        rows.write_parquet(
+        self.rows.write_parquet(
             file_path,
             compression=PARQUET_COMPRESSION,
             compression_level=PARQUET_COMPRESSION_LEVEL,
