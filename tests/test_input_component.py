@@ -14,8 +14,8 @@ from types import SimpleNamespace
 
 from gems_views_builder.input.component import (
     Component,
-    find_components_taxonomy_categories,
     group_components_by_taxon,
+    supply_components_with_taxonomy_categories,
 )
 
 
@@ -28,9 +28,9 @@ def test_get_location_none_returns_own_id() -> None:
     assert component.resolve_locations(None, "any_taxonomy_category") == ("area",)
 
 
-def test_find_components_taxonomy_categories() -> None:
+def test_supply_components_with_taxonomy_categories() -> None:
     components = [Component(make_raw_component("gen", "lib.generator"))]
-    find_components_taxonomy_categories(components, {"generator": "production"})
+    supply_components_with_taxonomy_categories(components, {"generator": "production"})
     assert components[0].taxonomy_category == "production"
 
 

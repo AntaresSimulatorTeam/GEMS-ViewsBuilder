@@ -21,7 +21,7 @@ class Component:
     # port_id -> set of peer component ids connected on that port
     connections: dict[str, set[str]] = field(default_factory=dict)
     # (port_id, taxonomy_category) -> unique peer component id located on that port for that
-    # taxonomy category. Populated by ``compute_component_locations``. Absence of a key means no
+    # taxonomy category. Populated by ``supply_components_with_locations``. Absence of a key means no
     # peer on that port belongs to that taxonomy category (no location can be determined there).
     locations: dict[tuple[str, str], str] = field(default_factory=dict)
 
@@ -83,7 +83,7 @@ class Component:
         return matched
 
 
-def find_components_taxonomy_categories(
+def supply_components_with_taxonomy_categories(
     components: list[Component], taxonomy_category_by_model: dict[str, str]
 ) -> None:
     for component in components:
@@ -91,7 +91,7 @@ def find_components_taxonomy_categories(
 
 
 def group_components_by_taxon(components: list[Component]) -> dict[str, list[Component]]:
-    """Group components by taxonomy category. Requires ``find_components_taxonomy_categories`` to have run first."""
+    """Group components by taxonomy category. Requires ``supply_components_with_taxonomy_categories`` first."""
     components_by_taxon: dict[str, list[Component]] = defaultdict(list)
     for component in components:
         components_by_taxon[cast(str, component.taxonomy_category)].append(component)
@@ -157,10 +157,13 @@ def build_component_port_connections(connections: list[Any]) -> dict[str, dict[s
     return component_port_connections
 
 
-def compute_component_locations(components: list[Component], taxonomy_category: str) -> None:
+def supply_components_with_locations(components: list[Component], taxonomy_category: str) -> None:
+    # # Resolve, for every component's port, its unique location within taxonomy_category.
+    # # Done once up front so ambiguous locations are caught before building any metric structure table.
+
     """Precompute, for every component's port, the unique peer belonging to taxonomy_category.
 
-    Requires find_components_taxonomy_categories and save_component_port_connections to have
+    Requires supply_components_with_taxonomy_categories and save_component_port_connections to have
     already run. For each (component, port), among the peers connected on that port, only those
     belonging to ``taxonomy_category`` are considered:
     - zero matching peers: no location is stored for that port (components referencing it are

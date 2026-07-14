@@ -30,11 +30,11 @@ from gems_views_builder import (
 from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
-    compute_component_locations,
-    find_components_taxonomy_categories,
     format_metric_location,
     group_components_by_taxon,
     save_component_port_connections,
+    supply_components_with_locations,
+    supply_components_with_taxonomy_categories,
 )
 from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
@@ -46,12 +46,12 @@ def build_components_by_taxonomy_category(
     system: Any, library: Any, scope_taxon_category: str | None = None
 ) -> dict[str, list[Component]]:
     components = [Component(component) for component in system.components]
-    find_components_taxonomy_categories(components, library.taxonomy_category_by_model)
+    supply_components_with_taxonomy_categories(components, library.taxonomy_category_by_model)
     components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
     save_component_port_connections(components, component_port_connections)
     if scope_taxon_category is not None:
-        compute_component_locations(components, scope_taxon_category)
+        supply_components_with_locations(components, scope_taxon_category)
     return components_by_taxon
 
 
@@ -277,7 +277,7 @@ def test_single_port_multiple_peers_of_other_categories_are_skipped_not_raised(
     assert table.dataframe.collect().height == 0
 
 
-def test_compute_component_locations_raises_on_genuine_ambiguity(test_files_root: Path) -> None:
+def test_supply_components_with_locations_raises_on_genuine_ambiguity(test_files_root: Path) -> None:
     """Two peers on the same port both belonging to the scope taxonomy category is an actual
     inconsistency and must raise during the up-front location precomputation."""
     # Arrange
@@ -285,7 +285,7 @@ def test_compute_component_locations_raises_on_genuine_ambiguity(test_files_root
     library = load_library(test_3 / "library.yml")
     system = load_system(test_3, resolve_libraries(test_3 / "library.yml"))
     components = [Component(component) for component in system.components]
-    find_components_taxonomy_categories(components, library.taxonomy_category_by_model)
+    supply_components_with_taxonomy_categories(components, library.taxonomy_category_by_model)
     component_port_connections = build_component_port_connections(system.connections)
     save_component_port_connections(components, component_port_connections)
     components_by_id = {component.id: component for component in components}
@@ -294,7 +294,7 @@ def test_compute_component_locations_raises_on_genuine_ambiguity(test_files_root
 
     # Act / Assert
     with pytest.raises(ValueError, match="p0_port"):
-        compute_component_locations(components, "balance")
+        supply_components_with_locations(components, "balance")
 
 
 def test_get_location_tuple_of_ports_returns_peer_per_port(test_3_components: dict[str, Any]) -> None:
@@ -355,7 +355,7 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
     # then recompute locations so the precomputed dictionary reflects the forced wiring.
     components_by_id["link_link_AB"].connections["p0_port"] = {"busA"}
     components_by_id["link_link_AB"].connections["p1_port"] = {"busA"}
-    compute_component_locations(list(components_by_id.values()), view_config.scope_taxon_category)
+    supply_components_with_locations(list(components_by_id.values()), view_config.scope_taxon_category)
     assert components_by_id["link_link_AB"].resolve_locations(
         ("p0_port", "p1_port"), view_config.scope_taxon_category
     ) == ("busA", "busA")
