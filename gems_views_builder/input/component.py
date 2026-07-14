@@ -194,3 +194,15 @@ def format_metric_location(locations: tuple[str, ...]) -> str:
     if len(locations) == 1:
         return locations[0]
     return "(" + ",".join(locations) + ")"
+
+
+def create_components(gemspy_components: list[GemsPyComponent]) -> list[Component]:
+    return [Component(component) for component in gemspy_components]
+
+
+def supply_components_with_port_connections(components: list[Component], system_connections: list[Any]) -> None:
+    # # Build component-port connection index
+    # # Shape: component_id -> {port_id -> {peer_component_ids}}, so each component can
+    # # resolve a location by port in O(1).
+    component_port_connections = build_component_port_connections(system_connections)
+    save_component_port_connections(components, component_port_connections)

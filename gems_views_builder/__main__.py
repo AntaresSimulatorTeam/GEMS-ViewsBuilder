@@ -16,12 +16,12 @@ from pathlib import Path
 from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import (
     configure_logging,
-    create_components,
-    supply_components_with_port_connections,
 )
 from gems_views_builder.input.component import (
+    create_components,
     group_components_by_taxon,
     supply_components_with_locations,
+    supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
 from gems_views_builder.loader import Loader
