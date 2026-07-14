@@ -43,7 +43,9 @@ class MetricStructureTableBuilder:
                         {
                             "metric_id": metric.id,
                             "component": c.id,
-                            "metric_location": c.formatted_locations(term.location_ports, self.location_taxonomy_category),
+                            "metric_location": c.formatted_locations(
+                                term.location_ports, self.location_taxonomy_category
+                            ),
                             "breakdown_properties": c.format_breakdown_properties(metric.breakdown),
                             "output": term.output_id,
                             "weight_output_id": 1,
