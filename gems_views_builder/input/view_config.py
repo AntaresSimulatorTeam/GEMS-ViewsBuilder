@@ -33,7 +33,7 @@ class TimeAggregation(Enum):
     YEAR = "year"
 
 
-class Location(ViewBuilderBasedModel):
+class LocationCategory(ViewBuilderBasedModel):
     taxonomy_category: str
 
 
@@ -42,7 +42,7 @@ class Calendar(ViewBuilderBasedModel):
 
 
 class Scope(ViewBuilderBasedModel):
-    location: Location | None = None
+    location: LocationCategory | None = None
     calendar: Calendar | None = None
 
 
