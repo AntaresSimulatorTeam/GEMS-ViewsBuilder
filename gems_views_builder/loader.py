@@ -41,8 +41,7 @@ class Loader:
 
         simulation_table = load_simulation_table(next(self.input_data_path.glob("simulation_table*")))
         calendar = load_calendar(self.input_data_path, view_config.calendar_id)
-        intermediates_dir = self.input_data_path / "views" / "intermediate"
-        filtered_st = filter_simulation_table(simulation_table, calendar, intermediates_dir)
+        filtered_st = filter_simulation_table(simulation_table, calendar)
 
         library_path = self.input_data_path / "library.yml"
         input_data = InputData(
