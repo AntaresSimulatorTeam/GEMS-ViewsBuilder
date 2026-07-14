@@ -16,11 +16,14 @@ from pathlib import Path
 from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import (
     configure_logging,
+)
+from gems_views_builder.input.component import (
     create_components,
+    group_components_by_taxon,
+    supply_components_with_locations,
     supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
-from gems_views_builder.input.component import group_components_by_taxonomy_category
 from gems_views_builder.loader import Loader
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.input_consistency_validator import InputConsistencyValidator
@@ -28,7 +31,7 @@ from gems_views_builder.validation.study_layout_validator import StudyLayoutVali
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
-def run(input_dir: Path, view_sinker: ViewSinker) -> None:
+def run_view_building_process(input_dir: Path, view_sinker: ViewSinker) -> None:
     """Run the full pipeline and accumulate the results to the results directory."""
 
     # # Validate study layout
@@ -43,12 +46,13 @@ def run(input_dir: Path, view_sinker: ViewSinker) -> None:
     components = create_components(input_data.system.components)
     supply_components_with_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
     supply_components_with_port_connections(components, input_data.system.connections)
-    components_by_taxonomy_category = group_components_by_taxonomy_category(components)
+    supply_components_with_locations(components, input_data.view_config.scope_taxon_category)
+    components_by_taxon = group_components_by_taxon(components)
 
     # # Only one instance of MetricStructureTableBuilder is needed
     metric_structure_table_builder = MetricStructureTableBuilder(
-        input_data.view_config.location_taxonomy_category,
-        components_by_taxonomy_category,
+        input_data.view_config.scope_taxon_category,
+        components_by_taxon,
     )
 
     metric_views = ViewBuilder(input_data, metric_structure_table_builder).build()
@@ -70,7 +74,8 @@ def main(argv: list[str] | None = None) -> int:
         return error
 
     try:
-        run(args.input_dir, view_sinker)
+        StudyLayoutValidator(args.input_dir).validate()
+        run_view_building_process(args.input_dir, view_sinker)
     except Exception:
         logging.exception("View building failed")
         return 1

@@ -28,7 +28,7 @@ def test_loads(test_dataset_dir: Path) -> None:
     # Assert
     assert isinstance(config, ViewConfig)
     assert isinstance(config.id, str)
-    assert isinstance(config.location_taxonomy_category, str)
+    assert isinstance(config.scope_taxon_category, str)
     assert isinstance(config.calendar_id, str)
     assert isinstance(config.taxonomy_id, str)
     assert len(config.catalog_ids) > 0
@@ -69,7 +69,7 @@ def test_known_values(test_dataset_dir: Path) -> None:
 
     # Assert
     assert config.id == "view_area"
-    assert config.location_taxonomy_category == "balance"
+    assert config.scope_taxon_category == "balance"
     assert config.taxonomy_id == "my_taxonomy"
     assert config.catalog_ids == {"catalog"}
     metric_names = {metric_id.split(".", 1)[1] for metric_id in config.metric_ids}

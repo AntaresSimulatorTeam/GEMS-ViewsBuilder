@@ -17,8 +17,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.__main__ import run
-from gems_views_builder.metrics_structure_builder import format_metric_location
+from gems_views_builder.__main__ import run_view_building_process
+from gems_views_builder.input.component import format_metric_location
 from gems_views_builder.view import CsvViewSinker, ParquetViewSinker
 
 
@@ -36,7 +36,7 @@ def test_3_study(test_files_root: Path, tmp_path: Path) -> Path:
 @pytest.fixture()
 def view_result(test_3_study: Path) -> pl.DataFrame:
     sinker = ParquetViewSinker(test_3_study)
-    run(test_3_study, sinker)
+    run_view_building_process(test_3_study, sinker)
     result_files = list(test_3_study.glob("view*.parquet"))
     assert result_files, "No result parquet file written"
     return pl.read_parquet(result_files[0])
@@ -99,7 +99,7 @@ def test_build_view_from_parquet_simu_table__print_it_in_csv__check_view_format(
     sinker = CsvViewSinker(test_3_study)
 
     # Act
-    run(test_3_study, sinker)
+    run_view_building_process(test_3_study, sinker)
 
     # Assert
     result_files = list(test_3_study.glob("view*.csv"))
@@ -116,7 +116,7 @@ def test_build_view__run_pipeline__emits_expected_log_messages(
 
     # Act
     with caplog.at_level(logging.INFO):
-        run(test_3_study, sinker)
+        run_view_building_process(test_3_study, sinker)
 
     # Assert
     repo_root = Path(__file__).resolve().parents[1]
@@ -137,7 +137,7 @@ def test_build_view__run_pipeline__creates_log_file(test_3_study: Path) -> None:
     sinker = ParquetViewSinker(test_3_study)
 
     # Act
-    run(test_3_study, sinker)
+    run_view_building_process(test_3_study, sinker)
 
     # Assert
     repo_root = Path(__file__).resolve().parents[1]
