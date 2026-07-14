@@ -13,7 +13,7 @@
 import logging
 
 from gems_views_builder.input.catalog import Metric
-from gems_views_builder.input.component import Component
+from gems_views_builder.input.component import Component, format_metric_location
 from gems_views_builder.input.view_config import LocationAggregation
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
@@ -30,29 +30,9 @@ class MetricStructureTableBuilder:
         self.scope_taxon_category = scope_taxon_category
         self.components_by_taxon = components_by_taxon  # this is mainly for operating
         self.location_aggregation = location_aggregation
-
-    def _resolve_location_aggregation(self, locations: list[str]) -> list[str]:
-        """Filter and relabel raw location component IDs using the configured property key.
-
-        Each location is resolved independently. Locations where the property is
-        undeclared are replaced with ``<unknown>`` (on_missing='keep') or
-        excluded (on_missing='drop'). When no location_aggregation is configured
-        the list is returned unchanged.
-        """
-        location = self.location_aggregation
-        if location is None:
-            return locations
-        result: list[str] = []
-        for loc in locations:
-            val = self.system.get_component(loc).properties.get(location.key)
-            if val is not None:
-                result.append(val)
-            elif location.on_missing == "keep":
-                result.append("<unknown>")
-            elif location.on_missing == "drop":
-                return []
-
-        return result
+        self.components_by_id = {
+            component.id: component for components in components_by_taxon.values() for component in components
+        }
 
     def build(self, metric: Metric) -> MetricStructureTable:
         logging.debug(f"[{metric.id}] Building metric structure table ({len(metric.terms)} term(s))")
@@ -65,11 +45,20 @@ class MetricStructureTableBuilder:
 
             for c in self.components_by_taxon[term.taxonomy_category]:
                 if c.match(metric.filter) and c.is_located_at(term.location_ports, self.scope_taxon_category):
+                    locations = c.aggregated_locations(
+                        term.location_ports,
+                        self.scope_taxon_category,
+                        self.location_aggregation,
+                        self.components_by_id,
+                    )
+                    if not locations:
+                        logging.debug(f"[{metric.id}] Component {c.id!r} dropped: no location after spatial aggregation")
+                        continue
                     rows.append(
                         {
                             "metric_id": metric.id,
                             "component": c.id,
-                            "metric_location": c.formatted_locations(term.location_ports, self.scope_taxon_category),
+                            "metric_location": format_metric_location(locations),
                             "breakdown_properties": c.format_breakdown_properties(metric.breakdown),
                             "output": term.output_id,
                             "weight_output_id": 1,

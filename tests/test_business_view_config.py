@@ -57,8 +57,8 @@ def test_known_values(test_dataset_dir: Path) -> None:
         assert "PROD" in metric_names
         assert "BALANCE" in metric_names
     elif test_dataset_dir.name == "test_location_aggregation":
-        assert "PRODUCTION" in metrics
-        assert "BALANCE" in metrics
+        assert "PRODUCTION" in metric_names
+        assert "BALANCE" in metric_names
     else:
         assert "PRODUCTION" in metric_names
         assert "NUCLEAR_PRODUCTION" in metric_names
@@ -67,16 +67,6 @@ def test_known_values(test_dataset_dir: Path) -> None:
 def test_time_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
     assert config.time_aggregation == TimeAggregation.HOUR
-
-
-def test_view_config_location_aggregation(test_files_root: Path) -> None:
-    src = test_files_root / "test_location_aggregation"
-    if not src.is_dir():
-        src = test_files_root.parent / "tests" / "test_inputs" / "test_location_aggregation"
-    config = load_view_config(src / "view_config.yml")
-    assert config.location_aggregation is not None
-    assert config.location_aggregation.key == "country"
-    assert config.location_aggregation.on_missing == "keep"
 
 
 def test_view_config_location_aggregation(test_files_root: Path) -> None:

@@ -6,6 +6,7 @@ from typing import Any, cast
 from gems.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.catalog import PropertySchema
+from gems_views_builder.input.view_config import LocationAggregation
 
 
 @dataclass
@@ -59,8 +60,15 @@ class Component:
             return (self.id,)
         return tuple(self.locations[(port, taxonomy_category)] for port in location_ports)
 
-    def formatted_locations(self, location_ports: tuple[str, ...] | None, taxonomy_category: str) -> str:
-        return format_metric_location(self.resolve_locations(location_ports, taxonomy_category))
+    def aggregated_locations(
+        self,
+        location_ports: tuple[str, ...] | None,
+        taxonomy_category: str,
+        location_aggregation: LocationAggregation | None,
+        components_by_id: dict[str, "Component"],
+    ) -> tuple[str, ...]:
+        location_components_ids = self.resolve_locations(location_ports, taxonomy_category)
+        return self.resolve_location_aggregation(location_components_ids, location_aggregation, components_by_id)
 
     def format_breakdown_properties(self, breakdown: list[PropertySchema] | None) -> str:
         if not breakdown:
@@ -81,6 +89,27 @@ class Component:
         if not matched:
             logging.debug(f"Component {self.id!r} did not match metric filter and was skipped")
         return matched
+
+    def resolve_location_aggregation(
+        self,
+        location_components_ids: tuple[str, ...],
+        location_aggregation: LocationAggregation | None,
+        components_by_id: dict[str, "Component"],
+    ) -> tuple[str, ...]:
+        if location_aggregation is None:
+            return location_components_ids
+
+        result: list[str] = []
+        for component_id in location_components_ids:
+            property_value = components_by_id[component_id].properties.get(location_aggregation.key)
+            if property_value is not None:
+                result.append(property_value)
+            elif location_aggregation.on_missing == "keep":
+                result.append("<unknown>")
+            elif location_aggregation.on_missing == "drop":
+                return ()
+
+        return tuple(result)
 
 
 def find_components_taxonomy_categories(

@@ -38,8 +38,7 @@ from gems_views_builder.input.component import (
 )
 from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
-from gems_views_builder.input.view_config import load_view_config
-from gems_views_builder.input.view_config import LocationAggregation
+from gems_views_builder.input.view_config import LocationAggregation, load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
@@ -405,56 +404,73 @@ def _location_aggregation_src(test_files_root: Path) -> Path:
 def loc_agg_components(test_files_root: Path) -> dict[str, Any]:
     fixture = _location_aggregation_src(test_files_root)
     library = load_library(fixture / "library.yml")
-    system = load_system(fixture)
+    system = load_system(fixture, resolve_libraries(fixture / "library.yml"))
     catalog = load_catalog(fixture / "catalogs" / "catalog.yml")
     taxonomy = load_taxonomy(fixture / "taxonomy.yml")
-    return {"system": system, "catalog": catalog, "library": library, "taxonomy": taxonomy}
+    view_config = load_view_config(fixture / "view_config.yml")
+    components_by_taxon = build_components_by_taxonomy_category(system, library, view_config.scope_taxon_category)
+    components_by_id = {
+        component.id: component for components in components_by_taxon.values() for component in components
+    }
+    return {
+        "system": system,
+        "catalog": catalog,
+        "library": library,
+        "taxonomy": taxonomy,
+        "scope_taxon_category": view_config.scope_taxon_category,
+        "components_by_taxon": components_by_taxon,
+        "components_by_id": components_by_id,
+    }
 
 
-def _make_builder(
+def _resolve(
     components: dict[str, Any],
-    location_aggregation: LocationAggregation | None = None,
-) -> MetricStructureTableBuilder:
-    return MetricStructureTableBuilder(
-        components["system"],
-        components["library"],
-        location_aggregation=location_aggregation,
+    locations: tuple[str, ...],
+    location_aggregation: LocationAggregation | None,
+) -> tuple[str, ...]:
+    components_by_id: dict[str, Component] = components["components_by_id"]
+    any_component = next(iter(components_by_id.values()))
+    result: tuple[str, ...] = any_component.resolve_location_aggregation(
+        locations, location_aggregation, components_by_id
     )
+    return result
 
 
 # ---------------------------------------------------------------------------
-# _resolve_location_aggregation unit tests
+# resolve_location_aggregation unit tests
 # ---------------------------------------------------------------------------
 
 
 def test_resolve_single_location_with_property(loc_agg_components: dict[str, Any]) -> None:
-    builder = _make_builder(loc_agg_components, LocationAggregation(key="country"))
-    assert builder._resolve_location_aggregation(["area_FR1"]) == ["FR"]
+    assert _resolve(loc_agg_components, ("area_FR1",), LocationAggregation(key="country")) == ("FR",)
 
 
 def test_resolve_multiple_locations(loc_agg_components: dict[str, Any]) -> None:
-    builder = _make_builder(loc_agg_components, LocationAggregation(key="country"))
-    assert builder._resolve_location_aggregation(["area_FR1", "area_DE"]) == ["FR", "DE"]
+    assert _resolve(loc_agg_components, ("area_FR1", "area_DE"), LocationAggregation(key="country")) == (
+        "FR",
+        "DE",
+    )
 
 
 def test_resolve_missing_property_keep(loc_agg_components: dict[str, Any]) -> None:
-    builder = _make_builder(loc_agg_components, LocationAggregation(key="country", on_missing="keep"))
-    assert builder._resolve_location_aggregation(["area_orph"]) == ["<unknown>"]
+    result = _resolve(loc_agg_components, ("area_orph",), LocationAggregation(key="country", on_missing="keep"))
+    assert result == ("<unknown>",)
 
 
 def test_resolve_missing_property_drop(loc_agg_components: dict[str, Any]) -> None:
-    builder = _make_builder(loc_agg_components, LocationAggregation(key="country", on_missing="drop"))
-    assert builder._resolve_location_aggregation(["area_orph"]) == []
+    result = _resolve(loc_agg_components, ("area_orph",), LocationAggregation(key="country", on_missing="drop"))
+    assert result == ()
 
 
 def test_resolve_mixed_known_and_unknown_drop(loc_agg_components: dict[str, Any]) -> None:
-    builder = _make_builder(loc_agg_components, LocationAggregation(key="country", on_missing="drop"))
-    assert builder._resolve_location_aggregation(["area_FR1", "area_orph"]) == []
+    result = _resolve(
+        loc_agg_components, ("area_FR1", "area_orph"), LocationAggregation(key="country", on_missing="drop")
+    )
+    assert result == ()
 
 
 def test_resolve_no_aggregation_passthrough(loc_agg_components: dict[str, Any]) -> None:
-    builder = _make_builder(loc_agg_components, location_aggregation=None)
-    assert builder._resolve_location_aggregation(["area_FR1"]) == ["area_FR1"]
+    assert _resolve(loc_agg_components, ("area_FR1",), None) == ("area_FR1",)
 
 
 # ---------------------------------------------------------------------------
@@ -466,8 +482,8 @@ def test_build_with_country_aggregation_collapses_fr(loc_agg_components: dict[st
     """gen_FR1 and gen_FR2 both resolve to 'FR' via the country property."""
     metric = loc_agg_components["catalog"].get_metric("PRODUCTION")
     table = MetricStructureTableBuilder(
-        loc_agg_components["system"],
-        loc_agg_components["library"],
+        loc_agg_components["scope_taxon_category"],
+        loc_agg_components["components_by_taxon"],
         location_aggregation=LocationAggregation(key="country"),
     ).build(metric)
     df = table.dataframe.collect()
@@ -480,8 +496,8 @@ def test_build_with_drop_excludes_orphan(loc_agg_components: dict[str, Any]) -> 
     """gen_orph has no country property; on_missing=drop excludes it."""
     metric = loc_agg_components["catalog"].get_metric("PRODUCTION")
     table = MetricStructureTableBuilder(
-        loc_agg_components["system"],
-        loc_agg_components["library"],
+        loc_agg_components["scope_taxon_category"],
+        loc_agg_components["components_by_taxon"],
         location_aggregation=LocationAggregation(key="country", on_missing="drop"),
     ).build(metric)
     df = table.dataframe.collect()
@@ -504,8 +520,8 @@ def test_build_multiport_location_ports_with_aggregation(loc_agg_components: dic
         time_operator=TimeOperator.SUM,
     )
     table = MetricStructureTableBuilder(
-        loc_agg_components["system"],
-        loc_agg_components["library"],
+        loc_agg_components["scope_taxon_category"],
+        loc_agg_components["components_by_taxon"],
         location_aggregation=LocationAggregation(key="country"),
     ).build(metric)
     df = table.dataframe.collect()

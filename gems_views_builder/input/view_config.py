@@ -126,10 +126,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         scope_taxon_category=scope_taxon_category,
         catalog_ids={c.id for c in raw_view_config.catalog},
         time_aggregation=raw_view_config.aggregation[0].time if raw_view_config.aggregation else None,
-        location_aggregation=next(
-            (item.location for item in parsed.aggregation if item.location),
-            None,
-        ),
+        location_aggregation=raw_view_config.aggregation[1].location if len(raw_view_config.aggregation) > 1 else None,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
     )
     logging.info(

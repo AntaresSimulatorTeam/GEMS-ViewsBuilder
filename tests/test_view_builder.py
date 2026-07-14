@@ -43,22 +43,8 @@ def _location_aggregation_src(test_files_root: Path) -> Path:
     raise FileNotFoundError(f"test_location_aggregation fixture not found under {test_files_root}")
 
 
-def _metric_context(dataset_dir: Path, metric_id: str) -> tuple[Metric, System]:
-    catalog = load_catalog(dataset_dir / "catalogs" / "catalog.yml")
-    return catalog.get_metric(metric_id), load_system(dataset_dir)
-
-
-def _component_matches_filters(metric_filter: PropertySchema | None, component: object) -> bool:
-    if metric_filter is None:
-        return True
-    props = getattr(component, "properties", None) or {}
-    if not isinstance(props, dict):
-        return False
-    return bool(props.get(metric_filter.key) == metric_filter.value)
-
-
-def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
-    encoded = _format_metric_location(location)
+def metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
+    encoded = format_metric_location((location,))
     return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == encoded)).sort("view_date")
 
 
@@ -69,11 +55,6 @@ def view_result(test_3_study: Path) -> pl.DataFrame:
     result_files = list(test_3_study.glob("view*.parquet"))
     assert result_files, "No result parquet file written"
     return pl.read_parquet(result_files[0])
-
-
-def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
-    encoded = _format_metric_location(location)
-    return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == encoded)).sort("view_date")
 
 
 def test_build_view__prod_at_bus_a__returns_24_hourly_rows(view_result: pl.DataFrame) -> None:
@@ -116,13 +97,8 @@ def test_build_view__balance_at_bus_a__matches_link_outflow(view_result: pl.Data
     assert rows["metric_value"].to_list() == expected
 
 
-def test_build_view__balance_at_bus_b__matches_link_inflow(view_run: tuple[pl.DataFrame, Path]) -> None:
-    view_result, dst = view_run
+def test_build_view__balance_at_bus_b__matches_link_inflow(view_result: pl.DataFrame) -> None:
     rows = metric_at(view_result, "BALANCE", "busB")
-    metric, system = _metric_context(dst, "BALANCE")
-    if not _component_matches_filters(metric.filter, system.get_component("link_link_AB")):
-        assert len(rows) == 0
-        return
     assert len(rows) == 24
     expected = [-(100 - 2 * t) for t in range(1, 25)]
     assert rows["metric_value"].to_list() == expected
@@ -198,11 +174,9 @@ def _loc_run(test_files_root: Path, tmp_path: Path, config_variant: str | None =
     shutil.copytree(src, dst)
     if config_variant is not None:
         shutil.copy(dst / f"{config_variant}.yml", dst / "view_config.yml")
-    results_dir = tmp_path / "results" / (config_variant or "default")
-    results_dir.mkdir(parents=True)
-    metric_views = _build_view_builder(dst).build()
-    accumulate_on_disk(metric_views, results_dir)
-    result_files = list(results_dir.glob("view*.parquet"))
+    sinker = ParquetViewSinker(dst)
+    run(dst, sinker)
+    result_files = list(dst.glob("view*.parquet"))
     assert result_files, "No result parquet file written"
     return pl.read_parquet(result_files[0])
 
@@ -210,7 +184,7 @@ def _loc_run(test_files_root: Path, tmp_path: Path, config_variant: str | None =
 def test_country_collapse_fr(test_files_root: Path, tmp_path: Path) -> None:
     """PRODUCTION at '{FR}' = gen_FR1 + gen_FR2 summed per hour."""
     df = _loc_run(test_files_root, tmp_path)
-    rows = _metric_at(df, "PRODUCTION", "FR")
+    rows = metric_at(df, "PRODUCTION", "FR")
     assert rows["metric_value"].to_list() == [20, 40, 60, 80]
     assert df.filter(pl.col("metric_location").is_in(["area_FR1", "area_FR2"])).is_empty()
 
@@ -218,14 +192,14 @@ def test_country_collapse_fr(test_files_root: Path, tmp_path: Path) -> None:
 def test_country_collapse_de(test_files_root: Path, tmp_path: Path) -> None:
     """PRODUCTION at '{DE}' = gen_DE alone."""
     df = _loc_run(test_files_root, tmp_path)
-    rows = _metric_at(df, "PRODUCTION", "DE")
+    rows = metric_at(df, "PRODUCTION", "DE")
     assert rows["metric_value"].to_list() == [10, 20, 30, 40]
 
 
 def test_unknown_sentinel_keep(test_files_root: Path, tmp_path: Path) -> None:
     """gen_orph has no country property; on_missing=keep routes it to '{<unknown>}'."""
     df = _loc_run(test_files_root, tmp_path)
-    rows = _metric_at(df, "PRODUCTION", "<unknown>")
+    rows = metric_at(df, "PRODUCTION", "<unknown>")
     assert rows["metric_value"].to_list() == [10, 20, 30, 40]
     assert df.filter(pl.col("metric_location") == "area_orph").is_empty()
 
@@ -235,15 +209,15 @@ def test_unknown_drop(test_files_root: Path, tmp_path: Path) -> None:
     df = _loc_run(test_files_root, tmp_path, config_variant="view_config_drop")
     assert df.filter(pl.col("metric_location") == "<unknown>").is_empty()
     assert df.filter(pl.col("metric_location") == "area_orph").is_empty()
-    assert _metric_at(df, "PRODUCTION", "FR")["metric_value"].to_list() == [20, 40, 60, 80]
-    assert _metric_at(df, "PRODUCTION", "DE")["metric_value"].to_list() == [10, 20, 30, 40]
+    assert metric_at(df, "PRODUCTION", "FR")["metric_value"].to_list() == [20, 40, 60, 80]
+    assert metric_at(df, "PRODUCTION", "DE")["metric_value"].to_list() == [10, 20, 30, 40]
 
 
 def test_balance_location_collapse(test_files_root: Path, tmp_path: Path) -> None:
     """BALANCE link flows appear at country-level labels, not raw area IDs."""
     df = _loc_run(test_files_root, tmp_path)
-    assert _metric_at(df, "BALANCE", "FR")["metric_value"].to_list() == [5, 5, 5, 5]
-    assert _metric_at(df, "BALANCE", "DE")["metric_value"].to_list() == [-5, -5, -5, -5]
+    assert metric_at(df, "BALANCE", "FR")["metric_value"].to_list() == [5, 5, 5, 5]
+    assert metric_at(df, "BALANCE", "DE")["metric_value"].to_list() == [-5, -5, -5, -5]
     assert df.filter(
         (pl.col("metric_id") == "BALANCE") & pl.col("metric_location").is_in(["area_FR1", "area_DE"])
     ).is_empty()
@@ -253,6 +227,6 @@ def test_no_location_key_regression(test_files_root: Path, tmp_path: Path) -> No
     """Without a location key, PRODUCTION rows carry raw area IDs — feature is opt-in."""
     df = _loc_run(test_files_root, tmp_path, config_variant="view_config_no_location")
     for area in ("area_FR1", "area_FR2", "area_DE", "area_orph"):
-        rows = _metric_at(df, "PRODUCTION", area)
+        rows = metric_at(df, "PRODUCTION", area)
         assert rows["metric_value"].to_list() == [10, 20, 30, 40], f"unexpected values for {area}"
     assert df.filter(pl.col("metric_location").is_in(["FR", "DE", "<unknown>"])).is_empty()
