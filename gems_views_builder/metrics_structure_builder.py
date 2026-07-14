@@ -22,10 +22,10 @@ class MetricStructureTableBuilder:
 
     def __init__(
         self,
-        scope_taxon_category: str,
+        location_taxonomy_category: str,
         components_by_taxon: dict[str, list[Component]],  # taxonomy category -> components
     ) -> None:
-        self.scope_taxon_category = scope_taxon_category
+        self.location_taxonomy_category = location_taxonomy_category
         self.components_by_taxon = components_by_taxon  # this is mainly for operating
 
     def build(self, metric: Metric) -> MetricStructureTable:
@@ -38,12 +38,12 @@ class MetricStructureTableBuilder:
             )
 
             for c in self.components_by_taxon[term.taxonomy_category]:
-                if c.match(metric.filter) and c.is_located_at(term.location_ports, self.scope_taxon_category):
+                if c.match(metric.filter) and c.is_located_at(term.location_ports, self.location_taxonomy_category):
                     rows.append(
                         {
                             "metric_id": metric.id,
                             "component": c.id,
-                            "metric_location": c.formatted_locations(term.location_ports, self.scope_taxon_category),
+                            "metric_location": c.formatted_locations(term.location_ports, self.location_taxonomy_category),
                             "breakdown_properties": c.format_breakdown_properties(metric.breakdown),
                             "output": term.output_id,
                             "weight_output_id": 1,

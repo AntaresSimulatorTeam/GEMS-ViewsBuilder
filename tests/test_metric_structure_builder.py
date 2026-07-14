@@ -44,15 +44,15 @@ from gems_views_builder.metrics_structure_builder import MetricStructureTableBui
 
 
 def build_components_by_taxonomy_category(
-    system: Any, library: Any, scope_taxon_category: str | None = None
+    system: Any, library: Any, location_taxonomy_category: str | None = None
 ) -> dict[str, list[Component]]:
     components = [Component(component) for component in system.components]
     supply_components_with_taxonomy_categories(components, library.taxonomy_category_by_model)
     components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
     save_component_port_connections(components, component_port_connections)
-    if scope_taxon_category is not None:
-        supply_components_with_locations(components, scope_taxon_category)
+    if location_taxonomy_category is not None:
+        supply_components_with_locations(components, location_taxonomy_category)
     return components_by_taxon
 
 
@@ -64,13 +64,13 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
     library = load_library(test_3 / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     view_config = load_view_config(test_3 / "view_config.yml")
-    components_by_taxon = build_components_by_taxonomy_category(system, library, view_config.scope_taxon_category)
+    components_by_taxon = build_components_by_taxonomy_category(system, library, view_config.location_taxonomy_category)
     return {
         "system": system,
         "taxonomy": taxonomy,
         "library": library,
         "catalog": catalog,
-        "scope_taxon_category": view_config.scope_taxon_category,
+        "location_taxonomy_category": view_config.location_taxonomy_category,
         "components_by_taxon": components_by_taxon,
         "components_by_id": {
             component.id: component for components in components_by_taxon.values() for component in components
@@ -81,7 +81,7 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
 def build(metric_id: str, components: dict[str, Any]) -> pl.DataFrame:
     metric = components["catalog"].get_metric(metric_id)
     table = MetricStructureTableBuilder(
-        components["scope_taxon_category"],
+        components["location_taxonomy_category"],
         components["components_by_taxon"],
     ).build(metric)
     return table.dataframe.collect()
@@ -178,7 +178,7 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
         if len(comp_rows) == 0:
             continue
         resolved = components_by_id[comp].resolve_locations(
-            ("p_balance_port",), test_3_components["scope_taxon_category"]
+            ("p_balance_port",), test_3_components["location_taxonomy_category"]
         )
         assert comp_rows["metric_location"].to_list() == [format_metric_location(resolved)]
 
@@ -267,7 +267,7 @@ def test_single_port_multiple_peers_of_other_categories_are_skipped_not_raised(
         time_operator=TimeOperator.SUM,
     )
     builder = MetricStructureTableBuilder(
-        test_3_components["scope_taxon_category"],
+        test_3_components["location_taxonomy_category"],
         test_3_components["components_by_taxon"],
     )
 
@@ -305,7 +305,7 @@ def test_get_location_tuple_of_ports_returns_peer_per_port(test_3_components: di
     """Each port in a location_ports tuple resolves to its connected peer(s)."""
     components_by_id = test_3_components["components_by_id"]
     locations = components_by_id["link_link_AB"].resolve_locations(
-        ("p0_port", "p1_port"), test_3_components["scope_taxon_category"]
+        ("p0_port", "p1_port"), test_3_components["location_taxonomy_category"]
     )
     assert isinstance(locations, tuple)
     assert locations == ("busA", "busB")
@@ -327,7 +327,7 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
         time_operator=TimeOperator.SUM,
     )
     table = MetricStructureTableBuilder(
-        test_3_components["scope_taxon_category"],
+        test_3_components["location_taxonomy_category"],
         test_3_components["components_by_taxon"],
     ).build(metric)
     df = table.dataframe.collect()
@@ -336,7 +336,7 @@ def test_tuple_location_ports_produces_one_row_per_location(test_3_components: d
     assert len(link_rows) == 1
     assert link_rows["metric_location"][0] == format_metric_location(
         components_by_id["link_link_AB"].resolve_locations(
-            ("p0_port", "p1_port"), test_3_components["scope_taxon_category"]
+            ("p0_port", "p1_port"), test_3_components["location_taxonomy_category"]
         )
     )
     assert set(_parse_metric_location(link_rows["metric_location"][0])) == {"busA", "busB"}
@@ -364,9 +364,9 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
         Connection(port="p0_port", components=[components_by_id["busA"]]),
         Connection(port="p1_port", components=[components_by_id["busA"]]),
     ]
-    supply_components_with_locations(list(components_by_id.values()), view_config.scope_taxon_category)
+    supply_components_with_locations(list(components_by_id.values()), view_config.location_taxonomy_category)
     assert components_by_id["link_link_AB"].resolve_locations(
-        ("p0_port", "p1_port"), view_config.scope_taxon_category
+        ("p0_port", "p1_port"), view_config.location_taxonomy_category
     ) == ("busA", "busA")
 
     metric = Metric(
@@ -381,7 +381,7 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    builder = MetricStructureTableBuilder(view_config.scope_taxon_category, components_by_taxon)
+    builder = MetricStructureTableBuilder(view_config.location_taxonomy_category, components_by_taxon)
 
     # Act
     table = builder.build(metric)

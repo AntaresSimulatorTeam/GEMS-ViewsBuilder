@@ -48,7 +48,7 @@ def test_view_config_taxonomy_validator_raises_on_unknown_location_category(test
     # Arrange
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    view_config.scope_taxon_category = "unknown_category"
+    view_config.location_taxonomy_category = "unknown_category"
     validator = ViewConfigTaxonomyValidator(taxonomy, view_config)
 
     # Act / Assert

@@ -38,10 +38,10 @@ class CatalogsViewConfigValidator:
                 f"but view config {self.view_config.id!r} references taxonomy "
                 f"{self.view_config.taxonomy_id!r}"
             )
-        if catalog.location_taxonomy_category != self.view_config.scope_taxon_category:
+        if catalog.location_taxonomy_category != self.view_config.location_taxonomy_category:
             raise ValueError(
                 f"Catalog {catalog.id!r} location taxonomy category "
                 f"{catalog.location_taxonomy_category!r} does not match view config "
                 f"{self.view_config.id!r} location taxonomy category "
-                f"{self.view_config.scope_taxon_category!r}"
+                f"{self.view_config.location_taxonomy_category!r}"
             )

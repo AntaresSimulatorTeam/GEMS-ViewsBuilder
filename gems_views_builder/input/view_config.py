@@ -76,7 +76,7 @@ class ViewConfig:
     id: str
     input_data_path: Path
     calendar_id: str
-    scope_taxon_category: str
+    location_taxonomy_category: str
     taxonomy_id: str
     catalog_ids: set[str] = field(default_factory=set)
     time_aggregation: TimeAggregation | None = None
@@ -119,7 +119,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
     raw_view_config = load_raw_view_config_file(config_file_path)
     RawViewConfigValidator(raw_view_config).validate()
 
-    scope_taxon_category = next(
+    location_taxonomy_category = next(
         item.location.taxonomy_category for item in raw_view_config.scope if item.location is not None
     )
     calendar_id = next(item.calendar.id for item in raw_view_config.scope if item.calendar is not None)
@@ -128,7 +128,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         id=raw_view_config.id,
         input_data_path=config_file_path.parent,
         calendar_id=calendar_id,
-        scope_taxon_category=scope_taxon_category,
+        location_taxonomy_category=location_taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalog},
         time_aggregation=raw_view_config.aggregation[0].time if raw_view_config.aggregation else None,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
