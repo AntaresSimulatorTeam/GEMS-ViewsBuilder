@@ -31,13 +31,10 @@ from gems_views_builder.validation.study_layout_validator import StudyLayoutVali
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
-def run(input_dir: Path, view_sinker: ViewSinker) -> None:
+def run_view_building_process(input_dir: Path, view_sinker: ViewSinker) -> None:
     """Run the full pipeline and accumulate the results to the results directory."""
 
-    # # Validate study layout
-    StudyLayoutValidator(input_dir).validate()
-
-    # # If everything is ok, load pipeline input
+    # # Load pipeline input
     input_data = Loader(input_dir).load()
 
     # # Create GVB components from system raw components
@@ -74,7 +71,8 @@ def main(argv: list[str] | None = None) -> int:
         return error
 
     try:
-        run(args.input_dir, view_sinker)
+        StudyLayoutValidator(args.input_dir).validate()
+        run_view_building_process(args.input_dir, view_sinker)
     except Exception:
         logging.exception("View building failed")
         return 1
