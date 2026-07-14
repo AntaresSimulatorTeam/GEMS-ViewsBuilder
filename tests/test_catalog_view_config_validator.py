@@ -32,7 +32,7 @@ def test_catalog_view_config_validator_passes_for_test_dataset(test_dataset_dir:
 
     # Assert
     assert catalog.taxonomy == view_config.taxonomy_id
-    assert catalog.location_taxonomy_category == view_config.location_taxonomy_category
+    assert catalog.location_taxonomy_category == view_config.scope_taxon_category
 
 
 def test_validate_catalogs_against_view_config_passes_for_test_dataset(test_dataset_dir: Path) -> None:

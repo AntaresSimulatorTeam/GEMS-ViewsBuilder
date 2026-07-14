@@ -119,7 +119,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
     raw_view_config = load_raw_view_config_file(config_file_path)
     RawViewConfigValidator(raw_view_config).validate()
 
-    location_taxonomy_category = next(
+    scope_taxon_category = next(
         item.location.taxonomy_category for item in raw_view_config.scope if item.location is not None
     )
     calendar_id = next(item.calendar.id for item in raw_view_config.scope if item.calendar is not None)

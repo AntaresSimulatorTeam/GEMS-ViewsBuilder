@@ -29,7 +29,7 @@ class CatalogsTaxonomyValidator:
         for catalog in self.catalogs:
             self._validate_catalog_against_taxonomy(catalog)
         logging.info(f"All catalogs are consistent with taxonomy {self.taxonomy.id!r}")
- 
+
     def _match_catalog_taxonomy_id(self, catalog: Catalog) -> None:
         if catalog.taxonomy != self.taxonomy.id:
             raise ValueError(
@@ -40,7 +40,6 @@ class CatalogsTaxonomyValidator:
         logging.info(f"Validating catalog {catalog.id!r} against taxonomy {self.taxonomy.id!r}")
         self._match_catalog_taxonomy_id(catalog)
 
-    
         categories = self.taxonomy.get_taxonomy_categories()
 
         category_ports_by_id = {
@@ -49,7 +48,7 @@ class CatalogsTaxonomyValidator:
 
         for metric in catalog.metrics.values():
             for term in metric.terms:
-                category = categories[term.taxonomy_category]
+                category = categories.get(term.taxonomy_category)
                 if category is None:
                     raise ValueError(
                         f"Catalog {catalog.id!r} metric {metric.id!r} uses taxonomy-category "
