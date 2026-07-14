@@ -15,8 +15,8 @@
 import logging
 from dataclasses import dataclass
 
-from gems_views_builder.input.catalog import Catalog
-from gems_views_builder.input.taxonomy import Taxonomy
+from gems_views_builder.input.catalog import Catalog, Term
+from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem
 
 
 @dataclass
@@ -36,6 +36,26 @@ class CatalogsTaxonomyValidator:
                 f"Catalog {catalog.id!r} references taxonomy {catalog.taxonomy!r}, but study taxonomy id is {self.taxonomy.id!r}"
             )
 
+    @staticmethod
+    def _item_ids(items: list[TaxonomyItem]) -> set[str]:
+        return {item.id for item in items}
+
+    def _allowed_output_ids(self, category: TaxonomyCategory) -> set[str]:
+        # | logical or(union) so resulting set is unique.
+        return self._item_ids(category.variables) | self._item_ids(category.extra_outputs)
+
+    def _validate_term_output_id(
+        self, catalog: Catalog, metric_id: str, term: Term, category: TaxonomyCategory
+    ) -> None:
+        allowed = self._allowed_output_ids(category)
+        if term.output_id in allowed:
+            return
+        raise ValueError(
+            f"Catalog {catalog.id!r} metric {metric_id!r} uses output-id {term.output_id!r}, "
+            f"which is not declared as a variable or extra-output on taxonomy category "
+            f"{term.taxonomy_category!r} in taxonomy {self.taxonomy.id!r}"
+        )
+
     def _validate_catalog_against_taxonomy(self, catalog: Catalog) -> None:
         logging.info(f"Validating catalog {catalog.id!r} against taxonomy {self.taxonomy.id!r}")
         self._match_catalog_taxonomy_id(catalog)
@@ -54,6 +74,8 @@ class CatalogsTaxonomyValidator:
                         f"Catalog {catalog.id!r} metric {metric.id!r} uses taxonomy-category "
                         f"{term.taxonomy_category!r}, which is not defined in taxonomy {self.taxonomy.id!r}"
                     )
+
+                self._validate_term_output_id(catalog, metric.id, term, category)
 
                 if term.location_ports is not None:
                     category_ports = category_ports_by_id[term.taxonomy_category]

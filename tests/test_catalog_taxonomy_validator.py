@@ -55,3 +55,27 @@ def test_catalogs_taxonomy_validator_raises_on_unknown_location_port(test_datase
     next(iter(catalog.metrics.values())).terms[0].location_ports = ("unknown_port",)
     with pytest.raises(ValueError, match="uses location-port"):
         CatalogsTaxonomyValidator([catalog], taxonomy).validate()
+
+
+def test_catalogs_taxonomy_validator_raises_on_unknown_output_id(test_dataset_dir: Path) -> None:
+    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
+    catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
+    next(iter(catalog.metrics.values())).terms[0].output_id = "unknown_output"
+    with pytest.raises(ValueError, match="uses output-id"):
+        CatalogsTaxonomyValidator([catalog], taxonomy).validate()
+
+
+def test_catalogs_taxonomy_validator_raises_when_output_id_belongs_to_another_category(
+    test_dataset_dir: Path,
+) -> None:
+    if test_dataset_dir.name != "test_3":
+        pytest.skip("requires the test_3 taxonomy fixture, where active_load is only valid on consumption")
+
+    # active_load is valid on consumption, not on production
+    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
+    catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
+    term = catalog.metrics["PROD"].terms[0]
+    term.taxonomy_category = "production"
+    term.output_id = "active_load"
+    with pytest.raises(ValueError, match="uses output-id"):
+        CatalogsTaxonomyValidator([catalog], taxonomy).validate()
