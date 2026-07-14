@@ -23,9 +23,11 @@ from gems_views_builder.input.component.component_factory import (
     supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
+from gems_views_builder.input.component.connection import Connection
 
 __all__ = [
     "Component",
+    "Connection",
     "build_component_port_connections",
     "create_components",
     "endpoint",

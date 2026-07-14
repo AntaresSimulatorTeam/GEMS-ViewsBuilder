@@ -5,6 +5,7 @@ from typing import Any, cast
 from gems.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.component.component import Component
+from gems_views_builder.input.component.connection import Connection
 
 
 def create_components(gemspy_components: list[GemsPyComponent]) -> list[Component]:
@@ -29,9 +30,13 @@ def group_components_by_taxon(components: list[Component]) -> dict[str, list[Com
 def save_component_port_connections(
     components: list[Component], component_port_connections: dict[str, dict[str, set[str]]]
 ) -> None:
+    components_by_id = {component.id: component for component in components}
     for component in components:
         if component.id in component_port_connections:
-            component.connections = component_port_connections[component.id]
+            component.connections = [
+                Connection(port=port_id, components=[components_by_id[peer_id] for peer_id in peer_ids])
+                for port_id, peer_ids in component_port_connections[component.id].items()
+            ]
 
 
 def endpoint(conn: Any, idx: int) -> tuple[str, str] | None:
@@ -103,18 +108,17 @@ def supply_components_with_locations(components: list[Component], taxonomy_categ
       building.
     """
     logging.info(f"Resolving component locations for taxonomy category {taxonomy_category!r}")
-    components_by_id = {component.id: component for component in components}
-    for component in components:
-        for port_id, peer_ids in component.connections.items():
-            matching_peers = [
-                peer_id for peer_id in peer_ids if components_by_id[peer_id].taxonomy_category == taxonomy_category
+    for c in components:
+        for connection in c.connections:
+            connected_components = [
+                peer for peer in connection.components if peer.taxonomy_category == taxonomy_category
             ]
-            if len(matching_peers) > 1:
+            if len(connected_components) > 1:
                 raise ValueError(
-                    f"Component {component.id!r} port {port_id!r} has {len(matching_peers)} peers "
-                    f"belonging to taxonomy category {taxonomy_category!r}: {tuple(sorted(matching_peers))!r}, "
-                    f"expected at most one"
+                    f"Component {c.id!r} port {connection.port!r} has {len(connected_components)} peers "
+                    f"belonging to taxonomy category {taxonomy_category!r}: "
+                    f"{tuple(sorted(peer.id for peer in connected_components))!r}, expected at most one"
                 )
-            if len(matching_peers) == 1:
-                component.locations[(port_id, taxonomy_category)] = matching_peers[0]
+            if len(connected_components) == 1:
+                c.locations[(connection.port, taxonomy_category)] = connected_components[0].id
     logging.info(f"Component locations resolved for taxonomy category {taxonomy_category!r}")
