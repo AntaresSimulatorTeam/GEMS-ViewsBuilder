@@ -14,16 +14,9 @@ import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import polars as pl
-from gems.study import Component as GemsPyComponent  # type: ignore
-
-from gems_views_builder.input.component import (
-    Component,
-    build_component_port_connections,
-    save_component_port_connections,
-)
 
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
@@ -65,4 +58,3 @@ def configure_logging(verbose: bool = False, log_dir: Path | None = None) -> Non
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
-
