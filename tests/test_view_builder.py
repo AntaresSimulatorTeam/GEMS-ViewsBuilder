@@ -18,7 +18,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder.__main__ import run_view_building_process
-from gems_views_builder.view import CsvViewSinker, ParquetViewSinker
+from gems_views_builder.view import ParquetViewSinker
 
 
 def copy_study_in_tmp(src: Path, tmp_path: Path) -> Path:
