@@ -22,7 +22,7 @@ def test_loads(test_dataset_dir: Path) -> None:
     config = load_view_config(config_path)
     assert isinstance(config, ViewConfig)
     assert isinstance(config.id, str)
-    assert isinstance(config.scope_taxon_category, str)
+    assert isinstance(config.location_taxonomy_category, str)
     assert isinstance(config.calendar_id, str)
     assert len(config.catalog_ids) > 0
     assert config.input_data_path == test_dataset_dir

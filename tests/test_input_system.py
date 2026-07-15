@@ -11,12 +11,11 @@
 # This file is part of the Antares project.
 
 from pathlib import Path
-from types import SimpleNamespace
 
 from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore
 
 from gems_views_builder.input.library import resolve_libraries
-from gems_views_builder.input.system import System, load_system
+from gems_views_builder.input.system import load_system
 
 
 def test_input_system_using(test_dataset_dir: Path) -> None:

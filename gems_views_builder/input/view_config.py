@@ -63,7 +63,7 @@ class ViewConfig:
     id: str
     input_data_path: Path
     calendar_id: str
-    location_taxonomy_category: str | None = None
+    location_taxonomy_category: str
     catalog_ids: set[str] = field(default_factory=set)
     time_aggregation: TimeAggregation | None = None
     metric_ids: list[str] = field(default_factory=list)
@@ -96,11 +96,11 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
     input_data_path = config_file_path.parent
-    scope_taxon_category = next(
+    location_taxonomy_category = next(
         (item.taxonomy_category for item in raw_view_config.scope if item.taxonomy_category),
         None,
     )
-    if scope_taxon_category is None:
+    if location_taxonomy_category is None:
         raise ValueError(
             f"view_config.yml '{raw_view_config.id}': no 'taxonomy-category' found in scope. "
             f"At least one scope entry must define a taxonomy-category"

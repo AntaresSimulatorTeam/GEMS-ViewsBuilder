@@ -18,8 +18,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder.__main__ import run_view_building_process
-from gems_views_builder.input.component import format_metric_location
-from gems_views_builder.view import CsvViewSinker, ParquetViewSinker
+from gems_views_builder.view import ParquetViewSinker
 
 
 def copy_study_in_tmp(src: Path, tmp_path: Path) -> Path:
@@ -42,7 +41,7 @@ def view_result(test_3_study: Path) -> pl.DataFrame:
     return pl.read_parquet(result_files[0])
 
 
-def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
+def metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
     return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == location)).sort("view_date")
 
 
@@ -64,13 +63,9 @@ def test_build_view__prod_at_bus_a__sums_generators_as_2t(view_result: pl.DataFr
 
 def test_build_view__prod_at_bus_b__returns_24_hourly_rows(view_result: pl.DataFrame) -> None:
     rows = metric_at(view_result, "PROD", "busB")
-def test_build_view__prod_at_bus_b__returns_24_hourly_rows(view_result: pl.DataFrame) -> None:
-    rows = metric_at(view_result, "PROD", "busB")
     assert len(rows) == 24
 
 
-def test_build_view__prod_at_bus_b__matches_generator_b1(view_result: pl.DataFrame) -> None:
-    rows = metric_at(view_result, "PROD", "busB")
 def test_build_view__prod_at_bus_b__matches_generator_b1(view_result: pl.DataFrame) -> None:
     rows = metric_at(view_result, "PROD", "busB")
     expected = [100 - 2 * t for t in range(1, 25)]
@@ -111,12 +106,14 @@ def test_log_messages_emitted_to_stdout(
     test_files_root: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     # Arrange
-    sinker = ParquetViewSinker(test_3_study)
+    dst = copy_study_in_tmp(test_files_root / "test_3", tmp_path)
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
+    sinker = ParquetViewSinker(results_dir)
 
     # Act
     with caplog.at_level(logging.INFO):
-        metric_views = _build_view_builder(dst).build()
-        accumulate_on_disk(metric_views, results_dir)
+        run_view_building_process(dst, sinker)
 
     # Assert
     repo_root = Path(__file__).resolve().parents[1]
@@ -135,9 +132,11 @@ def test_log_messages_emitted_to_stdout(
 def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> None:
     src = test_files_root / "test_3"
     dst = tmp_path / "test_3"
+    results_dir = tmp_path / "results"
     shutil.copytree(src, dst)
+    results_dir.mkdir()
 
-    _build_view_builder(dst).build()
+    run_view_building_process(dst, ParquetViewSinker(results_dir))
 
     repo_root = Path(__file__).resolve().parents[1]
     logs_dir = repo_root / "logs"
