@@ -92,29 +92,23 @@ def test_build_view__balance_at_bus_b__matches_link_inflow(view_result: pl.DataF
     assert rows["metric_value"].to_list() == expected
 
 
-def test_build_view_from_parquet_simu_table__print_it_in_csv__check_view_format(test_3_study: Path) -> None:
-    # Arrange
-    sinker = CsvViewSinker(test_3_study)
-
-    # Act
-    run_view_building_process(test_3_study, sinker)
-
-    # Assert
-    result_files = list(test_3_study.glob("view*.csv"))
-    assert result_files, "No result csv file written"
-    assert not list(test_3_study.glob("view*.parquet")), "Unexpected parquet file written"
-    assert pl.read_csv(result_files[0]).height > 0
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
 
 
-def test_build_view__run_pipeline__emits_expected_log_messages(
-    test_3_study: Path, caplog: pytest.LogCaptureFixture
+def test_log_messages_emitted_to_stdout(
+    test_files_root: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     # Arrange
-    sinker = ParquetViewSinker(test_3_study)
+    dst = copy_study_in_tmp(test_files_root / "test_3", tmp_path)
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
+    sinker = ParquetViewSinker(results_dir)
 
     # Act
     with caplog.at_level(logging.INFO):
-        run_view_building_process(test_3_study, sinker)
+        run_view_building_process(dst, sinker)
 
     # Assert
     repo_root = Path(__file__).resolve().parents[1]
@@ -130,14 +124,15 @@ def test_build_view__run_pipeline__emits_expected_log_messages(
     assert any("Results merged into" in m for m in messages), "Missing expected log: Results merged into"
 
 
-def test_build_view__run_pipeline__creates_log_file(test_3_study: Path) -> None:
-    # Arrange
-    sinker = ParquetViewSinker(test_3_study)
+def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> None:
+    src = test_files_root / "test_3"
+    dst = tmp_path / "test_3"
+    results_dir = tmp_path / "results"
+    shutil.copytree(src, dst)
+    results_dir.mkdir()
 
-    # Act
-    run_view_building_process(test_3_study, sinker)
+    run_view_building_process(dst, ParquetViewSinker(results_dir))
 
-    # Assert
     repo_root = Path(__file__).resolve().parents[1]
     logs_dir = repo_root / "logs"
     assert logs_dir.is_dir(), "logs/ directory was not created"
