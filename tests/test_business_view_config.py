@@ -49,7 +49,7 @@ def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
 def test_known_values(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
     assert config.id == "view_area"
-    assert config.scope_taxon_category == "balance"
+    assert config.location_taxonomy_category == "balance"
     assert config.catalog_ids == {"catalog"}
     metric_names = {metric_id.split(".", 1)[1] for metric_id in config.metric_ids}
     assert "LOAD" in metric_names

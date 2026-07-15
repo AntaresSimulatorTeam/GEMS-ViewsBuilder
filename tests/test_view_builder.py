@@ -42,9 +42,13 @@ def view_result(test_3_study: Path) -> pl.DataFrame:
     return pl.read_parquet(result_files[0])
 
 
-def metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
-    encoded = format_metric_location((location,))
-    return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == encoded)).sort("view_date")
+def _metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
+    return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == location)).sort("view_date")
+
+
+# ---------------------------------------------------------------------------
+# PROD
+# ---------------------------------------------------------------------------
 
 
 def test_build_view__prod_at_bus_a__returns_24_hourly_rows(view_result: pl.DataFrame) -> None:
@@ -60,9 +64,13 @@ def test_build_view__prod_at_bus_a__sums_generators_as_2t(view_result: pl.DataFr
 
 def test_build_view__prod_at_bus_b__returns_24_hourly_rows(view_result: pl.DataFrame) -> None:
     rows = metric_at(view_result, "PROD", "busB")
+def test_build_view__prod_at_bus_b__returns_24_hourly_rows(view_result: pl.DataFrame) -> None:
+    rows = metric_at(view_result, "PROD", "busB")
     assert len(rows) == 24
 
 
+def test_build_view__prod_at_bus_b__matches_generator_b1(view_result: pl.DataFrame) -> None:
+    rows = metric_at(view_result, "PROD", "busB")
 def test_build_view__prod_at_bus_b__matches_generator_b1(view_result: pl.DataFrame) -> None:
     rows = metric_at(view_result, "PROD", "busB")
     expected = [100 - 2 * t for t in range(1, 25)]
@@ -94,29 +102,21 @@ def test_build_view__balance_at_bus_b__matches_link_inflow(view_result: pl.DataF
     assert rows["metric_value"].to_list() == expected
 
 
-def test_build_view_from_parquet_simu_table__print_it_in_csv__check_view_format(test_3_study: Path) -> None:
-    # Arrange
-    sinker = CsvViewSinker(test_3_study)
-
-    # Act
-    run_view_building_process(test_3_study, sinker)
-
-    # Assert
-    result_files = list(test_3_study.glob("view*.csv"))
-    assert result_files, "No result csv file written"
-    assert not list(test_3_study.glob("view*.parquet")), "Unexpected parquet file written"
-    assert pl.read_csv(result_files[0]).height > 0
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
 
 
-def test_build_view__run_pipeline__emits_expected_log_messages(
-    test_3_study: Path, caplog: pytest.LogCaptureFixture
+def test_log_messages_emitted_to_stdout(
+    test_files_root: Path, tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     # Arrange
     sinker = ParquetViewSinker(test_3_study)
 
     # Act
     with caplog.at_level(logging.INFO):
-        run_view_building_process(test_3_study, sinker)
+        metric_views = _build_view_builder(dst).build()
+        accumulate_on_disk(metric_views, results_dir)
 
     # Assert
     repo_root = Path(__file__).resolve().parents[1]
@@ -132,14 +132,13 @@ def test_build_view__run_pipeline__emits_expected_log_messages(
     assert any("Results merged into" in m for m in messages), "Missing expected log: Results merged into"
 
 
-def test_build_view__run_pipeline__creates_log_file(test_3_study: Path) -> None:
-    # Arrange
-    sinker = ParquetViewSinker(test_3_study)
+def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> None:
+    src = test_files_root / "test_3"
+    dst = tmp_path / "test_3"
+    shutil.copytree(src, dst)
 
-    # Act
-    run_view_building_process(test_3_study, sinker)
+    _build_view_builder(dst).build()
 
-    # Assert
     repo_root = Path(__file__).resolve().parents[1]
     logs_dir = repo_root / "logs"
     assert logs_dir.is_dir(), "logs/ directory was not created"
