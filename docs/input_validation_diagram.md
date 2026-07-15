@@ -5,17 +5,17 @@ checks performed between them, labeled with the checks themselves.
 
 ```mermaid
 graph LR
-    catalog["catalog.yml<br/>(one or more)"]
-    taxonomy["taxonomy.yml"]
-    view_config["view_config.yml"]
-    library["library.yml"]
-    system["system.yml"]
-    simulation_table["simulation_table.parquet/csv"]
-    calendar["calendar.csv"]
+    catalog(("catalog.yml<br/>(one or more)"))
+    taxonomy(("taxonomy.yml"))
+    view_config(("view_config.yml"))
+    library(("library.yml"))
+    system(("system.yml"))
+    simulation_table(("simulation_table.parquet/csv"))
+    calendar(("calendar.csv"))
 
-    catalog -- "taxonomy id matches;<br/>taxonomy category exists;<br/>output id declared;<br/>location ports declared" --> taxonomy
-    view_config -- "taxonomy id matches;<br/>location taxonomy category exists" --> taxonomy
-    catalog -- "taxonomy id matches;<br/>location taxonomy category matches" --> view_config
+    catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --> taxonomy
+    view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --> taxonomy
+    catalog -- "• taxonomy id matches<br/>• location taxonomy category matches" --> view_config
 
     library -.-> system
     system -.-> simulation_table
