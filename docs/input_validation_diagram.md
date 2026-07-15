@@ -13,12 +13,12 @@ graph LR
     simulation_table(("simulation_table.parquet/csv"))
     calendar(("calendar.csv"))
 
-    catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --> taxonomy
-    view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --> taxonomy
-    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches" --> catalog
+    catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --- taxonomy
+    view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --- taxonomy
+    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches" --- catalog
 
-    library -. "checked by gemspy" .-> system
-    view_config -.-> calendar
+    library -. "checked by gemspy" .- system
+    view_config -.- calendar
 
     classDef unvalidated stroke-dasharray: 4 4;
     class library,system,simulation_table,calendar unvalidated;
