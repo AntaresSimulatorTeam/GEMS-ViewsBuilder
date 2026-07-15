@@ -1,0 +1,92 @@
+system:
+  id: property_order_example
+
+  components:
+    - id: area
+      model: basic_lib.area
+      parameters:
+        - id: spillage_cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 1000
+        - id: unsupplied_energy_cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 1000
+
+    # Same technology + company; YAML lists properties in opposite order.
+    - id: gas_1
+      model: basic_lib.generator_basic
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 250
+        - id: cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 50
+      properties:
+        - id: technology
+          value: gas
+        - id: company
+          value: rhonepower
+
+    # Only company declared — country and technology absent from component properties.
+    - id: gen_company_only
+      model: basic_lib.generator_basic
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 100
+        - id: cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 3
+      properties:
+        - id: company
+          value: rhonepower
+
+    - id: gas_2
+      model: basic_lib.generator_basic
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 250
+        - id: cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 100
+      properties:
+        - id: company
+          value: rhonepower
+        - id: technology
+          value: gas
+
+    - id: load
+      model: basic_lib.load
+      parameters:
+        - id: load
+          time-dependent: true
+          scenario-dependent: true
+          value: load_data
+
+  connections:
+    - component1: area
+      port1: balance_port
+      component2: gas_1
+      port2: balance_port
+    - component1: area
+      port1: balance_port
+      component2: gen_company_only
+      port2: balance_port
+    - component1: area
+      port1: balance_port
+      component2: gas_2
+      port2: balance_port
+    - component1: area
+      port1: balance_port
+      component2: load
+      port2: balance_port

@@ -18,17 +18,16 @@ import pytest
 
 from gems_views_builder.input.view_config import TimeAggregation, load_view_config
 from gems_views_builder.loader import Loader
-from gems_views_builder.view import accumulate_on_disk
-from gems_views_builder.views_builder import ViewBuilder
+from gems_views_builder.view import ParquetViewSinker, ViewBuilder, accumulate_on_disk
 
 AGGREGATION_BLOCK = "  aggregation:\n    - time: hour\n"
 
-# test_3/calendar_file.csv spans 2025-01-01 01:00 .. 2025-01-02 00:00 (24 granular hours).
-HOURLY_DATES = [datetime(2025, 1, 1, h) for h in range(1, 24)] + [datetime(2025, 1, 2)]
+# test_3/calendar_file.csv spans 2025-01-01 00:00 .. 2025-01-01 23:00 (24 granular hours).
+HOURLY_DATES = [datetime(2025, 1, 1, h) for h in range(24)]
 
 EXPECTED_DATES_BY_AGGREGATION = {
     TimeAggregation.HOUR: HOURLY_DATES,
-    TimeAggregation.DAY: [datetime(2025, 1, 1), datetime(2025, 1, 2)],
+    TimeAggregation.DAY: [datetime(2025, 1, 1)],
     TimeAggregation.WEEK: [datetime(2024, 12, 30)],
     TimeAggregation.MONTH: [datetime(2025, 1, 1)],
     TimeAggregation.YEAR: [datetime(2025, 1, 1)],
@@ -57,7 +56,7 @@ def test_yaml_time_aggregation_drives_full_pipeline(
 
     # Act, run pipeline
     metric_views = ViewBuilder(Loader(dataset_dir).load()).build()
-    accumulate_on_disk(metric_views, results_dir)
+    accumulate_on_disk(metric_views, ParquetViewSinker(results_dir))
     result = pl.read_parquet(next(results_dir.glob("view*.parquet")))
     rows = result.filter((pl.col("metric_id") == "PROD") & (pl.col("metric_location") == "busA")).sort("view_date")
 

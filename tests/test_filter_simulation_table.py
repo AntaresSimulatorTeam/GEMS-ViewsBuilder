@@ -27,9 +27,9 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     calendar = load_calendar(test_dataset_dir, "calendar_file")
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = filter_simulation_table(simulation_table, calendar, tmp_path)
+    filtered_table = filter_simulation_table(simulation_table, calendar)
     assert isinstance(filtered_table, FilteredSimulationTable)
-    filtered = pl.read_parquet(tmp_path / "simulation_table_filtered.parquet")
+    filtered = pl.read_parquet(filtered_table.file_path)
 
     # Time-dependent rows must have (absolute_time_index, block) in the calendar.
     # Non-time-dependent rows (null absolute_time_index) are passed through as-is.
@@ -68,10 +68,9 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     duplicated.write_parquet(sim_path_block2)
     simulation_table = load_simulation_table(sim_path_block2)
 
-    intermediates_dir = tmp_path / "intermediates"
-    filtered_table = filter_simulation_table(simulation_table, calendar, intermediates_dir)
+    filtered_table = filter_simulation_table(simulation_table, calendar)
     assert isinstance(filtered_table, FilteredSimulationTable)
-    filtered = pl.read_parquet(intermediates_dir / "simulation_table_filtered.parquet")
+    filtered = pl.read_parquet(filtered_table.file_path)
     # Time-dependent rows with block=2 are all dropped; only non-time-dependent
     # rows (null absolute_time_index) are preserved regardless of block.
     non_time_dep_count = duplicated.filter(pl.col("absolute_time_index").is_null()).height
@@ -87,7 +86,8 @@ def test_filter_simulation_table_writes_parquet(
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = filter_simulation_table(simulation_table, calendar, tmp_path)
+    filtered_table = filter_simulation_table(simulation_table, calendar)
+    assert isinstance(filtered_table, FilteredSimulationTable)
 
     assert filtered_table.file_path.exists(), "Output parquet should be created"
     written = filtered_table.dataframe.collect()
@@ -111,10 +111,10 @@ def test_filter_simulation_table_writes_parquet(
 
 
 def test_filter_simulation_table_invalid_file_format(test_dataset_dir: Path) -> None:
-    """When a non-parquet file is provided, an error is raised."""
-    simulation_table_file = test_dataset_dir / "simulation_table--invalid.csv"
+    """When a non-parquet, non-csv file is provided, an error is raised."""
+    simulation_table_file = test_dataset_dir / "simulation_table--invalid.txt"
     with pytest.raises(
         ValueError,
-        match=r"Simulation table file '.*simulation_table--invalid\.csv' is not a parquet file",
+        match=r"Simulation table file '.*simulation_table--invalid\.txt' is not a parquet or csv file",
     ):
         load_simulation_table(simulation_table_file)

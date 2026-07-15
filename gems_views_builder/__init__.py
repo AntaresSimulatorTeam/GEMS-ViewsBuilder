@@ -10,6 +10,7 @@
 #
 # This file is part of the Antares project.
 
+
 """GEMS-ViewsBuilder public package namespace."""
 
 from gems.model.parsing import (  # type: ignore
@@ -29,11 +30,14 @@ from gems_views_builder.input.calendar import Calendar, load_calendar
 from gems_views_builder.input.catalog import (
     Catalog,
     Metric,
+    PropertySchema,
     Term,
     TermsOperator,
     TimeOperator,
     load_catalog,
+    load_catalogs,
 )
+from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.library import Library, load_library
 from gems_views_builder.input.simulation_table import (
     FilteredSimulationTable,
@@ -47,7 +51,7 @@ from gems_views_builder.input.view_config import TimeAggregation, ViewConfig, lo
 from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
-from gems_views_builder.views_builder import ViewBuilder
+from gems_views_builder.view import ViewBuilder
 
 __all__ = [
     "Calendar",
@@ -58,7 +62,10 @@ __all__ = [
     "filter_simulation_table",
     "Catalog",
     "load_catalog",
+    "load_catalogs",
+    "InputData",
     "Metric",
+    "PropertySchema",
     "Term",
     "TermsOperator",
     "TimeOperator",

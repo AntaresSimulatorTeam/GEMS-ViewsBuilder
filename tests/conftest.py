@@ -18,7 +18,7 @@ import pytest
 from gems_views_builder.common import configure_logging
 
 RESOURCES_TEST_FILES_ROOT = Path(__file__).resolve().parent.parent / "resources"
-TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "test_inputs"
+TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -17,7 +17,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
+from gems.model.library import Library as GemsLibrary  # type: ignore
 from gems.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema, parse_yaml_library  # type: ignore
+from gems.model.resolve_library import resolve_library  # type: ignore
 
 
 @dataclass
@@ -64,6 +66,17 @@ def load_library(library_file_path: Path) -> Library:
             for cat in {m.taxonomy_category for m in parsed.models if m.taxonomy_category}
         },
     )
+
+
+def resolve_libraries(library_file_path: Path) -> dict[str, GemsLibrary]:
+    """Resolve library YAML into GemsPy's fully-resolved libraries, keyed by library id.
+
+    This is the shape ``gems.study.resolve_components.resolve_system`` needs to resolve
+    the study's components, distinct from the schema-level :class:`Library` wrapper above.
+    """
+    logging.info(f"Resolving model library from {library_file_path}")
+    parsed = load_library_file(library_file_path)
+    return cast(dict[str, GemsLibrary], resolve_library([parsed]))
 
 
 def load_library_file(library_file_path: Path) -> LibrarySchema:

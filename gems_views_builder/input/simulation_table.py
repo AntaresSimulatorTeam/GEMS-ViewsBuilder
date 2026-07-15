@@ -11,8 +11,10 @@
 # This file is part of the Antares project.
 
 import logging
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from shutil import rmtree
 
 import polars as pl
 
@@ -62,27 +64,29 @@ class FilteredSimulationTable:
     dataframe: pl.LazyFrame
 
     def __del__(self) -> None:
-        logging.debug(f"Cleaning filtered simulation table {self.file_path}")
-        self.file_path.unlink(missing_ok=True)
+        logging.debug(f"Cleaning filtered simulation table {self.file_path.parent}")
+        rmtree(self.file_path.parent, ignore_errors=True)
 
 
 def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
-    """Load and validate a simulation table from a parquet file."""
-    if simulation_table_file.suffix.lower() != ".parquet":
-        raise ValueError(f"Simulation table file '{simulation_table_file}' is not a parquet file")
+    """Load and validate a simulation table from a parquet or csv file."""
+    suffix = simulation_table_file.suffix.lower()
     logging.info(f"Loading simulation table from {simulation_table_file}")
-    dataframe = pl.scan_parquet(simulation_table_file)
+    if suffix == ".parquet":
+        dataframe = pl.scan_parquet(simulation_table_file)
+    elif suffix == ".csv":
+        dataframe = pl.scan_csv(simulation_table_file)
+    else:
+        raise ValueError(f"Simulation table file '{simulation_table_file}' is not a parquet or csv file")
     validate_columns(dataframe, simulation_table_file.stem, SIMULATION_TABLE_COLUMNS, "SimulationTable")
     logging.info(f"Simulation table {simulation_table_file.stem!r} successfully loaded from {simulation_table_file}")
     return SimulationTable(dataframe)
 
 
-def filter_simulation_table(
-    simulation_table: SimulationTable, calendar: Calendar, intermediates_dir: Path
-) -> FilteredSimulationTable:
-    """Filter simulation_table by calendar, persist result to intermediates_dir, and return it."""
+def filter_simulation_table(simulation_table: SimulationTable, calendar: Calendar) -> FilteredSimulationTable:
+    """Filter simulation_table by calendar, persist result to a private tempdir, and return it."""
     logging.info("Filtering simulation table by calendar")
-    intermediates_dir.mkdir(parents=True, exist_ok=True)
+    intermediates_dir = Path(tempfile.mkdtemp())
     output_path = intermediates_dir / "simulation_table_filtered.parquet"
 
     # Time-dependent rows: keep only timesteps present in the calendar.

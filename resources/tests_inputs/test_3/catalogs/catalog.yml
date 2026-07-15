@@ -56,5 +56,3 @@ catalog:
         location-ports: p1_port
     terms-operator: sum
     time-operator: sum
-
-  
