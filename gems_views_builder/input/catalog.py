@@ -44,6 +44,13 @@ class TermData(ViewBuilderBasedModel):
     location_port: str | None
     weight_output_id: str | None = None
 
+    @field_validator("location_port")
+    @classmethod
+    def validate_location_port(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError("location-port must not be an empty or blank string")
+        return value
+
 
 class PropertySchema(ViewBuilderBasedModel):
     """Reference to a system/taxonomy property by key; value is required only for metric filters."""

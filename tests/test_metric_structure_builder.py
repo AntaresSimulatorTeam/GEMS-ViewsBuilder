@@ -153,7 +153,9 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
         comp_rows = df.filter(pl.col("component") == comp)
         if len(comp_rows) == 0:
             continue
-        resolved = components_by_id[comp].resolve_location("p_balance_port", test_3_components["location_taxonomy_category"])
+        resolved = components_by_id[comp].resolve_location(
+            "p_balance_port", test_3_components["location_taxonomy_category"]
+        )
         assert comp_rows["metric_location"].to_list() == [resolved]
 
 
@@ -281,7 +283,39 @@ def test_resolve_location_returns_peer(test_3_components: dict[str, Any]) -> Non
     components_by_id = test_3_components["components_by_id"]
 
     # Act
-    location = components_by_id["link_link_AB"].resolve_location("p0_port", test_3_components["location_taxonomy_category"])
+    location = components_by_id["link_link_AB"].resolve_location(
+        "p0_port", test_3_components["location_taxonomy_category"]
+    )
 
     # Assert
     assert location == "busA"
+
+
+def test_none_location_port_resolves_to_the_component_itself(test_3_components: dict[str, Any]) -> None:
+    """A term with location_port=None means the component is its own location."""
+    # Arrange
+    metric = Metric(
+        id="SELF_LOCATED_TEST",
+        terms=[
+            Term(
+                taxonomy_category="link",
+                output_id="p0_port.flow",
+                location_port=None,
+            )
+        ],
+        terms_operator=TermsOperator.SUM,
+        time_operator=TimeOperator.SUM,
+    )
+    builder = MetricStructureTableBuilder(
+        test_3_components["location_taxonomy_category"],
+        test_3_components["components_by_taxon"],
+    )
+
+    # Act
+    table = builder.build(metric)
+    df = table.dataframe.collect()
+
+    # Assert
+    link_rows = df.filter(pl.col("component") == "link_link_AB")
+    assert len(link_rows) == 1
+    assert link_rows["metric_location"][0] == "link_link_AB"
