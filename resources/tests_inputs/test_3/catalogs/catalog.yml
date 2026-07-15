@@ -23,7 +23,7 @@ catalog:
     terms:
       - taxonomy-category: production
         output-id: p
-        location-ports: p_balance_port
+        location-port: p_balance_port
     terms-operator: sum
     time-operator: sum
 
@@ -32,7 +32,7 @@ catalog:
     terms:
       - taxonomy-category: consumption
         output-id: active_load
-        location-ports: p_balance_port
+        location-port: p_balance_port
     terms-operator: sum
     time-operator: sum
 
@@ -41,7 +41,7 @@ catalog:
     terms:
       - taxonomy-category: production
         output-id: pnom
-        location-ports: p_balance_port
+        location-port: p_balance_port
     terms-operator: sum
     time-operator: sum
 
@@ -50,9 +50,9 @@ catalog:
     terms:
       - taxonomy-category: link
         output-id: p0_port.flow
-        location-ports: p0_port
+        location-port: p0_port
       - taxonomy-category: link
         output-id: p1_port.flow
-        location-ports: p1_port
+        location-port: p1_port
     terms-operator: sum
     time-operator: sum

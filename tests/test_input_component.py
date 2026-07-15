@@ -25,7 +25,7 @@ def make_raw_component(component_id: str, model: str, properties: dict[str, str]
 
 def test_get_location_none_returns_own_id() -> None:
     component = Component(make_raw_component("area", "basic_lib.area"))
-    assert component.resolve_locations(None, "any_taxonomy_category") == ("area",)
+    assert component.resolve_location(None, "any_taxonomy_category") == "area"
 
 
 def test_supply_components_with_taxonomy_categories() -> None:

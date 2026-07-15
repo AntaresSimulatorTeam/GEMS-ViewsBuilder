@@ -41,7 +41,7 @@ class TimeOperator(Enum):
 class TermData(ViewBuilderBasedModel):
     taxonomy_category: str
     output_id: str
-    location_ports: str | tuple[str, ...] | None
+    location_port: str | None
     weight_output_id: str | None = None
 
 
@@ -83,7 +83,7 @@ class CatalogData(ViewBuilderBasedModel):
 class Term:
     taxonomy_category: str
     output_id: str
-    location_ports: tuple[str, ...] | None
+    location_port: str | None
     weight_output_id: str | None = None
 
 
@@ -117,9 +117,7 @@ def to_term(term_data: TermData) -> Term:
     return Term(
         taxonomy_category=term_data.taxonomy_category,
         output_id=term_data.output_id,
-        location_ports=(term_data.location_ports,)
-        if isinstance(term_data.location_ports, str)
-        else term_data.location_ports,
+        location_port=term_data.location_port,
         weight_output_id=term_data.weight_output_id,
     )
 

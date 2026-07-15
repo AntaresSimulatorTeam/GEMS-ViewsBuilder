@@ -18,7 +18,6 @@ import polars as pl
 import pytest
 
 from gems_views_builder.__main__ import run_view_building_process
-from gems_views_builder.input.component import format_metric_location
 from gems_views_builder.view import CsvViewSinker, ParquetViewSinker
 
 
@@ -43,8 +42,7 @@ def view_result(test_3_study: Path) -> pl.DataFrame:
 
 
 def metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
-    encoded = format_metric_location((location,))
-    return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == encoded)).sort("view_date")
+    return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == location)).sort("view_date")
 
 
 def test_build_view__prod_at_bus_a__returns_24_hourly_rows(view_result: pl.DataFrame) -> None:
