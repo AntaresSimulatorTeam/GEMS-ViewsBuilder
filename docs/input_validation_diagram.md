@@ -1,22 +1,36 @@
 # Input Validation Diagram
 
-Nodes are input files loaded by the view builder. Edges are the cross-file
-checks performed between them, labeled with the validator class that owns
-the check.
+Nodes are input files loaded by the pipeline, plus the orchestrator and
+the validator classes it runs. Every validator node lists, in words, the
+checks it performs, and connects to the orchestrator (run order) and to
+the file(s) it reads.
 
 ```mermaid
 graph LR
-    catalog["catalog.yml<br/>(one or more)"]
-    taxonomy["taxonomy.yml"]
-    view_config["view_config.yml"]
-    library["library.yml"]
-    system["system.yml"]
-    simulation_table["simulation_table.parquet/csv"]
-    calendar["calendar.csv"]
+    orchestrator(("InputConsistencyValidator<br/>(orchestrator)"))
 
-    catalog -- "CatalogsTaxonomyValidator" --> taxonomy
-    view_config -- "ViewConfigTaxonomyValidator" --> taxonomy
-    catalog -- "CatalogsViewConfigValidator" --> view_config
+    catalog(("catalog.yml<br/>(one or more)"))
+    taxonomy(("taxonomy.yml"))
+    view_config(("view_config.yml"))
+    library(("library.yml"))
+    system(("system.yml"))
+    simulation_table(("simulation_table.parquet/csv"))
+    calendar(("calendar.csv"))
+
+    vc_tax(("ViewConfigTaxonomyValidator<br/>• taxonomy id matches<br/>• location taxonomy category exists"))
+    cat_tax(("CatalogsTaxonomyValidator<br/>• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared"))
+    cat_vc(("CatalogsViewConfigValidator<br/>• taxonomy id matches<br/>• location taxonomy category matches"))
+
+    orchestrator -- "1" --> vc_tax
+    orchestrator -- "2" --> cat_tax
+    orchestrator -- "3" --> cat_vc
+
+    vc_tax --- view_config
+    vc_tax --- taxonomy
+    cat_tax --- catalog
+    cat_tax --- taxonomy
+    cat_vc --- catalog
+    cat_vc --- view_config
 
     library -.-> system
     system -.-> simulation_table
@@ -24,11 +38,17 @@ graph LR
 
     classDef unvalidated stroke-dasharray: 4 4;
     class library,system,simulation_table,calendar unvalidated;
+    classDef orchestrator fill:#e6d9f7,stroke:#6b3fa0,stroke-width:2px;
+    class orchestrator orchestrator;
+    classDef validator fill:#eef,stroke:#446;
+    class vc_tax,cat_tax,cat_vc validator;
 ```
 
-Solid edges = content is cross-validated. Dashed edges = files are read
-together / referenced by the study layout, but have no dedicated
-cross-file validator yet (see [`StudyLayoutValidator`](../gems_views_builder/validation/study_layout_validator.py),
+Numbered edges out of the orchestrator show run order. Solid edges from a
+validator to a file = that file's content is read/checked by the
+validator. Dashed edges = files are read together / referenced by the
+study layout, but have no dedicated cross-file validator yet (see
+[`StudyLayoutValidator`](../gems_views_builder/validation/study_layout_validator.py),
 which only checks that these files are *present*, not their contents).
 
 ## Edge details
