@@ -15,10 +15,9 @@ graph LR
 
     catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --> taxonomy
     view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --> taxonomy
-    catalog -- "• taxonomy id matches<br/>• location taxonomy category matches" --> view_config
+    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches" --> catalog
 
-    library -.-> system
-    system -.-> simulation_table
+    library -. "checked by gemspy" .-> system
     view_config -.-> calendar
 
     classDef unvalidated stroke-dasharray: 4 4;
