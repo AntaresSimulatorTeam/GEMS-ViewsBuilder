@@ -11,8 +11,10 @@
 # This file is part of the Antares project.
 
 import logging
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from shutil import rmtree
 
 import polars as pl
 
@@ -62,8 +64,8 @@ class FilteredSimulationTable:
     dataframe: pl.LazyFrame
 
     def __del__(self) -> None:
-        logging.debug(f"Cleaning filtered simulation table {self.file_path}")
-        self.file_path.unlink(missing_ok=True)
+        logging.debug(f"Cleaning filtered simulation table {self.file_path.parent}")
+        rmtree(self.file_path.parent, ignore_errors=True)
 
 
 def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
@@ -81,12 +83,10 @@ def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
     return SimulationTable(dataframe)
 
 
-def filter_simulation_table(
-    simulation_table: SimulationTable, calendar: Calendar, intermediates_dir: Path
-) -> FilteredSimulationTable:
-    """Filter simulation_table by calendar, persist result to intermediates_dir, and return it."""
+def filter_simulation_table(simulation_table: SimulationTable, calendar: Calendar) -> FilteredSimulationTable:
+    """Filter simulation_table by calendar, persist result to a private tempdir, and return it."""
     logging.info("Filtering simulation table by calendar")
-    intermediates_dir.mkdir(parents=True, exist_ok=True)
+    intermediates_dir = Path(tempfile.mkdtemp())
     output_path = intermediates_dir / "simulation_table_filtered.parquet"
 
     # Time-dependent rows: keep only timesteps present in the calendar.

@@ -70,7 +70,7 @@ class ViewConfig:
     id: str
     input_data_path: Path
     calendar_id: str
-    scope_taxon_category: str
+    location_taxonomy_category: str
     catalog_ids: set[str] = field(default_factory=set)
     time_aggregation: TimeAggregation | None = None
     location_aggregation: LocationAggregation | None = None
@@ -104,11 +104,11 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
     input_data_path = config_file_path.parent
-    scope_taxon_category = next(
+    location_taxonomy_category = next(
         (item.taxonomy_category for item in raw_view_config.scope if item.taxonomy_category),
         None,
     )
-    if scope_taxon_category is None:
+    if location_taxonomy_category is None:
         raise ValueError(
             f"view_config.yml '{raw_view_config.id}': no 'taxonomy-category' found in scope. "
             f"At least one scope entry must define a taxonomy-category"
@@ -123,7 +123,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         id=raw_view_config.id,
         input_data_path=input_data_path,
         calendar_id=calendar_id,
-        scope_taxon_category=scope_taxon_category,
+        location_taxonomy_category=location_taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalog},
         time_aggregation=raw_view_config.aggregation[0].time if raw_view_config.aggregation else None,
         location_aggregation=raw_view_config.aggregation[1].location if len(raw_view_config.aggregation) > 1 else None,

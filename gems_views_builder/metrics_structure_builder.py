@@ -23,11 +23,11 @@ class MetricStructureTableBuilder:
 
     def __init__(
         self,
-        scope_taxon_category: str,
+        location_taxonomy_category: str,
         components_by_taxon: dict[str, list[Component]],  # taxonomy category -> components
         location_aggregation: LocationAggregation | None = None,
     ) -> None:
-        self.scope_taxon_category = scope_taxon_category
+        self.location_taxonomy_category = location_taxonomy_category
         self.components_by_taxon = components_by_taxon  # this is mainly for operating
         self.location_aggregation = location_aggregation
         self.components_by_id = {
@@ -44,7 +44,7 @@ class MetricStructureTableBuilder:
             )
 
             for c in self.components_by_taxon[term.taxonomy_category]:
-                if c.match(metric.filter) and c.is_located_at(term.location_ports, self.scope_taxon_category):
+                if c.match(metric.filter) and c.is_located_at(term.location_ports, self.location_taxonomy_category):
                     locations = c.aggregated_locations(
                         term.location_ports,
                         self.scope_taxon_category,
