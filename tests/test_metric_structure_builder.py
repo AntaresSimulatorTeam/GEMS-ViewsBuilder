@@ -43,15 +43,15 @@ from gems_views_builder.metrics_structure_builder import MetricStructureTableBui
 
 
 def build_components_by_taxonomy_category(
-    system: Any, library: Any, location_taxonomy_category: str | None = None
+    system: Any, library: Any, metrics: list[Metric] | None = None
 ) -> dict[str, list[Component]]:
     components = [Component(component) for component in system.components]
     supply_components_with_taxonomy_categories(components, library.taxonomy_category_by_model)
     components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
     supply_components_with_port_connections(components, component_port_connections)
-    if location_taxonomy_category is not None:
-        supply_components_with_locations(components, location_taxonomy_category)
+    if metrics is not None:
+        supply_components_with_locations(components_by_taxon, metrics)
     return components_by_taxon
 
 
@@ -63,7 +63,7 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
     library = load_library(test_3 / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     view_config = load_view_config(test_3 / "view_config.yml")
-    components_by_taxon = build_components_by_taxonomy_category(system, library, view_config.location_taxonomy_category)
+    components_by_taxon = build_components_by_taxonomy_category(system, library, list(catalog.metrics.values()))
     return {
         "system": system,
         "taxonomy": taxonomy,
@@ -254,27 +254,28 @@ def test_single_port_multiple_peers_of_other_categories_are_skipped_not_raised(
     assert table.dataframe.collect().height == 0
 
 
-def test_supply_components_with_locations_raises_on_genuine_ambiguity(test_files_root: Path) -> None:
-    """Two peers on the same port both belonging to the scope taxonomy category is an actual
+def test_supply_components_with_locations_raises_on_genuine_ambiguity() -> None:
+    """Two peers on the same port both belonging to the term's taxonomy category is an actual
     inconsistency and must raise during the up-front location precomputation."""
     # Arrange
-    test_3 = test_files_root / "test_3"
-    library = load_library(test_3 / "library.yml")
-    system = load_system(test_3, resolve_libraries(test_3 / "library.yml"))
-    components = [Component(component) for component in system.components]
-    supply_components_with_taxonomy_categories(components, library.taxonomy_category_by_model)
-    component_port_connections = build_component_port_connections(system.connections)
-    supply_components_with_port_connections(components, component_port_connections)
-    components_by_id = {component.id: component for component in components}
-    # Force link_link_AB's p0_port to be wired to both busA and busB (both "balance").
-    link_link_ab = components_by_id["link_link_AB"]
-    link_link_ab.connections = [conn for conn in link_link_ab.connections if conn.port != "p0_port"] + [
-        ConnectionThroughPort(port="p0_port", components=[components_by_id["busA"], components_by_id["busB"]])
-    ]
+    owner = make_component({})
+    peer_1 = make_component({})
+    peer_2 = make_component({})
+    owner.taxonomy_category = "cat"
+    peer_1.taxonomy_category = "cat"
+    peer_2.taxonomy_category = "cat"
+    owner.connections = ConnectionThroughPort(port_components={"p0_port": [peer_1, peer_2]})
+    components_by_taxon = {"cat": [owner]}
+    metric = Metric(
+        id="AMBIGUITY_TEST",
+        terms=[Term(taxonomy_category="cat", output_id="o", location_port="p0_port")],
+        terms_operator=TermsOperator.SUM,
+        time_operator=TimeOperator.SUM,
+    )
 
     # Act / Assert
     with pytest.raises(ValueError, match="p0_port"):
-        supply_components_with_locations(components, "balance")
+        supply_components_with_locations(components_by_taxon, [metric])
 
 
 def test_resolve_location_returns_peer(test_3_components: dict[str, Any]) -> None:

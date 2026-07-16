@@ -91,6 +91,9 @@ class ViewConfig:
             logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
         return metric_ids_by_catalog
 
+    def get_metrics(self) -> list[Metric]:
+        return self.metrics
+
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")

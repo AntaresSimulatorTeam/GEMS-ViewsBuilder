@@ -19,11 +19,12 @@ class Component:
     raw_component: GemsPyComponent
     taxonomy_category: str | None = None
     # Connections holding the peer components connected on each port
-    connections: list[ConnectionThroughPort] = field(default_factory=list)
+    connections: ConnectionThroughPort = field(default_factory=ConnectionThroughPort)
     # (port_id, taxonomy_category) -> unique peer component id located on that port for that
-    # taxonomy category. Populated by ``supply_components_with_locations``. Absence of a key means no
-    # peer on that port belongs to that taxonomy category (no location can be determined there).
-    scope_locations: dict[tuple[str, str], str] = field(default_factory=dict)
+    # taxonomy category. Populated up front by ``supply_components_with_locations``, which groups
+    # every port's connected peers by their own taxonomy category. Absence of a key means no peer
+    # on that port belongs to that taxonomy category (no location can be determined there).
+    locations: dict[tuple[str | None, str], str] = field(default_factory=dict)
 
     @property
     def id(self) -> str:
@@ -48,7 +49,7 @@ class Component:
         """
         if location_port is None:
             return True
-        located = (location_port, taxonomy_category) in self.scope_locations
+        located = (location_port, taxonomy_category) in self.locations
         if not located:
             logging.debug(f"Component {self.id!r} has no resolved location for taxonomy category {taxonomy_category!r}")
         return located
@@ -57,7 +58,7 @@ class Component:
         """Return the resolved location for ``location_port``, previously checked via ``is_located_at``."""
         if location_port is None:
             return self.id
-        return self.scope_locations[(location_port, taxonomy_category)]
+        return self.locations[(location_port, taxonomy_category)]
 
     def format_breakdown_properties(self, breakdown: list[PropertySchema] | None) -> str:
         if not breakdown:

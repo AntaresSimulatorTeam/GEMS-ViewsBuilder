@@ -4,6 +4,7 @@ from typing import Any, cast
 
 from gems.study import Component as GemsPyComponent  # type: ignore
 
+from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component.component import Component
 from gems_views_builder.input.component.connection import ConnectionThroughPort
 
@@ -33,10 +34,12 @@ def supply_components_with_port_connections(
     components_by_id = {component.id: component for component in components}
     for component in components:
         if component.id in component_port_connections:
-            component.connections = [
-                ConnectionThroughPort(port=port_id, components=[components_by_id[peer_id] for peer_id in peer_ids])
-                for port_id, peer_ids in component_port_connections[component.id].items()
-            ]
+            component.connections = ConnectionThroughPort(
+                port_components={
+                    port_id: [components_by_id[peer_id] for peer_id in peer_ids]
+                    for port_id, peer_ids in component_port_connections[component.id].items()
+                }
+            )
 
 
 def endpoint(conn: Any, idx: int) -> tuple[str, str] | None:
@@ -90,34 +93,41 @@ def build_component_port_connections(connections: list[Any]) -> dict[str, dict[s
     return component_port_connections
 
 
-def supply_components_with_locations(components: list[Component], location_taxonomy_category: str) -> None:
-    """Precompute, for every component's port, the unique peer belonging to taxonomy_category.
+def supply_components_with_locations(components_by_taxon: dict[str, list[Component]], metrics: list[Metric]) -> None:
+    """Precompute, for every relevant component's port, the unique peer for each taxonomy category
+    found among its connected peers on that port.
 
     Requires to be run before:
-    - supply_components_with_taxonomy_categories(each component has a own taxonomy category)
-    - supply_components_with_port_connections(each component has list of connections through port)
+    - supply_components_with_taxonomy_categories (each component has its own taxonomy category)
+    - supply_components_with_port_connections (each component has its connections through port)
 
-    For each (component, port), among the peers connected on that port, only those
-    belonging to ``location_taxonomy_category`` are considered:
-    - zero matching peers: no location is stored for that port (components referencing it are
-      later skipped when building the metric structure table);
-    - exactly one: it is stored as the resolved location;
-    - more than one in same location taxonomy category: a genuine inconsistency, raised immediately rather than later during table
-      building.
+    For each metric term with a ``location_port``, and for each component belonging to that
+    term's taxonomy category, peers connected on that port are grouped by their own taxonomy
+    category:
+    - exactly one peer of a category: it is stored as the resolved location for that category;
+    - more than one peer of the same category: a genuine inconsistency, raised immediately
+      rather than later during table building.
+
+    This is later consumed via ``Component.is_located_at``/``Component.resolve_location`` with
+    whichever taxonomy category the consumer (e.g. ``MetricStructureTableBuilder``) cares about.
     """
-    logging.info(f"Resolving component locations for taxonomy category {location_taxonomy_category!r}")
-    # # Check for self location
-    for c in components:
-        for connection in c.connections:
-            connected_components = [
-                peer for peer in connection.components if peer.taxonomy_category == location_taxonomy_category
-            ]
-            if len(connected_components) > 1:
-                raise ValueError(
-                    f"Component {c.id!r} port {connection.port!r} has {len(connected_components)} peers "
-                    f"belonging to taxonomy category {location_taxonomy_category!r}: "
-                    f"{tuple(sorted(peer.id for peer in connected_components))!r}, expected at most one"
-                )
-            if len(connected_components) == 1:
-                c.scope_locations[(connection.port, location_taxonomy_category)] = connected_components[0].id
-    logging.info(f"Component locations resolved for location taxonomy category {location_taxonomy_category!r}")
+    for metric in metrics:
+        for term in metric.terms:
+            if term.location_port is None:
+                continue
+            for c in components_by_taxon[term.taxonomy_category]:
+                _supply_component_with_location(c, term.location_port)
+
+
+def _supply_component_with_location(component: Component, location_port: str) -> None:
+    peers_by_category: dict[str, list[Component]] = defaultdict(list)
+    for peer in component.connections.get_components(location_port):
+        peers_by_category[cast(str, peer.taxonomy_category)].append(peer)
+
+    for category, peers in peers_by_category.items():
+        if len(peers) > 1:
+            raise ValueError(
+                f"Component {component.id!r} port {location_port} has {len(peers)} peers "
+                f"belonging to taxonomy category {category!r}, expected at most one"
+            )
+        component.locations[(location_port, category)] = peers[0].id
