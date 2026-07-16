@@ -42,11 +42,6 @@ def _location_aggregation_src(test_files_root: Path) -> Path:
     raise FileNotFoundError(f"test_location_aggregation fixture not found under {test_files_root}")
 
 
-def metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
-    encoded = format_metric_location((location,))
-    return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == encoded)).sort("view_date")
-
-
 @pytest.fixture()
 def view_result(test_3_study: Path) -> pl.DataFrame:
     sinker = ParquetViewSinker(test_3_study)
@@ -178,7 +173,7 @@ def _loc_run(test_files_root: Path, tmp_path: Path, config_variant: str | None =
     if config_variant is not None:
         shutil.copy(dst / f"{config_variant}.yml", dst / "view_config.yml")
     sinker = ParquetViewSinker(dst)
-    run(dst, sinker)
+    run_view_building_process(dst, sinker)
     result_files = list(dst.glob("view*.parquet"))
     assert result_files, "No result parquet file written"
     return pl.read_parquet(result_files[0])

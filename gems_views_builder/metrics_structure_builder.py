@@ -47,7 +47,7 @@ class MetricStructureTableBuilder:
                 if c.match(metric.filter) and c.is_located_at(term.location_ports, self.location_taxonomy_category):
                     locations = c.aggregated_locations(
                         term.location_ports,
-                        self.scope_taxon_category,
+                        self.location_taxonomy_category,
                         self.location_aggregation,
                         self.components_by_id,
                     )
