@@ -49,12 +49,11 @@ def validate_catalog_against_taxonomy(catalog: Catalog, taxonomy: Taxonomy) -> N
                     f"{term.taxonomy_category!r}, which is not defined in taxonomy {taxonomy.id!r}"
                 )
 
-            if term.location_ports is not None:
+            if term.location_port is not None:
                 category_ports = category_ports_by_id[term.taxonomy_category]
-                unknown_ports = [port for port in term.location_ports if port not in category_ports]
-                if unknown_ports:
+                if term.location_port not in category_ports:
                     raise ValueError(
-                        f"Catalog {catalog.id!r} metric {metric.id!r} uses location-port(s) "
-                        f"{unknown_ports!r}, which is not defined on taxonomy category "
+                        f"Catalog {catalog.id!r} metric {metric.id!r} uses location-port "
+                        f"{term.location_port!r}, which is not defined on taxonomy category "
                         f"{term.taxonomy_category!r} in taxonomy {taxonomy.id!r}"
                     )

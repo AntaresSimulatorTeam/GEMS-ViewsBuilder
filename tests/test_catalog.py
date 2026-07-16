@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 from gems_views_builder import Metric, PropertySchema, Term, TermsOperator, TimeOperator, load_catalog
-from gems_views_builder.input.catalog import MetricData
+from gems_views_builder.input.catalog import MetricData, TermData
 
 
 def test_catalog_loads(test_dataset_dir: Path) -> None:
@@ -46,7 +46,7 @@ def test_catalog_terms_are_typed(test_dataset_dir: Path) -> None:
             assert isinstance(term, Term)
             assert isinstance(term.taxonomy_category, str)
             assert isinstance(term.output_id, str)
-            assert term.location_ports is None or isinstance(term.location_ports, tuple)
+            assert term.location_port is None or isinstance(term.location_port, str)
 
 
 def test_catalog_known_metrics(test_dataset_dir: Path) -> None:
@@ -64,6 +64,21 @@ def test_metric_filter_property_requires_value() -> None:
             time_operator=TimeOperator.SUM,
             filter=PropertySchema(key="technology"),
         )
+
+
+def test_term_location_port_none_is_valid() -> None:
+    term_data = TermData(taxonomy_category="production", output_id="p", location_port=None)
+    assert term_data.location_port is None
+
+
+def test_term_location_port_empty_string_is_rejected() -> None:
+    with pytest.raises(ValueError, match="location-port must not be an empty or blank string"):
+        TermData(taxonomy_category="production", output_id="p", location_port="")
+
+
+def test_term_location_port_blank_string_is_rejected() -> None:
+    with pytest.raises(ValueError, match="location-port must not be an empty or blank string"):
+        TermData(taxonomy_category="production", output_id="p", location_port="   ")
 
 
 def test_catalog_operators_valid_values(test_dataset_dir: Path) -> None:
