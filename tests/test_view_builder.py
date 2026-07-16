@@ -45,6 +45,11 @@ def metric_at(df: pl.DataFrame, metric_id: str, location: str) -> pl.DataFrame:
     return df.filter((pl.col("metric_id") == metric_id) & (pl.col("metric_location") == location)).sort("view_date")
 
 
+# ---------------------------------------------------------------------------
+# PROD
+# ---------------------------------------------------------------------------
+
+
 def test_build_view__prod_at_bus_a__returns_24_hourly_rows(view_result: pl.DataFrame) -> None:
     rows = metric_at(view_result, "PROD", "busA")
     assert len(rows) == 24
