@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class Connection:
+class ConnectionThroughPort:
     """Peer components connected to a component on a given port."""
 
     port: str

@@ -19,11 +19,11 @@ class Component:
     raw_component: GemsPyComponent
     taxonomy_category: str | None = None
     # Connections holding the peer components connected on each port
-    connections: list[Connection] = field(default_factory=list)
+    connections: list[ConnectionThroughPort] = field(default_factory=list)
     # (port_id, taxonomy_category) -> unique peer component id located on that port for that
     # taxonomy category. Populated by ``supply_components_with_locations``. Absence of a key means no
     # peer on that port belongs to that taxonomy category (no location can be determined there).
-    locations: dict[tuple[str, str], str] = field(default_factory=dict)
+    scope_locations: dict[tuple[str, str], str] = field(default_factory=dict)
 
     @property
     def id(self) -> str:

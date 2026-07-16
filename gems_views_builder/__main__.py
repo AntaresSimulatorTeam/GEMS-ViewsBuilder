@@ -18,6 +18,7 @@ from gems_views_builder.common import (
     configure_logging,
 )
 from gems_views_builder.input.component import (
+    build_component_port_connections,
     create_components,
     group_components_by_taxon,
     supply_components_with_locations,
@@ -40,7 +41,8 @@ def run_view_building_process(input_dir: Path, view_sinker: ViewSinker) -> None:
     # # Create GVB components from system raw components
     components = create_components(input_data.system.components)
     supply_components_with_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
-    supply_components_with_port_connections(components, input_data.system.connections)
+    component_port_connections = build_component_port_connections(input_data.system.connections)
+    supply_components_with_port_connections(components, component_port_connections)
     supply_components_with_locations(components, input_data.view_config.location_taxonomy_category)
     components_by_taxon = group_components_by_taxon(components)
 
