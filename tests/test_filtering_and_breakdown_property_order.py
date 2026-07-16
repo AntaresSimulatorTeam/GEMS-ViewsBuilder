@@ -30,8 +30,8 @@ from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
     group_components_by_taxon,
-    save_component_port_connections,
     supply_components_with_locations,
+    supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
 from gems_views_builder.input.library import resolve_libraries
@@ -127,7 +127,7 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     supply_components_with_taxonomy_categories(components, library.taxonomy_category_by_model)
     components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
-    save_component_port_connections(components, component_port_connections)
+    supply_components_with_port_connections(components, component_port_connections)
     supply_components_with_locations(components, view_config.location_taxonomy_category)
 
     table = MetricStructureTableBuilder(

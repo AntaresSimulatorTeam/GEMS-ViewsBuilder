@@ -27,7 +27,7 @@ def group_components_by_taxon(components: list[Component]) -> dict[str, list[Com
     return components_by_taxon
 
 
-def save_component_port_connections(
+def supply_components_with_port_connections(
     components: list[Component], component_port_connections: dict[str, dict[str, set[str]]]
 ) -> None:
     components_by_id = {component.id: component for component in components}
@@ -90,15 +90,10 @@ def build_component_port_connections(connections: list[Any]) -> dict[str, dict[s
     return component_port_connections
 
 
-def supply_components_with_port_connections(components: list[Component], system_connections: list[Any]) -> None:
-    component_port_connections = build_component_port_connections(system_connections)
-    save_component_port_connections(components, component_port_connections)
-
-
 def supply_components_with_locations(components: list[Component], taxonomy_category: str) -> None:
     """Precompute, for every component's port, the unique peer belonging to taxonomy_category.
 
-    Requires supply_components_with_taxonomy_categories and save_component_port_connections to have
+    Requires supply_components_with_taxonomy_categories and supply_components_with_port_connections to have
     already run. For each (component, port), among the peers connected on that port, only those
     belonging to ``taxonomy_category`` are considered:
     - zero matching peers: no location is stored for that port (components referencing it are

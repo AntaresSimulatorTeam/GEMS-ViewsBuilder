@@ -33,8 +33,8 @@ from gems_views_builder.input.component import (
     build_component_port_connections,
     format_metric_location,
     group_components_by_taxon,
-    save_component_port_connections,
     supply_components_with_locations,
+    supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
 from gems_views_builder.input.library import resolve_libraries
@@ -50,7 +50,7 @@ def build_components_by_taxonomy_category(
     supply_components_with_taxonomy_categories(components, library.taxonomy_category_by_model)
     components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
-    save_component_port_connections(components, component_port_connections)
+    supply_components_with_port_connections(components, component_port_connections)
     if location_taxonomy_category is not None:
         supply_components_with_locations(components, location_taxonomy_category)
     return components_by_taxon
@@ -288,7 +288,7 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity(test_files
     components = [Component(component) for component in system.components]
     supply_components_with_taxonomy_categories(components, library.taxonomy_category_by_model)
     component_port_connections = build_component_port_connections(system.connections)
-    save_component_port_connections(components, component_port_connections)
+    supply_components_with_port_connections(components, component_port_connections)
     components_by_id = {component.id: component for component in components}
     # Force link_link_AB's p0_port to be wired to both busA and busB (both "balance").
     link_link_ab = components_by_id["link_link_AB"]

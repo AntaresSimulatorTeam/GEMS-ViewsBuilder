@@ -20,8 +20,8 @@ from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
     group_components_by_taxon,
-    save_component_port_connections,
     supply_components_with_locations,
+    supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
 from gems_views_builder.loader import Loader
@@ -41,7 +41,7 @@ def build_view_builder(dataset_dir: Path) -> ViewBuilder:
     components_by_taxon = group_components_by_taxon(components)
 
     component_port_connections = build_component_port_connections(input_data.system.connections)
-    save_component_port_connections(components, component_port_connections)
+    supply_components_with_port_connections(components, component_port_connections)
     supply_components_with_locations(components, input_data.view_config.location_taxonomy_category)
 
     metric_structure_table_builder = MetricStructureTableBuilder(
