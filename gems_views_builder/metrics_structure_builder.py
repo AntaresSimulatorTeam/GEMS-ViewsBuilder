@@ -12,34 +12,9 @@
 
 import logging
 
-from gems_views_builder.input.catalog import Metric, PropertySchema
+from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component import Component
 from gems_views_builder.metric_structure_table import MetricStructureTable
-
-
-def _check_filter_matches(component: Component, filter: PropertySchema | None) -> bool:
-    if filter is None:
-        return True
-    return bool(component.properties.get(filter.key) == filter.value)
-
-
-def _format_breakdown_properties(component_properties: dict[str, str], breakdown: list[PropertySchema] | None) -> str:
-    if not breakdown:
-        return "{}"
-    pairs: list[str] = []
-    for prop in breakdown:
-        key = prop.key
-        if key not in component_properties:
-            pairs.append(f"({key},None)")
-        else:
-            pairs.append(f"({key},{component_properties[key]})")
-    return "{" + ",".join(pairs) + "}"
-
-
-def _format_metric_location(locations: str | tuple[str, ...]) -> str:
-    if isinstance(locations, str):
-        return locations
-    return "(" + ",".join(locations) + ")"
 
 
 class MetricStructureTableBuilder:
