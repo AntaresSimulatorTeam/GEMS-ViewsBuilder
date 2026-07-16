@@ -5,7 +5,7 @@ from typing import Any, cast
 from gems.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.component.component import Component
-from gems_views_builder.input.component.connection import Connection
+from gems_views_builder.input.component.connection import ConnectionThroughPort
 
 
 def create_components(gemspy_components: list[GemsPyComponent]) -> list[Component]:
@@ -34,7 +34,7 @@ def supply_components_with_port_connections(
     for component in components:
         if component.id in component_port_connections:
             component.connections = [
-                Connection(port=port_id, components=[components_by_id[peer_id] for peer_id in peer_ids])
+                ConnectionThroughPort(port=port_id, components=[components_by_id[peer_id] for peer_id in peer_ids])
                 for port_id, peer_ids in component_port_connections[component.id].items()
             ]
 
@@ -106,6 +106,7 @@ def supply_components_with_locations(components: list[Component], location_taxon
       building.
     """
     logging.info(f"Resolving component locations for taxonomy category {location_taxonomy_category!r}")
+    # # Check for self location
     for c in components:
         for connection in c.connections:
             connected_components = [

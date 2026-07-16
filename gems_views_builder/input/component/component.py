@@ -5,7 +5,7 @@ from typing import cast
 from gems.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.catalog import PropertySchema
-from gems_views_builder.input.component.connection import Connection
+from gems_views_builder.input.component.connection import ConnectionThroughPort
 
 
 def format_metric_location(locations: tuple[str, ...]) -> str:
@@ -25,7 +25,7 @@ class Component:
     raw_component: GemsPyComponent
     taxonomy_category: str | None = None
     # Connections holding the peer components connected on each port
-    connections: list[Connection] = field(default_factory=list)
+    connections: list[ConnectionThroughPort] = field(default_factory=list)
     # (port_id, taxonomy_category) -> unique peer component id located on that port for that
     # taxonomy category. Populated by ``supply_components_with_locations``. Absence of a key means no
     # peer on that port belongs to that taxonomy category (no location can be determined there).

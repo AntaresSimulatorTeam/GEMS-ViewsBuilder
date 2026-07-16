@@ -29,7 +29,7 @@ from gems_views_builder import (
 )
 from gems_views_builder.input.component import (
     Component,
-    Connection,
+    ConnectionThroughPort,
     build_component_port_connections,
     format_metric_location,
     group_components_by_taxon,
@@ -293,7 +293,7 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity(test_files
     # Force link_link_AB's p0_port to be wired to both busA and busB (both "balance").
     link_link_ab = components_by_id["link_link_AB"]
     link_link_ab.connections = [conn for conn in link_link_ab.connections if conn.port != "p0_port"] + [
-        Connection(port="p0_port", components=[components_by_id["busA"], components_by_id["busB"]])
+        ConnectionThroughPort(port="p0_port", components=[components_by_id["busA"], components_by_id["busB"]])
     ]
 
     # Act / Assert
@@ -361,8 +361,8 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
     link_link_ab.connections = [
         conn for conn in link_link_ab.connections if conn.port not in ("p0_port", "p1_port")
     ] + [
-        Connection(port="p0_port", components=[components_by_id["busA"]]),
-        Connection(port="p1_port", components=[components_by_id["busA"]]),
+        ConnectionThroughPort(port="p0_port", components=[components_by_id["busA"]]),
+        ConnectionThroughPort(port="p1_port", components=[components_by_id["busA"]]),
     ]
     supply_components_with_locations(list(components_by_id.values()), view_config.location_taxonomy_category)
     assert components_by_id["link_link_AB"].resolve_locations(
