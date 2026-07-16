@@ -29,7 +29,7 @@ class Component:
     # (port_id, taxonomy_category) -> unique peer component id located on that port for that
     # taxonomy category. Populated by ``supply_components_with_locations``. Absence of a key means no
     # peer on that port belongs to that taxonomy category (no location can be determined there).
-    locations: dict[tuple[str, str], str] = field(default_factory=dict)
+    scope_locations: dict[tuple[str, str], str] = field(default_factory=dict)
 
     @property
     def id(self) -> str:
@@ -54,7 +54,7 @@ class Component:
         """
         if location_ports is None:
             return True
-        located = all((port, taxonomy_category) in self.locations for port in location_ports)
+        located = all((port, taxonomy_category) in self.scope_locations for port in location_ports)
         if not located:
             logging.debug(f"Component {self.id!r} has no resolved location for taxonomy category {taxonomy_category!r}")
         return located
@@ -63,7 +63,7 @@ class Component:
         """Return the resolved location(s) for ``location_ports``, previously checked via ``is_located_at``."""
         if location_ports is None:
             return (self.id,)
-        return tuple(self.locations[(port, taxonomy_category)] for port in location_ports)
+        return tuple(self.scope_locations[(port, taxonomy_category)] for port in location_ports)
 
     def formatted_locations(self, location_ports: tuple[str, ...] | None, taxonomy_category: str) -> str:
         return format_metric_location(self.resolve_locations(location_ports, taxonomy_category))

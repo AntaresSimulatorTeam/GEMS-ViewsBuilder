@@ -93,13 +93,16 @@ def build_component_port_connections(connections: list[Any]) -> dict[str, dict[s
 def supply_components_with_locations(components: list[Component], location_taxonomy_category: str) -> None:
     """Precompute, for every component's port, the unique peer belonging to taxonomy_category.
 
-    Requires supply_components_with_taxonomy_categories and supply_components_with_port_connections to have
-    already run. For each (component, port), among the peers connected on that port, only those
-    belonging to ``taxonomy_category`` are considered:
+    Requires to be run before:
+    - supply_components_with_taxonomy_categories(each component has a own taxonomy category)
+    - supply_components_with_port_connections(each component has list of connections through port)
+
+    For each (component, port), among the peers connected on that port, only those
+    belonging to ``location_taxonomy_category`` are considered:
     - zero matching peers: no location is stored for that port (components referencing it are
       later skipped when building the metric structure table);
     - exactly one: it is stored as the resolved location;
-    - more than one: a genuine inconsistency, raised immediately rather than later during table
+    - more than one in same location taxonomy category: a genuine inconsistency, raised immediately rather than later during table
       building.
     """
     logging.info(f"Resolving component locations for taxonomy category {location_taxonomy_category!r}")
@@ -115,5 +118,5 @@ def supply_components_with_locations(components: list[Component], location_taxon
                     f"{tuple(sorted(peer.id for peer in connected_components))!r}, expected at most one"
                 )
             if len(connected_components) == 1:
-                c.locations[(connection.port, location_taxonomy_category)] = connected_components[0].id
-    logging.info(f"Component locations resolved for taxonomy category {location_taxonomy_category!r}")
+                c.scope_locations[(connection.port, location_taxonomy_category)] = connected_components[0].id
+    logging.info(f"Component locations resolved for location taxonomy category {location_taxonomy_category!r}")
