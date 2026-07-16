@@ -9,6 +9,12 @@ from gems_views_builder.input.component.connection import ConnectionThroughPort
 from gems_views_builder.input.view_config import LocationAggregation
 
 
+def format_metric_location(locations: tuple[str, ...]) -> str:
+    if len(locations) == 1:
+        return locations[0]
+    return "(" + ",".join(locations) + ")"
+
+
 @dataclass
 class Component:
     """
@@ -62,12 +68,12 @@ class Component:
 
     def aggregated_locations(
         self,
-        location_ports: tuple[str, ...] | None,
+        location_port: str | None,
         taxonomy_category: str,
         location_aggregation: LocationAggregation | None,
         components_by_id: dict[str, "Component"],
     ) -> tuple[str, ...]:
-        location_components_ids = self.resolve_locations(location_ports, taxonomy_category)
+        location_components_ids = (self.resolve_location(location_port, taxonomy_category),)
         return self.resolve_location_aggregation(location_components_ids, location_aggregation, components_by_id)
 
     def resolve_location_aggregation(

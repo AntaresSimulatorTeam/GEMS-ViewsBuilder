@@ -439,30 +439,3 @@ def test_build_with_drop_excludes_orphan(loc_agg_components: dict[str, Any]) -> 
     df = table.dataframe.collect()
     assert "gen_orph" not in df["component"].to_list()
     assert "<unknown>" not in df["metric_location"].to_list()
-
-
-def test_build_multiport_location_ports_with_aggregation(loc_agg_components: dict[str, Any]) -> None:
-    """A term with location_ports=(p0_port, p1_port) on link_FRDE produces one row with '(FR,DE)'."""
-    metric = Metric(
-        id="LINK_COUNTRY_TEST",
-        terms=[
-            Term(
-                taxonomy_category="link",
-                output_id="p0_port.flow",
-                location_ports=("p0_port", "p1_port"),
-            )
-        ],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.SUM,
-    )
-    table = MetricStructureTableBuilder(
-        loc_agg_components["location_taxonomy_category"],
-        loc_agg_components["components_by_taxon"],
-        location_aggregation=LocationAggregation(key="country"),
-    ).build(metric)
-    df = table.dataframe.collect()
-    link_rows = df.filter(pl.col("component") == "link_FRDE")
-    assert len(link_rows) == 1
-    assert link_rows["metric_location"][0] == "(FR,DE)"
-    assert "area_FR1" not in link_rows["metric_location"][0]
-    assert "area_DE" not in link_rows["metric_location"][0]
