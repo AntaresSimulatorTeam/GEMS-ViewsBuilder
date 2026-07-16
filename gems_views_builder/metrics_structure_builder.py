@@ -15,6 +15,8 @@ import logging
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component import Component
 from gems_views_builder.metric_structure_table import MetricStructureTable
+
+
 class MetricStructureTableBuilder:
     """Build metric structure rows without loading unrelated datasets."""
 
