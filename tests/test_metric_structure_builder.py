@@ -31,7 +31,6 @@ from gems_views_builder.input.component import (
     Component,
     ConnectionThroughPort,
     build_component_port_connections,
-    format_metric_location,
     group_components_by_taxon,
     supply_components_with_locations,
     supply_components_with_port_connections,
@@ -112,29 +111,6 @@ def test_format_breakdown_properties_empty_breakdown() -> None:
     assert component.format_breakdown_properties(None) == "{}"
 
 
-def test_format_metric_location_single() -> None:
-    assert format_metric_location(("busA",)) == "busA"
-
-
-def test_format_metric_location_multiple() -> None:
-    assert format_metric_location(("busA", "busB")) == "(busA,busB)"
-
-
-def test_format_metric_location_preserves_duplicates() -> None:
-    assert format_metric_location(("busA", "busA")) == "(busA,busA)"
-
-
-def test_format_metric_location_empty() -> None:
-    assert format_metric_location(()) == "()"
-
-
-def _parse_metric_location(encoded: str) -> list[str]:
-    if encoded.startswith("(") and encoded.endswith(")"):
-        inner = encoded[1:-1]
-        return [] if not inner else [part.strip() for part in inner.split(",")]
-    return [encoded.strip('"')]
-
-
 def _component_matches_filters(metric_filter: PropertySchema | None, component: Component) -> bool:
     """Match the filter clause against component properties."""
     return component.match(metric_filter)
@@ -177,10 +153,10 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
         comp_rows = df.filter(pl.col("component") == comp)
         if len(comp_rows) == 0:
             continue
-        resolved = components_by_id[comp].resolve_locations(
-            ("p_balance_port",), test_3_components["location_taxonomy_category"]
+        resolved = components_by_id[comp].resolve_location(
+            "p_balance_port", test_3_components["location_taxonomy_category"]
         )
-        assert comp_rows["metric_location"].to_list() == [format_metric_location(resolved)]
+        assert comp_rows["metric_location"].to_list() == [resolved]
 
 
 def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
@@ -260,7 +236,7 @@ def test_single_port_multiple_peers_of_other_categories_are_skipped_not_raised(
             Term(
                 taxonomy_category="balance",
                 output_id="p_balance_port.flow",
-                location_ports=("p_balance_port",),
+                location_port="p_balance_port",
             )
         ],
         terms_operator=TermsOperator.SUM,
@@ -301,87 +277,39 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity(test_files
         supply_components_with_locations(components, "balance")
 
 
-def test_get_location_tuple_of_ports_returns_peer_per_port(test_3_components: dict[str, Any]) -> None:
-    """Each port in a location_ports tuple resolves to its connected peer(s)."""
+def test_resolve_location_returns_peer(test_3_components: dict[str, Any]) -> None:
+    """A location_port resolves to its connected peer."""
+    # Arrange
     components_by_id = test_3_components["components_by_id"]
-    locations = components_by_id["link_link_AB"].resolve_locations(
-        ("p0_port", "p1_port"), test_3_components["location_taxonomy_category"]
+
+    # Act
+    location = components_by_id["link_link_AB"].resolve_location(
+        "p0_port", test_3_components["location_taxonomy_category"]
     )
-    assert isinstance(locations, tuple)
-    assert locations == ("busA", "busB")
+
+    # Assert
+    assert location == "busA"
 
 
-def test_tuple_location_ports_produces_one_row_per_location(test_3_components: dict[str, Any]) -> None:
-    """A term with multiple location_ports yields one row with all resolved locations merged."""
-    components_by_id = test_3_components["components_by_id"]
+def test_none_location_port_resolves_to_the_component_itself(test_3_components: dict[str, Any]) -> None:
+    """A term with location_port=None means the component is its own location."""
+    # Arrange
     metric = Metric(
-        id="LINK_BOTH_PORTS",
+        id="SELF_LOCATED_TEST",
         terms=[
             Term(
                 taxonomy_category="link",
                 output_id="p0_port.flow",
-                location_ports=("p0_port", "p1_port"),
+                location_port=None,
             )
         ],
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    table = MetricStructureTableBuilder(
+    builder = MetricStructureTableBuilder(
         test_3_components["location_taxonomy_category"],
         test_3_components["components_by_taxon"],
-    ).build(metric)
-    df = table.dataframe.collect()
-
-    link_rows = df.filter(pl.col("component") == "link_link_AB")
-    assert len(link_rows) == 1
-    assert link_rows["metric_location"][0] == format_metric_location(
-        components_by_id["link_link_AB"].resolve_locations(
-            ("p0_port", "p1_port"), test_3_components["location_taxonomy_category"]
-        )
     )
-    assert set(_parse_metric_location(link_rows["metric_location"][0])) == {"busA", "busB"}
-    assert set(link_rows["output"].to_list()) == {"p0_port.flow"}
-
-
-def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row(test_files_root: Path) -> None:
-    """When two ports resolve to the same peer, the single structure row keeps both locations (busA twice)."""
-    # Arrange
-    test_3 = test_files_root / "test_3"
-    library = load_library(test_3 / "library.yml")
-    system = load_system(test_3, resolve_libraries(test_3 / "library.yml"))
-    view_config = load_view_config(test_3 / "view_config.yml")
-    components_by_taxon = build_components_by_taxonomy_category(system, library)
-    components_by_id = {
-        component.id: component for components in components_by_taxon.values() for component in components
-    }
-
-    # Default test_3 wiring uses p0_port -> busA and p1_port -> busB; force both ports to busA here,
-    # then recompute locations so the precomputed dictionary reflects the forced wiring.
-    link_link_ab = components_by_id["link_link_AB"]
-    link_link_ab.connections = [
-        conn for conn in link_link_ab.connections if conn.port not in ("p0_port", "p1_port")
-    ] + [
-        ConnectionThroughPort(port="p0_port", components=[components_by_id["busA"]]),
-        ConnectionThroughPort(port="p1_port", components=[components_by_id["busA"]]),
-    ]
-    supply_components_with_locations(list(components_by_id.values()), view_config.location_taxonomy_category)
-    assert components_by_id["link_link_AB"].resolve_locations(
-        ("p0_port", "p1_port"), view_config.location_taxonomy_category
-    ) == ("busA", "busA")
-
-    metric = Metric(
-        id="DUP_PEER_VIA_TWO_PORTS",
-        terms=[
-            Term(
-                taxonomy_category="link",
-                output_id="p0_port.flow",
-                location_ports=("p0_port", "p1_port"),
-            )
-        ],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.SUM,
-    )
-    builder = MetricStructureTableBuilder(view_config.location_taxonomy_category, components_by_taxon)
 
     # Act
     table = builder.build(metric)
@@ -390,8 +318,7 @@ def test_two_ports_resolving_to_same_peer_keep_duplicate_locations_in_single_row
     # Assert
     link_rows = df.filter(pl.col("component") == "link_link_AB")
     assert len(link_rows) == 1
-    assert link_rows["metric_location"][0] == "(busA,busA)"
-    assert _parse_metric_location(link_rows["metric_location"][0]) == ["busA", "busA"]
+    assert link_rows["metric_location"][0] == "link_link_AB"
 
 
 # ---------------------------------------------------------------------------

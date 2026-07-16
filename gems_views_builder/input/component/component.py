@@ -9,12 +9,6 @@ from gems_views_builder.input.component.connection import ConnectionThroughPort
 from gems_views_builder.input.view_config import LocationAggregation
 
 
-def format_metric_location(locations: tuple[str, ...]) -> str:
-    if len(locations) == 1:
-        return locations[0]
-    return "(" + ",".join(locations) + ")"
-
-
 @dataclass
 class Component:
     """
@@ -48,26 +42,23 @@ class Component:
     def set_taxonomy_category(self, taxonomy_category: str) -> None:
         self.taxonomy_category = taxonomy_category
 
-    def is_located_at(self, location_ports: tuple[str, ...] | None, taxonomy_category: str) -> bool:
-        """Whether every port in ``location_ports`` has a resolved location for ``taxonomy_category``.
+    def is_located_at(self, location_port: str | None, taxonomy_category: str) -> bool:
+        """Whether ``location_port`` has a resolved location for ``taxonomy_category``.
 
-        ``location_ports`` of ``None`` means the component is its own location: always true.
+        ``location_port`` of ``None`` means the component is its own location: always true.
         """
-        if location_ports is None:
+        if location_port is None:
             return True
-        located = all((port, taxonomy_category) in self.scope_locations for port in location_ports)
+        located = (location_port, taxonomy_category) in self.scope_locations
         if not located:
             logging.debug(f"Component {self.id!r} has no resolved location for taxonomy category {taxonomy_category!r}")
         return located
 
-    def resolve_locations(self, location_ports: tuple[str, ...] | None, taxonomy_category: str) -> tuple[str, ...]:
-        """Return the resolved location(s) for ``location_ports``, previously checked via ``is_located_at``."""
-        if location_ports is None:
-            return (self.id,)
-        return tuple(self.scope_locations[(port, taxonomy_category)] for port in location_ports)
-
-    def formatted_locations(self, location_ports: tuple[str, ...] | None, taxonomy_category: str) -> str:
-        return format_metric_location(self.resolve_locations(location_ports, taxonomy_category))
+    def resolve_location(self, location_port: str | None, taxonomy_category: str) -> str:
+        """Return the resolved location for ``location_port``, previously checked via ``is_located_at``."""
+        if location_port is None:
+            return self.id
+        return self.scope_locations[(location_port, taxonomy_category)]
 
     def aggregated_locations(
         self,
