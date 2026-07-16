@@ -5,7 +5,7 @@ from typing import cast
 from gems.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.catalog import PropertySchema
-from gems_views_builder.input.component.connection import Connection
+from gems_views_builder.input.component.connection import ConnectionThroughPort
 
 
 @dataclass
@@ -48,7 +48,7 @@ class Component:
         """
         if location_port is None:
             return True
-        located = (location_port, taxonomy_category) in self.locations
+        located = (location_port, taxonomy_category) in self.scope_locations
         if not located:
             logging.debug(f"Component {self.id!r} has no resolved location for taxonomy category {taxonomy_category!r}")
         return located
@@ -57,7 +57,7 @@ class Component:
         """Return the resolved location for ``location_port``, previously checked via ``is_located_at``."""
         if location_port is None:
             return self.id
-        return self.locations[(location_port, taxonomy_category)]
+        return self.scope_locations[(location_port, taxonomy_category)]
 
     def format_breakdown_properties(self, breakdown: list[PropertySchema] | None) -> str:
         if not breakdown:
