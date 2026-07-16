@@ -52,7 +52,9 @@ class MetricStructureTableBuilder:
                         self.components_by_id,
                     )
                     if not locations:
-                        logging.debug(f"[{metric.id}] Component {c.id!r} dropped: no location after spatial aggregation")
+                        logging.debug(
+                            f"[{metric.id}] Component {c.id!r} dropped: no location after spatial aggregation"
+                        )
                         continue
                     rows.append(
                         {
