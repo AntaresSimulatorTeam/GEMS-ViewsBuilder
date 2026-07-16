@@ -26,6 +26,7 @@ from gems_views_builder import (
     load_catalog,
     load_library,
 )
+from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
@@ -37,8 +38,7 @@ from gems_views_builder.input.component import (
 from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
-from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
-from tests.conftest import build_view_builder
+from gems_views_builder.view import ParquetViewSinker
 
 # Same (technology, company) as filtering_and_breakdown, but YAML property order differs per component.
 _GAS_RHONEPOWER_GENERATORS = ("gas_1", "gas_2")
@@ -53,10 +53,9 @@ def property_order_workspace(test_files_root: Path, tmp_path: Path) -> tuple[Pat
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     shutil.copytree(src, dst)
-    metric_views = build_view_builder(dst).build()
-    sinker = ParquetViewSinker(results_dir)
-    view = accumulate_on_disk(metric_views, sinker)
-    return dst, view.dataframe.collect()
+    run_view_building_process(dst, ParquetViewSinker(results_dir))
+    view = pl.read_parquet(next(results_dir.glob("view*.parquet")))
+    return dst, view
 
 
 def _assert_totals_close(got: pl.DataFrame, exp: pl.DataFrame, *, msg: str = "") -> None:
