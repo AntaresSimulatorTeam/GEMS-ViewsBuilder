@@ -90,7 +90,7 @@ def build_component_port_connections(connections: list[Any]) -> dict[str, dict[s
     return component_port_connections
 
 
-def supply_components_with_locations(components: list[Component], taxonomy_category: str) -> None:
+def supply_components_with_locations(components: list[Component], location_taxonomy_category: str) -> None:
     """Precompute, for every component's port, the unique peer belonging to taxonomy_category.
 
     Requires supply_components_with_taxonomy_categories and supply_components_with_port_connections to have
@@ -102,18 +102,18 @@ def supply_components_with_locations(components: list[Component], taxonomy_categ
     - more than one: a genuine inconsistency, raised immediately rather than later during table
       building.
     """
-    logging.info(f"Resolving component locations for taxonomy category {taxonomy_category!r}")
+    logging.info(f"Resolving component locations for taxonomy category {location_taxonomy_category!r}")
     for c in components:
         for connection in c.connections:
             connected_components = [
-                peer for peer in connection.components if peer.taxonomy_category == taxonomy_category
+                peer for peer in connection.components if peer.taxonomy_category == location_taxonomy_category
             ]
             if len(connected_components) > 1:
                 raise ValueError(
                     f"Component {c.id!r} port {connection.port!r} has {len(connected_components)} peers "
-                    f"belonging to taxonomy category {taxonomy_category!r}: "
+                    f"belonging to taxonomy category {location_taxonomy_category!r}: "
                     f"{tuple(sorted(peer.id for peer in connected_components))!r}, expected at most one"
                 )
             if len(connected_components) == 1:
-                c.locations[(connection.port, taxonomy_category)] = connected_components[0].id
-    logging.info(f"Component locations resolved for taxonomy category {taxonomy_category!r}")
+                c.locations[(connection.port, location_taxonomy_category)] = connected_components[0].id
+    logging.info(f"Component locations resolved for taxonomy category {location_taxonomy_category!r}")
