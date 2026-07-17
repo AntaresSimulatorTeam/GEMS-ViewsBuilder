@@ -63,7 +63,7 @@ class ViewConfig:
     id: str
     input_data_path: Path
     calendar_id: str
-    location_taxonomy_category: str | None = None
+    location_taxonomy_category: str
     catalog_ids: set[str] = field(default_factory=set)
     time_aggregation: TimeAggregation | None = None
     metric_ids: list[str] = field(default_factory=list)
@@ -90,6 +90,9 @@ class ViewConfig:
             metric_ids_by_catalog[catalog_id].add(metric_id)
             logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
         return metric_ids_by_catalog
+
+    def get_metrics(self) -> list[Metric]:
+        return self.metrics
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:

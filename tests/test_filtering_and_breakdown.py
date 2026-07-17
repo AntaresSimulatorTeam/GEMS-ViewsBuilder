@@ -22,9 +22,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder import ViewBuilder
-from gems_views_builder.loader import Loader
-from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
+from gems_views_builder.__main__ import run_view_building_process
+from gems_views_builder.view import ParquetViewSinker
 
 # Generator instances in ``filtering_and_breakdown/system.yml`` (technology, company).
 _FILTERING_AND_BREAKDOWN_GEN_META: dict[str, tuple[str, str]] = {
@@ -45,10 +44,9 @@ def filtering_and_breakdown_workspace(test_files_root: Path, tmp_path: Path) -> 
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     shutil.copytree(src, dst)
-    metric_views = ViewBuilder(Loader(dst).load()).build()
-    sinker = ParquetViewSinker(results_dir)
-    view = accumulate_on_disk(metric_views, sinker)
-    return dst, view.dataframe.collect()
+    run_view_building_process(dst, ParquetViewSinker(results_dir))
+    view = pl.read_parquet(next(results_dir.glob("view*.parquet")))
+    return dst, view
 
 
 @pytest.fixture()

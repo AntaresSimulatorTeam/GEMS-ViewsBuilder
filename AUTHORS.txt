@@ -1,5 +1,6 @@
-Antoine Oustry 
+Antoine Oustry
 Dusan Paripovic
+Guillaume Pierre
 Sylvain Leclerc
 Theo Pascoli
-Thomas Bittar 
+Thomas Bittar

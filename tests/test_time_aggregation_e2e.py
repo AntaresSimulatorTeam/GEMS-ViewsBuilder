@@ -16,9 +16,9 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.input.view_config import TimeAggregation, load_view_config
-from gems_views_builder.loader import Loader
-from gems_views_builder.view import ParquetViewSinker, ViewBuilder, accumulate_on_disk
+from gems_views_builder.view import ParquetViewSinker
 
 AGGREGATION_BLOCK = "  aggregation:\n    - time: hour\n"
 
@@ -55,8 +55,7 @@ def test_yaml_time_aggregation_drives_full_pipeline(
     results_dir.mkdir()
 
     # Act, run pipeline
-    metric_views = ViewBuilder(Loader(dataset_dir).load()).build()
-    accumulate_on_disk(metric_views, ParquetViewSinker(results_dir))
+    run_view_building_process(dataset_dir, ParquetViewSinker(results_dir))
     result = pl.read_parquet(next(results_dir.glob("view*.parquet")))
     rows = result.filter((pl.col("metric_id") == "PROD") & (pl.col("metric_location") == "busA")).sort("view_date")
 
