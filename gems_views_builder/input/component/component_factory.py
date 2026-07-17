@@ -6,7 +6,7 @@ from gems.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component.component import Component
-from gems_views_builder.input.component.connection import ConnectionThroughPort
+from gems_views_builder.input.component.connection import ConnectionsThroughPort
 
 
 def create_components(gemspy_components: list[GemsPyComponent]) -> list[Component]:
@@ -34,7 +34,7 @@ def supply_components_with_port_connections(
     components_by_id = {component.id: component for component in components}
     for component in components:
         if component.id in component_port_connections:
-            component.connections = ConnectionThroughPort(
+            component.connections = ConnectionsThroughPort(
                 port_components={
                     port_id: [components_by_id[peer_id] for peer_id in peer_ids]
                     for port_id, peer_ids in component_port_connections[component.id].items()
@@ -120,15 +120,13 @@ def supply_components_with_locations(
         for term in metric.terms:
             for c in components_by_taxon[term.taxonomy_category]:
                 if term.location_port is None:
-                    # If location port is None current component is self located for this all location_taxonomy categories over views
-                    # Currently we support only one view, do we really need to perform check term.taxonomy_category == location_taxonomy_category?
+                    if term.taxonomy_category != location_taxonomy_category:
+                        raise ValueError(
+                            f"Component {c.id!r} has taxonomy category {c.taxonomy_category!r}, "
+                            f"expected {location_taxonomy_category!r}"
+                        )
                     c.locations[(None, location_taxonomy_category)] = c.id
                 else:
-                    # Pick connections for this component through current term port
-                    # Group component by their taxonomy category
-                    # If anyone has more than one peer of the same category raise an error
-                    # So this will in general work I don't see point why we pass location_taxonomy_category because we will check it later
-                    # In function is located
                     supply_component_with_location(c, term.location_port, location_taxonomy_category)
 
 

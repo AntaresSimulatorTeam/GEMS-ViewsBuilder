@@ -5,7 +5,7 @@ from typing import cast
 from gems.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.catalog import PropertySchema
-from gems_views_builder.input.component.connection import ConnectionThroughPort
+from gems_views_builder.input.component.connection import ConnectionsThroughPort
 from gems_views_builder.input.view_config import LocationAggregation
 
 
@@ -26,7 +26,7 @@ class Component:
     raw_component: GemsPyComponent
     taxonomy_category: str | None = None
     # Connections holding the peer components connected on each port
-    connections: ConnectionThroughPort = field(default_factory=ConnectionThroughPort)
+    connections: ConnectionsThroughPort = field(default_factory=ConnectionsThroughPort)
     # (location_port, taxonomy_category) -> resolved location component id.
     # Populated by ``supply_components_with_locations``:
     # - location_port set: unique peer on that port for the peer's taxonomy category;
