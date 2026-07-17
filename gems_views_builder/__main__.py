@@ -44,7 +44,11 @@ def run_view_building_process(input_dir: Path, view_sinker: ViewSinker) -> None:
     component_port_connections = build_component_port_connections(input_data.system.connections)
     supply_components_with_port_connections(components, component_port_connections)
     components_by_taxon = group_components_by_taxon(components)
-    supply_components_with_locations(components_by_taxon, input_data.view_config.get_metrics())
+    supply_components_with_locations(
+        components_by_taxon,
+        input_data.view_config.get_metrics(),
+        input_data.view_config.location_taxonomy_category,
+    )
 
     # # Only one instance of MetricStructureTableBuilder is needed
     metric_structure_table_builder = MetricStructureTableBuilder(

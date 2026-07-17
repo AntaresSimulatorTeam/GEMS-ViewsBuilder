@@ -43,7 +43,10 @@ from gems_views_builder.metrics_structure_builder import MetricStructureTableBui
 
 
 def build_components_by_taxonomy_category(
-    system: Any, library: Any, metrics: list[Metric] | None = None
+    system: Any,
+    library: Any,
+    metrics: list[Metric] | None = None,
+    location_taxonomy_category: str | None = None,
 ) -> dict[str, list[Component]]:
     components = [Component(component) for component in system.components]
     supply_components_with_taxonomy_categories(components, library.taxonomy_category_by_model)
@@ -51,7 +54,9 @@ def build_components_by_taxonomy_category(
     component_port_connections = build_component_port_connections(system.connections)
     supply_components_with_port_connections(components, component_port_connections)
     if metrics is not None:
-        supply_components_with_locations(components_by_taxon, metrics)
+        if location_taxonomy_category is None:
+            raise ValueError("location_taxonomy_category is required when metrics are provided")
+        supply_components_with_locations(components_by_taxon, metrics, location_taxonomy_category)
     return components_by_taxon
 
 
@@ -63,7 +68,9 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
     library = load_library(test_3 / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     view_config = load_view_config(test_3 / "view_config.yml")
-    components_by_taxon = build_components_by_taxonomy_category(system, library, list(catalog.metrics.values()))
+    components_by_taxon = build_components_by_taxonomy_category(
+        system, library, list(catalog.metrics.values()), view_config.location_taxonomy_category
+    )
     return {
         "system": system,
         "taxonomy": taxonomy,
@@ -275,7 +282,7 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity() -> None:
 
     # Act / Assert
     with pytest.raises(ValueError, match="p0_port"):
-        supply_components_with_locations(components_by_taxon, [metric])
+        supply_components_with_locations(components_by_taxon, [metric], "cat")
 
 
 def test_resolve_location_returns_peer(test_3_components: dict[str, Any]) -> None:
@@ -307,8 +314,10 @@ def test_none_location_port_resolves_to_the_component_itself(test_3_components: 
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
+    location_taxonomy_category = test_3_components["location_taxonomy_category"]
+    supply_components_with_locations(test_3_components["components_by_taxon"], [metric], location_taxonomy_category)
     builder = MetricStructureTableBuilder(
-        test_3_components["location_taxonomy_category"],
+        location_taxonomy_category,
         test_3_components["components_by_taxon"],
     )
 

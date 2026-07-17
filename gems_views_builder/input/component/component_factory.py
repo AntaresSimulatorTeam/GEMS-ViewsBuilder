@@ -93,39 +93,45 @@ def build_component_port_connections(connections: list[Any]) -> dict[str, dict[s
     return component_port_connections
 
 
-def supply_components_with_locations(components_by_taxon: dict[str, list[Component]], metrics: list[Metric]) -> None:
-    """Precompute, for every relevant component's port, the unique peer for each taxonomy category
-    found among its connected peers on that port.
+def supply_components_with_locations(
+    components_by_taxon: dict[str, list[Component]],
+    metrics: list[Metric],
+    location_taxonomy_category: str,
+) -> None:
+    """Precompute each component's metric locations from catalog terms.
 
-    Requires to be run before:
-    - supply_components_with_taxonomy_categories (each component has its own taxonomy category)
-    - supply_components_with_port_connections (each component has its connections through port)
+    Must run after:
+    - ``supply_components_with_taxonomy_categories``
+    - ``supply_components_with_port_connections``
 
-    For each metric term with a ``location_port``, and for each component belonging to that
-    term's taxonomy category, peers connected on that port are grouped by their own taxonomy
-    category:
-    - exactly one peer of a category: it is stored as the resolved location for that category;
-    - more than one peer of the same category: a genuine inconsistency, raised immediately
-      rather than later during table building.
+    For each metric term and each component in that term's taxonomy category:
 
-    This is later consumed via ``Component.is_located_at``/``Component.resolve_location`` with
-    whichever taxonomy category the consumer (e.g. ``MetricStructureTableBuilder``) cares about.
+    - ``location_port is None``: the component is its own location; store
+      ``(None, location_taxonomy_category) -> component.id``.
+    - ``location_port`` is set: look at peers connected on that port, group them by
+      *peer* taxonomy category, then:
+      - exactly one peer of a category → store ``(location_port, peer_category) -> peer.id``;
+      - more than one peer of the same category → raise (ambiguous location).
+
+    Later read via ``Component.is_located_at`` / ``Component.resolve_location``, which both
+    look up ``(location_port, location_taxonomy_category)`` in ``Component.locations``.
     """
     for metric in metrics:
         for term in metric.terms:
-            if term.location_port is None:
-                continue
             for c in components_by_taxon[term.taxonomy_category]:
-                _supply_component_with_location(c, term.location_port)
+                if term.location_port is None:
+                    c.locations[(None, location_taxonomy_category)] = c.id
+                else:
+                    supply_component_with_location(c, term.location_port)
 
 
-def _supply_component_with_location(component: Component, location_port: str) -> None:
+def supply_component_with_location(component: Component, location_port: str) -> None:
     peers_by_category: dict[str, list[Component]] = defaultdict(list)
     for peer in component.connections.get_components(location_port):
         peers_by_category[cast(str, peer.taxonomy_category)].append(peer)
 
     for category, peers in peers_by_category.items():
-        if len(peers) > 1:
+        if len(peers) != 1:
             raise ValueError(
                 f"Component {component.id!r} port {location_port} has {len(peers)} peers "
                 f"belonging to taxonomy category {category!r}, expected at most one"
