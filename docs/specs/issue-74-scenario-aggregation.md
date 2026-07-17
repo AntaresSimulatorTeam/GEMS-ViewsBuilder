@@ -13,6 +13,12 @@ that collapses the scenario dimension into four synthesis statistics per
 group: expectation (`exp`), standard deviation (`std`), minimum (`min`) and
 maximum (`max`).
 
+As part of this change, the View's `scenario` column is renamed to
+**`scenario_id`** — a plain rename, independent of the aggregation feature
+itself, done for clarity now that this column sits alongside the new
+`scenario_aggregation` / `scenario_stat` columns (see "Output schema" and
+"Column rename" below).
+
 ## Config schema
 
 `Aggregation` (`gems_views_builder/input/view_config.py`) gains a second
@@ -77,15 +83,27 @@ class ScenarioOperator(Enum):
 
 - When `scenario_aggregation = True`: group by
   `metric_id, metric_location, breakdown_properties, view_date` (dropping
-  `scenario`), and emit one row per `ScenarioOperator` — mean / std (ddof=0,
-  see below) / min / max of `metric_value` — unpivoted into long form (4 rows
-  per group).
-- When `scenario_aggregation = False`: pass through unchanged.
+  `scenario_id`), and emit one row per `ScenarioOperator` — mean / std
+  (ddof=0, see below) / min / max of `metric_value` — unpivoted into long
+  form (4 rows per group).
+- When `scenario_aggregation = False`: pass through unchanged (aside from
+  the column rename below).
+
+## Column rename: `scenario` → `scenario_id`
+
+Renamed in `TermsAggregator` (currently
+`.with_columns(pl.col("scenario_index").alias("scenario"))` in
+`terms_aggregator.py`) to alias to `scenario_id` instead, and correspondingly
+in every downstream groupby/select in `TimeAggregator` and the new
+`ScenarioAggregator`. Existing tests referencing the `scenario` column
+(`test_time_aggregator.py`, `test_filtering_and_breakdown.py`,
+`test_view_builder.py`) need updating to `scenario_id`. This is a breaking
+change for any external consumer reading View output by column name.
 
 ## Output schema
 
 ```
-metric_id | metric_location | breakdown_properties | view_date | scenario | scenario_aggregation | scenario_stat | metric_value
+metric_id | metric_location | breakdown_properties | view_date | scenario_id | scenario_aggregation | scenario_stat | metric_value
 ```
 
 Two new columns, present in **every** View's output regardless of config, so
@@ -99,15 +117,15 @@ the schema stays uniform across all Views:
   `scenario_aggregation = false`; one of `"exp" | "std" | "min" | "max"` when
   `scenario_aggregation = true`.
 
-`scenario` (Int64) keeps its current meaning and dtype in both cases —
+`scenario_id` (Int64) keeps its current meaning and dtype in both cases —
 populated with the scenario index when `scenario_aggregation = false`, `null`
 when `true` (a synthesis row no longer corresponds to a single scenario).
-This avoids retyping/renaming `scenario` depending on config, which was the
-original concern raised on this issue (reusing `scenario` as a string column
+This avoids retyping `scenario_id` depending on config, which was the
+original concern raised on this issue (reusing it as a string column
 would make its dtype flip between `Int64` and `Utf8` depending on config —
 a footgun for any downstream consumer with a fixed schema expectation).
 
-| scenario_aggregation | scenario | scenario_stat | meaning |
+| scenario_aggregation | scenario_id | scenario_stat | meaning |
 |---|---|---|---|
 | `false` | `3` | `null` | ordinary per-scenario row (today's behavior) |
 | `true` | `null` | `"std"` | synthesis row, one of 4 per group |
@@ -127,11 +145,13 @@ single-scenario View), no null/NaN edge case to special-case downstream.
 
 ## Documentation fixes bundled with this change
 
-Several `catalog.yml` fixtures carry a stale column-order comment
-(`scenario_id`, `breakdown_property` singular) that doesn't match the actual
-runtime column names (`scenario`, `breakdown_properties`). Update these
-comments while touching this area, and extend them to include the two new
-columns:
+Several `catalog.yml` fixtures carry a column-order comment
+(`# metric_id | metric_location | breakdown_property | view_date |
+scenario_id | metric_value |`). It already says `scenario_id`, so the
+rename above actually makes that part of the comment correct — but
+`breakdown_property` is still singular where the real column is
+`breakdown_properties`, and the comment needs the two new columns added.
+Update while touching this area:
 
 - `resources/tests_inputs/test_3/catalogs/catalog.yml`
 - `resources/tests_inputs/filtering_and_breakdown/catalogs/catalog.yml`
@@ -147,7 +167,11 @@ columns:
   (ddof=0) / `min` / `max` against values computed directly from the raw
   simulation table.
 - Regression test confirming `scenario_aggregation = false` (or omitted)
-  leaves output unchanged except for the two new columns
-  (`scenario_aggregation = false` on every row, `scenario_stat = null`).
+  leaves output unchanged (aside from the `scenario` → `scenario_id` rename
+  and the two new columns: `scenario_aggregation = false` on every row,
+  `scenario_stat = null`).
 - `load_view_config()` test covering a two-entry `aggregation` list
   (`time` + `scenario` together), to lock in the list-scanning fix.
+- Sweep of existing tests asserting on the `scenario` column
+  (`test_time_aggregator.py`, `test_filtering_and_breakdown.py`,
+  `test_view_builder.py`) updated to `scenario_id`.
