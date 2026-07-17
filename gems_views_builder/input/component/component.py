@@ -26,11 +26,13 @@ class Component:
     raw_component: GemsPyComponent
     taxonomy_category: str | None = None
     # Connections holding the peer components connected on each port
-    connections: list[ConnectionThroughPort] = field(default_factory=list)
-    # (port_id, taxonomy_category) -> unique peer component id located on that port for that
-    # taxonomy category. Populated by ``supply_components_with_locations``. Absence of a key means no
-    # peer on that port belongs to that taxonomy category (no location can be determined there).
-    scope_locations: dict[tuple[str, str], str] = field(default_factory=dict)
+    connections: ConnectionThroughPort = field(default_factory=ConnectionThroughPort)
+    # (location_port, taxonomy_category) -> resolved location component id.
+    # Populated by ``supply_components_with_locations``:
+    # - location_port set: unique peer on that port for the peer's taxonomy category;
+    # - location_port None: the component itself for the view's location taxonomy category.
+    # Absence of a key means no location can be determined for that (port, category).
+    locations: dict[tuple[str | None, str], str] = field(default_factory=dict)
 
     @property
     def id(self) -> str:
@@ -48,23 +50,19 @@ class Component:
     def set_taxonomy_category(self, taxonomy_category: str) -> None:
         self.taxonomy_category = taxonomy_category
 
-    def is_located_at(self, location_port: str | None, taxonomy_category: str) -> bool:
-        """Whether ``location_port`` has a resolved location for ``taxonomy_category``.
-
-        ``location_port`` of ``None`` means the component is its own location: always true.
-        """
-        if location_port is None:
-            return True
-        located = (location_port, taxonomy_category) in self.scope_locations
+    def is_located_at(self, location_port: str | None, location_taxonomy_category: str) -> bool:
+        """Whether a location was precomputed for ``(location_port, location_taxonomy_category)``."""
+        located = (location_port, location_taxonomy_category) in self.locations
         if not located:
-            logging.debug(f"Component {self.id!r} has no resolved location for taxonomy category {taxonomy_category!r}")
+            logging.debug(
+                f"Component {self.id!r} has no resolved location for "
+                f"port {location_port!r} and taxonomy category {location_taxonomy_category!r}"
+            )
         return located
 
-    def resolve_location(self, location_port: str | None, taxonomy_category: str) -> str:
-        """Return the resolved location for ``location_port``, previously checked via ``is_located_at``."""
-        if location_port is None:
-            return self.id
-        return self.scope_locations[(location_port, taxonomy_category)]
+    def resolve_location(self, location_port: str | None, location_taxonomy_category: str) -> str:
+        """Return the resolved location, previously checked via ``is_located_at``."""
+        return self.locations[(location_port, location_taxonomy_category)]
 
     def aggregated_locations(
         self,
