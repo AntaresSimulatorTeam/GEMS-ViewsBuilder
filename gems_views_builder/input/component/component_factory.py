@@ -120,20 +120,24 @@ def supply_components_with_locations(
         for term in metric.terms:
             for c in components_by_taxon[term.taxonomy_category]:
                 if term.location_port is None:
+                    # If location port is None current component is self located for this all location_taxonomy categories over views
+                    # Currently we support only one view, do we really need to perform check term.taxonomy_category == location_taxonomy_category?
                     c.locations[(None, location_taxonomy_category)] = c.id
                 else:
-                    supply_component_with_location(c, term.location_port)
+                    # Pick connections for this component through current term port
+                    # Group component by their taxonomy category
+                    # If anyone has more than one peer of the same category raise an error
+                    # So this will in general work I don't see point why we pass location_taxonomy_category because we will check it later
+                    # In function is located
+                    supply_component_with_location(c, term.location_port, location_taxonomy_category)
 
 
-def supply_component_with_location(component: Component, location_port: str) -> None:
-    peers_by_category: dict[str, list[Component]] = defaultdict(list)
-    for peer in component.connections.get_components(location_port):
-        peers_by_category[cast(str, peer.taxonomy_category)].append(peer)
-
-    for category, peers in peers_by_category.items():
-        if len(peers) != 1:
-            raise ValueError(
-                f"Component {component.id!r} port {location_port} has {len(peers)} peers "
-                f"belonging to taxonomy category {category!r}, expected at most one"
-            )
-        component.locations[(location_port, category)] = peers[0].id
+def supply_component_with_location(component: Component, location_port: str, location_taxonomy_category: str) -> None:
+    peers = component.connections.get_components(location_port)
+    if len(peers) != 1:
+        raise ValueError(f"Component {component.id!r} port {location_port} has {len(peers)} peers, expected 1")
+    if peers[0].taxonomy_category != location_taxonomy_category:
+        raise ValueError(
+            f"Component {component.id!r} port {location_port} has peer {peers[0].id!r} with taxonomy category {peers[0].taxonomy_category!r}, expected {location_taxonomy_category!r}"
+        )
+    component.locations[(location_port, location_taxonomy_category)] = peers[0].id
