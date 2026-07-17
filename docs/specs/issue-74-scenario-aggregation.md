@@ -61,43 +61,14 @@ require renaming these fields again.
 
 ## Pipeline changes
 
-Unlike `TermsAggregator`/`TimeAggregator`, `ScenarioAggregator` does **not**
-belong inside `ViewBuilder.build()`'s per-metric loop
-(`gems_views_builder/view/views_builder.py`). Those two steps need
-per-metric config (`terms_operator`, `time_operator` come from the
-`Metric`), but scenario synthesis (exp/std/min/max) is the same fixed
-transformation for every metric — there is no per-metric choice to make. So
-it should run **once**, as the true last step of the whole pipeline, on
-the fully merged output, not once per metric before the merge.
-
-Concretely, this lands in `accumulate_on_disk`
-(`gems_views_builder/view/view.py`), between the parquet merge and the sink
-— i.e. on `merged`, which already has (almost) the exact final View schema
-(`metric_id, metric_location, breakdown_properties, view_date, scenario_id,
-metric_value`) once every metric's output has been combined:
+New `ScenarioAggregator` (mirrors `TimeAggregator`'s shape), inserted after
+`TimeAggregator.run()` in `ViewBuilder.build()`:
 
 ```python
-def accumulate_on_disk(
-    metric_views: list[MetricView], sinker: ViewSinker, scenario_aggregation: bool
-) -> View:
-    merged = pl.scan_parquet([v.persistence_path for v in metric_views])
-    final = ScenarioAggregator().run(merged, scenario_aggregation)
-    return sinker.sink(final)
+metric_view = terms_aggregator.run(metric_structure_table, metric)
+temporal_metric_view = time_aggregator.run(metric_view, metric)
+final_metric_view = scenario_aggregator.run(temporal_metric_view, config.scenario_aggregation)
 ```
-
-`ScenarioAggregator.run()` should be self-contained/autonomous: its
-signature is just `(view: pl.LazyFrame, scenario_aggregation: bool) ->
-pl.LazyFrame` — no `Metric`, no `TermsOperator`/`TimeOperator`, no catalog or
-taxonomy object, unlike every other step in this pipeline. It only needs to
-know the standard View columns and the one boolean flag. This keeps it
-trivially unit-testable against a synthetic LazyFrame with no pipeline
-scaffolding, and decoupled from any per-metric or catalog changes elsewhere
-in the codebase — it doesn't care how `merged` was produced, only that it
-already looks like a View (minus the two new columns).
-
-`ViewBuilder.build()` and `run_view_building_process()` stay unchanged apart
-from threading `input_data.view_config.scenario_aggregation` through to this
-new `accumulate_on_disk` parameter.
 
 New `ScenarioOperator` enum (`gems_views_builder/input/catalog.py`, alongside
 `TermsOperator` / `TimeOperator`), values chosen to be written directly into
