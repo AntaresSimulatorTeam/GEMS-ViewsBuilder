@@ -300,21 +300,25 @@ def test_resolve_location_returns_peer(test_3_components: dict[str, Any]) -> Non
 
 
 def test_none_location_port_resolves_to_the_component_itself(test_3_components: dict[str, Any]) -> None:
-    """A term with location_port=None means the component is its own location."""
+    """A term with location_port=None means the component is its own location.
+
+    Self-location is only valid when the term taxonomy category matches the view's
+    location taxonomy category (here ``balance``).
+    """
     # Arrange
+    location_taxonomy_category = test_3_components["location_taxonomy_category"]
     metric = Metric(
         id="SELF_LOCATED_TEST",
         terms=[
             Term(
-                taxonomy_category="link",
-                output_id="p0_port.flow",
+                taxonomy_category=location_taxonomy_category,
+                output_id="p_balance_port.flow",
                 location_port=None,
             )
         ],
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    location_taxonomy_category = test_3_components["location_taxonomy_category"]
     supply_components_with_locations(test_3_components["components_by_taxon"], [metric], location_taxonomy_category)
     builder = MetricStructureTableBuilder(
         location_taxonomy_category,
@@ -326,6 +330,6 @@ def test_none_location_port_resolves_to_the_component_itself(test_3_components: 
     df = table.dataframe.collect()
 
     # Assert
-    link_rows = df.filter(pl.col("component") == "link_link_AB")
-    assert len(link_rows) == 1
-    assert link_rows["metric_location"][0] == "link_link_AB"
+    bus_rows = df.filter(pl.col("component") == "busA")
+    assert len(bus_rows) == 1
+    assert bus_rows["metric_location"][0] == "busA"

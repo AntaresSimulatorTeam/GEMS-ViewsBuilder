@@ -120,8 +120,11 @@ def supply_components_with_locations(
         for term in metric.terms:
             for c in components_by_taxon[term.taxonomy_category]:
                 if term.location_port is None:
-                    # If location port is None current component is self located for this all location_taxonomy categories over views
-                    # Currently we support only one view, do we really need to perform check term.taxonomy_category == location_taxonomy_category?
+                    if term.taxonomy_category != location_taxonomy_category:
+                        raise ValueError(
+                            f"Component {c.id!r} has taxonomy category {c.taxonomy_category!r}, "
+                            f"expected {location_taxonomy_category!r}"
+                        )
                     c.locations[(None, location_taxonomy_category)] = c.id
                 else:
                     supply_component_with_location(c, term.location_port, location_taxonomy_category)
