@@ -29,7 +29,7 @@ from gems_views_builder import (
 )
 from gems_views_builder.input.component import (
     Component,
-    ConnectionThroughPort,
+    ConnectionsThroughPort,
     build_component_port_connections,
     group_components_by_taxon,
     supply_components_with_locations,
@@ -271,7 +271,7 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity() -> None:
     owner.taxonomy_category = "cat"
     peer_1.taxonomy_category = "cat"
     peer_2.taxonomy_category = "cat"
-    owner.connections = ConnectionThroughPort(port_components={"p0_port": [peer_1, peer_2]})
+    owner.connections = ConnectionsThroughPort(port_components={"p0_port": [peer_1, peer_2]})
     components_by_taxon = {"cat": [owner]}
     metric = Metric(
         id="AMBIGUITY_TEST",

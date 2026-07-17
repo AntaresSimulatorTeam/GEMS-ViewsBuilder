@@ -6,7 +6,7 @@ from gems.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component.component import Component
-from gems_views_builder.input.component.connection import ConnectionThroughPort
+from gems_views_builder.input.component.connection import ConnectionsThroughPort
 
 
 def create_components(gemspy_components: list[GemsPyComponent]) -> list[Component]:
@@ -34,7 +34,7 @@ def supply_components_with_port_connections(
     components_by_id = {component.id: component for component in components}
     for component in components:
         if component.id in component_port_connections:
-            component.connections = ConnectionThroughPort(
+            component.connections = ConnectionsThroughPort(
                 port_components={
                     port_id: [components_by_id[peer_id] for peer_id in peer_ids]
                     for port_id, peer_ids in component_port_connections[component.id].items()
@@ -120,20 +120,19 @@ def supply_components_with_locations(
         for term in metric.terms:
             for c in components_by_taxon[term.taxonomy_category]:
                 if term.location_port is None:
+                    # If location port is None current component is self located for this all location_taxonomy categories over views
+                    # Currently we support only one view, do we really need to perform check term.taxonomy_category == location_taxonomy_category?
                     c.locations[(None, location_taxonomy_category)] = c.id
                 else:
-                    supply_component_with_location(c, term.location_port)
+                    supply_component_with_location(c, term.location_port, location_taxonomy_category)
 
 
-def supply_component_with_location(component: Component, location_port: str) -> None:
-    peers_by_category: dict[str, list[Component]] = defaultdict(list)
-    for peer in component.connections.get_components(location_port):
-        peers_by_category[cast(str, peer.taxonomy_category)].append(peer)
-
-    for category, peers in peers_by_category.items():
-        if len(peers) != 1:
-            raise ValueError(
-                f"Component {component.id!r} port {location_port} has {len(peers)} peers "
-                f"belonging to taxonomy category {category!r}, expected at most one"
-            )
-        component.locations[(location_port, category)] = peers[0].id
+def supply_component_with_location(component: Component, location_port: str, location_taxonomy_category: str) -> None:
+    peers = component.connections.get_components(location_port)
+    if len(peers) != 1:
+        raise ValueError(f"Component {component.id!r} port {location_port} has {len(peers)} peers, expected 1")
+    if peers[0].taxonomy_category != location_taxonomy_category:
+        raise ValueError(
+            f"Component {component.id!r} port {location_port} has peer {peers[0].id!r} with taxonomy category {peers[0].taxonomy_category!r}, expected {location_taxonomy_category!r}"
+        )
+    component.locations[(location_port, location_taxonomy_category)] = peers[0].id
