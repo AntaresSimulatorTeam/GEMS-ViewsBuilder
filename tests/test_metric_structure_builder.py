@@ -354,7 +354,9 @@ def loc_agg_components(test_files_root: Path) -> dict[str, Any]:
     catalog = load_catalog(fixture / "catalogs" / "catalog.yml")
     taxonomy = load_taxonomy(fixture / "taxonomy.yml")
     view_config = load_view_config(fixture / "view_config.yml")
-    components_by_taxon = build_components_by_taxonomy_category(system, library, view_config.location_taxonomy_category)
+    components_by_taxon = build_components_by_taxonomy_category(
+        system, library, list(catalog.metrics.values()), view_config.location_taxonomy_category
+    )
     components_by_id = {
         component.id: component for components in components_by_taxon.values() for component in components
     }
