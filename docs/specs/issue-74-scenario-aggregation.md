@@ -21,21 +21,14 @@ itself, done for clarity now that this column sits alongside the new
 
 ## Config schema
 
-Mirroring `TimeAggregation` (the type used for `Aggregation.time`), a new
-`ScenarioAggregation` model is introduced for `Aggregation.scenario` instead
-of a bare `bool`. It carries no fields for now — its mere *presence* in the
-`aggregation` list is the on/off signal, so there's no separate keyword
-(like `active`) that could disagree with that presence:
-
-```python
-class ScenarioAggregation(ViewBuilderBasedModel):
-    pass
-```
+`Aggregation` gains a plain `scenario: bool | None = None` field, keeping the
+flat YAML shape from the issue's own draft — no wrapper type, no extra
+keyword:
 
 ```python
 class Aggregation(ViewBuilderBasedModel):
     time: TimeAggregation | None = None
-    scenario: ScenarioAggregation | None = None
+    scenario: bool | None = None
 ```
 
 YAML shape (one aggregation dimension per list entry, matching the existing
@@ -44,22 +37,10 @@ convention):
 ```yaml
 aggregation:
   - time: hour
-  - scenario: {}
+  - scenario: true # (or false)
 ```
 
-Omitting the `scenario` entry entirely means scenario aggregation is off —
-there is no `scenario: false` form. This is a deliberate departure from the
-flat `scenario: true | false` in the issue's own draft, but keeps the model
-free of any field whose meaning could drift from "is this entry present" —
-and leaves room to add real fields later (e.g. which stats to compute, or a
-future multi-level config per the forward-looking note below) without
-touching this on/off semantics.
-
-`ViewConfig` keeps a plain `scenario_aggregation: bool = False` — `ViewConfig`
-is the resolved/internal config the pipeline consumes, and already unwraps
-richer raw-pydantic types into plain values elsewhere (e.g. `catalog_ids:
-set[str]` from `list[CatalogId]`), so `ScenarioAggregation` stays confined to
-the raw YAML-parsing layer.
+`ViewConfig` gains `scenario_aggregation: bool = False`.
 
 `load_view_config()` currently only inspects `aggregation[0]` — harmless
 today since only one entry is ever used, but this feature requires two
@@ -67,7 +48,7 @@ entries in the same list, so this needs fixing to scan the whole list:
 
 ```python
 time_aggregation = next((a.time for a in raw.aggregation if a.time is not None), None)
-scenario_aggregation = any(a.scenario is not None for a in raw.aggregation)
+scenario_aggregation = next((a.scenario for a in raw.aggregation if a.scenario is not None), False)
 ```
 
 **Forward-looking note:** a future issue will allow *several* time and
