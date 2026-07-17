@@ -21,25 +21,44 @@ itself, done for clarity now that this column sits alongside the new
 
 ## Config schema
 
-`Aggregation` (`gems_views_builder/input/view_config.py`) gains a second
-optional field, alongside the existing `time`:
+Mirroring `TimeAggregation` (the type used for `Aggregation.time`), a new
+`ScenarioAggregation` model is introduced for `Aggregation.scenario` instead
+of a bare `bool` — a `BaseModel` rather than an `Enum` since a boolean has no
+natural set of named variants, but the same idea of "a small dedicated type
+per aggregation dimension, not a primitive":
 
 ```python
-class Aggregation(BaseModel):
+class ScenarioAggregation(ViewBuilderBasedModel):
+    active: bool = False
+```
+
+```python
+class Aggregation(ViewBuilderBasedModel):
     time: TimeAggregation | None = None
-    scenario: bool | None = None
+    scenario: ScenarioAggregation | None = None
 ```
 
 YAML shape (one aggregation dimension per list entry, matching the existing
-convention and the issue's own draft):
+convention):
 
 ```yaml
 aggregation:
   - time: hour
-  - scenario: true
+  - scenario:
+      active: true
 ```
 
-`ViewConfig` gains `scenario_aggregation: bool = False`.
+This is a deliberate departure from the flat `scenario: true | false` in the
+issue's own draft — wrapping it in a model now means later fields (e.g. which
+stats to compute, or a future multi-level config per the forward-looking
+note below) can be added to `ScenarioAggregation` without another type change
+on `Aggregation.scenario` itself.
+
+`ViewConfig` keeps a plain `scenario_aggregation: bool = False` — `ViewConfig`
+is the resolved/internal config the pipeline consumes, and already unwraps
+richer raw-pydantic types into plain values elsewhere (e.g. `catalog_ids:
+set[str]` from `list[CatalogId]`), so `ScenarioAggregation` stays confined to
+the raw YAML-parsing layer.
 
 `load_view_config()` currently only inspects `aggregation[0]` — harmless
 today since only one entry is ever used, but this feature requires two
@@ -47,7 +66,9 @@ entries in the same list, so this needs fixing to scan the whole list:
 
 ```python
 time_aggregation = next((a.time for a in raw.aggregation if a.time is not None), None)
-scenario_aggregation = next((a.scenario for a in raw.aggregation if a.scenario), False)
+scenario_aggregation = next(
+    (a.scenario.active for a in raw.aggregation if a.scenario is not None), False
+)
 ```
 
 **Forward-looking note:** a future issue will allow *several* time and
