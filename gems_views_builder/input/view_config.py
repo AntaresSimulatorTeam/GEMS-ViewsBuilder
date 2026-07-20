@@ -17,7 +17,8 @@ from gems_views_builder.input.catalog import Catalog, Metric
 
 
 class ExtraLocations(ViewBuilderBasedModel):
-    ...
+    country_id: str
+    region_id: str
 
 class TimeAggregation(Enum):
     HOUR = "hour"
@@ -35,6 +36,7 @@ class Scope(ViewBuilderBasedModel):
 class Aggregation(ViewBuilderBasedModel):
     time: TimeAggregation
     scenario: bool
+    extra_locations: list[ExtraLocations] | None = None
 
 
 class CatalogId(ViewBuilderBasedModel):
