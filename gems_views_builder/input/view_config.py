@@ -42,8 +42,8 @@ class Calendar(ViewBuilderBasedModel):
 
 
 class Scope(ViewBuilderBasedModel):
-    location: LocationCategory | None = None
-    calendar: Calendar | None = None
+    location: LocationCategory
+    calendar: Calendar
 
 
 class Aggregation(ViewBuilderBasedModel):
@@ -65,7 +65,7 @@ class MetricId(ViewBuilderBasedModel):
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
     taxonomy: list[TaxonomyId] = Field(min_length=1, max_length=1)
-    scope: list[Scope] = Field(min_length=2, max_length=2)
+    scope: Scope
     aggregation: list[Aggregation]
     catalog: list[CatalogId] = Field(min_length=1)  # We need minimum one catalog and metric
     metrics: list[MetricId] = Field(min_length=1)  # in fact if we don't have it GVB process is useless
@@ -116,22 +116,13 @@ class ViewConfig:
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
-    from gems_views_builder.validation.raw_view_config_validator import RawViewConfigValidator
-
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
-    RawViewConfigValidator(raw_view_config).validate()
-
-    location_taxonomy_category = next(
-        item.location.taxonomy_category for item in raw_view_config.scope if item.location is not None
-    )
-    calendar_id = next(item.calendar.id for item in raw_view_config.scope if item.calendar is not None)
-
     view_config = ViewConfig(
         id=raw_view_config.id,
         input_data_path=config_file_path.parent,
-        calendar_id=calendar_id,
-        location_taxonomy_category=location_taxonomy_category,
+        calendar_id=raw_view_config.scope.calendar.id,
+        location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalog},
         time_aggregation=raw_view_config.aggregation[0].time if raw_view_config.aggregation else None,
         metric_ids=[metric.id for metric in raw_view_config.metrics],

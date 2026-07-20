@@ -49,10 +49,10 @@ def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
         """view:
   id: invalid_metric_format
   scope:
-    - location:
-        taxonomy-category: balance
-    - calendar:
-        id: calendar_file
+    location:
+      taxonomy-category: balance
+    calendar:
+      id: calendar_file
   aggregation:
     - time: hour
   catalog:
@@ -76,10 +76,10 @@ def test_raises_on_invalid_taxonomy_section(tmp_path: Path, taxonomy_section: st
         f"""view:
   id: invalid_taxonomy
   scope:
-    - location:
-        taxonomy-category: balance
-    - calendar:
-        id: calendar_file
+    location:
+      taxonomy-category: balance
+    calendar:
+      id: calendar_file
   aggregation:
     - time: hour
   catalog:
