@@ -38,14 +38,12 @@ class MetricStructureTableBuilder:
             )
 
             for c in self.components_by_taxon[term.taxonomy_category]:
-                if c.match(metric.filter) and c.is_located_at(term.location_ports, self.location_taxonomy_category):
+                if c.match(metric.filter) and c.is_located_at(term.location_port, self.location_taxonomy_category):
                     rows.append(
                         {
                             "metric_id": metric.id,
                             "component": c.id,
-                            "metric_location": c.formatted_locations(
-                                term.location_ports, self.location_taxonomy_category
-                            ),
+                            "metric_location": c.resolve_location(term.location_port, self.location_taxonomy_category),
                             "breakdown_properties": c.format_breakdown_properties(metric.breakdown),
                             "output": term.output_id,
                             "weight_output_id": 1,

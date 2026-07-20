@@ -39,7 +39,7 @@ which only checks that these files are *present*, not their contents).
 | Taxonomy id match | `catalog.taxonomy == taxonomy.id` |
 | Taxonomy category exists | every term's `taxonomy-category` is a category defined in `taxonomy.yml` |
 | Output id declared | every term's `output-id` is declared as a `variable` or `extra-output` on that category |
-| Location ports declared | every term's `location-ports` are declared as `ports` on that category |
+| Location port declared | every term's `location-port` is declared as a `port` on that category |
 
 ### `view_config.yml` → `taxonomy.yml`
 [`ViewConfigTaxonomyValidator`](../gems_views_builder/validation/view_config_taxonomy.py)

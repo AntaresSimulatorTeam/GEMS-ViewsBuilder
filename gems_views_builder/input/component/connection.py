@@ -8,8 +8,11 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class Connection:
+class ConnectionsThroughPort:
     """Peer components connected to a component on a given port."""
 
-    port: str
-    components: list[Component] = field(default_factory=list)
+    # port id -> list of components connected on that port
+    port_components: dict[str, list[Component]] = field(default_factory=dict)
+
+    def get_components(self, port_id: str) -> list[Component]:
+        return self.port_components.get(port_id, [])

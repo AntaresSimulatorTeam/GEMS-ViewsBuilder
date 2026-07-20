@@ -16,39 +16,8 @@ from typing import cast
 import pytest
 
 from gems_views_builder.common import configure_logging
-from gems_views_builder.input.component import (
-    Component,
-    build_component_port_connections,
-    group_components_by_taxon,
-    save_component_port_connections,
-    supply_components_with_locations,
-    supply_components_with_taxonomy_categories,
-)
-from gems_views_builder.loader import Loader
-from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
-from gems_views_builder.view import ViewBuilder
-
 RESOURCES_TEST_FILES_ROOT = Path(__file__).resolve().parent.parent / "resources"
 TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
-
-
-def build_view_builder(dataset_dir: Path) -> ViewBuilder:
-    """Load a dataset directory and return a configured ``ViewBuilder``."""
-    input_data, _catalogs = Loader(dataset_dir).load()
-
-    components = [Component(component) for component in input_data.system.components]
-    supply_components_with_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
-    components_by_taxon = group_components_by_taxon(components)
-
-    component_port_connections = build_component_port_connections(input_data.system.connections)
-    save_component_port_connections(components, component_port_connections)
-    supply_components_with_locations(components, input_data.view_config.location_taxonomy_category)
-
-    metric_structure_table_builder = MetricStructureTableBuilder(
-        input_data.view_config.location_taxonomy_category,
-        components_by_taxon,
-    )
-    return ViewBuilder(input_data, metric_structure_table_builder)
 
 
 @pytest.fixture(scope="session", autouse=True)

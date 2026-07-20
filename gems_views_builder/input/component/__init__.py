@@ -12,28 +12,25 @@
 
 """Component model and factory helpers."""
 
-from gems_views_builder.input.component.component import Component, format_metric_location
+from gems_views_builder.input.component.component import Component
 from gems_views_builder.input.component.component_factory import (
     build_component_port_connections,
     create_components,
     endpoint,
     group_components_by_taxon,
-    save_component_port_connections,
     supply_components_with_locations,
     supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
-from gems_views_builder.input.component.connection import Connection
+from gems_views_builder.input.component.connection import ConnectionsThroughPort
 
 __all__ = [
     "Component",
-    "Connection",
+    "ConnectionsThroughPort",
     "build_component_port_connections",
     "create_components",
     "endpoint",
-    "format_metric_location",
     "group_components_by_taxon",
-    "save_component_port_connections",
     "supply_components_with_locations",
     "supply_components_with_port_connections",
     "supply_components_with_taxonomy_categories",

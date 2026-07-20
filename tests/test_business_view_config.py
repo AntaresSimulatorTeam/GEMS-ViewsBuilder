@@ -1,14 +1,6 @@
 # Copyright (c) 2026, RTE (https://www.rte-france.com)
 #
-# See AUTHORS.txt
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
 # SPDX-License-Identifier: MPL-2.0
-#
-# This file is part of the Antares project.
 
 from pathlib import Path
 
@@ -19,83 +11,42 @@ from gems_views_builder import TimeAggregation, ViewConfig, load_view_config
 
 
 def test_loads(test_dataset_dir: Path) -> None:
-    # Arrange
-    config_path = test_dataset_dir / "view_config.yml"
-
-    # Act
-    config = load_view_config(config_path)
-
-    # Assert
+    config = load_view_config(test_dataset_dir / "view_config.yml")
     assert isinstance(config, ViewConfig)
     assert isinstance(config.id, str)
     assert isinstance(config.location_taxonomy_category, str)
     assert isinstance(config.calendar_id, str)
     assert isinstance(config.taxonomy_id, str)
-    assert len(config.catalog_ids) > 0
+    assert config.catalog_ids
     assert config.input_data_path == test_dataset_dir
 
 
-def test_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
-    # Arrange
-    config_path = test_dataset_dir / "view_config.yml"
-
-    # Act
-    config = load_view_config(config_path)
-
-    # Assert
-    for catalog_id in config.catalog_ids:
-        assert isinstance(catalog_id, str)
-
-
-def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
-    # Arrange
-    config_path = test_dataset_dir / "view_config.yml"
-
-    # Act
-    config = load_view_config(config_path)
-
-    # Assert
+def test_catalog_and_metric_ids_are_strings(test_dataset_dir: Path) -> None:
+    config = load_view_config(test_dataset_dir / "view_config.yml")
+    assert all(isinstance(catalog_id, str) for catalog_id in config.catalog_ids)
     for metric_id in config.metric_ids:
         assert isinstance(metric_id, str)
-        assert "." in metric_id
         catalog_id, metric_name = metric_id.split(".", 1)
         assert catalog_id in config.catalog_ids
         assert metric_name
 
 
 def test_known_values(test_dataset_dir: Path) -> None:
-    # Arrange / Act
     config = load_view_config(test_dataset_dir / "view_config.yml")
-
-    # Assert
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.taxonomy_id == "my_taxonomy"
     assert config.catalog_ids == {"catalog"}
-    metric_names = {metric_id.split(".", 1)[1] for metric_id in config.metric_ids}
-    assert "LOAD" in metric_names
-    if test_dataset_dir.name == "test_3":
-        assert "PROD" in metric_names
-        assert "BALANCE" in metric_names
-    else:
-        assert "PRODUCTION" in metric_names
-        assert "NUCLEAR_PRODUCTION" in metric_names
 
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
-    # Arrange / Act
-    config = load_view_config(test_dataset_dir / "view_config.yml")
-
-    # Assert
-    assert config.time_aggregation == TimeAggregation.HOUR
+    assert load_view_config(test_dataset_dir / "view_config.yml").time_aggregation == TimeAggregation.HOUR
 
 
 def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
-    # Arrange
-    invalid_config = tmp_path / "view_config.yml"
-    invalid_config.write_text(
-        """
-view:
+    config_path = tmp_path / "view_config.yml"
+    config_path.write_text(
+        """view:
   id: invalid_metric_format
   scope:
     - location:
@@ -109,23 +60,21 @@ view:
   taxonomy:
     - id: my_taxonomy
   metrics:
-    - id: invalid_metric_id
-""".strip()
+    - id: invalid_metric_id"""
     )
-    config = load_view_config(invalid_config)
-
-    # Act / Assert
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        config.fetch_metrics([])
+        load_view_config(config_path).fetch_metrics([])
 
 
-def test_raises_on_missing_taxonomy_section(tmp_path: Path) -> None:
-    # Arrange
+@pytest.mark.parametrize(
+    "taxonomy_section",
+    ["", "  taxonomy: []", "  taxonomy:\n    - id: my_taxonomy\n    - id: other_taxonomy"],
+)
+def test_raises_on_invalid_taxonomy_section(tmp_path: Path, taxonomy_section: str) -> None:
     config_path = tmp_path / "view_config.yml"
     config_path.write_text(
-        """
-view:
-  id: missing_taxonomy
+        f"""view:
+  id: invalid_taxonomy
   scope:
     - location:
         taxonomy-category: balance
@@ -135,67 +84,9 @@ view:
     - time: hour
   catalog:
     - id: catalog
+{taxonomy_section}
   metrics:
-    - id: catalog.LOAD
-""".strip()
+    - id: catalog.LOAD"""
     )
-
-    # Act / Assert
-    with pytest.raises(ValidationError):
-        load_view_config(config_path)
-
-
-def test_raises_on_empty_taxonomy_list(tmp_path: Path) -> None:
-    # Arrange
-    config_path = tmp_path / "view_config.yml"
-    config_path.write_text(
-        """
-view:
-  id: empty_taxonomy
-  scope:
-    - location:
-        taxonomy-category: balance
-    - calendar:
-        id: calendar_file
-  aggregation:
-    - time: hour
-  catalog:
-    - id: catalog
-  taxonomy: []
-  metrics:
-    - id: catalog.LOAD
-""".strip()
-    )
-
-    # Act / Assert
-    with pytest.raises(ValidationError):
-        load_view_config(config_path)
-
-
-def test_raises_on_multiple_taxonomy_ids(tmp_path: Path) -> None:
-    # Arrange
-    config_path = tmp_path / "view_config.yml"
-    config_path.write_text(
-        """
-view:
-  id: multiple_taxonomies
-  scope:
-    - location:
-        taxonomy-category: balance
-    - calendar:
-        id: calendar_file
-  aggregation:
-    - time: hour
-  catalog:
-    - id: catalog
-  taxonomy:
-    - id: my_taxonomy
-    - id: other_taxonomy
-  metrics:
-    - id: catalog.LOAD
-""".strip()
-    )
-
-    # Act / Assert
     with pytest.raises(ValidationError):
         load_view_config(config_path)

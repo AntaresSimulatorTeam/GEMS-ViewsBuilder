@@ -111,6 +111,10 @@ class ViewConfig:
             logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
         return metric_ids_by_catalog
 
+    def get_metrics(self) -> list[Metric]:
+        return self.metrics
+
+
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
     from gems_views_builder.validation.raw_view_config_validator import RawViewConfigValidator
