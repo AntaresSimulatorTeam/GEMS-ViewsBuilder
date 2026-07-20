@@ -15,9 +15,11 @@ class MetricStructureTableBuilder:
         self,
         location_taxonomy_category: str,
         components_by_taxon: dict[str, list[Component]],  # taxonomy category -> components
+        extra_locations: list[str] | None = None,
     ) -> None:
         self.location_taxonomy_category = location_taxonomy_category
         self.components_by_taxon = components_by_taxon  # this is mainly for operating
+        self.extra_locations = extra_locations or []
 
     def build(self, metric: Metric) -> MetricStructureTable:
         logging.debug(f"[{metric.id}] Building metric structure table ({len(metric.terms)} term(s))")
@@ -30,14 +32,18 @@ class MetricStructureTableBuilder:
 
             for c in self.components_by_taxon[term.taxonomy_category]:
                 if c.match(metric.filter) and c.is_located_at(term.location_port, self.location_taxonomy_category):
-                    rows.append(
-                        {
-                            "metric_id": metric.id,
-                            "component": c.id,
-                            "metric_location": c.resolve_location(term.location_port, self.location_taxonomy_category),
-                            "breakdown_properties": c.format_breakdown_properties(metric.breakdown),
-                            "output": term.output_id,
-                            "weight_output_id": 1,
-                        }
+                    locations = c.resolve_location(
+                        term.location_port, self.location_taxonomy_category, self.extra_locations
                     )
+                    for location in locations:
+                        rows.append(
+                            {
+                                "metric_id": metric.id,
+                                "component": c.id,
+                                "metric_location": location,
+                                "breakdown_properties": c.format_breakdown_properties(metric.breakdown),
+                                "output": term.output_id,
+                                "weight_output_id": 1,
+                            }
+                        )
         return MetricStructureTable(rows, metric.id)

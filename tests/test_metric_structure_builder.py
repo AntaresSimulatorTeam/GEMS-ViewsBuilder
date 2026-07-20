@@ -154,7 +154,7 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
         resolved = components_by_id[comp].resolve_location(
             "p_balance_port", test_3_components["location_taxonomy_category"]
         )
-        assert comp_rows["metric_location"].to_list() == [resolved]
+        assert comp_rows["metric_location"].to_list() == resolved
 
 
 def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
@@ -287,7 +287,7 @@ def test_resolve_location_returns_peer(test_3_components: dict[str, Any]) -> Non
     )
 
     # Assert
-    assert location == "busA"
+    assert location == ["busA"]
 
 
 def test_none_location_port_resolves_to_the_component_itself(test_3_components: dict[str, Any]) -> None:

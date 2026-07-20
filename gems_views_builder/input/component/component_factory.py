@@ -128,7 +128,7 @@ def supply_components_with_locations(
                             f"Component {c.id!r} has taxonomy category {c.taxonomy_category!r}, "
                             f"expected {location_taxonomy_category!r}"
                         )
-                    c.locations[(None, location_taxonomy_category)] = c.id
+                    c.locations[(None, location_taxonomy_category)] = c
                 else:
                     supply_component_with_location(c, term.location_port, location_taxonomy_category)
 
@@ -141,4 +141,4 @@ def supply_component_with_location(component: Component, location_port: str, loc
         raise ValueError(
             f"Component {component.id!r} port {location_port} has peer {peers[0].id!r} with taxonomy category {peers[0].taxonomy_category!r}, expected {location_taxonomy_category!r}"
         )
-    component.locations[(location_port, location_taxonomy_category)] = peers[0].id
+    component.locations[(location_port, location_taxonomy_category)] = peers[0]

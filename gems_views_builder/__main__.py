@@ -45,6 +45,7 @@ def run_view_building_process(input_dir: Path, view_sinker: ViewSinker) -> None:
     metric_structure_table_builder = MetricStructureTableBuilder(
         input_data.view_config.location_taxonomy_category,
         components_by_taxon,
+        input_data.view_config.extra_locations,
     )
     # # Validate catalogs against taxonomy
     validate_catalogs_against_taxonomy(input_dir, input_data.view_config.catalog_ids, input_data.taxonomy)

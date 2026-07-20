@@ -16,9 +16,9 @@ from gems_views_builder.base_model import ViewBuilderBasedModel
 from gems_views_builder.input.catalog import Catalog, Metric
 
 
-class ExtraLocations(ViewBuilderBasedModel):
-    country_id: str
-    region_id: str
+class ExtraLocation(ViewBuilderBasedModel):
+    id: str
+
 
 class TimeAggregation(Enum):
     HOUR = "hour"
@@ -36,7 +36,7 @@ class Scope(ViewBuilderBasedModel):
 class Aggregation(ViewBuilderBasedModel):
     time: TimeAggregation
     scenario: bool
-    extra_locations: list[ExtraLocations] | None = None
+    extra_locations: list[ExtraLocation] | None = None
 
 
 class CatalogId(ViewBuilderBasedModel):
@@ -64,6 +64,7 @@ class ViewConfig:
     time_aggregation: TimeAggregation
     scenario_aggregation: bool
     catalog_ids: set[str] = field(default_factory=set)
+    extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
@@ -122,6 +123,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         time_aggregation=raw_view_config.aggregation.time,
         scenario_aggregation=raw_view_config.aggregation.scenario,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
+        extra_locations=[property.id for property in extra_locations],
     )
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "

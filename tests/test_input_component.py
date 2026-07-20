@@ -16,9 +16,9 @@ def make_raw_component(component_id: str, model: str, properties: dict[str, str]
 
 def test_get_location_none_returns_own_id() -> None:
     component = Component(make_raw_component("area", "basic_lib.area"))
-    component.locations[(None, "balance")] = component.id
+    component.locations[(None, "balance")] = component
     assert component.is_located_at(None, "balance") is True
-    assert component.resolve_location(None, "balance") == "area"
+    assert component.resolve_location(None, "balance") == ["area"]
 
 
 def test_supply_components_with_taxonomy_categories() -> None:

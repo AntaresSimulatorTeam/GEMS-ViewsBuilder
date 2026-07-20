@@ -23,12 +23,12 @@ class Component:
     taxonomy_category: str | None = None
     # Connections holding the peer components connected on each port
     connections: ConnectionsThroughPort = field(default_factory=ConnectionsThroughPort)
-    # (location_port, taxonomy_category) -> resolved location component id.
+    # (location_port, taxonomy_category) -> resolved location component.
     # Populated by ``supply_components_with_locations``:
     # - location_port set: unique peer on that port for the peer's taxonomy category;
     # - location_port None: the component itself for the view's location taxonomy category.
     # Absence of a key means no location can be determined for that (port, category).
-    locations: dict[tuple[str | None, str], str] = field(default_factory=dict)
+    locations: dict[tuple[str | None, str], "Component"] = field(default_factory=dict)
 
     @property
     def id(self) -> str:
@@ -56,9 +56,25 @@ class Component:
             )
         return located
 
-    def resolve_location(self, location_port: str | None, location_taxonomy_category: str) -> str:
-        """Return the resolved location, previously checked via ``is_located_at``."""
-        return self.locations[(location_port, location_taxonomy_category)]
+    def spatial_aggregation(self, extra_locations: list[str], component: "Component") -> list[str]:
+        locations: list[str] = []
+        for location in extra_locations:
+            if location in component.properties:
+                locations.append(component.properties[location])
+        return locations
+
+    def resolve_location(
+        self, location_port: str | None, location_taxonomy_category: str, extra_locations: list[str] | None = None
+    ) -> list[str]:
+        component = self.locations[(location_port, location_taxonomy_category)]
+
+        if not extra_locations:
+            return [component.id]
+
+        resolved_locations = self.spatial_aggregation(extra_locations, component)
+        if resolved_locations:
+            return resolved_locations
+        return [component.id]
 
     def format_breakdown_properties(self, breakdown: list[PropertySchema] | None) -> str:
         if not breakdown:
