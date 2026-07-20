@@ -16,6 +16,9 @@ from gems_views_builder.base_model import ViewBuilderBasedModel
 from gems_views_builder.input.catalog import Catalog, Metric
 
 
+class ExtraLocations(ViewBuilderBasedModel):
+    ...
+
 class TimeAggregation(Enum):
     HOUR = "hour"
     DAY = "day"
