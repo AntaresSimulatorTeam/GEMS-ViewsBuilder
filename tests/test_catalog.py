@@ -27,8 +27,13 @@ def test_catalog_metrics_and_terms_are_typed(test_dataset_dir: Path) -> None:
 
 def test_metric_filter_property_requires_value() -> None:
     with pytest.raises(ValueError, match="metric filter property must include a value"):
-        MetricData(id="X", terms=[], terms_operator=TermsOperator.SUM, time_operator=TimeOperator.SUM,
-                   filter=PropertySchema(key="technology"))
+        MetricData(
+            id="X",
+            terms=[],
+            terms_operator=TermsOperator.SUM,
+            time_operator=TimeOperator.SUM,
+            filter=PropertySchema(key="technology"),
+        )
 
 
 def test_term_location_port_validation() -> None:

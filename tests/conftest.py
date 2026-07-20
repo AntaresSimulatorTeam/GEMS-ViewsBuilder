@@ -16,6 +16,7 @@ from typing import cast
 import pytest
 
 from gems_views_builder.common import configure_logging
+
 RESOURCES_TEST_FILES_ROOT = Path(__file__).resolve().parent.parent / "resources"
 TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
 

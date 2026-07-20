@@ -115,7 +115,6 @@ class ViewConfig:
         return self.metrics
 
 
-
 def load_view_config(config_file_path: Path) -> ViewConfig:
     from gems_views_builder.validation.raw_view_config_validator import RawViewConfigValidator
 
