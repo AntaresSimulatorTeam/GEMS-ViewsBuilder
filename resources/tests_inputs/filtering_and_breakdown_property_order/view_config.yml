@@ -3,7 +3,7 @@ view:
   id: view_area
 
   taxonomy:
-    - id: my_taxonomy
+    id: my_taxonomy
     
   scope:
     location:

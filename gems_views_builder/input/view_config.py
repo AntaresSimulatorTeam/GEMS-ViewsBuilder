@@ -64,7 +64,7 @@ class MetricId(ViewBuilderBasedModel):
 
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
-    taxonomy: list[TaxonomyId] = Field(min_length=1, max_length=1)
+    taxonomy: TaxonomyId
     scope: Scope
     aggregation: list[Aggregation]
     catalog: list[CatalogId] = Field(min_length=1)  # We need minimum one catalog and metric
@@ -126,7 +126,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         catalog_ids={c.id for c in raw_view_config.catalog},
         time_aggregation=raw_view_config.aggregation[0].time if raw_view_config.aggregation else None,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
-        taxonomy_id=raw_view_config.taxonomy[0].id,
+        taxonomy_id=raw_view_config.taxonomy.id,
     )
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "

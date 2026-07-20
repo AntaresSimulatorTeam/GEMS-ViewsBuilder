@@ -49,7 +49,7 @@ view:
   catalog:
     - id: catalog
   taxonomy:
-    - id: my_taxonomy
+    id: my_taxonomy
   metrics:
     - id: catalog.LOAD
 """,

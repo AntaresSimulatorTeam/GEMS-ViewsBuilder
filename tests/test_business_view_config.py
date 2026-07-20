@@ -58,7 +58,7 @@ def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
   catalog:
     - id: catalog_1
   taxonomy:
-    - id: my_taxonomy
+    id: my_taxonomy
   metrics:
     - id: invalid_metric_id"""
     )
@@ -68,7 +68,7 @@ def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     "taxonomy_section",
-    ["", "  taxonomy: []", "  taxonomy:\n    - id: my_taxonomy\n    - id: other_taxonomy"],
+    ["", "  taxonomy: []", "  taxonomy:\n    - id: my_taxonomy"],
 )
 def test_raises_on_invalid_taxonomy_section(tmp_path: Path, taxonomy_section: str) -> None:
     config_path = tmp_path / "view_config.yml"
