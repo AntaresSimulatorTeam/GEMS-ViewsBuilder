@@ -21,7 +21,7 @@ from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregato
 from gems_views_builder.metric_view import MetricView
 
 
-def _temporal_metric_view(tmp_path: Path, *, values_by_scenario: dict[int, float]) -> MetricView:
+def temporal_metric_view(tmp_path: Path, values_by_scenario: dict[int, float]) -> MetricView:
     """Temporal aggregation-shaped parquet (input to scenario aggregation)."""
     scenarios = sorted(values_by_scenario)
     n = len(scenarios)
@@ -42,16 +42,19 @@ def _temporal_metric_view(tmp_path: Path, *, values_by_scenario: dict[int, float
 
 
 def test_scenario_aggregation_false_preserves_rows_and_adds_columns(tmp_path: Path) -> None:
+    # Arrange
     values = {0: 10.0, 1: 20.0, 2: 30.0}
-    metric_view = _temporal_metric_view(tmp_path, values_by_scenario=values)
+    metric_view = temporal_metric_view(tmp_path, values_by_scenario=values)
     original_path = metric_view.persistence_path
-    original_name = original_path.name
+    aggregator = ScenarioAggregator(False)
 
-    ScenarioAggregator(False).run(metric_view)
+    # Act
+    aggregator.run(metric_view)
+
+    # Assert
     df = pl.read_parquet(metric_view.persistence_path).sort("scenario_id")
-
     assert metric_view.persistence_path == original_path
-    assert metric_view.persistence_path.name == original_name
+    assert metric_view.persistence_path.name == original_path.name
     assert "scenario_aggregation" in df.columns and "scenario_stat" in df.columns
     assert df.height == 3
     assert df["scenario_aggregation"].to_list() == [False, False, False]
@@ -61,13 +64,18 @@ def test_scenario_aggregation_false_preserves_rows_and_adds_columns(tmp_path: Pa
 
 
 def test_scenario_aggregation_true_emits_exp_std_min_max(tmp_path: Path) -> None:
+    # Arrange
     values = {0: 10.0, 1: 20.0, 2: 30.0}
-    metric_view = _temporal_metric_view(tmp_path, values_by_scenario=values)
+    metric_view = temporal_metric_view(tmp_path, values_by_scenario=values)
     original_path = metric_view.persistence_path
+    aggregator = ScenarioAggregator(True)
+    expected_values = list(values.values())
 
-    ScenarioAggregator(True).run(metric_view)
+    # Act
+    aggregator.run(metric_view)
+
+    # Assert
     df = pl.read_parquet(metric_view.persistence_path)
-
     assert metric_view.persistence_path == original_path
     assert df.height == 4
     assert set(df["scenario_stat"].to_list()) == {"exp", "std", "min", "max"}
@@ -75,8 +83,7 @@ def test_scenario_aggregation_true_emits_exp_std_min_max(tmp_path: Path) -> None
     assert df["scenario_id"].null_count() == 4
 
     by_stat = {row["scenario_stat"]: row["metric_value"] for row in df.iter_rows(named=True)}
-    nums = list(values.values())
-    assert by_stat["exp"] == approx(mean(nums))
-    assert by_stat["std"] == approx(pstdev(nums))
-    assert by_stat["min"] == approx(min(nums))
-    assert by_stat["max"] == approx(max(nums))
+    assert by_stat["exp"] == approx(mean(expected_values))
+    assert by_stat["std"] == approx(pstdev(expected_values))
+    assert by_stat["min"] == approx(min(expected_values))
+    assert by_stat["max"] == approx(max(expected_values))
