@@ -84,12 +84,12 @@ class ViewConfig:
     metrics: list[Metric] = field(default_factory=list)
 
     def fetch_metrics(self, catalogs: list[Catalog]) -> None:
-        metric_ids_by_catalog = self._group_metrics_by_catalog()
+        metric_ids_by_catalog = self.group_metrics_by_catalog()
         for catalog in catalogs:
             for metric_id in metric_ids_by_catalog[catalog.id]:
                 self.metrics.append(catalog.get_metric(metric_id))
 
-    def _group_metrics_by_catalog(self) -> dict[str, set[str]]:
+    def group_metrics_by_catalog(self) -> dict[str, set[str]]:
         logging.debug(f"Grouping {len(self.metric_ids)} metric id(s) by catalog")
         metric_ids_by_catalog: dict[str, set[str]] = defaultdict(set)
         for metric_ref in self.metric_ids:

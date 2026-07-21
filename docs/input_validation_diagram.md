@@ -15,7 +15,7 @@ graph LR
 
     catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --- taxonomy
     view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --- taxonomy
-    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches<br/>• unique metric ids across catalogs" --- catalog
+    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches<br/>• selected metrics exist in catalogs<br/>• unique metric ids across catalogs" --- catalog
 
     library -. "checked by gemspy" .- system
     view_config -.- calendar
@@ -49,14 +49,17 @@ which only checks that these files are *present*, not their contents).
 | Taxonomy id match | `view_config.taxonomy_id == taxonomy.id` |
 | Location taxonomy category exists | `view_config.location_taxonomy_category` is a category defined in `taxonomy.yml` |
 
-### `catalog.yml` → `view_config.yml`
+### `catalog.yml` ↔ `view_config.yml`
 [`CatalogsViewConfigValidator`](../gems_views_builder/validation/catalog_view_config_validator.py)
+
+Per catalog, checks run in this order:
 
 | Check | Rule |
 |---|---|
-| Unique metric ids across catalogs | every metric `id` appears in at most one catalog (catalog prefixes are dropped at runtime) |
 | Taxonomy id match | `catalog.taxonomy == view_config.taxonomy_id` |
 | Location taxonomy category match | `catalog.location_taxonomy_category == view_config.location_taxonomy_category` |
+| Selected metrics exist | every `view_config` metric ref `<catalog_id>.<metric_id>` for that catalog is defined in it |
+| Unique metric ids across catalogs | every metric `id` defined in any loaded catalog appears in at most one catalog (prefixes are dropped at runtime) |
 
 ## Orchestration
 

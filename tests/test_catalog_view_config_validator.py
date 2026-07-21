@@ -101,6 +101,8 @@ def test_catalog_view_config_validator_raises_on_duplicate_metric_ids(
 ) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
+    view_config.catalog_ids = {"catalog_a", "catalog_b"}
+    view_config.metric_ids = ["catalog_a.LOAD", "catalog_b.BALANCE"]
     catalogs = [
         catalog("catalog_a", ["LOAD", "PROD"]),
         catalog("catalog_b", ["BALANCE", "LOAD"]),
@@ -117,6 +119,8 @@ def test_catalog_view_config_validator_passes_when_metric_ids_are_unique(
 ) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
+    view_config.catalog_ids = {"catalog_a", "catalog_b"}
+    view_config.metric_ids = ["catalog_a.LOAD", "catalog_a.PROD", "catalog_b.BALANCE", "catalog_b.FLOW"]
     catalogs = [
         catalog("catalog_a", ["LOAD", "PROD"]),
         catalog("catalog_b", ["BALANCE", "FLOW"]),
@@ -133,3 +137,18 @@ def test_catalog_view_config_validator_passes_when_metric_ids_are_unique(
         "BALANCE",
         "FLOW",
     }
+
+
+def test_catalog_view_config_validator_raises_when_metric_missing_from_catalog(
+    test_dataset_dir: Path,
+) -> None:
+    # Arrange
+    view_config = load_view_config(test_dataset_dir / "view_config.yml")
+    view_config.catalog_ids = {"catalog"}
+    view_config.metric_ids = ["catalog.MISSING_METRIC"]
+    catalogs = [catalog("catalog", ["LOAD", "PROD"])]
+    validator = CatalogsViewConfigValidator(catalogs, view_config)
+
+    # Act / Assert
+    with pytest.raises(ValueError, match=r"metric 'catalog.MISSING_METRIC' is not defined in catalog 'catalog'"):
+        validator.validate()
