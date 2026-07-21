@@ -34,7 +34,14 @@ def temporal_metric_view(tmp_path: Path, values_by_scenario: dict[int, float]) -
             "scenario_id": scenarios,
             "metric_value": [values_by_scenario[s] for s in scenarios],
         },
-        schema_overrides={"view_date": pl.Datetime, "scenario_id": pl.Int64},
+        schema={
+            "metric_id": pl.Utf8,
+            "metric_location": pl.Utf8,
+            "breakdown_properties": pl.Utf8,
+            "view_date": pl.Datetime,
+            "scenario_id": pl.Int64,
+            "metric_value": pl.Float64,
+        },
     )
     path = tmp_path / "temporal.parquet"
     dataframe.write_parquet(path)
