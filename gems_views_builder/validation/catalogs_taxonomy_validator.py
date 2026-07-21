@@ -41,8 +41,7 @@ class CatalogsTaxonomyValidator:
         return {item.id for item in items}
 
     def _allowed_output_ids(self, category: TaxonomyCategory) -> set[str]:
-        # | logical or(union) so resulting set is unique.
-        return self._item_ids(category.variables) | self._item_ids(category.extra_outputs)
+        return self._item_ids(category.variables).union(self._item_ids(category.extra_outputs))
 
     def _validate_term_output_id(
         self, catalog: Catalog, metric_id: str, term: Term, category: TaxonomyCategory
