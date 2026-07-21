@@ -42,7 +42,7 @@ SCENARIO_AGG_EXPRS = [
 class ScenarioAggregator:
     scenario_aggregation: bool
 
-    def run(self, temporal_metric_view: MetricView) -> MetricView:
+    def run(self, temporal_metric_view: MetricView) -> None:
         file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
         os.close(file_descriptor)
 
@@ -92,4 +92,3 @@ class ScenarioAggregator:
 
         os.replace(tmp_path, temporal_metric_view.persistence_path)
         logging.info(f"Scenario aggregation written to {temporal_metric_view.persistence_path}")
-        return temporal_metric_view
