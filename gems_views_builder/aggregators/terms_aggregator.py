@@ -1,3 +1,15 @@
+# Copyright (c) 2026, RTE (https://www.rte-france.com)
+#
+# See AUTHORS.txt
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# This file is part of the Antares project.
+
 import logging
 import tempfile
 from pathlib import Path
@@ -31,14 +43,14 @@ class TermsAggregator:
         logging.info(f"[{metric.id}] Aggregating terms with operator {metric.terms_operator.value}")
         value_agg = pl.col("value").sum() if metric.terms_operator == TermsOperator.SUM else pl.col("value").mean()
         metric_view = (
-            structured_simulation_table.with_columns(pl.col("scenario_index").alias("scenario"))
+            structured_simulation_table.with_columns(pl.col("scenario_index").alias("scenario_id"))
             .group_by(
                 [
                     "metric_id",
                     "metric_location",
                     "breakdown_properties",
                     "absolute_time_index",
-                    "scenario",
+                    "scenario_id",
                 ]
             )
             .agg(
@@ -54,7 +66,7 @@ class TermsAggregator:
                     "metric_location",
                     "breakdown_properties",
                     "absolute_time_index",
-                    "scenario",
+                    "scenario_id",
                     "granular_metric_value",
                     "granular_date",
                 ]

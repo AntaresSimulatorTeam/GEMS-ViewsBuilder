@@ -64,11 +64,11 @@ def _view_generation_total_by_scenario(
     df = _at(view, metric_id)
     if breakdown_properties is not None:
         df = df.filter(pl.col("breakdown_properties") == breakdown_properties)
-    return df.group_by("scenario").agg(pl.col("metric_value").sum().alias("view_total")).sort("scenario")
+    return df.group_by("scenario_id").agg(pl.col("metric_value").sum().alias("view_total")).sort("scenario_id")
 
 
 def _assert_totals_close(got: pl.DataFrame, exp: pl.DataFrame, *, msg: str = "") -> None:
-    merged = got.join(exp, on="scenario", how="inner")
+    merged = got.join(exp, on="scenario_id", how="inner")
     assert merged.height == exp.height, msg
     raw_max = (merged["view_total"] - merged["expected_total"]).abs().max()
     assert isinstance(raw_max, Real), f"{msg} unexpected max diff type: {type(raw_max)}"
@@ -93,8 +93,8 @@ def _expected_generation_total_by_scenario(
     return (
         base.group_by("scenario_index")
         .agg(pl.col("value").sum().alias("expected_total"))
-        .rename({"scenario_index": "scenario"})
-        .sort("scenario")
+        .rename({"scenario_index": "scenario_id"})
+        .sort("scenario_id")
     )
 
 
@@ -125,12 +125,12 @@ def test_filter_nuclear_production_is_subset_of_by_tech(fb_view_result: pl.DataF
     PRODUCTION_BY_TECH slice at breakdown {(technology,nuclear)}.
     """
     nuclear = _at(fb_view_result, "NUCLEAR_PRODUCTION").select(
-        ["metric_location", "view_date", "scenario", "metric_value"]
+        ["metric_location", "view_date", "scenario_id", "metric_value"]
     )
     by_tech_nuclear = (
         _at(fb_view_result, "PRODUCTION_BY_TECH")
         .filter(pl.col("breakdown_properties") == "{(technology,nuclear)}")
-        .select(["metric_location", "view_date", "scenario", "metric_value"])
+        .select(["metric_location", "view_date", "scenario_id", "metric_value"])
     )
     assert nuclear.sort(nuclear.columns).to_dicts() == by_tech_nuclear.sort(by_tech_nuclear.columns).to_dicts()
 
@@ -140,7 +140,7 @@ def test_production_equals_sum_by_tech_and_company_partitions(fb_view_result: pl
     For each (location, date, scenario), PRODUCTION must equal the sum across the
     breakdown partitions (tech, company, and tech+company).
     """
-    keys = ["metric_location", "view_date", "scenario"]
+    keys = ["metric_location", "view_date", "scenario_id"]
 
     prod = _at(fb_view_result, "PRODUCTION").group_by(keys).agg(pl.col("metric_value").sum().alias("v"))
 
@@ -229,7 +229,7 @@ def test_single_generator_slice_matches_component_simulation_sum(
         _at(view, "PRODUCTION_BY_TECH_AND_COMPANY")
         .filter(
             (pl.col("breakdown_properties") == "{(technology,nuclear),(company,rhonepower)}")
-            & (pl.col("scenario") == scenario)
+            & (pl.col("scenario_id") == scenario)
         )
         .select(pl.col("metric_value").sum())
         .item()

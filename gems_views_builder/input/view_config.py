@@ -40,6 +40,7 @@ class Scope(ViewBuilderBasedModel):
 
 class Aggregation(ViewBuilderBasedModel):
     time: TimeAggregation | None = None
+    scenario: bool | None = None
 
 
 class CatalogId(ViewBuilderBasedModel):
@@ -53,7 +54,7 @@ class MetricId(ViewBuilderBasedModel):
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: list[Scope]
-    aggregation: list[Aggregation]
+    aggregation: Aggregation
     catalog: list[CatalogId]
     metrics: list[MetricId]
 
@@ -66,6 +67,7 @@ class ViewConfig:
     location_taxonomy_category: str
     catalog_ids: set[str] = field(default_factory=set)
     time_aggregation: TimeAggregation | None = None
+    scenario_aggregation: bool = False
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
@@ -114,13 +116,17 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         raise ValueError(
             f"view_config.yml '{raw_view_config.id}': no calendar configured in scope. One calendar must be configured in scope"
         )
+
     view_config = ViewConfig(
         id=raw_view_config.id,
         input_data_path=input_data_path,
         calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalog},
-        time_aggregation=raw_view_config.aggregation[0].time if raw_view_config.aggregation else None,
+        time_aggregation=raw_view_config.aggregation.time if raw_view_config.aggregation.time is not None else None,
+        scenario_aggregation=raw_view_config.aggregation.scenario
+        if raw_view_config.aggregation.scenario is not None
+        else False,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
     )
     logging.info(

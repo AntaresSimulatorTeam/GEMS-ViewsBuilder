@@ -15,10 +15,10 @@ from pathlib import Path
 import polars as pl
 from pytest import approx
 
+from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.metric_structure_table import MetricStructureTable
-from gems_views_builder.terms_aggregator import TermsAggregator
 
 
 def _filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationTable:

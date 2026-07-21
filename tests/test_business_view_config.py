@@ -76,7 +76,7 @@ view:
     - taxonomy-category: balance
     - calendar: calendar_file
   aggregation:
-    - time: hour
+    time: hour
   catalog:
     - id: catalog_1
   metrics:

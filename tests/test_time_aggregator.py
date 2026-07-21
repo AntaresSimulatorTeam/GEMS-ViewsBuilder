@@ -18,14 +18,14 @@ import polars as pl
 import pytest
 from pytest import approx
 
-from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
-from gems_views_builder.input.view_config import TimeAggregation
-from gems_views_builder.metric_view import MetricView
-from gems_views_builder.time_aggregator import (
+from gems_views_builder.aggregators.time_aggregator import (
     TimeAggregator,
     granular_date_expression,
     time_aggregation_expression,
 )
+from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
+from gems_views_builder.input.view_config import TimeAggregation
+from gems_views_builder.metric_view import MetricView
 
 
 def apply_date_expr(date: datetime, aggregation: TimeAggregation | None) -> datetime:
@@ -47,7 +47,7 @@ def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> Metr
             "metric_location": ["L"] * n,
             "breakdown_properties": [""] * n,
             "absolute_time_index": list(range(1, n + 1)),
-            "scenario": [0] * n,
+            "scenario_id": [0] * n,
             "granular_metric_value": [value for _, value in rows],
             "granular_date": [date for date, _ in rows],
         },

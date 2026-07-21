@@ -12,11 +12,12 @@
 
 """ViewBuilder."""
 
+from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator
+from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
+from gems_views_builder.aggregators.time_aggregator import TimeAggregator
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
-from gems_views_builder.terms_aggregator import TermsAggregator
-from gems_views_builder.time_aggregator import TimeAggregator
 
 
 class ViewBuilder:
@@ -30,12 +31,15 @@ class ViewBuilder:
         # # Aggregator for step 2C
         self.time_aggregator = TimeAggregator(self.input_data.view_config.time_aggregation)
 
+        self.scenario_aggregator = ScenarioAggregator(self.input_data.view_config.scenario_aggregation)
+
     def build(self) -> list[MetricView]:
         metric_views: list[MetricView] = []
         for metric in self.input_data.view_config.metrics:
             metric_structure_table = self.metric_structure_table_builder.build(metric)
             metric_view = self.terms_aggregator.run(metric_structure_table, metric)
             temporal_metric_view = self.time_aggregator.run(metric_view, metric)
+            self.scenario_aggregator.run(temporal_metric_view)
             metric_views.append(temporal_metric_view)
 
         return metric_views
