@@ -86,12 +86,6 @@ class ViewConfig:
     def fetch_metrics(self, catalogs: list[Catalog]) -> None:
         metric_ids_by_catalog = self._group_metrics_by_catalog()
         for catalog in catalogs:
-            if catalog.id not in metric_ids_by_catalog:
-                raise ValueError(
-                    f"Catalog {catalog.id!r} has no metrics referenced in the view config. "
-                    f"Metric refs must use the catalog id from the catalog file "
-                    f"(expected prefixes: {sorted(metric_ids_by_catalog)})"
-                )
             for metric_id in metric_ids_by_catalog[catalog.id]:
                 self.metrics.append(catalog.get_metric(metric_id))
 

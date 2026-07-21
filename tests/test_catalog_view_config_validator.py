@@ -14,11 +14,37 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder.input.catalog import load_catalog, load_catalogs
+from gems_views_builder.input.catalog import (
+    Catalog,
+    Metric,
+    Term,
+    TermsOperator,
+    TimeOperator,
+    load_catalog,
+    load_catalogs,
+)
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.validation.catalog_view_config_validator import (
     CatalogsViewConfigValidator,
 )
+
+
+def catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
+    metrics = {
+        metric_id: Metric(
+            id=metric_id,
+            terms=[Term(taxonomy_category="production", output_id="p", location_port=None)],
+            terms_operator=TermsOperator.SUM,
+            time_operator=TimeOperator.SUM,
+        )
+        for metric_id in metric_ids
+    }
+    return Catalog(
+        id=catalog_id,
+        taxonomy="my_taxonomy",
+        location_taxonomy_category="balance",
+        metrics=metrics,
+    )
 
 
 def test_catalog_view_config_validator_passes_for_test_dataset(test_dataset_dir: Path) -> None:
@@ -68,3 +94,42 @@ def test_catalog_view_config_validator_raises_on_location_category_mismatch(
     # Act / Assert
     with pytest.raises(ValueError, match="location taxonomy category"):
         validator.validate()
+
+
+def test_catalog_view_config_validator_raises_on_duplicate_metric_ids(
+    test_dataset_dir: Path,
+) -> None:
+    # Arrange
+    view_config = load_view_config(test_dataset_dir / "view_config.yml")
+    catalogs = [
+        catalog("catalog_a", ["LOAD", "PROD"]),
+        catalog("catalog_b", ["BALANCE", "LOAD"]),
+    ]
+    validator = CatalogsViewConfigValidator(catalogs, view_config)
+
+    # Act / Assert
+    with pytest.raises(ValueError, match=r"Same metric id 'LOAD' is defined in multiple catalogs"):
+        validator.validate()
+
+
+def test_catalog_view_config_validator_passes_when_metric_ids_are_unique(
+    test_dataset_dir: Path,
+) -> None:
+    # Arrange
+    view_config = load_view_config(test_dataset_dir / "view_config.yml")
+    catalogs = [
+        catalog("catalog_a", ["LOAD", "PROD"]),
+        catalog("catalog_b", ["BALANCE", "FLOW"]),
+    ]
+    validator = CatalogsViewConfigValidator(catalogs, view_config)
+
+    # Act
+    validator.validate()
+
+    # Assert
+    assert {metric_id for catalog in catalogs for metric_id in catalog.metrics} == {
+        "LOAD",
+        "PROD",
+        "BALANCE",
+        "FLOW",
+    }

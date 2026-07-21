@@ -15,7 +15,7 @@ graph LR
 
     catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --- taxonomy
     view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --- taxonomy
-    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches" --- catalog
+    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches<br/>• unique metric ids across catalogs" --- catalog
 
     library -. "checked by gemspy" .- system
     view_config -.- calendar
@@ -54,6 +54,7 @@ which only checks that these files are *present*, not their contents).
 
 | Check | Rule |
 |---|---|
+| Unique metric ids across catalogs | every metric `id` appears in at most one catalog (catalog prefixes are dropped at runtime) |
 | Taxonomy id match | `catalog.taxonomy == view_config.taxonomy_id` |
 | Location taxonomy category match | `catalog.location_taxonomy_category == view_config.location_taxonomy_category` |
 

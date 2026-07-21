@@ -26,11 +26,12 @@ class CatalogsViewConfigValidator:
 
     def validate(self) -> None:
         logging.info(f"Validating {len(self.catalogs)} catalog(s) against view config {self.view_config.id!r}")
+        seen_metric_id: set[str] = set()
         for catalog in self.catalogs:
-            self._validate_catalog_against_view_config(catalog)
+            self._validate_catalog_against_view_config(catalog, seen_metric_id)
         logging.info(f"All catalogs are consistent with view config {self.view_config.id!r}")
 
-    def _validate_catalog_against_view_config(self, catalog: Catalog) -> None:
+    def _validate_catalog_against_view_config(self, catalog: Catalog, seen_metric_id: set[str]) -> None:
         logging.info(f"Validating catalog {catalog.id!r} against view config {self.view_config.id!r}")
         if catalog.taxonomy != self.view_config.taxonomy_id:
             raise ValueError(
@@ -45,3 +46,8 @@ class CatalogsViewConfigValidator:
                 f"{self.view_config.id!r} location taxonomy category "
                 f"{self.view_config.location_taxonomy_category!r}"
             )
+
+        for metric_id in catalog.metrics:
+            if metric_id in seen_metric_id:
+                raise ValueError(f"Same metric id {metric_id!r} is defined in multiple catalogs!")
+            seen_metric_id.add(metric_id)
