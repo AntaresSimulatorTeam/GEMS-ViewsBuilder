@@ -106,9 +106,8 @@ def test_log_messages_emitted_to_stdout(
     with caplog.at_level(logging.INFO):
         run_view_building_process(dst, sinker)
 
-    # Assert
-    repo_root = Path(__file__).resolve().parents[1]
-    log_directory = repo_root / "logs"
+    # Assert — logging writes under Path.cwd()/logs (see configure_logging / LOG_DIR)
+    log_directory = Path.cwd() / "logs"
     if not log_directory.exists() or not any(log_directory.glob("gems-views-builder-pipeline-run-*.log")):
         raise FileNotFoundError(f"Log directory {log_directory} not found or does not contain any log files")
 
@@ -129,8 +128,7 @@ def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> Non
 
     run_view_building_process(dst, ParquetViewSinker(results_dir))
 
-    repo_root = Path(__file__).resolve().parents[1]
-    logs_dir = repo_root / "logs"
+    logs_dir = Path.cwd() / "logs"
     assert logs_dir.is_dir(), "logs/ directory was not created"
     log_files = list(logs_dir.glob("gems-views-builder-pipeline-run-*.log"))
     assert len(log_files) >= 1, f"Expected at least 1 log file, found {len(log_files)}"
