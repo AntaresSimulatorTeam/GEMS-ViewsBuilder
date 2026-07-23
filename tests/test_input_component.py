@@ -8,6 +8,7 @@ from gems_views_builder.input.component import (
     group_components_by_taxon,
     supply_components_with_taxonomy_categories,
 )
+from gems_views_builder.input.component.location import Location
 
 
 def make_raw_component(component_id: str, model: str, properties: dict[str, str] | None = None) -> SimpleNamespace:
@@ -16,9 +17,9 @@ def make_raw_component(component_id: str, model: str, properties: dict[str, str]
 
 def test_get_location_none_returns_own_id() -> None:
     component = Component(make_raw_component("area", "basic_lib.area"))
-    component.locations[(None, "balance")] = component
+    component.locations[(None, "balance")] = Location(id=component.id, properties=component.properties)
     assert component.is_located_at(None, "balance") is True
-    assert component.resolve_location(None, "balance") == ["area"]
+    assert component.resolve_location(None, "balance", []) == ["area"]
 
 
 def test_supply_components_with_taxonomy_categories() -> None:

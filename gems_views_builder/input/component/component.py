@@ -9,6 +9,7 @@ from gems_craft.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.catalog import PropertySchema
 from gems_views_builder.input.component.connection import ConnectionsThroughPort
+from gems_views_builder.input.component.location import Location
 
 
 @dataclass
@@ -28,7 +29,7 @@ class Component:
     # - location_port set: unique peer on that port for the peer's taxonomy category;
     # - location_port None: the component itself for the view's location taxonomy category.
     # Absence of a key means no location can be determined for that (port, category).
-    locations: dict[tuple[str | None, str], "Component"] = field(default_factory=dict)
+    locations: dict[tuple[str | None, str], Location] = field(default_factory=dict)
 
     @property
     def id(self) -> str:
@@ -56,18 +57,18 @@ class Component:
             )
         return located
 
-    def resolve_extra_locations(self, extra_locations: list[str], component: "Component") -> list[str]:
+    def resolve_extra_locations(self, extra_locations: list[str], location_component: Location) -> list[str]:
         locations: list[str] = []
         for location in extra_locations:
-            if location in component.properties:
-                locations.append(component.properties[location])
+            if location in location_component.properties:
+                locations.append(location_component.properties[location])
         return locations
 
     def resolve_location(
-        self, location_port: str | None, location_taxonomy_category: str, extra_locations: list[str] | None = None
+        self, location_port: str | None, location_taxonomy_category: str, extra_locations: list[str]
     ) -> list[str]:
         location_component = self.locations[(location_port, location_taxonomy_category)]
-        extras = self.resolve_extra_locations(extra_locations or [], location_component)
+        extras = self.resolve_extra_locations(extra_locations, location_component)
         return [location_component.id] + extras
 
     def format_breakdown_properties(self, breakdown: list[PropertySchema] | None) -> str:

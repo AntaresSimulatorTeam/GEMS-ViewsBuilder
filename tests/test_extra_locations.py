@@ -15,6 +15,7 @@ from types import SimpleNamespace
 
 from gems_views_builder.input.catalog import Metric, Term, TermsOperator, TimeOperator
 from gems_views_builder.input.component import Component
+from gems_views_builder.input.component.location import Location
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
@@ -39,7 +40,7 @@ def metric() -> Metric:
 
 
 def located_at(component: Component, location: Component, location_category: str = "balance") -> Component:
-    component.locations[(None, location_category)] = location
+    component.locations[(None, location_category)] = Location(id=location.id, properties=location.properties)
     return component
 
 
@@ -71,6 +72,32 @@ view:
 
     # Assert
     assert config.extra_locations == ["country", "district", "city_part"]
+
+
+def test_view_config_extra_locations_defaults_to_empty_list(tmp_path: Path) -> None:
+    # Arrange
+    config_path = tmp_path / "view_config.yml"
+    config_path.write_text(
+        """
+view:
+  id: view_area
+  scope:
+    - taxonomy-category: balance
+    - calendar: calendar_file
+  aggregation:
+    time: hour
+  catalog:
+    - id: catalog
+  metrics:
+    - id: catalog.LOAD
+""".strip()
+    )
+
+    # Act
+    config = load_view_config(config_path)
+
+    # Assert
+    assert config.extra_locations == []
 
 
 def test_extra_location_emits_country_district_and_city_part() -> None:
@@ -105,7 +132,7 @@ def test_extra_location_keeps_primary_when_extra_locations_absent() -> None:
     paris = component("paris", properties={"country": "France"})
     gen_paris = located_at(component("gen_paris"), paris)
     components_by_taxon = {"balance": [paris], "production": [gen_paris]}
-    builder = MetricStructureTableBuilder("balance", components_by_taxon)
+    builder = MetricStructureTableBuilder("balance", components_by_taxon, [])
 
     # Act
     table = builder.build(metric())

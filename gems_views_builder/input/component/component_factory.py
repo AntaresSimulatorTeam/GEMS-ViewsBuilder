@@ -10,6 +10,7 @@ from gems_craft.study import Component as GemsPyComponent  # type: ignore
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component.component import Component
 from gems_views_builder.input.component.connection import ConnectionsThroughPort
+from gems_views_builder.input.component.location import Location
 
 
 def create_components(gemspy_components: list[GemsPyComponent]) -> list[Component]:
@@ -128,7 +129,7 @@ def supply_components_with_locations(
                             f"Component {c.id!r} has taxonomy category {c.taxonomy_category!r}, "
                             f"expected {location_taxonomy_category!r}"
                         )
-                    c.locations[(None, location_taxonomy_category)] = c
+                    c.locations[(None, location_taxonomy_category)] = Location(c.id, c.properties)
                 else:
                     supply_component_with_location(c, term.location_port, location_taxonomy_category)
 
@@ -141,4 +142,4 @@ def supply_component_with_location(component: Component, location_port: str, loc
         raise ValueError(
             f"Component {component.id!r} port {location_port} has peer {peers[0].id!r} with taxonomy category {peers[0].taxonomy_category!r}, expected {location_taxonomy_category!r}"
         )
-    component.locations[(location_port, location_taxonomy_category)] = peers[0]
+    component.locations[(location_port, location_taxonomy_category)] = Location(peers[0].id, peers[0].properties)

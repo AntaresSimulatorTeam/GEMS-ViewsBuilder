@@ -2,24 +2,18 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
+from dataclasses import dataclass
 
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component import Component
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
 
+@dataclass
 class MetricStructureTableBuilder:
-    """Build metric structure rows without loading unrelated datasets."""
-
-    def __init__(
-        self,
-        location_taxonomy_category: str,
-        components_by_taxon: dict[str, list[Component]],  # taxonomy category -> components
-        extra_locations: list[str] | None = None,
-    ) -> None:
-        self.location_taxonomy_category = location_taxonomy_category
-        self.components_by_taxon = components_by_taxon  # this is mainly for operating
-        self.extra_locations = extra_locations or []
+    location_taxonomy_category: str
+    components_by_taxon: dict[str, list[Component]]  # taxonomy category -> components
+    extra_locations: list[str]  # empty list means no extra locations
 
     def build(self, metric: Metric) -> MetricStructureTable:
         logging.debug(f"[{metric.id}] Building metric structure table ({len(metric.terms)} term(s))")

@@ -123,6 +123,7 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     table = MetricStructureTableBuilder(
         view_config.location_taxonomy_category,
         components_by_taxon,
+        view_config.extra_locations,
     ).build(metric)
     df = table.dataframe.collect()
     partial = df.filter(pl.col("component") == "gen_company_only")

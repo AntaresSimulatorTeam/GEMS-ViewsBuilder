@@ -80,6 +80,7 @@ def build(metric_id: str, components: dict[str, Any]) -> pl.DataFrame:
     table = MetricStructureTableBuilder(
         components["location_taxonomy_category"],
         components["components_by_taxon"],
+        [],
     ).build(metric)
     return table.dataframe.collect()
 
@@ -152,7 +153,7 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
         if len(comp_rows) == 0:
             continue
         resolved = components_by_id[comp].resolve_location(
-            "p_balance_port", test_3_components["location_taxonomy_category"]
+            "p_balance_port", test_3_components["location_taxonomy_category"], []
         )
         assert comp_rows["metric_location"].to_list() == resolved
 
@@ -243,6 +244,7 @@ def test_single_port_multiple_peers_of_other_categories_are_skipped_not_raised(
     builder = MetricStructureTableBuilder(
         test_3_components["location_taxonomy_category"],
         test_3_components["components_by_taxon"],
+        [],
     )
 
     # Act
@@ -283,7 +285,7 @@ def test_resolve_location_returns_peer(test_3_components: dict[str, Any]) -> Non
 
     # Act
     location = components_by_id["link_link_AB"].resolve_location(
-        "p0_port", test_3_components["location_taxonomy_category"]
+        "p0_port", test_3_components["location_taxonomy_category"], []
     )
 
     # Assert
@@ -314,6 +316,7 @@ def test_none_location_port_resolves_to_the_component_itself(test_3_components: 
     builder = MetricStructureTableBuilder(
         location_taxonomy_category,
         test_3_components["components_by_taxon"],
+        [],
     )
 
     # Act
