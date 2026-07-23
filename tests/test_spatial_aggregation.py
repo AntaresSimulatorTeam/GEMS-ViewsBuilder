@@ -73,7 +73,7 @@ view:
     assert config.extra_locations == ["country", "district", "city_part"]
 
 
-def test_spatial_aggregation_emits_country_district_and_city_part() -> None:
+def test_extra_location_emits_country_district_and_city_part() -> None:
     # Arrange
     paris = component(
         "paris",

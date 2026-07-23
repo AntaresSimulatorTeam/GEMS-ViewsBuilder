@@ -56,7 +56,7 @@ class Component:
             )
         return located
 
-    def spatial_aggregation(self, extra_locations: list[str], component: "Component") -> list[str]:
+    def resolve_extra_locations(self, extra_locations: list[str], component: "Component") -> list[str]:
         locations: list[str] = []
         for location in extra_locations:
             if location in component.properties:
@@ -71,7 +71,7 @@ class Component:
         if not extra_locations:
             return [component.id]
 
-        resolved_locations = self.spatial_aggregation(extra_locations, component)
+        resolved_locations = self.resolve_extra_locations(extra_locations, component)
         if resolved_locations:
             return resolved_locations
         return [component.id]
