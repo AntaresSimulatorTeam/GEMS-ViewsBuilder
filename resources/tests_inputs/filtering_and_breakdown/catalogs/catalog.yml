@@ -4,10 +4,6 @@
 
 ############################    Columns of a Business View   #######################################
 
-# legacy
-# metric_id | metric_location | breakdown_property | view_date | scenario_id | metric_value |
-
-# new
 # metric_id | metric_location | breakdown_properties | view_date | scenario_id | scenario_aggregation | scenario_stat | metric_value
 
 ####################################################################################################
