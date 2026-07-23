@@ -100,7 +100,7 @@ def test_extra_location_emits_country_district_and_city_part() -> None:
     assert rows["metric_location"].to_list() == ["France", "IleDeFrance", "Downtown"]
 
 
-def test_spatial_aggregation_keeps_primary_when_extra_locations_absent() -> None:
+def test_extra_location_keeps_primary_when_extra_locations_absent() -> None:
     # Arrange
     paris = component("paris", properties={"country": "France"})
     gen_paris = located_at(component("gen_paris"), paris)
@@ -115,7 +115,7 @@ def test_spatial_aggregation_keeps_primary_when_extra_locations_absent() -> None
     assert locations == ["paris"]
 
 
-def test_spatial_aggregation_keeps_primary_when_properties_missing() -> None:
+def test_extra_location_keeps_primary_when_properties_missing() -> None:
     # Arrange
     paris = component("paris", properties={})
     gen_paris = located_at(component("gen_paris"), paris)
@@ -134,7 +134,7 @@ def test_spatial_aggregation_keeps_primary_when_properties_missing() -> None:
     assert locations == ["paris"]
 
 
-def test_spatial_aggregation_uses_only_present_properties() -> None:
+def test_extra_location_uses_only_present_properties() -> None:
     # Arrange
     paris = component("paris", properties={"country": "France", "district": "La Defense"})
     gen_paris = located_at(component("gen_paris"), paris)

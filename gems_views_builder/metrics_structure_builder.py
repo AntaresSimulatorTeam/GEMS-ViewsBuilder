@@ -35,13 +35,14 @@ class MetricStructureTableBuilder:
                     locations = c.resolve_location(
                         term.location_port, self.location_taxonomy_category, self.extra_locations
                     )
+                    breakdown_properties = c.format_breakdown_properties(metric.breakdown)
                     for location in locations:
                         rows.append(
                             {
                                 "metric_id": metric.id,
                                 "component": c.id,
                                 "metric_location": location,
-                                "breakdown_properties": c.format_breakdown_properties(metric.breakdown),
+                                "breakdown_properties": breakdown_properties,
                                 "output": term.output_id,
                                 "weight_output_id": 1,
                             }
