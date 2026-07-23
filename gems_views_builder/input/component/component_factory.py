@@ -108,14 +108,14 @@ def supply_components_with_locations(
     - ``supply_components_with_taxonomy_categories``
     - ``supply_components_with_port_connections``
 
-    For each metric term and each component in that term's taxonomy category:
+    For each metric term and each component in that term's taxonomy category,
+    resolve ``(location_port, location_taxonomy_category)`` once per component
+    (later metrics that reuse the same term shape are skipped):
 
     - ``location_port is None``: the component is its own location; store
-      ``(None, location_taxonomy_category) -> component.id``.
-    - ``location_port`` is set: look at peers connected on that port, group them by
-      *peer* taxonomy category, then:
-      - exactly one peer of a category → store ``(location_port, peer_category) -> peer.id``;
-      - more than one peer of the same category → raise (ambiguous location).
+      ``(None, location_taxonomy_category) -> Location(component)``.
+    - ``location_port`` is set: require exactly one peer on that port belonging to
+      ``location_taxonomy_category``, then store it; more than one raises.
 
     Later read via ``Component.is_located_at`` / ``Component.resolve_location``, which both
     look up ``(location_port, location_taxonomy_category)`` in ``Component.locations``.
@@ -123,13 +123,16 @@ def supply_components_with_locations(
     for metric in metrics:
         for term in metric.terms:
             for c in components_by_taxon[term.taxonomy_category]:
+                location_key = (term.location_port, location_taxonomy_category)
+                if location_key in c.locations:
+                    continue
                 if term.location_port is None:
                     if term.taxonomy_category != location_taxonomy_category:
                         raise ValueError(
                             f"Component {c.id!r} has taxonomy category {c.taxonomy_category!r}, "
                             f"expected {location_taxonomy_category!r}"
                         )
-                    c.locations[(None, location_taxonomy_category)] = Location(c.id, c.properties)
+                    c.locations[location_key] = Location(c.id, c.properties)
                 else:
                     supply_component_with_location(c, term.location_port, location_taxonomy_category)
 
