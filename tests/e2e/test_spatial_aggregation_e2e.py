@@ -11,17 +11,6 @@
 # This file is part of the Antares project.
 
 """E2E test for spatial aggregation.
-
-Everything (raw system components/connections, library, taxonomy, view config, simulation
-table) is built in code -- no YAML/parquet fixture files are used. The one pipeline step that
-*is* skipped is ``Loader(input_dir).load()`` (disk I/O); every other step of
-``run_view_building_process`` runs for real, via ``pipeline_helpers.run_pipeline``:
-``create_components`` -> ``supply_components_with_taxonomy_categories`` ->
-``build_component_port_connections`` -> ``supply_components_with_port_connections`` ->
-``group_components_by_taxon`` -> ``supply_components_with_locations`` ->
-``MetricStructureTableBuilder`` -> ``validate_catalogs_against_taxonomy`` -> ``ViewBuilder``
-(``TermsAggregator`` -> ``TimeAggregator``), then merged (``accumulate_on_disk``), to check:
-
 1. Every location mentioned by the view config -- the primary resolved location
    *and* every configured extra-location property -- shows up in the output.
 2. Port-resolved locations (a component whose location is a connected peer, not itself)

@@ -11,17 +11,6 @@
 # This file is part of the Antares project.
 
 """E2E test for temporal aggregation.
-
-Everything (raw system components, library, taxonomy, view config, simulation table) is
-built in code -- no YAML/parquet fixture files are used. The one pipeline step that *is*
-skipped is ``Loader(input_dir).load()`` (disk I/O); every other step of
-``run_view_building_process`` runs for real, via ``pipeline_helpers.run_pipeline``:
-``create_components`` -> ``supply_components_with_taxonomy_categories`` ->
-``build_component_port_connections`` -> ``supply_components_with_port_connections`` ->
-``group_components_by_taxon`` -> ``supply_components_with_locations`` ->
-``MetricStructureTableBuilder`` -> ``validate_catalogs_against_taxonomy`` -> ``ViewBuilder``
-(``TermsAggregator`` -> ``TimeAggregator``), then merged (``accumulate_on_disk``), to check:
-
 1. Granular timesteps spanning two calendar days collapse into two ``view_date`` buckets
    when the view is aggregated at DAY granularity, one bucket per real day -- not one
    bucket per row.
