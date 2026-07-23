@@ -66,15 +66,9 @@ class Component:
     def resolve_location(
         self, location_port: str | None, location_taxonomy_category: str, extra_locations: list[str] | None = None
     ) -> list[str]:
-        component = self.locations[(location_port, location_taxonomy_category)]
-
-        if not extra_locations:
-            return [component.id]
-
-        resolved_locations = self.resolve_extra_locations(extra_locations, component)
-        if resolved_locations:
-            return resolved_locations
-        return [component.id]
+        location_component = self.locations[(location_port, location_taxonomy_category)]
+        extras = self.resolve_extra_locations(extra_locations or [], location_component)
+        return [location_component.id] + extras
 
     def format_breakdown_properties(self, breakdown: list[PropertySchema] | None) -> str:
         if not breakdown:

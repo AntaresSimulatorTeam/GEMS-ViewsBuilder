@@ -96,8 +96,8 @@ def test_extra_location_emits_country_district_and_city_part() -> None:
     rows = table.dataframe.collect()
 
     # Assert
-    assert rows["component"].to_list() == ["gen_paris", "gen_paris", "gen_paris"]
-    assert rows["metric_location"].to_list() == ["France", "IleDeFrance", "Downtown"]
+    assert rows["component"].to_list() == ["gen_paris", "gen_paris", "gen_paris", "gen_paris"]
+    assert rows["metric_location"].to_list() == ["paris", "France", "IleDeFrance", "Downtown"]
 
 
 def test_extra_location_keeps_primary_when_extra_locations_absent() -> None:
@@ -150,4 +150,4 @@ def test_extra_location_uses_only_present_properties() -> None:
     locations = table.dataframe.collect()["metric_location"].to_list()
 
     # Assert
-    assert locations == ["France", "La Defense"]
+    assert locations == ["paris", "France", "La Defense"]
