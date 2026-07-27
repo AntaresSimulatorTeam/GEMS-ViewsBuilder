@@ -4,79 +4,78 @@
 import logging
 from pathlib import Path
 
-EXACT_FILES = ["taxonomy.yml", "view_config.yml", "library.yml", "system.yml"]
-PREFIX_FILES = {"calendar": (".csv",), "simulation_table": (".parquet", ".csv")}
+from gems_views_builder.input_layout import InputLayout
 
 
-class StudyLayoutValidator:
+class InputLayoutValidator:
     """
-    Expected files:
-    - taxonomy.yml
-    - view_config.yml
-    - library.yml
-    - system.yml
-    - simulation_table.parquet/csv (for debugging purposes)
-    - calendar.csv
-    - catalogs directory with 1 * catalogs without strict name convention for now
+    Validates the on-disk layout expected by GEMS-ViewsBuilder, rooted at the GVB input
+    directory (``input_dir``):
+
+    - input/model-libraries/ : exactly one library.yml file
+    - input/system.yml
+    - input/calendar*.csv    : exactly one calendar file
+    - input/catalogs/        : one or more catalog.yml files
+    - input/taxonomy/        : exactly one taxonomy.yml file
+    - input/view-configs/    : exactly one view config.yml file
+    - output/{simulation_id}/ (most recent by folder name) : exactly one simulation table file
     """
 
-    def __init__(self, input_data_path: Path) -> None:
-        self.input_data_path = input_data_path
+    def __init__(self, input_dir: Path) -> None:
+        self.input_dir = input_dir
+        self.paths = InputLayout(input_dir)
 
-    def _check_input_data_path(self) -> None:
-        """
-        # Check if input_data_path exists and is a directory.
-        """
-        logging.info(f"Validating input directory {self.input_data_path}")
-        if not self.input_data_path.is_dir():
-            raise NotADirectoryError(f"Input data path {self.input_data_path} is not a directory")
-        logging.info(f"Input directory exists: {self.input_data_path}")
+    def _check_input_dir(self) -> None:
+        logging.info(f"Validating input directory {self.input_dir}")
+        if not self.input_dir.is_dir():
+            raise NotADirectoryError(f"Input directory {self.input_dir} is not a directory")
+
+    def _check_model_libraries(self) -> None:
+        if not self.paths.model_libraries_path.is_file():
+            raise FileNotFoundError(f"Required file 'model-libraries/library.yml' not found in {self.paths.input_dir}")
+
+    def _check_system_file(self) -> None:
+        if not self.paths.system_file.is_file():
+            raise FileNotFoundError(f"Required file 'system.yml' not found in {self.paths.input_dir}")
 
     def _check_catalogs_directory(self) -> None:
-        """
-        # Check if catalogs directory exists and is a directory.
-        # Check if catalogs directory is empty.
-        """
-        catalogs_path = self.input_data_path / "catalogs"
+        catalogs_path = self.paths.catalogs_dir
         logging.info(f"Validating catalogs directory {catalogs_path}")
         if not catalogs_path.is_dir():
             raise NotADirectoryError(f"Catalogs directory {catalogs_path} not found or not a directory")
-        if not any(catalogs_path.iterdir()):
-            raise FileNotFoundError(f"Catalogs directory {catalogs_path} is empty")  # 1 * constraint
-        logging.info(f"Catalogs directory is ready: {catalogs_path}")
+        if not any(catalogs_path.glob("*.yml")):
+            raise FileNotFoundError(f"Catalogs directory {catalogs_path} has no catalog .yml file")
 
-    def _check_required_input_files(self) -> None:
-        """
-        # Check if there are exactly 6 required files.
-        """
-        logging.info(f"Checking required input files in {self.input_data_path}")
-        # # Check names
-        for filename in EXACT_FILES:
-            logging.info(f"Checking presence of required file {filename}")
-            if not (self.input_data_path / filename).is_file():
-                raise FileNotFoundError(f"Required file '{filename}' not found in {self.input_data_path}")
+    def _check_taxonomy_directory(self) -> None:
+        if not self.paths.taxonomy_path.is_file():
+            raise FileNotFoundError(f"Required file 'taxonomy/taxonomy.yml' not found in {self.paths.input_dir}")
 
-        for prefix, expected_suffixes in PREFIX_FILES.items():
-            logging.info(f"Checking presence of file with prefix {prefix!r}")
-            matches = list(self.input_data_path.glob(f"{prefix}*"))
-            if not matches:
-                raise FileNotFoundError(f"Required file starting with '{prefix}' not found in {self.input_data_path}")
-            if len(matches) > 1:
-                names = ", ".join(sorted(m.name for m in matches))
-                raise ValueError(
-                    f"Expected exactly one file starting with '{prefix}' in {self.input_data_path}, found: {names}"
-                )
-            match = matches[0]
-            if match.suffix not in expected_suffixes:
-                allowed = " or ".join(f"'{suffix}'" for suffix in expected_suffixes)
-                raise ValueError(f"File '{match.name}' starting with '{prefix}' must be a {allowed} file")
-            logging.info(f"Found {match.name} for prefix {prefix!r}")
+    def _check_calendar_file(self) -> None:
+        try:
+            self.paths.calendar_path
+        except StopIteration:
+            raise FileNotFoundError(f"Required file 'calendar*.csv' not found in {self.paths.input_dir}") from None
+
+    def _check_view_configs_directory(self) -> None:
+        if not self.paths.view_config_path.is_file():
+            raise FileNotFoundError(f"Required file 'view-configs/view_config.yml' not found in {self.paths.input_dir}")
+
+    def _check_output_directory(self) -> None:
+        try:
+            self.paths.simulation_table_path
+        except StopIteration:
+            raise FileNotFoundError(
+                f"Required file starting with 'simulation_table' not found in {self.paths.simulation_dir}"
+            ) from None
 
     def validate(self) -> None:
-        logging.info(f"Starting input validation for {self.input_data_path}")
-        self._check_input_data_path()
-
+        logging.info(f"Starting input layout validation for {self.input_dir}")
+        self._check_input_dir()
+        self._check_model_libraries()
+        self._check_system_file()
         self._check_catalogs_directory()
-
-        self._check_required_input_files()
-        logging.info(f"Input validation completed successfully for {self.input_data_path}")
+        self._check_taxonomy_directory()
+        self._check_calendar_file()
+        self._check_view_configs_directory()
+        self._check_output_directory()
+        logging.info(f"Input layout validation completed successfully for {self.input_dir}")

@@ -26,13 +26,13 @@ def test_files_root() -> Path:
 
 
 DATASET_REQUIRED_FILES: tuple[str, ...] = (
-    "calendar_file.csv",
-    "system.yml",
-    "taxonomy.yml",
-    "view_config.yml",
+    "input/calendar_file.csv",
+    "input/system.yml",
+    "input/taxonomy/taxonomy.yml",
+    "input/view-configs/view_config.yml",
 )
 
-DATASET_LIBRARY_FILES: tuple[str, ...] = ("library.yml",)
+DATASET_LIBRARY_FILES: tuple[str, ...] = ("input/model-libraries/library.yml",)
 
 
 def _dataset_dirs(test_inputs_path: Path) -> list[str]:
@@ -44,12 +44,18 @@ def _is_valid_dataset_dir(dataset_dir: Path) -> bool:
         return False
     if not any((dataset_dir / rel).is_file() for rel in DATASET_LIBRARY_FILES):
         return False
-    catalogs_dir = dataset_dir / "catalogs"
+    catalogs_dir = dataset_dir / "input" / "catalogs"
     if not catalogs_dir.is_dir():
         return False
     if not list(catalogs_dir.glob("*.yml")):
         return False
-    simulation_tables = list(dataset_dir.glob("simulation_table*.parquet"))
+    output_dir = dataset_dir / "output"
+    if not output_dir.is_dir():
+        return False
+    simulation_dirs = [d for d in output_dir.iterdir() if d.is_dir()]
+    if len(simulation_dirs) != 1:
+        return False
+    simulation_tables = list(simulation_dirs[0].glob("simulation_table*.parquet"))
     if len(simulation_tables) != 1:
         return False
     return True

@@ -78,7 +78,7 @@ def test_generators_with_same_properties_share_one_breakdown_key(
 def test_same_breakdown_group_sums_all_matching_generators(property_order_workspace: tuple[Path, pl.DataFrame]) -> None:
     """Per scenario, the (gas, rhonepower) view bucket must equal the sum of gas_1 and gas_2 generation."""
     dataset_dir, view = property_order_workspace
-    sim = pl.read_parquet(dataset_dir / "simulation_table.parquet")
+    sim = pl.read_parquet(next((dataset_dir / "output").glob("*/simulation_table.parquet")))
 
     expected = (
         sim.filter((pl.col("output") == "generation") & pl.col("component").is_in(_GAS_RHONEPOWER_GENERATORS))
@@ -107,10 +107,12 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     Breakdown must list (key,None) for missing keys, not omit them or return "{}".
     """
     root = test_files_root / "filtering_and_breakdown_property_order"
-    library = load_library(root / "library.yml")
-    system = load_system(root, resolve_libraries(root / "library.yml"))
-    catalog = load_catalog(root / "catalogs" / "catalog.yml")
-    view_config = load_view_config(root / "view_config.yml")
+    library = load_library(root / "input" / "model-libraries" / "library.yml")
+    system = load_system(
+        root / "input" / "system.yml", resolve_libraries(root / "input" / "model-libraries" / "library.yml")
+    )
+    catalog = load_catalog(root / "input" / "catalogs" / "catalog.yml")
+    view_config = load_view_config(root / "input" / "view-configs" / "view_config.yml")
     metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")
 
     components = [Component(component) for component in system.components]

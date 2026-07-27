@@ -53,11 +53,12 @@ def build_components_by_taxonomy_category(
 @pytest.fixture(scope="module")
 def test_3_components(test_files_root: Path) -> dict[str, Any]:
     test_3 = test_files_root / "test_3"
-    system = load_system(test_3, resolve_libraries(test_3 / "library.yml"))
-    taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
-    library = load_library(test_3 / "library.yml")
-    catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
-    view_config = load_view_config(test_3 / "view_config.yml")
+    library_path = test_3 / "input" / "model-libraries" / "library.yml"
+    system = load_system(test_3 / "input" / "system.yml", resolve_libraries(library_path))
+    taxonomy = load_taxonomy(test_3 / "input" / "taxonomy" / "taxonomy.yml")
+    library = load_library(library_path)
+    catalog = load_catalog(test_3 / "input" / "catalogs" / "catalog.yml")
+    view_config = load_view_config(test_3 / "input" / "view-configs" / "view_config.yml")
     components_by_taxon = build_components_by_taxonomy_category(
         system, library, list(catalog.metrics.values()), view_config.location_taxonomy_category
     )

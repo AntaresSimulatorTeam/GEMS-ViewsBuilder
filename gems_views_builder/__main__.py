@@ -16,17 +16,19 @@ from gems_views_builder.input.component import (
 )
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input_data import create_view_building_input
+from gems_views_builder.input_layout import InputLayout
 from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
-from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
+from gems_views_builder.validation.study_layout_validator import InputLayoutValidator
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
 def load_and_validate_input_data(input_dir: Path) -> RawInputData:
     raw_input_data = Loader(input_dir).load()
-    validate_catalogs_against_taxonomy(input_dir, raw_input_data.view_config.catalog_ids, raw_input_data.taxonomy)
+    catalogs_dir = InputLayout(input_dir).catalogs_dir
+    validate_catalogs_against_taxonomy(catalogs_dir, raw_input_data.view_config.catalog_ids, raw_input_data.taxonomy)
     return raw_input_data
 
 
@@ -62,21 +64,27 @@ def main(argv: list[str] | None = None) -> int:
     """
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose, log_dir=args.log_dir)
-    view_sinker = ViewSinkerFactory(args.results_dir, args.output_format).make()
 
     error = check_options(args)
     if error is not None:
         return error
 
     try:
-        StudyLayoutValidator(args.input_dir).validate()
+        InputLayoutValidator(args.input_dir).validate()
+        layout = InputLayout(args.input_dir)
+        if args.results_dir is not None:
+            results_dir = args.results_dir
+        else:
+            results_dir = layout.views_output_dir(layout.simulation_dir)
+        results_dir.mkdir(parents=True, exist_ok=True)
+        view_sinker = ViewSinkerFactory(results_dir, args.output_format).make()
         raw_input_data = load_and_validate_input_data(args.input_dir)
         run_view_building_process(raw_input_data, view_sinker)
     except Exception:
         logging.exception("View building failed")
         return 1
 
-    logging.info(f"View successfully written to {args.results_dir}")
+    logging.info(f"View successfully written to {results_dir}")
     return 0
 
 

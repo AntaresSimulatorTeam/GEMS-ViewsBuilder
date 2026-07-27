@@ -16,7 +16,7 @@ from gems_views_builder import (
 
 
 def _library_path(test_dataset_dir: Path) -> Path | None:
-    generic = Path(test_dataset_dir) / "library.yml"
+    generic = Path(test_dataset_dir) / "input" / "model-libraries" / "library.yml"
     if generic.is_file():
         return generic
     pytest.skip("No model library file found (expected library.yml)")

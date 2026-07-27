@@ -7,7 +7,7 @@ from gems_views_builder import TaxonomyCategory, TaxonomyItem, load_taxonomy
 
 
 def test_taxonomy_loads(test_dataset_dir: Path) -> None:
-    taxonomy_path = test_dataset_dir / "taxonomy.yml"
+    taxonomy_path = test_dataset_dir / "input" / "taxonomy" / "taxonomy.yml"
     taxonomy = load_taxonomy(taxonomy_path)
     assert taxonomy.id == "my_taxonomy"
     assert taxonomy.description != ""
@@ -15,7 +15,7 @@ def test_taxonomy_loads(test_dataset_dir: Path) -> None:
 
 
 def test_taxonomy_categories_are_typed(test_dataset_dir: Path) -> None:
-    taxonomy_path = test_dataset_dir / "taxonomy.yml"
+    taxonomy_path = test_dataset_dir / "input" / "taxonomy" / "taxonomy.yml"
     taxonomy = load_taxonomy(taxonomy_path)
     for category in taxonomy.categories:
         assert isinstance(category, TaxonomyCategory)
@@ -24,7 +24,7 @@ def test_taxonomy_categories_are_typed(test_dataset_dir: Path) -> None:
 
 
 def test_taxonomy_items_are_typed(test_dataset_dir: Path) -> None:
-    taxonomy_path = test_dataset_dir / "taxonomy.yml"
+    taxonomy_path = test_dataset_dir / "input" / "taxonomy" / "taxonomy.yml"
     taxonomy = load_taxonomy(taxonomy_path)
     for category in taxonomy.categories:
         for field in (
@@ -41,7 +41,7 @@ def test_taxonomy_items_are_typed(test_dataset_dir: Path) -> None:
 
 
 def test_taxonomy_known_categories(test_dataset_dir: Path) -> None:
-    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
+    taxonomy = load_taxonomy(test_dataset_dir / "input" / "taxonomy" / "taxonomy.yml")
     category_ids = {c.id for c in taxonomy.categories}
     for expected in ("balance", "production", "consumption", "storage"):
         assert expected in category_ids
