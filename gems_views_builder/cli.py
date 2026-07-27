@@ -16,15 +16,22 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "input_dir",
         type=Path,
-        help="Input data directory (contains view_config.yml, simulation_table*.parquet, library.yml, ...).",
+        help=(
+            "GEMS View Builder input directory (contains input/model-libraries, input/catalogs, input/taxonomy, "
+            "input/view-configs, input/system.yml, and output/{simulation_id}/simulation_table.*). "
+            "Results are written to output/{simulation_id}/views/ of the most recent simulation."
+        ),
     )
     parser.add_argument(
         "-o",
         "--output",
         dest="results_dir",
         type=Path,
-        required=True,
-        help="Directory where the merged result parquet will be written.",
+        default=None,
+        help=(
+            "Directory where the result file will be written. If omitted, defaults to "
+            "output/{simulation_id}/views/ (most recent simulation) under the input directory."
+        ),
     )
     parser.add_argument(
         "-f",
@@ -53,7 +60,7 @@ def check_options(args: argparse.Namespace) -> int | None:
     if not args.input_dir.is_dir():
         logging.error(f"Input directory does not exist: {args.input_dir}")
         return 2
-    if not args.results_dir.is_dir():
+    if args.results_dir is not None and not args.results_dir.is_dir():
         logging.error(f"Results directory does not exist: {args.results_dir}")
         return 2
     return None
