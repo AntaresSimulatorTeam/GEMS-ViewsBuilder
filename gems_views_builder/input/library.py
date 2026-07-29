@@ -96,10 +96,7 @@ def merge_taxonomy_category_by_model(libraries: dict[str, Library]) -> dict[str,
     """
     Merge each library's taxonomy_category_by_model into one dict keyed by qualified
     model id (<library_id>.<model_id>).
-    Two libraries may define a model with the same id but a different taxonomy category
-    (e.g. a "generator" role that behaves differently per library); qualifying the key keeps
-    them distinct instead of one silently overwriting the other.
-    """
+    """ 
     merged: dict[str, str] = {}
     for library_id, library in libraries.items():
         for model_id, category in library.taxonomy_category_by_model.items():
