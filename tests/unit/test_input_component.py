@@ -30,7 +30,7 @@ def test_match_extra_locations_reads_own_properties() -> None:
 
 def test_supply_components_with_taxonomy_categories() -> None:
     components = [Component(make_raw_component("gen", "lib.generator"))]
-    supply_components_with_taxonomy_categories(components, {"generator": "production"})
+    supply_components_with_taxonomy_categories(components, {"lib.generator": "production"})
     assert components[0].taxonomy_category == "production"
 
 

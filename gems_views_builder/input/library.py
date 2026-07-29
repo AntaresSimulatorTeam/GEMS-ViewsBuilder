@@ -61,15 +61,50 @@ def load_library(library_file_path: Path) -> Library:
     )
 
 
-def resolve_libraries(library_file_path: Path) -> dict[str, GemsLibrary]:
-    """Resolve library YAML into GemsPy's fully-resolved libraries, keyed by library id.
+def load_libraries(library_dir: Path) -> dict[str, Library]:
+    """
+    Load every library YAML file (any file name) in library_dir, keyed by library id.
+    """
+    logging.info(f"Loading model libraries from {library_dir}")
+    libraries: dict[str, Library] = {}
+    for library_file_path in discover_library_files(library_dir):
+        library = load_library(library_file_path)
+        if library.id in libraries:
+            raise ValueError(
+                f"Library id {library.id!r} defined more than once in {library_dir} (also found in a different file)"
+            )
+        libraries[library.id] = library
+    return libraries
+
+
+def resolve_libraries(library_dir: Path) -> dict[str, GemsLibrary]:
+    """Resolve library YAMLs in ``library_dir`` into GemsPy's fully-resolved libraries, keyed by library id.
 
     This is the shape ``gems_craft.study.resolve_components.resolve_system`` needs to resolve
     the study's components, distinct from the schema-level :class:`Library` wrapper above.
     """
-    logging.info(f"Resolving model library from {library_file_path}")
-    parsed = load_library_file(library_file_path)
-    return cast(dict[str, GemsLibrary], resolve_library([parsed]))
+    logging.info(f"Resolving model libraries from {library_dir}")
+    parsed = [load_library_file(p) for p in discover_library_files(library_dir)]
+    return cast(dict[str, GemsLibrary], resolve_library(parsed))
+
+
+def discover_library_files(library_dir: Path) -> list[Path]:
+    return list(library_dir.glob("*.yml"))
+
+
+def merge_taxonomy_category_by_model(libraries: dict[str, Library]) -> dict[str, str]:
+    """
+    Merge each library's taxonomy_category_by_model into one dict keyed by qualified
+    model id (<library_id>.<model_id>).
+    Two libraries may define a model with the same id but a different taxonomy category
+    (e.g. a "generator" role that behaves differently per library); qualifying the key keeps
+    them distinct instead of one silently overwriting the other.
+    """
+    merged: dict[str, str] = {}
+    for library_id, library in libraries.items():
+        for model_id, category in library.taxonomy_category_by_model.items():
+            merged[f"{library_id}.{model_id}"] = category
+    return merged
 
 
 def load_library_file(library_file_path: Path) -> LibrarySchema:

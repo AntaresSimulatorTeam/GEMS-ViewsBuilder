@@ -84,20 +84,22 @@ def build_raw_input_data(
 ) -> RawInputData:
     """
     Build a real RawInputData, skipping only the disk-reading Loader.load() step:
-    system/library/taxonomy are minimal but real objects, populated with just
+    system/libraries/taxonomy are minimal but real objects, populated with just
     enough to drive the pipeline steps under test.
     """
     return RawInputData(
         input_data_path=input_dir,
         taxonomy=Taxonomy(id="taxonomy"),
-        library=Library(
-            id="lib",
-            description="",
-            port_types=[],
-            models={},
-            models_by_taxonomy_category={},
-            taxonomy_category_by_model=taxonomy_category_by_model,
-        ),
+        libraries={
+            "lib": Library(
+                id="lib",
+                description="",
+                port_types=[],
+                models={},
+                models_by_taxonomy_category={},
+                taxonomy_category_by_model=taxonomy_category_by_model,
+            )
+        },
         system=system,
         view_config=view_config,
         simulation_table=simulation_table,

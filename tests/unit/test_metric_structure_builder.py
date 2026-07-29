@@ -26,7 +26,7 @@ from gems_views_builder.input.component import (
     supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
-from gems_views_builder.input.library import resolve_libraries
+from gems_views_builder.input.library import merge_taxonomy_category_by_model, resolve_libraries
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
@@ -39,7 +39,7 @@ def build_components_by_taxonomy_category(
     location_taxonomy_category: str | None = None,
 ) -> dict[str, list[Component]]:
     components = [Component(component) for component in system.components]
-    supply_components_with_taxonomy_categories(components, library.taxonomy_category_by_model)
+    supply_components_with_taxonomy_categories(components, merge_taxonomy_category_by_model({library.id: library}))
     components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
     supply_components_with_port_connections(components, component_port_connections)
@@ -53,10 +53,10 @@ def build_components_by_taxonomy_category(
 @pytest.fixture(scope="module")
 def test_3_components(test_files_root: Path) -> dict[str, Any]:
     test_3 = test_files_root / "test_3"
-    library_path = test_3 / "libraries" / "library.yml"
-    system = load_system(test_3 / "system.yml", resolve_libraries(library_path))
+    library_dir = test_3 / "libraries"
+    system = load_system(test_3 / "system.yml", resolve_libraries(library_dir))
     taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
-    library = load_library(library_path)
+    library = load_library(library_dir / "library.yml")
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     view_config = load_view_config(test_3 / "view_config.yml")
     components_by_taxon = build_components_by_taxonomy_category(

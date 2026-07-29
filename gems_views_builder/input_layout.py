@@ -27,11 +27,6 @@ class InputLayout:
     view_config: Path
     simulation_table: Path
 
-    @property
-    def library_file(self) -> Path:
-        """Single library file currently supported under libraries_dir."""
-        return self.libraries_dir / "library.yml"
-
 
 def create_input_layout_from_args(args: Namespace) -> InputLayout:
     return InputLayout(

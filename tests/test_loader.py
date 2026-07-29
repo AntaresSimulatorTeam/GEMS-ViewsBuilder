@@ -42,7 +42,9 @@ def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
     assert raw_input_data.input_data_path == test_dataset_dir
     assert isinstance(raw_input_data.taxonomy, Taxonomy)
     assert isinstance(raw_input_data.view_config, ViewConfig)
-    assert isinstance(raw_input_data.library, Library)
+    assert isinstance(raw_input_data.libraries, dict)
+    assert raw_input_data.libraries
+    assert all(isinstance(library, Library) for library in raw_input_data.libraries.values())
     assert isinstance(raw_input_data.system, System)
     assert isinstance(raw_input_data.simulation_table, SimulationTable)
     assert isinstance(raw_input_data.calendar, Calendar)
@@ -59,7 +61,9 @@ def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path
     assert raw_input_data.input_data_path == test_dataset_dir
     assert isinstance(raw_input_data.taxonomy, Taxonomy)
     assert isinstance(raw_input_data.view_config, ViewConfig)
-    assert isinstance(raw_input_data.library, Library)
+    assert isinstance(raw_input_data.libraries, dict)
+    assert raw_input_data.libraries
+    assert all(isinstance(library, Library) for library in raw_input_data.libraries.values())
     assert isinstance(raw_input_data.system, System)
     assert isinstance(raw_input_data.simulation_table, SimulationTable)
     assert isinstance(raw_input_data.calendar, Calendar)

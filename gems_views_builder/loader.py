@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from gems_views_builder.input.calendar import load_calendar
 from gems_views_builder.input.catalog import load_catalogs
-from gems_views_builder.input.library import load_library, resolve_libraries
+from gems_views_builder.input.library import load_libraries, resolve_libraries
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import load_simulation_table
 from gems_views_builder.input.system import load_system
@@ -25,13 +25,12 @@ class Loader:
         logging.info("Loading inputs from explicit input layout paths")
         view_config: ViewConfig = load_view_config(self.input_layout.view_config)
 
-        library_file = self.input_layout.library_file
         raw_input_data = RawInputData(
             input_data_path=self.input_layout.view_config.parent,
             taxonomy=load_taxonomy(self.input_layout.taxonomy),
             view_config=view_config,
-            library=load_library(library_file),
-            system=load_system(self.input_layout.system, resolve_libraries(library_file)),
+            libraries=load_libraries(self.input_layout.libraries_dir),
+            system=load_system(self.input_layout.system, resolve_libraries(self.input_layout.libraries_dir)),
             simulation_table=load_simulation_table(self.input_layout.simulation_table),
             calendar=load_calendar(self.input_layout.calendar),
             catalogs=load_catalogs(self.input_layout.catalogs_dir, view_config.catalog_ids),

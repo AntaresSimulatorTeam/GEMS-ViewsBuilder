@@ -27,7 +27,7 @@ from gems_views_builder.input.catalog import (
     load_catalog,
     load_catalogs,
 )
-from gems_views_builder.input.library import Library, load_library
+from gems_views_builder.input.library import Library, load_libraries, load_library, merge_taxonomy_category_by_model
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import (
     FilteredSimulationTable,
@@ -66,6 +66,8 @@ __all__ = [
     "Library",
     "LibrarySchema",
     "load_library",
+    "load_libraries",
+    "merge_taxonomy_category_by_model",
     "ModelSchema",
     "ModelPortSchema",
     "ObjectiveContributionSchema",

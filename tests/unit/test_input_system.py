@@ -19,7 +19,7 @@ def test_input_system_using(test_dataset_dir: Path) -> None:
 
 
 def test_system_exposes_components_and_connections(test_dataset_dir: Path) -> None:
-    library_path = test_dataset_dir / "libraries" / "library.yml"
-    system = load_system(test_dataset_dir / "system.yml", resolve_libraries(library_path))
+    library_dir = test_dataset_dir / "libraries"
+    system = load_system(test_dataset_dir / "system.yml", resolve_libraries(library_dir))
     assert len(system.components) > 0
     assert isinstance(system.connections, list)
