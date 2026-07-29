@@ -22,7 +22,7 @@ input_dir holds the GEMS study data plus GVB-specific
     |   |-- taxonomy/          (taxonomy.yml) - fixed one file
     |   |-- view-configs/      (view_config.yml) - in future multiple files
     |   |-- system.yml
-    |   `-- calendar*.csv
+    |   `-- calendar.csv
     `-- output/
         `-- {simulation_id}/   (most recent by folder name)
             |-- simulation_table.{parquet,csv}
