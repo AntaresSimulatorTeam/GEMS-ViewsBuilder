@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-from pathlib import Path
+from dataclasses import dataclass
 
 from gems_views_builder.input.calendar import load_calendar
 from gems_views_builder.input.catalog import load_catalogs
@@ -15,26 +15,27 @@ from gems_views_builder.input.view_config import ViewConfig, load_view_config
 from gems_views_builder.input_layout import InputLayout
 
 
+@dataclass
 class Loader:
-    def __init__(self, input_data_path: Path) -> None:
-        self.input_data_path = input_data_path
-        self.paths = InputLayout(input_data_path)
+    input_layout: InputLayout
 
     def load(self) -> RawInputData:
         """Perform all input data I/O and return populated raw input data."""
 
-        logging.info(f"Loading inputs from {self.input_data_path}")
-        view_config: ViewConfig = load_view_config(self.paths.view_config_path)
+        logging.info(f"Loading inputs from {self.input_layout.input_dir}")
+        view_config: ViewConfig = load_view_config(self.input_layout.view_config_path)
 
         raw_input_data = RawInputData(
-            input_data_path=self.input_data_path,
-            taxonomy=load_taxonomy(self.paths.taxonomy_path),
+            input_data_path=self.input_layout.root_dir,
+            taxonomy=load_taxonomy(self.input_layout.taxonomy_path),
             view_config=view_config,
-            library=load_library(self.paths.model_libraries_path),
-            system=load_system(self.paths.system_file, resolve_libraries(self.paths.model_libraries_path)),
-            simulation_table=load_simulation_table(self.paths.simulation_table_path),
-            calendar=load_calendar(self.paths.input_dir, view_config.calendar_id),
-            catalogs=load_catalogs(self.paths.catalogs_dir, view_config.catalog_ids),
+            library=load_library(self.input_layout.model_libraries_path),
+            system=load_system(
+                self.input_layout.system_file, resolve_libraries(self.input_layout.model_libraries_path)
+            ),
+            simulation_table=load_simulation_table(self.input_layout.simulation_table_path),
+            calendar=load_calendar(self.input_layout.input_dir, view_config.calendar_id),
+            catalogs=load_catalogs(self.input_layout.catalogs_dir, view_config.catalog_ids),
         )
 
         logging.info("All inputs loaded successfully")

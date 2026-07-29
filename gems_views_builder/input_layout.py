@@ -75,7 +75,7 @@ class InputLayout:
 
     @property
     def simulation_table_path(self) -> Path:
-        return next(p for p in self.simulation_dir.iterdir() if p.is_file() and p.name == "simulation_table")
+        return next(p for p in self.simulation_dir.iterdir() if p.is_file() and p.name.startswith("simulation_table"))
 
     def views_output_dir(self, simulation_dir: Path) -> Path:
         return simulation_dir / "views"

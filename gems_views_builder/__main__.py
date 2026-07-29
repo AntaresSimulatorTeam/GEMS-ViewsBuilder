@@ -21,14 +21,16 @@ from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
-from gems_views_builder.validation.study_layout_validator import InputLayoutValidator
+from gems_views_builder.validation.input_layout_validator import InputLayoutValidator
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
 def load_and_validate_input_data(input_dir: Path) -> RawInputData:
-    raw_input_data = Loader(input_dir).load()
-    catalogs_dir = InputLayout(input_dir).catalogs_dir
-    validate_catalogs_against_taxonomy(catalogs_dir, raw_input_data.view_config.catalog_ids, raw_input_data.taxonomy)
+    input_layout = InputLayout(input_dir)
+    raw_input_data = Loader(input_layout).load()
+    validate_catalogs_against_taxonomy(
+        input_layout.catalogs_dir, raw_input_data.view_config.catalog_ids, raw_input_data.taxonomy
+    )
     return raw_input_data
 
 
@@ -70,12 +72,12 @@ def main(argv: list[str] | None = None) -> int:
         return error
 
     try:
-        InputLayoutValidator(args.input_dir).validate()
-        layout = InputLayout(args.input_dir)
+        input_layout = InputLayout(args.input_dir)
+        InputLayoutValidator(input_layout).validate()
         if args.results_dir is not None:
             results_dir = args.results_dir
         else:
-            results_dir = layout.views_output_dir(layout.simulation_dir)
+            results_dir = input_layout.views_output_dir(input_layout.simulation_dir)
         results_dir.mkdir(parents=True, exist_ok=True)
         view_sinker = ViewSinkerFactory(results_dir, args.output_format).make()
         raw_input_data = load_and_validate_input_data(args.input_dir)

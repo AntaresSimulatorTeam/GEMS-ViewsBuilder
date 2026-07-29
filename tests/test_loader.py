@@ -11,6 +11,7 @@ from gems_views_builder.input.simulation_table import SimulationTable
 from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
+from gems_views_builder.input_layout import InputLayout
 from gems_views_builder.loader import Loader
 
 
@@ -19,12 +20,14 @@ def test_loader_init_has_no_io() -> None:
     Constructor should not touch the filesystem (no glob/yaml/parquet reads).
     """
     missing = Path("/this/path/should/not/exist")
-    loader = Loader(missing)
-    assert loader.input_data_path == missing
+    layout = InputLayout(missing)
+    loader = Loader(layout)
+    assert loader.input_layout is layout
+    assert loader.input_layout.root_dir == missing
 
 
 def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
-    raw_input_data = Loader(test_dataset_dir).load()
+    raw_input_data = Loader(InputLayout(test_dataset_dir)).load()
 
     assert isinstance(raw_input_data, RawInputData)
     assert raw_input_data.input_data_path == test_dataset_dir
@@ -40,7 +43,7 @@ def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
 
 
 def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
-    loader = Loader(test_dataset_dir)
+    loader = Loader(InputLayout(test_dataset_dir))
     raw_input_data = loader.load()
 
     assert isinstance(raw_input_data, RawInputData)
