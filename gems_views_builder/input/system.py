@@ -16,13 +16,13 @@ import logging
 from pathlib import Path
 from typing import Any, cast
 
-from gems.model.library import Library as GemsLibrary  # type: ignore
-from gems.study import Component as GemsPyComponent  # type: ignore
-from gems.study.parsing import parse_yaml_components  # type: ignore
-from gems.study.resolve_components import (  # type: ignore
+from gems_craft.model.library import Library as GemsLibrary  # type: ignore
+from gems_craft.study import Component as GemsPyComponent  # type: ignore
+from gems_craft.study.parsing import parse_yaml_system  # type: ignore
+from gems_craft.study.resolve_components import (  # type: ignore
     System as GemsPySystem,
 )
-from gems.study.resolve_components import (
+from gems_craft.study.resolve_components import (
     resolve_system,
 )
 
@@ -52,7 +52,7 @@ def load_system(input_data_path: Path, resolved_libs: dict[str, GemsLibrary]) ->
     logging.info("Loading system")
     system_path = input_data_path / "system.yml"
     with open(system_path, encoding="utf-8") as f:
-        parsed = parse_yaml_components(f)
+        parsed = parse_yaml_system(f)
     resolved = resolve_system(parsed, resolved_libs)
     logging.info(f"System loaded and resolved from {system_path}")
     return System(cast(GemsPySystem, resolved))

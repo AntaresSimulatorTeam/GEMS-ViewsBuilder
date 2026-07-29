@@ -12,7 +12,7 @@
 
 from pathlib import Path
 
-from gems.study.parsing import SystemSchema, parse_yaml_components  # type: ignore
+from gems_craft.study.parsing import SystemSchema, parse_yaml_system  # type: ignore
 
 from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
@@ -22,7 +22,7 @@ def test_input_system_using(test_dataset_dir: Path) -> None:
     input_system_path = test_dataset_dir / "system.yml"
     assert input_system_path.exists(), f"System file not found: {input_system_path}"
     with open(input_system_path, encoding="utf-8") as f:
-        input_system = parse_yaml_components(f)
+        input_system = parse_yaml_system(f)
     assert input_system is not None
     assert isinstance(input_system, SystemSchema)
 

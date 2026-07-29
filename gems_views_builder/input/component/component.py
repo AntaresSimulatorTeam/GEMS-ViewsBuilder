@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import cast
 
-from gems.study import Component as GemsPyComponent  # type: ignore
+from gems_craft.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.catalog import PropertySchema
 from gems_views_builder.input.component.connection import ConnectionsThroughPort
