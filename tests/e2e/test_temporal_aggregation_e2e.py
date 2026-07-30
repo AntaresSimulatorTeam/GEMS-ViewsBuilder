@@ -28,42 +28,20 @@ from pytest import approx
 
 from gems_views_builder.input.catalog import Metric, Term, TermsOperator, TimeOperator
 from gems_views_builder.input.input_data import InputData
-from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.input.view_config import TimeAggregation, ViewConfig
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.view.view import View, accumulate_on_disk
 from gems_views_builder.view.view_sinker import ParquetViewSinker
-from tests.e2e.utils import build_input_data, make_raw_component, run_pipeline
+from tests.e2e.utils import (
+    build_input_data,
+    make_filtered_simulation_table,
+    make_raw_component,
+    run_pipeline,
+)
 
 LOCATION_TAXONOMY_CATEGORY = "production"
 MODEL_ID = "bus"
 TAXONOMY_CATEGORY_BY_MODEL = {MODEL_ID: LOCATION_TAXONOMY_CATEGORY}
-
-
-def make_filtered_simulation_table(
-    rows: list[tuple[str, str, int, datetime, float]], tmp_path: Path
-) -> FilteredSimulationTable:
-    """Build a FilteredSimulationTable directly, bypassing calendar filtering (out of scope here)."""
-    n = len(rows)
-    dataframe = pl.DataFrame(
-        {
-            "block": ["b1"] * n,
-            "component": [r[0] for r in rows],
-            "output": [r[1] for r in rows],
-            "absolute_time_index": list(range(1, n + 1)),
-            "block_time_index": list(range(1, n + 1)),
-            "scenario_index": [r[2] for r in rows],
-            "value": [r[4] for r in rows],
-            "basis_status": ["ok"] * n,
-            "granular_date": [r[3] for r in rows],
-        },
-        schema_overrides={"granular_date": pl.Datetime},
-    )
-    sim_table_dir = tmp_path / "filtered_simulation_table"
-    sim_table_dir.mkdir()
-    path = sim_table_dir / "filtered.parquet"
-    dataframe.write_parquet(path)
-    return FilteredSimulationTable(path, pl.scan_parquet(path))
 
 
 # Four granular timesteps for busA, spread across two calendar days: two per day.
