@@ -32,7 +32,7 @@ from pytest import approx
 from gems_views_builder.input.catalog import Metric, PropertySchema, Term, TermsOperator, TimeOperator
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
-from gems_views_builder.input.view_config import TimeAggregation, ViewConfig
+from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.view.view import View, accumulate_on_disk
 from gems_views_builder.view.view_sinker import ParquetViewSinker
@@ -40,6 +40,9 @@ from tests.e2e.utils import build_input_data, make_raw_component, make_raw_conne
 
 EXTRA_LOCATIONS = ["country", "region"]
 TAXONOMY_CATEGORY_BY_MODEL = {"bus": "balance", "load": "load"}
+
+T1 = datetime(2026, 1, 1, 3, 0)
+T2 = datetime(2026, 1, 1, 20, 0)
 
 
 def make_filtered_simulation_table(
@@ -97,14 +100,14 @@ def build_pipeline(tmp_path: Path) -> tuple[list[MetricView], ViewConfig]:
 
     # Two granular timesteps within the same day, per component/output.
     rows = [
-        ("loadX", "active_load", 0, datetime(2026, 1, 1, 3, 0), 10.0),
-        ("loadX", "active_load", 0, datetime(2026, 1, 1, 20, 0), 20.0),
-        ("busA", "active_power", 0, datetime(2026, 1, 1, 3, 0), 100.0),
-        ("busA", "active_power", 0, datetime(2026, 1, 1, 20, 0), 200.0),
-        ("busB", "active_power", 0, datetime(2026, 1, 1, 3, 0), 50.0),
-        ("busB", "active_power", 0, datetime(2026, 1, 1, 20, 0), 150.0),
-        ("busC", "active_power", 0, datetime(2026, 1, 1, 3, 0), 999.0),  # filtering out by country=France
-        ("busC", "active_power", 0, datetime(2026, 1, 1, 20, 0), 999.0),
+        ("loadX", "active_load", 0, T1, 10.0),
+        ("loadX", "active_load", 0, T2, 20.0),
+        ("busA", "active_power", 0, T1, 100.0),
+        ("busA", "active_power", 0, T2, 200.0),
+        ("busB", "active_power", 0, T1, 50.0),
+        ("busB", "active_power", 0, T2, 150.0),
+        ("busC", "active_power", 0, T1, 999.0),  # filtering out by country=France
+        ("busC", "active_power", 0, T2, 999.0),
     ]
     filtered_st = make_filtered_simulation_table(rows, tmp_path)
 
@@ -114,7 +117,7 @@ def build_pipeline(tmp_path: Path) -> tuple[list[MetricView], ViewConfig]:
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids=set(),  # keeps validate_catalogs_against_taxonomy disk-free (no catalogs to load)
-        time_aggregation=TimeAggregation.DAY,
+        time_aggregation=None,
         extra_locations=EXTRA_LOCATIONS,
         metric_ids=["catalog.LOAD", "catalog.PROD"],
         metrics=metrics,
@@ -127,21 +130,46 @@ def build_pipeline(tmp_path: Path) -> tuple[list[MetricView], ViewConfig]:
     return temporal_views, view_config
 
 
-def values_by_location(path: Path) -> dict[str, float]:
+def values_by_location_and_date(path: Path) -> dict[tuple[str, datetime], float]:
     df = pl.read_parquet(path)
-    return dict(zip(df["metric_location"].to_list(), df["metric_value"].to_list()))
+    return dict(
+        zip(
+            zip(df["metric_location"].to_list(), df["view_date"].to_list()),
+            df["metric_value"].to_list(),
+        )
+    )
 
 
 # loadX's location is resolved through its port connection to busA, so LOAD is reported under
 # busA's location (and busA's extra-locations), not under "loadX".
+#
+# With time_aggregation=None each granular timestamp stays its own view_date.
+# LOAD: terms SUM + time SUM, one value per (location, timestamp) => the granular value.
+EXPECTED_LOAD = {
+    ("busA", T1): 10.0,
+    ("busA", T2): 20.0,
+    ("France", T1): 10.0,
+    ("France", T2): 20.0,
+    ("West", T1): 10.0,
+    ("West", T2): 20.0,
+}
 
-# Sum 10 + 20, loadX is connected to busA through its injection port busA==France==West location
-# Load Metric has Time && Term Operator SUM, so the result is 30.0
-EXPECTED_LOAD = {"busA": 30.0, "France": 30.0, "West": 30.0}
-
-# Prod Metric has Time OP = Sum, Term OP = AVG
-# Bus C won't appear because of filter
-EXPECTED_PROD = {"busA": 150.0, "France": 125.0, "West": 150.0, "busB": 100.0, "East": 100.0}
+# PROD: terms SUM + time AVG. Primary/region locations have one component each, so AVG
+# equals the granular value. France is shared by busA and busB, so AVG collapses both
+# contributions at the same timestamp: mean(100,50)=75 and mean(200,150)=175.
+# Bus C is filtered out by country=France.
+EXPECTED_PROD = {
+    ("busA", T1): 100.0,
+    ("busA", T2): 200.0,
+    ("busB", T1): 50.0,
+    ("busB", T2): 150.0,
+    ("West", T1): 100.0,
+    ("West", T2): 200.0,
+    ("East", T1): 50.0,
+    ("East", T2): 150.0,
+    ("France", T1): 75.0,
+    ("France", T2): 175.0,
+}
 
 
 def test_all_view_config_locations_are_present(tmp_path: Path) -> None:
@@ -151,19 +179,19 @@ def test_all_view_config_locations_are_present(tmp_path: Path) -> None:
 
     # Assert: LOAD's location is port-resolved to busA, so busA's primary location plus every
     # extra-location property it actually has (view_config.extra_locations) must appear.
-    load_locations = values_by_location(load_view.persistence_path)
-    assert set(load_locations) == set(EXPECTED_LOAD)
-    for location, expected_value in EXPECTED_LOAD.items():
-        assert load_locations[location] == approx(expected_value)
+    load_values = values_by_location_and_date(load_view.persistence_path)
+    assert set(load_values) == set(EXPECTED_LOAD)
+    for key, expected_value in EXPECTED_LOAD.items():
+        assert load_values[key] == approx(expected_value)
 
     # PROD is filtered to country=France, so busC/Germany must be entirely absent
     # even though "country" is a configured extra location.
-    prod_locations = values_by_location(prod_view.persistence_path)
-    assert set(prod_locations) == set(EXPECTED_PROD)
-    assert "busC" not in prod_locations
-    assert "Germany" not in prod_locations
-    for location, expected_value in EXPECTED_PROD.items():
-        assert prod_locations[location] == approx(expected_value)
+    prod_values = values_by_location_and_date(prod_view.persistence_path)
+    assert set(prod_values) == set(EXPECTED_PROD)
+    assert all(location != "busC" for location, _ in prod_values)
+    assert all(location != "Germany" for location, _ in prod_values)
+    for key, expected_value in EXPECTED_PROD.items():
+        assert prod_values[key] == approx(expected_value)
 
     assert view_config.extra_locations == EXTRA_LOCATIONS
 
@@ -175,10 +203,10 @@ def test_temporal_views_are_consistent_with_each_other(tmp_path: Path) -> None:
     load_df = pl.read_parquet(load_view.persistence_path)
     prod_df = pl.read_parquet(prod_view.persistence_path)
 
-    # Assert: both metrics share the same time-aggregation config, so both must
-    # collapse to a single view_date; neither metric has a breakdown, so both use "{}".
-    assert set(load_df["view_date"].to_list()) == {datetime(2026, 1, 1)}
-    assert set(prod_df["view_date"].to_list()) == {datetime(2026, 1, 1)}
+    # Assert: no time_aggregation, so both metrics keep the two granular timestamps;
+    # neither metric has a breakdown, so both use "{}".
+    assert set(load_df["view_date"].to_list()) == {T1, T2}
+    assert set(prod_df["view_date"].to_list()) == {T1, T2}
     assert set(load_df["breakdown_properties"].to_list()) == {"{}"}
     assert set(prod_df["breakdown_properties"].to_list()) == {"{}"}
 
@@ -211,10 +239,15 @@ def test_merged_view_is_consistent_with_pre_merge_temporal_views(tmp_path: Path)
     # Assert: every value in the merged file matches the corresponding pre-merge temporal view.
     for metric_id, expected in (("LOAD", EXPECTED_LOAD), ("PROD", EXPECTED_PROD)):
         rows = merged.filter(pl.col("metric_id") == metric_id)
-        by_location = dict(zip(rows["metric_location"].to_list(), rows["metric_value"].to_list()))
-        assert set(by_location) == set(expected)
-        for location, expected_value in expected.items():
-            assert by_location[location] == approx(expected_value)
+        by_key = dict(
+            zip(
+                zip(rows["metric_location"].to_list(), rows["view_date"].to_list()),
+                rows["metric_value"].to_list(),
+            )
+        )
+        assert set(by_key) == set(expected)
+        for key, expected_value in expected.items():
+            assert by_key[key] == approx(expected_value)
 
     # No location leaks across metrics in the merge: busC/Germany only ever came from PROD's
     # filter being applied; LOAD never touches them at all since loadX resolves to busA.

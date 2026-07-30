@@ -29,7 +29,7 @@ from pytest import approx
 from gems_views_builder.input.catalog import Metric, Term, TermsOperator, TimeOperator
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
-from gems_views_builder.input.view_config import ViewConfig
+from gems_views_builder.input.view_config import TimeAggregation, ViewConfig
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.view.view import View, accumulate_on_disk
 from gems_views_builder.view.view_sinker import ParquetViewSinker
@@ -109,7 +109,7 @@ def build_pipeline(tmp_path: Path) -> tuple[list[MetricView], ViewConfig]:
         calendar_id="calendar",
         location_taxonomy_category=LOCATION_TAXONOMY_CATEGORY,
         catalog_ids=set(),  # keeps validate_catalogs_against_taxonomy disk-free (no catalogs to load)
-        time_aggregation=None,
+        time_aggregation=TimeAggregation.DAY,
         extra_locations=[],
         metric_ids=["catalog.LOAD_SUM", "catalog.LOAD_AVG"],
         metrics=metrics,
