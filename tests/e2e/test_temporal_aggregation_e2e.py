@@ -76,10 +76,10 @@ ROWS = [
     ("busA", "active_load", 0, datetime(2026, 1, 2, 20, 0), 200.0),
 ]
 
-# LOAD sums per day: day1 = 10+20 = 30, day2 = 100+200 = 300.
-EXPECTED_LOAD_BY_DAY = {DAY_1: 30.0, DAY_2: 300.0}
-# PROD averages per day: day1 = mean(10,20) = 15, day2 = mean(100,200) = 150.
-EXPECTED_PROD_BY_DAY = {DAY_1: 15.0, DAY_2: 150.0}
+# LOAD_SUM per day: day1 = 10+20 = 30, day2 = 100+200 = 300.
+EXPECTED_LOAD_SUM_BY_DAY = {DAY_1: 30.0, DAY_2: 300.0}
+# LOAD_AVG per day: day1 = mean(10,20) = 15, day2 = mean(100,200) = 150.
+EXPECTED_LOAD_AVG_BY_DAY = {DAY_1: 15.0, DAY_2: 150.0}
 
 
 def build_pipeline(tmp_path: Path) -> tuple[list[MetricView], ViewConfig]:
@@ -87,19 +87,19 @@ def build_pipeline(tmp_path: Path) -> tuple[list[MetricView], ViewConfig]:
 
     # Same term/output for both metrics, only the time_operator differs, isolating the
     # temporal-aggregation behavior from any spatial/terms concern.
-    load_metric = Metric(
-        id="LOAD",
+    load_sum_metric = Metric(
+        id="LOAD_SUM",
         terms=[Term(taxonomy_category=LOCATION_TAXONOMY_CATEGORY, output_id="active_load", location_port=None)],
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.SUM,
     )
-    prod_metric = Metric(
-        id="PROD",
+    load_avg_metric = Metric(
+        id="LOAD_AVG",
         terms=[Term(taxonomy_category=LOCATION_TAXONOMY_CATEGORY, output_id="active_load", location_port=None)],
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.AVG,
     )
-    metrics = [load_metric, prod_metric]
+    metrics = [load_sum_metric, load_avg_metric]
 
     filtered_st = make_filtered_simulation_table(ROWS, tmp_path)
 
@@ -111,7 +111,7 @@ def build_pipeline(tmp_path: Path) -> tuple[list[MetricView], ViewConfig]:
         catalog_ids=set(),  # keeps validate_catalogs_against_taxonomy disk-free (no catalogs to load)
         time_aggregation=TimeAggregation.DAY,
         extra_locations=[],
-        metric_ids=["catalog.LOAD", "catalog.PROD"],
+        metric_ids=["catalog.LOAD_SUM", "catalog.LOAD_AVG"],
         metrics=metrics,
     )
 
@@ -130,31 +130,31 @@ def values_by_day(path: Path) -> dict[datetime, float]:
 def test_granular_timesteps_are_bucketed_by_calendar_day(tmp_path: Path) -> None:
     # Arrange / Act
     temporal_views, _ = build_pipeline(tmp_path)
-    load_view, prod_view = temporal_views
+    load_sum_view, load_avg_view = temporal_views
 
     # Assert: 4 granular rows collapse into exactly 2 day-buckets, not 4 (one per row) or 1
     # (all merged together) -- each metric gets one row per real day.
-    load_df = pl.read_parquet(load_view.persistence_path)
-    prod_df = pl.read_parquet(prod_view.persistence_path)
-    assert load_df.shape[0] == 2
-    assert prod_df.shape[0] == 2
-    assert set(load_df["view_date"].to_list()) == {DAY_1, DAY_2}
-    assert set(prod_df["view_date"].to_list()) == {DAY_1, DAY_2}
+    load_sum_df = pl.read_parquet(load_sum_view.persistence_path)
+    load_avg_df = pl.read_parquet(load_avg_view.persistence_path)
+    assert load_sum_df.shape[0] == 2
+    assert load_avg_df.shape[0] == 2
+    assert set(load_sum_df["view_date"].to_list()) == {DAY_1, DAY_2}
+    assert set(load_avg_df["view_date"].to_list()) == {DAY_1, DAY_2}
 
 
 def test_sum_and_avg_time_operators_diverge_on_the_same_granular_data(tmp_path: Path) -> None:
     # Arrange / Act
     temporal_views, _ = build_pipeline(tmp_path)
-    load_view, prod_view = temporal_views
+    load_sum_view, load_avg_view = temporal_views
 
-    # Assert: LOAD (SUM) and PROD (AVG) read the exact same granular rows, but produce
+    # Assert: LOAD_SUM and LOAD_AVG read the exact same granular rows, but produce
     # different per-day values -- confirms the time_operator, not the data, drives the split.
-    load_by_day = values_by_day(load_view.persistence_path)
-    prod_by_day = values_by_day(prod_view.persistence_path)
-    for day, expected_value in EXPECTED_LOAD_BY_DAY.items():
-        assert load_by_day[day] == approx(expected_value)
-    for day, expected_value in EXPECTED_PROD_BY_DAY.items():
-        assert prod_by_day[day] == approx(expected_value)
+    load_sum_by_day = values_by_day(load_sum_view.persistence_path)
+    load_avg_by_day = values_by_day(load_avg_view.persistence_path)
+    for day, expected_value in EXPECTED_LOAD_SUM_BY_DAY.items():
+        assert load_sum_by_day[day] == approx(expected_value)
+    for day, expected_value in EXPECTED_LOAD_AVG_BY_DAY.items():
+        assert load_avg_by_day[day] == approx(expected_value)
 
 
 def test_merged_view_is_consistent_with_pre_merge_temporal_views(tmp_path: Path) -> None:
@@ -171,7 +171,7 @@ def test_merged_view_is_consistent_with_pre_merge_temporal_views(tmp_path: Path)
     pre_merge_row_counts = [pl.read_parquet(v.persistence_path).shape[0] for v in temporal_views]
     assert merged.shape[0] == sum(pre_merge_row_counts) == 4
 
-    for metric_id, expected_by_day in (("LOAD", EXPECTED_LOAD_BY_DAY), ("PROD", EXPECTED_PROD_BY_DAY)):
+    for metric_id, expected_by_day in (("LOAD_SUM", EXPECTED_LOAD_SUM_BY_DAY), ("LOAD_AVG", EXPECTED_LOAD_AVG_BY_DAY)):
         rows = merged.filter(pl.col("metric_id") == metric_id)
         by_day = dict(zip(rows["view_date"].to_list(), rows["metric_value"].to_list()))
         assert set(by_day) == set(expected_by_day)
