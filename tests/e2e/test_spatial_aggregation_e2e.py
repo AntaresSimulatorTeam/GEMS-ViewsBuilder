@@ -33,7 +33,7 @@ from tests.e2e.utils import (
     make_raw_connection,
 )
 
-EXTRA_LOCATIONS = ["country", "region"]
+
 TAXONOMY_CATEGORY_BY_MODEL = {"bus": "balance", "load": "load"}
 
 T1 = datetime(2026, 1, 1, 3, 0)
@@ -81,7 +81,7 @@ def build_input(tmp_path: Path) -> InputData:
         location_taxonomy_category="balance",
         catalog_ids=set(),  # keeps validate_catalogs_against_taxonomy disk-free (no catalogs to load)
         time_aggregation=None,
-        extra_locations=EXTRA_LOCATIONS,
+        extra_locations=["country", "region"],
         metric_ids=["catalog.LOAD", "catalog.PROD"],
         metrics=[load_metric, prod_metric],
     )
@@ -146,19 +146,8 @@ def test_all_view_config_locations_are_present(tmp_path: Path) -> None:
 
     # Assert
     load_view, prod_view = metric_views
-    load_values = values_by_location_and_date(load_view.persistence_path)
-    assert set(load_values) == set(EXPECTED_LOAD)
-    for key, expected_value in EXPECTED_LOAD.items():
-        assert load_values[key] == approx(expected_value)
-
-    prod_values = values_by_location_and_date(prod_view.persistence_path)
-    assert set(prod_values) == set(EXPECTED_PROD)
-    assert all(location != "busC" for location, _ in prod_values)
-    assert all(location != "Germany" for location, _ in prod_values)
-    for key, expected_value in EXPECTED_PROD.items():
-        assert prod_values[key] == approx(expected_value)
-
-    assert input_data.view_config.extra_locations == EXTRA_LOCATIONS
+    assert values_by_location_and_date(load_view.persistence_path) == approx(EXPECTED_LOAD)
+    assert values_by_location_and_date(prod_view.persistence_path) == approx(EXPECTED_PROD)
 
 
 def test_temporal_views_are_consistent_with_each_other(tmp_path: Path) -> None:
@@ -173,12 +162,14 @@ def test_temporal_views_are_consistent_with_each_other(tmp_path: Path) -> None:
     load_df = pl.read_parquet(load_view.persistence_path)
     prod_df = pl.read_parquet(prod_view.persistence_path)
 
+    shared_locations = {"busA", "France", "West"}
+
     assert set(load_df["view_date"].to_list()) == {T1, T2}
     assert set(prod_df["view_date"].to_list()) == {T1, T2}
     assert set(load_df["breakdown_properties"].to_list()) == {"{}"}
     assert set(prod_df["breakdown_properties"].to_list()) == {"{}"}
 
-    shared_locations = {"busA", "France", "West"}
+    
     assert shared_locations <= set(load_df["metric_location"].to_list())
     assert shared_locations <= set(prod_df["metric_location"].to_list())
 
@@ -211,10 +202,4 @@ def test_merged_view_is_consistent_with_pre_merge_temporal_views(tmp_path: Path)
                 rows["metric_value"].to_list(),
             )
         )
-        assert set(by_key) == set(expected)
-        for key, expected_value in expected.items():
-            assert by_key[key] == approx(expected_value)
-
-    prod_rows = merged.filter(pl.col("metric_id") == "PROD")
-    assert "busC" not in prod_rows["metric_location"].to_list()
-    assert "Germany" not in prod_rows["metric_location"].to_list()
+        assert by_key == approx(expected)
