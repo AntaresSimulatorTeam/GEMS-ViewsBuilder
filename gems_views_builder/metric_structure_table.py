@@ -9,10 +9,20 @@ from pathlib import Path
 import polars as pl
 
 from gems_views_builder.common import (
-    METRIC_STRUCTURE_TABLE_SCHEMA,
     PARQUET_COMPRESSION,
     PARQUET_COMPRESSION_LEVEL,
     PARQUET_ROW_GROUP_SIZE,
+)
+
+METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
+    {
+        "metric_id": pl.Utf8,
+        "component": pl.Utf8,
+        "metric_location": pl.Utf8,
+        "breakdown_properties": pl.Utf8,
+        "output": pl.Utf8,
+        "weight_output_id": pl.Utf8,
+    }
 )
 
 
