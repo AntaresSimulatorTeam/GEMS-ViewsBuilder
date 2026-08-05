@@ -1,14 +1,5 @@
-# Copyright (c) 2026, RTE (https://www.rte-france.com)
-#
-# See AUTHORS.txt
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-#
-# This file is part of the Antares project.
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -16,7 +7,7 @@ from types import SimpleNamespace
 from gems_views_builder.input.catalog import Metric, Term, TermsOperator, TimeOperator
 from gems_views_builder.input.component import Component
 from gems_views_builder.input.component.location import Location
-from gems_views_builder.input.view_config import load_view_config
+from gems_views_builder.input.view_config import ViewConfig, load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
@@ -42,6 +33,16 @@ def metric() -> Metric:
 def located_at(component: Component, location: Component, location_category: str = "balance") -> Component:
     component.locations[(None, location_category)] = Location(id=location.id, properties=location.properties)
     return component
+
+
+def view_config(extra_locations: list[str] | None = None) -> ViewConfig:
+    return ViewConfig(
+        id="view_area",
+        input_data_path=Path("."),
+        calendar_id="calendar_file",
+        location_taxonomy_category="balance",
+        extra_locations=extra_locations or [],
+    )
 
 
 def test_view_config_parses_extra_locations(tmp_path: Path) -> None:
@@ -113,9 +114,8 @@ def test_extra_location_emits_country_district_and_city_part() -> None:
     gen_paris = located_at(component("gen_paris"), paris)
     components_by_taxon = {"balance": [paris], "production": [gen_paris]}
     builder = MetricStructureTableBuilder(
-        "balance",
+        view_config(["country", "district", "city_part"]),
         components_by_taxon,
-        extra_locations=["country", "district", "city_part"],
     )
 
     # Act
@@ -132,7 +132,7 @@ def test_extra_location_keeps_primary_when_extra_locations_absent() -> None:
     paris = component("paris", properties={"country": "France"})
     gen_paris = located_at(component("gen_paris"), paris)
     components_by_taxon = {"balance": [paris], "production": [gen_paris]}
-    builder = MetricStructureTableBuilder("balance", components_by_taxon, [])
+    builder = MetricStructureTableBuilder(view_config(), components_by_taxon)
 
     # Act
     table = builder.build(metric())
@@ -148,9 +148,8 @@ def test_extra_location_keeps_primary_when_properties_missing() -> None:
     gen_paris = located_at(component("gen_paris"), paris)
     components_by_taxon = {"balance": [paris], "production": [gen_paris]}
     builder = MetricStructureTableBuilder(
-        "balance",
+        view_config(["country", "district", "city_part"]),
         components_by_taxon,
-        extra_locations=["country", "district", "city_part"],
     )
 
     # Act
@@ -167,9 +166,8 @@ def test_extra_location_uses_only_present_properties() -> None:
     gen_paris = located_at(component("gen_paris"), paris)
     components_by_taxon = {"balance": [paris], "production": [gen_paris]}
     builder = MetricStructureTableBuilder(
-        "balance",
+        view_config(["country", "district", "city_part"]),
         components_by_taxon,
-        extra_locations=["country", "district", "city_part"],
     )
 
     # Act

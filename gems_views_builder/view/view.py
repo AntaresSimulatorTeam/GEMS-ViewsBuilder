@@ -17,6 +17,6 @@ class View:
 from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
 
 
-def accumulate_on_disk(metric_views: list[MetricView], sinker: ViewSinker) -> View:
+def accumulate_on_disk(metric_views: list[MetricView], sinker: ViewSinker) -> None:
     merged = pl.scan_parquet([v.persistence_path for v in metric_views])
-    return sinker.sink(merged)
+    sinker.sink(merged)

@@ -1,14 +1,5 @@
-# Copyright (c) 2026, RTE (https://www.rte-france.com)
-#
-# See AUTHORS.txt
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-#
-# This file is part of the Antares project.
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -24,7 +15,6 @@ from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_view import MetricView
-from gems_views_builder.view.view import View
 from gems_views_builder.view.view_sinker import ViewSinker
 
 
@@ -107,9 +97,8 @@ def run_pipeline(input_data: InputData, input_dir: Path) -> list[MetricView]:
         def load(self) -> InputData:
             return input_data
 
-    def dummy_accumulate(metric_views: list[MetricView], _sinker: ViewSinker) -> View:
+    def dummy_accumulate(metric_views: list[MetricView], _sinker: ViewSinker) -> None:
         captured.extend(metric_views)
-        return View(dataframe=pl.LazyFrame())
 
     with (
         patch("gems_views_builder.__main__.Loader", DummyLoader),

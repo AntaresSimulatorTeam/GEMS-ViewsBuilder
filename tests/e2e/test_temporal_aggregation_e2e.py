@@ -1,14 +1,5 @@
-# Copyright (c) 2026, RTE (https://www.rte-france.com)
-#
-# See AUTHORS.txt
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-#
-# This file is part of the Antares project.
 
 """E2E test for temporal aggregation.
 1. Granular timesteps spanning two calendar days collapse into two ``view_date`` buckets
@@ -30,7 +21,7 @@ from gems_views_builder.input.catalog import Metric, Term, TermsOperator, TimeOp
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.view_config import TimeAggregation, ViewConfig
 from gems_views_builder.metric_view import MetricView
-from gems_views_builder.view.view import View, accumulate_on_disk
+from gems_views_builder.view.view import accumulate_on_disk
 from gems_views_builder.view.view_sinker import ParquetViewSinker
 from tests.e2e.utils import (
     build_input_data,
@@ -142,8 +133,8 @@ def test_merged_view_is_consistent_with_pre_merge_temporal_views(tmp_path: Path)
     results_dir.mkdir()
 
     # Act
-    view: View = accumulate_on_disk(temporal_views, ParquetViewSinker(results_dir))
-    merged = view.dataframe.collect()
+    accumulate_on_disk(temporal_views, ParquetViewSinker(results_dir))
+    merged = pl.read_parquet(next(results_dir.glob("view*.parquet")))
 
     # Assert: row count matches the sum of the pre-merge views (2 days x 2 metrics = 4).
     pre_merge_row_counts = [pl.read_parquet(v.persistence_path).shape[0] for v in temporal_views]

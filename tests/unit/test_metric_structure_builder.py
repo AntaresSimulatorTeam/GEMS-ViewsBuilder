@@ -67,6 +67,7 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
         "taxonomy": taxonomy,
         "library": library,
         "catalog": catalog,
+        "view_config": view_config,
         "location_taxonomy_category": view_config.location_taxonomy_category,
         "components_by_taxon": components_by_taxon,
         "components_by_id": {
@@ -78,9 +79,8 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
 def build(metric_id: str, components: dict[str, Any]) -> pl.DataFrame:
     metric = components["catalog"].get_metric(metric_id)
     table = MetricStructureTableBuilder(
-        components["location_taxonomy_category"],
+        components["view_config"],
         components["components_by_taxon"],
-        [],
     ).build(metric)
     return table.dataframe.collect()
 
@@ -242,9 +242,8 @@ def test_single_port_multiple_peers_of_other_categories_are_skipped_not_raised(
         time_operator=TimeOperator.SUM,
     )
     builder = MetricStructureTableBuilder(
-        test_3_components["location_taxonomy_category"],
+        test_3_components["view_config"],
         test_3_components["components_by_taxon"],
-        [],
     )
 
     # Act
@@ -314,9 +313,8 @@ def test_none_location_port_resolves_to_the_component_itself(test_3_components: 
     )
     supply_components_with_locations(test_3_components["components_by_taxon"], [metric], location_taxonomy_category)
     builder = MetricStructureTableBuilder(
-        location_taxonomy_category,
+        test_3_components["view_config"],
         test_3_components["components_by_taxon"],
-        [],
     )
 
     # Act

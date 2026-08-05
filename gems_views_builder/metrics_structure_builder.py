@@ -6,14 +6,14 @@ from dataclasses import dataclass
 
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component import Component
+from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
 
 @dataclass
 class MetricStructureTableBuilder:
-    location_taxonomy_category: str
+    view_config: ViewConfig
     components_by_taxon: dict[str, list[Component]]  # taxonomy category -> components
-    extra_locations: list[str]  # empty list means no extra locations
 
     def build(self, metric: Metric) -> MetricStructureTable:
         logging.debug(f"[{metric.id}] Building metric structure table ({len(metric.terms)} term(s))")
@@ -25,9 +25,13 @@ class MetricStructureTableBuilder:
             )
 
             for c in self.components_by_taxon[term.taxonomy_category]:
-                if c.match(metric.filter) and c.is_located_at(term.location_port, self.location_taxonomy_category):
+                if c.match(metric.filter) and c.is_located_at(
+                    term.location_port, self.view_config.location_taxonomy_category
+                ):
                     locations = c.resolve_location(
-                        term.location_port, self.location_taxonomy_category, self.extra_locations
+                        term.location_port,
+                        self.view_config.location_taxonomy_category,
+                        self.view_config.extra_locations,
                     )
                     breakdown_properties = c.format_breakdown_properties(metric.breakdown)
                     for location in locations:
