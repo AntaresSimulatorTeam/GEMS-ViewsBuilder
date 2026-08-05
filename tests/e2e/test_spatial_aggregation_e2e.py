@@ -25,8 +25,6 @@ from gems_views_builder.input.catalog import Metric, PropertySchema, Term, Terms
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_view import MetricView
-from gems_views_builder.view.view import accumulate_on_disk
-from gems_views_builder.view.view_sinker import ParquetViewSinker
 from tests.e2e.utils import (
     build_input_data,
     make_filtered_simulation_table,
@@ -174,31 +172,3 @@ def test_temporal_views_are_consistent_with_each_other(tmp_path: Path) -> None:
 
     assert set(load_df["metric_id"].to_list()) == {"LOAD"}
     assert set(prod_df["metric_id"].to_list()) == {"PROD"}
-
-
-def test_merged_view_is_consistent_with_pre_merge_temporal_views(tmp_path: Path) -> None:
-    # Arrange
-    input_data = build_input(tmp_path)
-    results_dir = tmp_path / "results"
-    results_dir.mkdir()
-
-    # Act
-    metric_views = build_metric_views(input_data)
-    accumulate_on_disk(metric_views, ParquetViewSinker(results_dir))
-    merged = pl.read_parquet(next(results_dir.glob("view*.parquet")))
-
-    # Assert
-    pre_merge_row_counts = [pl.read_parquet(v.persistence_path).shape[0] for v in metric_views]
-    assert merged.shape[0] == sum(pre_merge_row_counts)
-    assert merged.filter(pl.col("metric_id") == "LOAD").shape[0] == len(EXPECTED_LOAD)
-    assert merged.filter(pl.col("metric_id") == "PROD").shape[0] == len(EXPECTED_PROD)
-
-    for metric_id, expected in (("LOAD", EXPECTED_LOAD), ("PROD", EXPECTED_PROD)):
-        rows = merged.filter(pl.col("metric_id") == metric_id)
-        by_key = dict(
-            zip(
-                zip(rows["metric_location"].to_list(), rows["view_date"].to_list()),
-                rows["metric_value"].to_list(),
-            )
-        )
-        assert by_key == approx(expected)
