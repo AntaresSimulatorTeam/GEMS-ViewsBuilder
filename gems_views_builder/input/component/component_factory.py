@@ -1,9 +1,11 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from gems_craft.study import Component as GemsPyComponent  # type: ignore
 
@@ -12,9 +14,21 @@ from gems_views_builder.input.component.component import Component
 from gems_views_builder.input.component.connection import ConnectionsThroughPort
 from gems_views_builder.input.component.location import Location
 
+if TYPE_CHECKING:
+    from gems_views_builder.input.input_data import InputData
+
 
 def create_components(gemspy_components: list[GemsPyComponent]) -> list[Component]:
     return [Component(component) for component in gemspy_components]
+
+
+def enrich_components(components: list[Component], input_data: InputData) -> None:
+    """
+    Attach taxonomy categories and port connections to components.
+    """
+    supply_components_with_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
+    component_port_connections = build_component_port_connections(input_data.system.connections)
+    supply_components_with_port_connections(components, component_port_connections)
 
 
 def supply_components_with_taxonomy_categories(

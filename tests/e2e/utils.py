@@ -4,18 +4,14 @@ from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
-from unittest.mock import MagicMock, patch
 
 import polars as pl
 
-from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
-from gems_views_builder.metric_view import MetricView
-from gems_views_builder.view.view_sinker import ViewSinker
 
 
 def make_raw_component(component_id: str, model_id: str, properties: dict[str, str]) -> Any:
@@ -80,30 +76,3 @@ def build_input_data(
         view_config=view_config,
         filtered_st=filtered_st,
     )
-
-
-def run_pipeline(input_data: InputData, input_dir: Path) -> list[MetricView]:
-    """
-    Drive the real ``run_view_building_process``, stubbing only I/O boundaries:
-    - Loader returns the in-memory ``input_data`` (no disk load)
-    - accumulate_on_disk is a no-op that captures the built metric views
-    """
-    captured: list[MetricView] = []
-
-    class DummyLoader:
-        def __init__(self, _input_dir: Path) -> None:
-            pass
-
-        def load(self) -> InputData:
-            return input_data
-
-    def dummy_accumulate(metric_views: list[MetricView], _sinker: ViewSinker) -> None:
-        captured.extend(metric_views)
-
-    with (
-        patch("gems_views_builder.__main__.Loader", DummyLoader),
-        patch("gems_views_builder.__main__.accumulate_on_disk", dummy_accumulate),
-    ):
-        run_view_building_process(input_dir, MagicMock(spec=ViewSinker))
-
-    return captured

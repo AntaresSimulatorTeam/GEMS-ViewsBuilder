@@ -7,7 +7,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.__main__ import run_view_building_process
+from gems_views_builder.__main__ import load_and_validate_input_data, run_view_building_process
 from gems_views_builder.input.view_config import TimeAggregation, load_view_config
 from gems_views_builder.view import ParquetViewSinker
 
@@ -44,7 +44,7 @@ def test_yaml_time_aggregation_drives_full_pipeline(
     results_dir.mkdir()
 
     # Act, run pipeline
-    run_view_building_process(dataset_dir, ParquetViewSinker(results_dir))
+    run_view_building_process(load_and_validate_input_data(dataset_dir), ParquetViewSinker(results_dir))
     result = pl.read_parquet(next(results_dir.glob("view*.parquet")))
     rows = result.filter((pl.col("metric_id") == "PROD") & (pl.col("metric_location") == "busA")).sort("view_date")
 

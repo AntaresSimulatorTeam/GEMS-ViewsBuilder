@@ -17,25 +17,22 @@ from typing import Any
 import polars as pl
 from pytest import approx
 
+from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import Metric, Term, TermsOperator, TimeOperator
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.view_config import TimeAggregation, ViewConfig
-from gems_views_builder.metric_view import MetricView
 from gems_views_builder.view.view import accumulate_on_disk
 from gems_views_builder.view.view_sinker import ParquetViewSinker
 from tests.e2e.utils import (
     build_input_data,
     make_filtered_simulation_table,
     make_raw_component,
-    run_pipeline,
 )
 
 LOCATION_TAXONOMY_CATEGORY = "production"
 MODEL_ID = "bus"
 TAXONOMY_CATEGORY_BY_MODEL = {MODEL_ID: LOCATION_TAXONOMY_CATEGORY}
 
-
-# Four granular timesteps for busA, spread across two calendar days: two per day.
 DAY_1 = datetime(2026, 1, 1)
 DAY_2 = datetime(2026, 1, 2)
 ROWS = [
@@ -45,17 +42,13 @@ ROWS = [
     ("busA", "active_load", 0, datetime(2026, 1, 2, 20, 0), 200.0),
 ]
 
-# LOAD_SUM per day: day1 = 10+20 = 30, day2 = 100+200 = 300.
 EXPECTED_LOAD_SUM_BY_DAY = {DAY_1: 30.0, DAY_2: 300.0}
-# LOAD_AVG per day: day1 = mean(10,20) = 15, day2 = mean(100,200) = 150.
 EXPECTED_LOAD_AVG_BY_DAY = {DAY_1: 15.0, DAY_2: 150.0}
 
 
-def build_pipeline(tmp_path: Path) -> tuple[list[MetricView], ViewConfig]:
+def build_input(tmp_path: Path) -> InputData:
     raw_components: list[Any] = [make_raw_component("busA", "lib." + MODEL_ID, {})]
 
-    # Same term/output for both metrics, only the time_operator differs, isolating the
-    # temporal-aggregation behavior from any spatial/terms concern.
     load_sum_metric = Metric(
         id="LOAD_SUM",
         terms=[Term(taxonomy_category=LOCATION_TAXONOMY_CATEGORY, output_id="active_load", location_port=None)],
@@ -68,27 +61,26 @@ def build_pipeline(tmp_path: Path) -> tuple[list[MetricView], ViewConfig]:
         terms_operator=TermsOperator.SUM,
         time_operator=TimeOperator.AVG,
     )
-    metrics = [load_sum_metric, load_avg_metric]
-
-    filtered_st = make_filtered_simulation_table(ROWS, tmp_path)
 
     view_config = ViewConfig(
         id="view_time",
         input_data_path=tmp_path,
         calendar_id="calendar",
         location_taxonomy_category=LOCATION_TAXONOMY_CATEGORY,
-        catalog_ids=set(),  # keeps validate_catalogs_against_taxonomy disk-free (no catalogs to load)
+        catalog_ids=set(),
         time_aggregation=TimeAggregation.DAY,
         extra_locations=[],
         metric_ids=["catalog.LOAD_SUM", "catalog.LOAD_AVG"],
-        metrics=metrics,
+        metrics=[load_sum_metric, load_avg_metric],
     )
-
-    input_data: InputData = build_input_data(
-        tmp_path, raw_components, [], TAXONOMY_CATEGORY_BY_MODEL, view_config, filtered_st
+    return build_input_data(
+        tmp_path,
+        raw_components,
+        [],
+        TAXONOMY_CATEGORY_BY_MODEL,
+        view_config,
+        make_filtered_simulation_table(ROWS, tmp_path),
     )
-    temporal_views = run_pipeline(input_data, tmp_path)
-    return temporal_views, view_config
 
 
 def values_by_day(path: Path) -> dict[datetime, float]:
@@ -97,12 +89,14 @@ def values_by_day(path: Path) -> dict[datetime, float]:
 
 
 def test_granular_timesteps_are_bucketed_by_calendar_day(tmp_path: Path) -> None:
-    # Arrange / Act
-    temporal_views, _ = build_pipeline(tmp_path)
-    load_sum_view, load_avg_view = temporal_views
+    # Arrange
+    input_data = build_input(tmp_path)
 
-    # Assert: 4 granular rows collapse into exactly 2 day-buckets, not 4 (one per row) or 1
-    # (all merged together) -- each metric gets one row per real day.
+    # Act
+    metric_views = build_metric_views(input_data)
+
+    # Assert
+    load_sum_view, load_avg_view = metric_views
     load_sum_df = pl.read_parquet(load_sum_view.persistence_path)
     load_avg_df = pl.read_parquet(load_avg_view.persistence_path)
     assert load_sum_df.shape[0] == 2
@@ -112,12 +106,14 @@ def test_granular_timesteps_are_bucketed_by_calendar_day(tmp_path: Path) -> None
 
 
 def test_sum_and_avg_time_operators_diverge_on_the_same_granular_data(tmp_path: Path) -> None:
-    # Arrange / Act
-    temporal_views, _ = build_pipeline(tmp_path)
-    load_sum_view, load_avg_view = temporal_views
+    # Arrange
+    input_data = build_input(tmp_path)
 
-    # Assert: LOAD_SUM and LOAD_AVG read the exact same granular rows, but produce
-    # different per-day values -- confirms the time_operator, not the data, drives the split.
+    # Act
+    metric_views = build_metric_views(input_data)
+
+    # Assert
+    load_sum_view, load_avg_view = metric_views
     load_sum_by_day = values_by_day(load_sum_view.persistence_path)
     load_avg_by_day = values_by_day(load_avg_view.persistence_path)
     for day, expected_value in EXPECTED_LOAD_SUM_BY_DAY.items():
@@ -128,16 +124,17 @@ def test_sum_and_avg_time_operators_diverge_on_the_same_granular_data(tmp_path: 
 
 def test_merged_view_is_consistent_with_pre_merge_temporal_views(tmp_path: Path) -> None:
     # Arrange
-    temporal_views, _ = build_pipeline(tmp_path)
+    input_data = build_input(tmp_path)
     results_dir = tmp_path / "results"
     results_dir.mkdir()
 
     # Act
-    accumulate_on_disk(temporal_views, ParquetViewSinker(results_dir))
+    metric_views = build_metric_views(input_data)
+    accumulate_on_disk(metric_views, ParquetViewSinker(results_dir))
     merged = pl.read_parquet(next(results_dir.glob("view*.parquet")))
 
-    # Assert: row count matches the sum of the pre-merge views (2 days x 2 metrics = 4).
-    pre_merge_row_counts = [pl.read_parquet(v.persistence_path).shape[0] for v in temporal_views]
+    # Assert
+    pre_merge_row_counts = [pl.read_parquet(v.persistence_path).shape[0] for v in metric_views]
     assert merged.shape[0] == sum(pre_merge_row_counts) == 4
 
     for metric_id, expected_by_day in (("LOAD_SUM", EXPECTED_LOAD_SUM_BY_DAY), ("LOAD_AVG", EXPECTED_LOAD_AVG_BY_DAY)):

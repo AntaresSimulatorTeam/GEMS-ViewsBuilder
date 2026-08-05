@@ -4,7 +4,7 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from gems_views_builder.input.component import Component
+from gems_views_builder.input.component.component import Component
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.input.system import System

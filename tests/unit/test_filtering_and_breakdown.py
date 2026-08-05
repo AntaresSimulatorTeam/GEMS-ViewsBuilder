@@ -13,7 +13,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.__main__ import run_view_building_process
+from gems_views_builder.__main__ import load_and_validate_input_data, run_view_building_process
 from gems_views_builder.view import ParquetViewSinker
 
 # Generator instances in ``filtering_and_breakdown/system.yml`` (technology, company).
@@ -35,7 +35,7 @@ def filtering_and_breakdown_workspace(test_files_root: Path, tmp_path: Path) -> 
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     shutil.copytree(src, dst)
-    run_view_building_process(dst, ParquetViewSinker(results_dir))
+    run_view_building_process(load_and_validate_input_data(dst), ParquetViewSinker(results_dir))
     view = pl.read_parquet(next(results_dir.glob("view*.parquet")))
     return dst, view
 
