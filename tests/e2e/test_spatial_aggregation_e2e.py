@@ -33,7 +33,6 @@ from tests.e2e.utils import (
     make_raw_connection,
 )
 
-
 TAXONOMY_CATEGORY_BY_MODEL = {"bus": "balance", "load": "load"}
 
 T1 = datetime(2026, 1, 1, 3, 0)
@@ -169,7 +168,6 @@ def test_temporal_views_are_consistent_with_each_other(tmp_path: Path) -> None:
     assert set(load_df["breakdown_properties"].to_list()) == {"{}"}
     assert set(prod_df["breakdown_properties"].to_list()) == {"{}"}
 
-    
     assert shared_locations <= set(load_df["metric_location"].to_list())
     assert shared_locations <= set(prod_df["metric_location"].to_list())
 
