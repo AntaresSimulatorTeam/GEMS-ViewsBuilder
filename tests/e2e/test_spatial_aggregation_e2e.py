@@ -24,6 +24,7 @@ from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import Metric, PropertySchema, Term, TermsOperator, TimeOperator
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.view_config import ViewConfig
+from gems_views_builder.metric_view import MetricView
 from gems_views_builder.view.view import accumulate_on_disk
 from gems_views_builder.view.view_sinker import ParquetViewSinker
 from tests.e2e.utils import (
@@ -94,8 +95,8 @@ def build_input(tmp_path: Path) -> InputData:
     )
 
 
-def values_by_location_and_date(path: Path) -> dict[tuple[str, datetime], float]:
-    df = pl.read_parquet(path)
+def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], float]:
+    df = pl.read_parquet(view.persistence_path)
     return dict(
         zip(
             zip(df["metric_location"].to_list(), df["view_date"].to_list()),
@@ -145,8 +146,8 @@ def test_all_view_config_locations_are_present(tmp_path: Path) -> None:
 
     # Assert
     load_view, prod_view = metric_views
-    assert values_by_location_and_date(load_view.persistence_path) == approx(EXPECTED_LOAD)
-    assert values_by_location_and_date(prod_view.persistence_path) == approx(EXPECTED_PROD)
+    assert extract_values_from_view(load_view) == approx(EXPECTED_LOAD)
+    assert extract_values_from_view(prod_view) == approx(EXPECTED_PROD)
 
 
 def test_temporal_views_are_consistent_with_each_other(tmp_path: Path) -> None:
