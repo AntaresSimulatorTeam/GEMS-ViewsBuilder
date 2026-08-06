@@ -10,18 +10,20 @@ from pathlib import Path
 from typing import Any
 
 import polars as pl
-from pytest import approx
 
 from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import Metric, Term, TermsOperator, TimeOperator
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.view_config import TimeAggregation, ViewConfig
+from gems_views_builder.metric_view import MetricView
 from gems_views_builder.view.view import accumulate_on_disk
 from gems_views_builder.view.view_sinker import ParquetViewSinker
 from tests.e2e.utils import (
     build_input_data,
+    fetch_view,
     make_filtered_simulation_table,
     make_raw_component,
+    make_results_dir,
 )
 
 LOCATION_TAXONOMY_CATEGORY = "production"
@@ -83,24 +85,29 @@ def values_by_day(path: Path) -> dict[datetime, float]:
     return dict(zip(df["view_date"].to_list(), df["metric_value"].to_list()))
 
 
+def pre_merge_row_count(metric_views: list[MetricView]) -> int:
+    return sum(pl.read_parquet(v.persistence_path).shape[0] for v in metric_views)
+
+
+def get_metric_values_by_day(view: pl.DataFrame, metric_id: str) -> dict[datetime, float]:
+    rows = view.filter(pl.col("metric_id") == metric_id)
+    return dict(zip(rows["view_date"].to_list(), rows["metric_value"].to_list()))
+
+
 def test_merged_view_is_consistent_with_pre_merge_temporal_views(tmp_path: Path) -> None:
     # Arrange
     input_data = build_input(tmp_path)
-    results_dir = tmp_path / "results"
-    results_dir.mkdir()
+    results_dir = make_results_dir(tmp_path)
 
     # Act
     metric_views = build_metric_views(input_data)
     accumulate_on_disk(metric_views, ParquetViewSinker(results_dir))
-    merged = pl.read_parquet(next(results_dir.glob("view*.parquet")))
 
     # Assert
-    pre_merge_row_counts = [pl.read_parquet(v.persistence_path).shape[0] for v in metric_views]
-    assert merged.shape[0] == sum(pre_merge_row_counts) == 4
+    view = fetch_view(results_dir)
+    assert view.shape[0] == pre_merge_row_count(metric_views) == 4
 
     for metric_id, expected_by_day in (("LOAD_SUM", EXPECTED_LOAD_SUM_BY_DAY), ("LOAD_AVG", EXPECTED_LOAD_AVG_BY_DAY)):
-        rows = merged.filter(pl.col("metric_id") == metric_id)
-        by_day = dict(zip(rows["view_date"].to_list(), rows["metric_value"].to_list()))
-        assert set(by_day) == set(expected_by_day)
+        by_day = get_metric_values_by_day(view, metric_id)
         for day, expected_value in expected_by_day.items():
-            assert by_day[day] == approx(expected_value)
+            assert by_day[day] == expected_value

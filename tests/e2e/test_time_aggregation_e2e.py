@@ -10,6 +10,7 @@ import pytest
 from gems_views_builder.__main__ import load_and_validate_input_data, run_view_building_process
 from gems_views_builder.input.view_config import TimeAggregation, load_view_config
 from gems_views_builder.view import ParquetViewSinker
+from tests.e2e.utils import fetch_view, make_results_dir
 
 AGGREGATION_BLOCK = "  aggregation:\n    time: hour\n    scenario: false\n"
 
@@ -34,10 +35,6 @@ def replace_aggregation(view_config_path: Path, aggregation_time: TimeAggregatio
     view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
 
 
-def fetch_view(results_dir: Path) -> pl.DataFrame:
-    return pl.read_parquet(next(results_dir.glob("view*.parquet")))
-
-
 def extract_filtered_rows_from_view(view: pl.DataFrame) -> list[datetime]:
     rows = view.filter((pl.col("metric_id") == "PROD") & (pl.col("metric_location") == "busA")).sort("view_date")
     return rows["view_date"].to_list()
@@ -51,8 +48,7 @@ def test_yaml_time_aggregation_drives_full_pipeline(
     dataset_dir = tmp_path / "test_3"
     shutil.copytree(test_files_root / "test_3", dataset_dir)
     replace_aggregation(dataset_dir / "view_config.yml", aggregation_time)
-    results_dir = tmp_path / "results"
-    results_dir.mkdir()
+    results_dir = make_results_dir(tmp_path)
 
     # Act
     run_view_building_process(load_and_validate_input_data(dataset_dir), ParquetViewSinker(results_dir))

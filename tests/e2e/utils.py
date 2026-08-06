@@ -14,6 +14,16 @@ from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
 
 
+def make_results_dir(tmp_path: Path) -> Path:
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
+    return results_dir
+
+
+def fetch_view(results_dir: Path) -> pl.DataFrame:
+    return pl.read_parquet(next(results_dir.glob("view*.parquet")))
+
+
 def make_raw_component(component_id: str, model_id: str, properties: dict[str, str]) -> Any:
     return SimpleNamespace(id=component_id, model=SimpleNamespace(id=model_id), properties=properties)
 
