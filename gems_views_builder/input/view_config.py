@@ -123,7 +123,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         time_aggregation=raw_view_config.aggregation.time,
         scenario_aggregation=raw_view_config.aggregation.scenario,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
-        extra_locations=[property.id for property in extra_locations],
+        extra_locations=[loc.id for loc in (raw_view_config.aggregation.extra_locations or [])],
     )
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "

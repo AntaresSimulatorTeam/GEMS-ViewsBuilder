@@ -26,30 +26,41 @@ EXPECTED_DATES_BY_AGGREGATION = {
 }
 
 
+def replace_aggregation(view_config_path: Path, aggregation_time: TimeAggregation) -> None:
+    text = view_config_path.read_text()
+    replacement = f"  aggregation:\n    time: {aggregation_time.value}\n    scenario: false\n"
+    if AGGREGATION_BLOCK not in text:
+        raise AssertionError(f"Expected aggregation block not found in {view_config_path}")
+    view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
+
+
+def fetch_view(results_dir: Path) -> pl.DataFrame:
+    return pl.read_parquet(next(results_dir.glob("view*.parquet")))
+
+
+def extract_filtered_rows_from_view(view: pl.DataFrame) -> list[datetime]:
+    rows = view.filter((pl.col("metric_id") == "PROD") & (pl.col("metric_location") == "busA")).sort("view_date")
+    return rows["view_date"].to_list()
+
+
 @pytest.mark.parametrize("aggregation_time", list(TimeAggregation))
 def test_yaml_time_aggregation_drives_full_pipeline(
     test_files_root: Path, tmp_path: Path, aggregation_time: TimeAggregation
 ) -> None:
-    # Arrange, copy test_3 fixture and set aggregation to value under test
+    # Arrange
     dataset_dir = tmp_path / "test_3"
     shutil.copytree(test_files_root / "test_3", dataset_dir)
-    config_path = dataset_dir / "view_config.yml"
-    config_path.write_text(
-        config_path.read_text().replace(
-            AGGREGATION_BLOCK,
-            f"  aggregation:\n    time: {aggregation_time.value}\n    scenario: false\n",
-        )
-    )
+    replace_aggregation(dataset_dir / "view_config.yml", aggregation_time)
     results_dir = tmp_path / "results"
     results_dir.mkdir()
 
-    # Act, run pipeline
+    # Act
     run_view_building_process(load_and_validate_input_data(dataset_dir), ParquetViewSinker(results_dir))
-    result = pl.read_parquet(next(results_dir.glob("view*.parquet")))
-    rows = result.filter((pl.col("metric_id") == "PROD") & (pl.col("metric_location") == "busA")).sort("view_date")
 
-    # Assert, check expected result
-    assert rows["view_date"].to_list() == EXPECTED_DATES_BY_AGGREGATION[aggregation_time]
+    # Assert
+    view = fetch_view(results_dir)
+    dates = extract_filtered_rows_from_view(view)
+    assert dates == EXPECTED_DATES_BY_AGGREGATION[aggregation_time]
 
 
 def test_yaml_missing_aggregation_key_fails_to_parse(test_files_root: Path, tmp_path: Path) -> None:
