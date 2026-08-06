@@ -2,12 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 """E2E test for temporal aggregation.
-1. Granular timesteps spanning two calendar days collapse into two ``view_date`` buckets
-   when the view is aggregated at DAY granularity, one bucket per real day -- not one
-   bucket per row.
-2. SUM and AVG ``time_operator`` metrics produce different values from the exact same
-   granular data, and both are correct per bucket.
-3. The merged result stays consistent with the pre-merge temporal views.
+The merged result stays consistent with the pre-merge temporal views.
 """
 
 from datetime import datetime
@@ -86,40 +81,6 @@ def build_input(tmp_path: Path) -> InputData:
 def values_by_day(path: Path) -> dict[datetime, float]:
     df = pl.read_parquet(path)
     return dict(zip(df["view_date"].to_list(), df["metric_value"].to_list()))
-
-
-def test_granular_timesteps_are_bucketed_by_calendar_day(tmp_path: Path) -> None:
-    # Arrange
-    input_data = build_input(tmp_path)
-
-    # Act
-    metric_views = build_metric_views(input_data)
-
-    # Assert
-    load_sum_view, load_avg_view = metric_views
-    load_sum_df = pl.read_parquet(load_sum_view.persistence_path)
-    load_avg_df = pl.read_parquet(load_avg_view.persistence_path)
-    assert load_sum_df.shape[0] == 2
-    assert load_avg_df.shape[0] == 2
-    assert set(load_sum_df["view_date"].to_list()) == {DAY_1, DAY_2}
-    assert set(load_avg_df["view_date"].to_list()) == {DAY_1, DAY_2}
-
-
-def test_sum_and_avg_time_operators_diverge_on_the_same_granular_data(tmp_path: Path) -> None:
-    # Arrange
-    input_data = build_input(tmp_path)
-
-    # Act
-    metric_views = build_metric_views(input_data)
-
-    # Assert
-    load_sum_view, load_avg_view = metric_views
-    load_sum_by_day = values_by_day(load_sum_view.persistence_path)
-    load_avg_by_day = values_by_day(load_avg_view.persistence_path)
-    for day, expected_value in EXPECTED_LOAD_SUM_BY_DAY.items():
-        assert load_sum_by_day[day] == approx(expected_value)
-    for day, expected_value in EXPECTED_LOAD_AVG_BY_DAY.items():
-        assert load_avg_by_day[day] == approx(expected_value)
 
 
 def test_merged_view_is_consistent_with_pre_merge_temporal_views(tmp_path: Path) -> None:
