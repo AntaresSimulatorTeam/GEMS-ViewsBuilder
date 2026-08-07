@@ -19,11 +19,7 @@ class MetricStructureTableBuilder:
         logging.debug(f"[{metric.id}] Building metric structure table ({len(metric.terms)} term(s))")
         rows: list[dict[str, object]] = []
         for term in metric.terms:
-            logging.debug(
-                f"[{metric.id}] Processing term for taxonomy category {term.taxonomy_category!r} "
-                f"and output {term.output_id!r}"
-            )
-
+            log_term_processing(metric, term)
             for c in self.components_by_taxon[term.taxonomy_category]:
                 if c.match(metric.filter) and c.is_located_at(
                     term.location_port, self.view_config.location_taxonomy_category
@@ -35,6 +31,12 @@ class MetricStructureTableBuilder:
                     breakdown_prop = c.format_breakdown_properties(metric.breakdown)
                     rows.extend(make_row(metric, term, c, location, breakdown_prop) for location in locations)
         return MetricStructureTable(rows, metric.id)
+
+
+def log_term_processing(metric: Metric, term: Term) -> None:
+    logging.debug(
+        f"[{metric.id}] Processing term for taxonomy category {term.taxonomy_category!r} and output {term.output_id!r}"
+    )
 
 
 def make_row(metric: Metric, term: Term, c: Component, location: str, breakdown_prop: str) -> dict[str, object]:
