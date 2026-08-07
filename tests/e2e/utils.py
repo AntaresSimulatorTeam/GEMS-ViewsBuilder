@@ -7,9 +7,11 @@ from typing import Any
 
 import polars as pl
 
-from gems_views_builder.input.input_data import InputData
+from gems_views_builder.input.calendar import Calendar
+from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.library import Library
-from gems_views_builder.input.simulation_table import FilteredSimulationTable
+from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.simulation_table import SimulationTable
 from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
 
@@ -24,6 +26,10 @@ def fetch_view(results_dir: Path) -> pl.DataFrame:
     return pl.read_parquet(next(results_dir.glob("view*.parquet")))
 
 
+def values_by_day(df: pl.DataFrame) -> dict[datetime, float]:
+    return dict(zip(df["view_date"].to_list(), df["metric_value"].to_list()))
+
+
 def make_raw_component(component_id: str, model_id: str, properties: dict[str, str]) -> Any:
     return SimpleNamespace(id=component_id, model=SimpleNamespace(id=model_id), properties=properties)
 
@@ -32,45 +38,56 @@ def make_raw_connection(component1: str, port1: str, component2: str, port2: str
     return SimpleNamespace(component1=component1, port1=port1, component2=component2, port2=port2)
 
 
-def make_filtered_simulation_table(
+def make_simulation_table_and_calendar(
     rows: list[tuple[str, str, int, datetime, float]], tmp_path: Path
-) -> FilteredSimulationTable:
-    """Build a FilteredSimulationTable directly, bypassing calendar filtering (out of scope here)."""
+) -> tuple[SimulationTable, Calendar]:
+    """Build a raw SimulationTable and matching Calendar for e2e arrange steps."""
     n = len(rows)
-    dataframe = pl.DataFrame(
-        {
-            "block": ["b1"] * n,
-            "component": [r[0] for r in rows],
-            "output": [r[1] for r in rows],
-            "absolute_time_index": list(range(1, n + 1)),
-            "block_time_index": list(range(1, n + 1)),
-            "scenario_index": [r[2] for r in rows],
-            "value": [r[4] for r in rows],
-            "basis_status": ["ok"] * n,
-            "granular_date": [r[3] for r in rows],
-        },
-        schema_overrides={"granular_date": pl.Datetime},
+    absolute_time_index = list(range(1, n + 1))
+    block = ["b1"] * n
+    simulation_table = SimulationTable(
+        pl.DataFrame(
+            {
+                "block": block,
+                "component": [r[0] for r in rows],
+                "output": [r[1] for r in rows],
+                "absolute_time_index": absolute_time_index,
+                "block_time_index": absolute_time_index,
+                "scenario_index": [r[2] for r in rows],
+                "value": [r[4] for r in rows],
+                "basis_status": ["ok"] * n,
+            }
+        ).lazy()
     )
-    sim_table_dir = tmp_path / "filtered_simulation_table"
-    sim_table_dir.mkdir()
-    path = sim_table_dir / "filtered.parquet"
-    dataframe.write_parquet(path)
-    return FilteredSimulationTable(path, pl.scan_parquet(path))
+    calendar = Calendar(
+        id="calendar",
+        dataframe=pl.DataFrame(
+            {
+                "absolute_time_index": absolute_time_index,
+                "block": block,
+                "granular_date": [r[3] for r in rows],
+            },
+            schema_overrides={"granular_date": pl.Datetime},
+        ).lazy(),
+    )
+    return simulation_table, calendar
 
 
-def build_input_data(
+def build_raw_input_data(
     input_dir: Path,
     system: Any,
     taxonomy_category_by_model: dict[str, str],
     view_config: ViewConfig,
-    filtered_st: FilteredSimulationTable,
-) -> InputData:
+    simulation_table: SimulationTable,
+    calendar: Calendar,
+    catalogs: dict[str, Catalog] | None = None,
+) -> RawInputData:
     """
-    Build a real InputData, skipping only the disk-reading Loader.load() step:
+    Build a real RawInputData, skipping only the disk-reading Loader.load() step:
     system/library/taxonomy are minimal but real objects, populated with just
     enough to drive the pipeline steps under test.
     """
-    return InputData(
+    return RawInputData(
         input_data_path=input_dir,
         taxonomy=Taxonomy(id="taxonomy"),
         library=Library(
@@ -83,5 +100,7 @@ def build_input_data(
         ),
         system=system,
         view_config=view_config,
-        filtered_st=filtered_st,
+        simulation_table=simulation_table,
+        calendar=calendar,
+        catalogs=catalogs or {},
     )

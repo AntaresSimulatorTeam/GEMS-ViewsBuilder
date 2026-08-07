@@ -3,9 +3,11 @@
 
 from pathlib import Path
 
-from gems_views_builder.input.input_data import InputData
+from gems_views_builder.input.calendar import Calendar
+from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.library import Library
-from gems_views_builder.input.simulation_table import FilteredSimulationTable
+from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.simulation_table import SimulationTable
 from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
@@ -21,26 +23,34 @@ def test_loader_init_has_no_io() -> None:
     assert loader.input_data_path == missing
 
 
-def test_loader_load_populates_input_data(test_dataset_dir: Path) -> None:
-    input_data = Loader(test_dataset_dir).load()
+def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
+    raw_input_data = Loader(test_dataset_dir).load()
 
-    assert isinstance(input_data, InputData)
-    assert input_data.input_data_path == test_dataset_dir
-    assert isinstance(input_data.taxonomy, Taxonomy)
-    assert isinstance(input_data.view_config, ViewConfig)
-    assert isinstance(input_data.library, Library)
-    assert isinstance(input_data.system, System)
-    assert isinstance(input_data.filtered_st, FilteredSimulationTable)
+    assert isinstance(raw_input_data, RawInputData)
+    assert raw_input_data.input_data_path == test_dataset_dir
+    assert isinstance(raw_input_data.taxonomy, Taxonomy)
+    assert isinstance(raw_input_data.view_config, ViewConfig)
+    assert isinstance(raw_input_data.library, Library)
+    assert isinstance(raw_input_data.system, System)
+    assert isinstance(raw_input_data.simulation_table, SimulationTable)
+    assert isinstance(raw_input_data.calendar, Calendar)
+    assert raw_input_data.catalogs
+    assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs.values())
+    assert raw_input_data.view_config.metrics == []
 
 
-def test_loader_classmethod_load_populates_input_data(test_dataset_dir: Path) -> None:
+def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
     loader = Loader(test_dataset_dir)
-    input_data = loader.load()
+    raw_input_data = loader.load()
 
-    assert isinstance(input_data, InputData)
-    assert input_data.input_data_path == test_dataset_dir
-    assert isinstance(input_data.taxonomy, Taxonomy)
-    assert isinstance(input_data.view_config, ViewConfig)
-    assert isinstance(input_data.library, Library)
-    assert isinstance(input_data.system, System)
-    assert isinstance(input_data.filtered_st, FilteredSimulationTable)
+    assert isinstance(raw_input_data, RawInputData)
+    assert raw_input_data.input_data_path == test_dataset_dir
+    assert isinstance(raw_input_data.taxonomy, Taxonomy)
+    assert isinstance(raw_input_data.view_config, ViewConfig)
+    assert isinstance(raw_input_data.library, Library)
+    assert isinstance(raw_input_data.system, System)
+    assert isinstance(raw_input_data.simulation_table, SimulationTable)
+    assert isinstance(raw_input_data.calendar, Calendar)
+    assert raw_input_data.catalogs
+    assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs.values())
+    assert raw_input_data.view_config.metrics == []
