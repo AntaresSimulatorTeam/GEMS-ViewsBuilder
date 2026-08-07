@@ -23,11 +23,8 @@ class Component:
     taxonomy_category: str | None = None
     # Connections holding the peer components connected on each port
     connections: ConnectionsThroughPort = field(default_factory=ConnectionsThroughPort)
-    # (location_port, taxonomy_category) -> resolved location component.
-    # Populated by ``supply_components_with_locations``:
-    # - location_port set: unique peer on that port for the peer's taxonomy category;
-    # - location_port None: the component itself for the view's location taxonomy category.
-    # Absence of a key means no location can be determined for that (port, category).
+    # Where this component is located for a given (location_port, taxonomy_category).
+    # Missing key: no location for that port/category.
     locations: dict[tuple[str | None, str], "Component"] = field(default_factory=dict)
 
     @property
