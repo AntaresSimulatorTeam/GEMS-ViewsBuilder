@@ -6,7 +6,6 @@ from types import SimpleNamespace
 
 from gems_views_builder.input.catalog import Metric, Term, TermsOperator, TimeOperator
 from gems_views_builder.input.component import Component
-from gems_views_builder.input.component.location import Location
 from gems_views_builder.input.view_config import ViewConfig, load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
@@ -31,7 +30,7 @@ def metric() -> Metric:
 
 
 def located_at(component: Component, location: Component, location_category: str = "balance") -> Component:
-    component.locations[(None, location_category)] = Location(id=location.id, properties=location.properties)
+    component.locations[(None, location_category)] = location
     return component
 
 

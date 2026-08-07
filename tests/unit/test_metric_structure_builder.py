@@ -152,10 +152,8 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
         comp_rows = df.filter(pl.col("component") == comp)
         if len(comp_rows) == 0:
             continue
-        resolved = components_by_id[comp].resolve_location(
-            "p_balance_port", test_3_components["location_taxonomy_category"], []
-        )
-        assert comp_rows["metric_location"].to_list() == resolved
+        location = components_by_id[comp].location("p_balance_port", test_3_components["location_taxonomy_category"])
+        assert comp_rows["metric_location"].to_list() == [location.id]
 
 
 def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
@@ -277,18 +275,16 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity() -> None:
         supply_components_with_locations(components_by_taxon, [metric], "cat")
 
 
-def test_resolve_location_returns_peer(test_3_components: dict[str, Any]) -> None:
-    """A location_port resolves to its connected peer."""
+def test_location_returns_peer_component(test_3_components: dict[str, Any]) -> None:
+    """A location_port resolves to its connected peer component."""
     # Arrange
     components_by_id = test_3_components["components_by_id"]
 
     # Act
-    location = components_by_id["link_link_AB"].resolve_location(
-        "p0_port", test_3_components["location_taxonomy_category"], []
-    )
+    location = components_by_id["link_link_AB"].location("p0_port", test_3_components["location_taxonomy_category"])
 
     # Assert
-    assert location == ["busA"]
+    assert location.id == "busA"
 
 
 def test_none_location_port_resolves_to_the_component_itself(test_3_components: dict[str, Any]) -> None:

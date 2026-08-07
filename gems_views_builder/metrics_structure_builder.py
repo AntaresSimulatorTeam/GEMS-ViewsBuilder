@@ -4,7 +4,7 @@
 import logging
 from dataclasses import dataclass
 
-from gems_views_builder.input.catalog import Metric
+from gems_views_builder.input.catalog import Metric, Term
 from gems_views_builder.input.component import Component
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_structure_table import MetricStructureTable
@@ -28,21 +28,21 @@ class MetricStructureTableBuilder:
                 if c.match(metric.filter) and c.is_located_at(
                     term.location_port, self.view_config.location_taxonomy_category
                 ):
-                    locations = c.resolve_location(
-                        term.location_port,
-                        self.view_config.location_taxonomy_category,
-                        self.view_config.extra_locations,
+                    location_component = c.location(term.location_port, self.view_config.location_taxonomy_category)
+                    locations = [location_component.id] + location_component.match_extra_locations(
+                        self.view_config.extra_locations
                     )
-                    breakdown_properties = c.format_breakdown_properties(metric.breakdown)
-                    for location in locations:
-                        rows.append(
-                            {
-                                "metric_id": metric.id,
-                                "component": c.id,
-                                "metric_location": location,
-                                "breakdown_properties": breakdown_properties,
-                                "output": term.output_id,
-                                "weight_output_id": 1,
-                            }
-                        )
+                    breakdown = c.format_breakdown_properties(metric.breakdown)
+                    rows.extend(make_row(metric, term, c, location, breakdown) for location in locations)
         return MetricStructureTable(rows, metric.id)
+
+
+def make_row(metric: Metric, term: Term, c: Component, location: str, breakdown_properties: str) -> dict[str, object]:
+    return {
+        "metric_id": metric.id,
+        "component": c.id,
+        "metric_location": location,
+        "breakdown_properties": breakdown_properties,
+        "output": term.output_id,
+        "weight_output_id": 1,
+    }
