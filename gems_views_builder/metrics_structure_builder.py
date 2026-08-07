@@ -32,17 +32,17 @@ class MetricStructureTableBuilder:
                     locations = [location_component.id] + location_component.match_extra_locations(
                         self.view_config.extra_locations
                     )
-                    breakdown = c.format_breakdown_properties(metric.breakdown)
-                    rows.extend(make_row(metric, term, c, location, breakdown) for location in locations)
+                    breakdown_prop = c.format_breakdown_properties(metric.breakdown)
+                    rows.extend(make_row(metric, term, c, location, breakdown_prop) for location in locations)
         return MetricStructureTable(rows, metric.id)
 
 
-def make_row(metric: Metric, term: Term, c: Component, location: str, breakdown_properties: str) -> dict[str, object]:
+def make_row(metric: Metric, term: Term, c: Component, location: str, breakdown_prop: str) -> dict[str, object]:
     return {
         "metric_id": metric.id,
         "component": c.id,
         "metric_location": location,
-        "breakdown_properties": breakdown_properties,
+        "breakdown_properties": breakdown_prop,
         "output": term.output_id,
         "weight_output_id": 1,
     }
