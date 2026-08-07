@@ -10,7 +10,7 @@ from gems_views_builder.input.view_config import ViewConfig, load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
-def component(component_id: str, properties: dict[str, str] | None = None) -> Component:
+def make_component(component_id: str, properties: dict[str, str] | None = None) -> Component:
     return Component(
         SimpleNamespace(
             id=component_id,
@@ -20,7 +20,7 @@ def component(component_id: str, properties: dict[str, str] | None = None) -> Co
     )
 
 
-def metric() -> Metric:
+def make_metric() -> Metric:
     return Metric(
         id="LOAD",
         terms_operator=TermsOperator.SUM,
@@ -29,12 +29,7 @@ def metric() -> Metric:
     )
 
 
-def located_at(component: Component, location: Component, location_category: str = "balance") -> Component:
-    component.locations[(None, location_category)] = location
-    return component
-
-
-def view_config(extra_locations: list[str] | None = None) -> ViewConfig:
+def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
     return ViewConfig(
         id="view_area",
         input_data_path=Path("."),
@@ -100,78 +95,77 @@ view:
     assert config.extra_locations == []
 
 
-def test_extra_location_emits_country_district_and_city_part() -> None:
+def test_located_component_emits_primary_and_extra_locations() -> None:
     # Arrange
-    paris = component(
-        "paris",
-        properties={
-            "country": "France",
-            "district": "IleDeFrance",
-            "city_part": "Downtown",
-        },
-    )
-    gen_paris = located_at(component("gen_paris"), paris)
-    components_by_taxon = {"balance": [paris], "production": [gen_paris]}
-    builder = MetricStructureTableBuilder(
-        view_config(["country", "district", "city_part"]),
-        components_by_taxon,
-    )
+    # Balance node: this component is the location for the other component
+    location_properties = {"country": "France", "district": "IleDeFrance", "city_part": "Downtown"}
+    balance_node = make_component("balance-node", properties=location_properties)
+
+    # Other component
+    production = make_component("some-prod")
+    production.locations[(None, "balance")] = balance_node
+
+    components_by_taxon = {"balance": [balance_node], "production": [production]}
+    view_config = make_view_config(["country", "district", "city_part"])
+    builder = MetricStructureTableBuilder(view_config, components_by_taxon)
 
     # Act
-    table = builder.build(metric())
+    table = builder.build(make_metric())
     rows = table.dataframe.collect()
 
     # Assert
-    assert rows["component"].to_list() == ["gen_paris", "gen_paris", "gen_paris", "gen_paris"]
-    assert rows["metric_location"].to_list() == ["paris", "France", "IleDeFrance", "Downtown"]
+    assert rows["component"].to_list() == ["some-prod", "some-prod", "some-prod", "some-prod"]
+    assert rows["metric_location"].to_list() == ["balance-node", "France", "IleDeFrance", "Downtown"]
 
 
-def test_extra_location_keeps_primary_when_extra_locations_absent() -> None:
+def test_no_extra_locations_keeps_primary_only() -> None:
     # Arrange
-    paris = component("paris", properties={"country": "France"})
-    gen_paris = located_at(component("gen_paris"), paris)
-    components_by_taxon = {"balance": [paris], "production": [gen_paris]}
-    builder = MetricStructureTableBuilder(view_config(), components_by_taxon)
+    balance_node = make_component("balance-node", properties={"country": "France"})
+    production = make_component("some-prod")
+    production.locations[(None, "balance")] = balance_node
+
+    components_by_taxon = {"balance": [balance_node], "production": [production]}
+    builder = MetricStructureTableBuilder(make_view_config(), components_by_taxon)
 
     # Act
-    table = builder.build(metric())
+    table = builder.build(make_metric())
     locations = table.dataframe.collect()["metric_location"].to_list()
 
     # Assert
-    assert locations == ["paris"]
+    assert locations == ["balance-node"]
 
 
-def test_extra_location_keeps_primary_when_properties_missing() -> None:
+def test_missing_extra_properties_keeps_primary_only() -> None:
     # Arrange
-    paris = component("paris", properties={})
-    gen_paris = located_at(component("gen_paris"), paris)
-    components_by_taxon = {"balance": [paris], "production": [gen_paris]}
-    builder = MetricStructureTableBuilder(
-        view_config(["country", "district", "city_part"]),
-        components_by_taxon,
-    )
+    balance_node = make_component("balance-node", properties={})
+    production = make_component("some-prod")
+    production.locations[(None, "balance")] = balance_node
+
+    components_by_taxon = {"balance": [balance_node], "production": [production]}
+    view_config = make_view_config(["country", "district", "city_part"])
+    builder = MetricStructureTableBuilder(view_config, components_by_taxon)
 
     # Act
-    table = builder.build(metric())
+    table = builder.build(make_metric())
     locations = table.dataframe.collect()["metric_location"].to_list()
 
     # Assert
-    assert locations == ["paris"]
+    assert locations == ["balance-node"]
 
 
-def test_extra_location_uses_only_present_properties() -> None:
+def test_partial_extra_locations_emits_only_present_ones() -> None:
     # Arrange
-    paris = component("paris", properties={"country": "France", "district": "La Defense"})
-    gen_paris = located_at(component("gen_paris"), paris)
-    components_by_taxon = {"balance": [paris], "production": [gen_paris]}
-    builder = MetricStructureTableBuilder(
-        view_config(["country", "district", "city_part"]),
-        components_by_taxon,
-    )
+    balance_node = make_component("balance-node", properties={"country": "France", "district": "La Defense"})
+    production = make_component("some-prod")
+    production.locations[(None, "balance")] = balance_node
+
+    components_by_taxon = {"balance": [balance_node], "production": [production]}
+    view_config = make_view_config(["country", "district", "city_part"])
+    builder = MetricStructureTableBuilder(view_config, components_by_taxon)
 
     # Act
-    table = builder.build(metric())
+    table = builder.build(make_metric())
     locations = table.dataframe.collect()["metric_location"].to_list()
 
     # Assert
-    assert locations == ["paris", "France", "La Defense"]
+    assert locations == ["balance-node", "France", "La Defense"]
