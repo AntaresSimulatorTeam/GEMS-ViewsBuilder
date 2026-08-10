@@ -1,14 +1,5 @@
-# Copyright (c) 2026, RTE (https://www.rte-france.com)
-#
-# See AUTHORS.txt
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-#
-# This file is part of the Antares project.
 
 from datetime import datetime
 from pathlib import Path
@@ -18,7 +9,7 @@ from statistics import pstdev as std_deviation
 import polars as pl
 from pytest import approx
 
-from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator
+from gems_views_builder.aggregators.scenario_aggregator import make_scenario_operator, to_scenario_view
 from gems_views_builder.metric_view import MetricView
 
 
@@ -53,10 +44,10 @@ def test_scenario_aggregation_false_preserves_rows_and_adds_columns(tmp_path: Pa
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
     original_path = metric_view.persistence_path
-    aggregator = ScenarioAggregator(False)
+    operator = make_scenario_operator(False)
 
     # Act
-    aggregator.run(metric_view)
+    to_scenario_view(metric_view, operator)
 
     # Assert
     df = pl.read_parquet(metric_view.persistence_path).sort("scenario_id")
@@ -75,10 +66,10 @@ def test_scenario_aggregation_true_emits_exp_std_min_max(tmp_path: Path) -> None
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
     original_path = metric_view.persistence_path
-    aggregator = ScenarioAggregator(True)
+    operator = make_scenario_operator(True)
 
     # Act
-    aggregator.run(metric_view)
+    to_scenario_view(metric_view, operator)
 
     # Assert
     df = pl.read_parquet(metric_view.persistence_path)
