@@ -30,8 +30,8 @@ class Scope(ViewBuilderBasedModel):
 
 
 class Aggregation(ViewBuilderBasedModel):
-    time: TimeAggregation | None = None
-    scenario: bool | None = None
+    time: TimeAggregation
+    scenario: bool
 
 
 class CatalogId(ViewBuilderBasedModel):
@@ -56,9 +56,9 @@ class ViewConfig:
     input_data_path: Path
     calendar_id: str
     location_taxonomy_category: str
+    time_aggregation: TimeAggregation
+    scenario_aggregation: bool
     catalog_ids: set[str] = field(default_factory=set)
-    time_aggregation: TimeAggregation | None = None
-    scenario_aggregation: bool = False
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
@@ -115,7 +115,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         location_taxonomy_category=location_taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalog},
         time_aggregation=raw_view_config.aggregation.time,
-        scenario_aggregation=bool(raw_view_config.aggregation.scenario),
+        scenario_aggregation=raw_view_config.aggregation.scenario,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
     )
     logging.info(

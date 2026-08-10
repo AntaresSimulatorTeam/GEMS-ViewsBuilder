@@ -25,7 +25,7 @@ TRUNCATE_WINDOWS: dict[TimeAggregation, str] = {
 
 
 class TimeAggregator:
-    def __init__(self, time_aggregation: TimeAggregation | None) -> None:
+    def __init__(self, time_aggregation: TimeAggregation) -> None:
         self._time_aggregation = time_aggregation
         self._root_dir = Path(tempfile.mkdtemp())
         self._temporal_aggregation_dir = self._root_dir / "views" / "temporal_aggregation"
@@ -87,10 +87,8 @@ class TimeAggregator:
         return MetricView(out_path)
 
 
-def granular_date_expression(time_aggregation: TimeAggregation | None) -> pl.Expr:
-    if time_aggregation:
-        return pl.col("granular_date").dt.truncate(TRUNCATE_WINDOWS[time_aggregation]).alias("view_date")
-    return pl.col("granular_date").alias("view_date")
+def granular_date_expression(time_aggregation: TimeAggregation) -> pl.Expr:
+    return pl.col("granular_date").dt.truncate(TRUNCATE_WINDOWS[time_aggregation]).alias("view_date")
 
 
 def time_aggregation_expression(time_operator: TimeOperator) -> pl.Expr:

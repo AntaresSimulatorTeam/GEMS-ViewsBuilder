@@ -19,7 +19,7 @@ from gems_views_builder.input.view_config import TimeAggregation
 from gems_views_builder.metric_view import MetricView
 
 
-def apply_date_expr(date: datetime, aggregation: TimeAggregation | None) -> datetime:
+def apply_date_expr(date: datetime, aggregation: TimeAggregation) -> datetime:
     df = pl.DataFrame({"granular_date": [date]}, schema={"granular_date": pl.Datetime})
     return cast(datetime, df.select(granular_date_expression(aggregation)).item())
 
@@ -60,11 +60,10 @@ def make_metric(time_operator: TimeOperator) -> Metric:
         (TimeAggregation.DAY, datetime(2026, 1, 1, 20, 0), datetime(2026, 1, 1, 0, 0)),
         (TimeAggregation.MONTH, datetime(2026, 1, 15, 10, 0), datetime(2026, 1, 1, 0, 0)),
         (TimeAggregation.YEAR, datetime(2026, 3, 15, 10, 0), datetime(2026, 1, 1, 0, 0)),
-        (None, datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 3, 0)),
     ],
 )
 def test_granular_date_expression(
-    aggregation: TimeAggregation | None,
+    aggregation: TimeAggregation,
     input_date: datetime,
     expected_date: datetime,
 ) -> None:
@@ -98,22 +97,6 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
     assert df["view_date"][0] == datetime(2026, 1, 1, 0, 0)
     assert df["metric_value"][0] == approx(30.0)
     assert df["metric_value"].dtype == pl.Float64
-
-
-def test_no_truncation_keeps_granular_dates(tmp_path: Path) -> None:
-    # Arrange
-    aggregator = TimeAggregator(None)
-    rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]
-    metric_view = make_metric_view(rows, tmp_path)
-    metric = make_metric(TimeOperator.SUM)
-
-    # Act
-    out_metric_view = aggregator.run(metric_view, metric)
-
-    # Assert
-    df = pl.read_parquet(out_metric_view.persistence_path).sort("view_date")
-    assert df["view_date"].to_list() == [datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 20, 0)]
-    assert df["metric_value"].to_list() == [approx(10.0), approx(20.0)]
 
 
 def test_temporal_aggregation_avg(tmp_path: Path) -> None:

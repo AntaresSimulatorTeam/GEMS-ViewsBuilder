@@ -11,7 +11,7 @@ from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.input.view_config import TimeAggregation, load_view_config
 from gems_views_builder.view import ParquetViewSinker
 
-AGGREGATION_BLOCK = "  aggregation:\n    time: hour\n"
+AGGREGATION_BLOCK = "  aggregation:\n    time: hour\n    scenario: false\n"
 
 
 # test_3/calendar_file.csv spans 2025-01-01 00:00 .. 2025-01-01 23:00 (24 granular hours).
@@ -23,7 +23,6 @@ EXPECTED_DATES_BY_AGGREGATION = {
     TimeAggregation.WEEK: [datetime(2024, 12, 30)],
     TimeAggregation.MONTH: [datetime(2025, 1, 1)],
     TimeAggregation.YEAR: [datetime(2025, 1, 1)],
-    None: HOURLY_DATES,  # kept as-is
 }
 
 
@@ -36,7 +35,10 @@ def test_yaml_time_aggregation_drives_full_pipeline(
     shutil.copytree(test_files_root / "test_3", dataset_dir)
     config_path = dataset_dir / "view_config.yml"
     config_path.write_text(
-        config_path.read_text().replace(AGGREGATION_BLOCK, f"  aggregation:\n    time: {aggregation_time.value}\n")
+        config_path.read_text().replace(
+            AGGREGATION_BLOCK,
+            f"  aggregation:\n    time: {aggregation_time.value}\n    scenario: false\n",
+        )
     )
     results_dir = tmp_path / "results"
     results_dir.mkdir()
