@@ -12,7 +12,8 @@
 
 from datetime import datetime
 from pathlib import Path
-from statistics import mean, pstdev
+from statistics import mean
+from statistics import pstdev as std_deviation
 
 import polars as pl
 from pytest import approx
@@ -87,8 +88,8 @@ def test_scenario_aggregation_true_emits_exp_std_min_max(tmp_path: Path) -> None
     assert df["scenario_aggregation"].to_list() == [True] * 4
     assert df["scenario_id"].null_count() == 4
 
-    by_stat = {row["scenario_stat"]: row["metric_value"] for row in df.iter_rows(named=True)}
-    assert by_stat["exp"] == approx(mean(values))
-    assert by_stat["std"] == approx(pstdev(values))
-    assert by_stat["min"] == approx(min(values))
-    assert by_stat["max"] == approx(max(values))
+    stats_to_values = {row["scenario_stat"]: row["metric_value"] for row in df.iter_rows(named=True)}
+    assert stats_to_values["exp"] == approx(mean(values))
+    assert stats_to_values["std"] == approx(std_deviation(values))
+    assert stats_to_values["min"] == approx(min(values))
+    assert stats_to_values["max"] == approx(max(values))
