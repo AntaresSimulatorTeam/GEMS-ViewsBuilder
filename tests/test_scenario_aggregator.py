@@ -9,12 +9,17 @@ from statistics import pstdev as std_deviation
 import polars as pl
 from pytest import approx
 
-from gems_views_builder.aggregators.scenario_aggregator import make_scenario_operator, to_scenario_view
+from gems_views_builder.aggregators.scenario_aggregator import (
+    ScenarioAggregation,
+    ScenarioColumnsAddition,
+    make_scenario_operator,
+    to_scenario_view,
+)
 from gems_views_builder.metric_view import MetricView
 
 
 def temporal_metric_view(tmp_path: Path, values: list[float]) -> MetricView:
-    """Temporal aggregation-shaped parquet (input to scenario aggregation)."""
+    """Temporal aggregation-shaped parquet (input to scenario step)."""
     n = len(values)
     dataframe = pl.DataFrame(
         {
@@ -39,7 +44,15 @@ def temporal_metric_view(tmp_path: Path, values: list[float]) -> MetricView:
     return MetricView(path)
 
 
-def test_scenario_aggregation_false_preserves_rows_and_adds_columns(tmp_path: Path) -> None:
+def test_make_scenario_operator_returns_columns_addition_when_disabled() -> None:
+    assert isinstance(make_scenario_operator(False), ScenarioColumnsAddition)
+
+
+def test_make_scenario_operator_returns_aggregation_when_enabled() -> None:
+    assert isinstance(make_scenario_operator(True), ScenarioAggregation)
+
+
+def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -> None:
     # Arrange
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
@@ -52,7 +65,6 @@ def test_scenario_aggregation_false_preserves_rows_and_adds_columns(tmp_path: Pa
     # Assert
     df = pl.read_parquet(metric_view.persistence_path).sort("scenario_id")
     assert metric_view.persistence_path == original_path
-    assert metric_view.persistence_path.name == original_path.name
     assert "scenario_aggregation" in df.columns and "scenario_stat" in df.columns
     assert df.height == 3
     assert df["scenario_aggregation"].to_list() == [False, False, False]
@@ -61,7 +73,7 @@ def test_scenario_aggregation_false_preserves_rows_and_adds_columns(tmp_path: Pa
     assert df["metric_value"].to_list() == [approx(10.0), approx(20.0), approx(30.0)]
 
 
-def test_scenario_aggregation_true_emits_exp_std_min_max(tmp_path: Path) -> None:
+def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path) -> None:
     # Arrange
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
