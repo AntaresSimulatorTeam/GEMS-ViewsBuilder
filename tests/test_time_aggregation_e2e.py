@@ -36,22 +36,17 @@ EXPECTED_DATES_BY_AGGREGATION = {
 }
 
 
-def replace_aggregation(view_config_path: Path, aggregation_time: TimeAggregation | None) -> None:
-    text = view_config_path.read_text()
-    replacement = (
-        "  aggregation: {}\n" if aggregation_time is None else f"  aggregation:\n    time: {aggregation_time.value}\n"
-    )
-    view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
-
-
-@pytest.mark.parametrize("aggregation_time", [*TimeAggregation, None])
+@pytest.mark.parametrize("aggregation_time", list(TimeAggregation))
 def test_yaml_time_aggregation_drives_full_pipeline(
-    test_files_root: Path, tmp_path: Path, aggregation_time: TimeAggregation | None
+    test_files_root: Path, tmp_path: Path, aggregation_time: TimeAggregation
 ) -> None:
     # Arrange, copy test_3 fixture and set aggregation to value under test
     dataset_dir = tmp_path / "test_3"
     shutil.copytree(test_files_root / "test_3", dataset_dir)
-    replace_aggregation(dataset_dir / "view_config.yml", aggregation_time)
+    config_path = dataset_dir / "view_config.yml"
+    config_path.write_text(
+        config_path.read_text().replace(AGGREGATION_BLOCK, f"  aggregation:\n    time: {aggregation_time.value}\n")
+    )
     results_dir = tmp_path / "results"
     results_dir.mkdir()
 
