@@ -92,10 +92,14 @@ def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
 
 
 def to_scenario_view(temporal_metric_view: MetricView, scenario_operator: ScenarioOperator) -> None:
-    file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
-    os.close(file_descriptor)
+    try:
+        file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
+        os.close(file_descriptor)
 
-    scenario_operator.run(temporal_metric_view, Path(tmp_path))
+        scenario_operator.run(temporal_metric_view, Path(tmp_path))
 
-    os.replace(tmp_path, temporal_metric_view.persistence_path)
+        os.replace(tmp_path, temporal_metric_view.persistence_path)
+    except Exception:
+        # If something goes wrong, remove the temporary file to avoid leaving a half-written file
+        os.remove(tmp_path)
     logging.info(f"Scenario view written to {temporal_metric_view.persistence_path}")
