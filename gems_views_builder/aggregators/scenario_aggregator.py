@@ -42,7 +42,7 @@ class ScenarioAggregation(ScenarioOperator):
     def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
-        (
+        view = (
             pl.scan_parquet(temporal_metric_view.persistence_path)
             .group_by(index_columns)
             .agg(SCENARIO_AGG_EXPRS)
@@ -58,12 +58,12 @@ class ScenarioAggregation(ScenarioOperator):
                     pl.lit(True, dtype=pl.Boolean).alias("scenario_aggregation"),
                 ]
             )
-            .sink_parquet(
-                tmp_path,
-                compression=PARQUET_COMPRESSION,
-                compression_level=PARQUET_COMPRESSION_LEVEL,
-                row_group_size=PARQUET_ROW_GROUP_SIZE,
-            )
+        )
+        view.sink_parquet(
+            tmp_path,
+            compression=PARQUET_COMPRESSION,
+            compression_level=PARQUET_COMPRESSION_LEVEL,
+            row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
 
 
