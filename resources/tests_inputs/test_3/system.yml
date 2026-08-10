@@ -268,4 +268,3 @@ system:
     port1: p_balance_port
     component2: link_link_AB
     port2: p1_port
-  area_connections: null

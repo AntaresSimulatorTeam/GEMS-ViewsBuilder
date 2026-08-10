@@ -13,7 +13,7 @@
 
 """GEMS-ViewsBuilder public package namespace."""
 
-from gems.model.parsing import (  # type: ignore
+from gems_craft.model.parsing import (  # type: ignore
     ConstraintSchema,
     ExtraOutputSchema,
     LibrarySchema,

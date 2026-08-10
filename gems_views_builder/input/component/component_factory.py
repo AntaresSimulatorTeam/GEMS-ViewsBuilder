@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from typing import Any, cast
 
-from gems.study import Component as GemsPyComponent  # type: ignore
+from gems_craft.study import Component as GemsPyComponent  # type: ignore
 
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component.component import Component
