@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "GEMS-ViewsBuilder"
-version = "0.0.1"
+name = "gems-views-builder"
+version = "0.1.0"
 readme = "README.md"
 license = {file = "LICENSE"}
 dependencies = [
@@ -17,24 +17,32 @@ dependencies = [
 authors = [
     { name = "Antoine Oustry" },
     { name = "Dusan Paripovic" },
+    { name = "Guillaume Pierre" },
+    { name = "Sylvain Leclerc" },
+    { name = "Theo Pascoli" },
+    { name = "Thomas Bittar" },
 ]
 requires-python = ">=3.10"
 classifiers = [
     #Classifiers here: https://pypi.org/classifiers/
     "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
 ]
 
 [project.scripts]
 gems-views-builder = "gems_views_builder.__main__:main"
 
 [project.urls]
+Homepage = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
 Repository = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
 "Bug Tracker" = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/issues"
 
@@ -47,11 +55,12 @@ dev = [
     "types-PyYAML>=6.0.0",
     "ruff>=0.9.6",
     "pre-commit>=4.1.0",
+    "build>=1.2.0",
 ]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["gems_views_builder"]
+include = ["gems_views_builder*"]
 
 
 [tool.pytest.ini_options]
