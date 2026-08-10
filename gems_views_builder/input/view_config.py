@@ -123,10 +123,8 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalog},
-        time_aggregation=raw_view_config.aggregation.time if raw_view_config.aggregation.time is not None else None,
-        scenario_aggregation=raw_view_config.aggregation.scenario
-        if raw_view_config.aggregation.scenario is not None
-        else False,
+        time_aggregation=raw_view_config.aggregation.time,
+        scenario_aggregation=bool(raw_view_config.aggregation.scenario),
         metric_ids=[metric.id for metric in raw_view_config.metrics],
     )
     logging.info(
