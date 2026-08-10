@@ -70,20 +70,17 @@ class ScenarioAggregation(ScenarioOperator):
 class ScenarioColumnsAddition(ScenarioOperator):
     def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
-        (
-            pl.scan_parquet(temporal_metric_view.persistence_path)
-            .with_columns(
-                [
-                    pl.lit(False, dtype=pl.Boolean).alias("scenario_aggregation"),
-                    pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
-                ]
-            )
-            .sink_parquet(
-                tmp_path,
-                compression=PARQUET_COMPRESSION,
-                compression_level=PARQUET_COMPRESSION_LEVEL,
-                row_group_size=PARQUET_ROW_GROUP_SIZE,
-            )
+        view = pl.scan_parquet(temporal_metric_view.persistence_path).with_columns(
+            [
+                pl.lit(False, dtype=pl.Boolean).alias("scenario_aggregation"),
+                pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
+            ]
+        )
+        view.sink_parquet(
+            tmp_path,
+            compression=PARQUET_COMPRESSION,
+            compression_level=PARQUET_COMPRESSION_LEVEL,
+            row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
 
 
