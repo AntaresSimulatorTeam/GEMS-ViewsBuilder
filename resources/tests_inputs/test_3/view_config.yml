@@ -10,7 +10,6 @@ view:
 
   aggregation:
     time: hour
-    scenario: false
 
   catalog: #Pointer to "catalogs" = "Business Metrics definitions files".
       - id: catalog

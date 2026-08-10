@@ -20,7 +20,7 @@ from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.input.view_config import TimeAggregation, load_view_config
 from gems_views_builder.view import ParquetViewSinker
 
-AGGREGATION_BLOCK = "  aggregation:\n    time: hour\n    scenario: false\n"
+AGGREGATION_BLOCK = "  aggregation:\n    time: hour\n"
 
 
 # test_3/calendar_file.csv spans 2025-01-01 00:00 .. 2025-01-01 23:00 (24 granular hours).
@@ -39,9 +39,7 @@ EXPECTED_DATES_BY_AGGREGATION = {
 def replace_aggregation(view_config_path: Path, aggregation_time: TimeAggregation | None) -> None:
     text = view_config_path.read_text()
     replacement = (
-        "  aggregation: {}\n"
-        if aggregation_time is None
-        else f"  aggregation:\n    time: {aggregation_time.value}\n    scenario: false\n"
+        "  aggregation: {}\n" if aggregation_time is None else f"  aggregation:\n    time: {aggregation_time.value}\n"
     )
     view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
 
