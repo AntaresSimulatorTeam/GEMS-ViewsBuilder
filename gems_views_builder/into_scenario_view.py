@@ -23,7 +23,7 @@ class Operator(Enum):
 
 
 # expectation (exp) == mean
-SCENARIO_AGG_EXPRS = [
+AGGREGATION_OPERATORS = [
     pl.col("metric_value").mean().alias(Operator.EXP.value),
     pl.col("metric_value").std(ddof=0).alias(Operator.STD.value),
     pl.col("metric_value").min().alias(Operator.MIN.value),
@@ -45,7 +45,7 @@ class ScenarioAggregation(ScenarioOperator):
         view = (
             pl.scan_parquet(temporal_metric_view.persistence_path)
             .group_by(index_columns)
-            .agg(SCENARIO_AGG_EXPRS)
+            .agg(AGGREGATION_OPERATORS)
             .unpivot(
                 on=[op.value for op in Operator],
                 index=index_columns,

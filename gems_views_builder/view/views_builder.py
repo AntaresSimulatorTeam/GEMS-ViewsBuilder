@@ -3,10 +3,10 @@
 
 """ViewBuilder."""
 
-from gems_views_builder.aggregators.scenario_aggregator import make_scenario_operator, to_scenario_view
 from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.aggregators.time_aggregator import TimeAggregator
 from gems_views_builder.input.input_data import InputData
+from gems_views_builder.into_scenario_view import make_scenario_operator, to_scenario_view
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 

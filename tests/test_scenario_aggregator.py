@@ -9,7 +9,7 @@ from statistics import pstdev as std_deviation
 import polars as pl
 from pytest import approx
 
-from gems_views_builder.aggregators.scenario_aggregator import (
+from gems_views_builder.into_scenario_view import (
     ScenarioAggregation,
     ScenarioColumnsAddition,
     make_scenario_operator,
