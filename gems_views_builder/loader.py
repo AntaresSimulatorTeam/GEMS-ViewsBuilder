@@ -24,13 +24,12 @@ class Loader:
         logging.info(f"Loading inputs from {self.input_data_path}")
         view_config: ViewConfig = load_view_config(self.input_data_path / "view_config.yml")
 
-        library_path = self.input_data_path / "library.yml"
         raw_input_data = RawInputData(
             input_data_path=self.input_data_path,
             taxonomy=load_taxonomy(self.input_data_path / "taxonomy.yml"),
-            view_config=load_view_config(self.input_data_path / "view_config.yml"),
-            library=load_library(library_path),
-            system=load_system(self.input_data_path, resolve_libraries(library_path)),
+            view_config=view_config,
+            library=load_library(self.input_data_path / "library.yml"),
+            system=load_system(self.input_data_path, resolve_libraries(self.input_data_path / "library.yml")),
             simulation_table=load_simulation_table(next(self.input_data_path.glob("simulation_table*"))),
             calendar=load_calendar(self.input_data_path, view_config.calendar_id),
             catalogs=load_catalogs(self.input_data_path, view_config.catalog_ids),
