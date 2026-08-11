@@ -116,12 +116,12 @@ def test_merged_view_is_consistent_with_pre_merge_temporal_views(tmp_path: Path)
     results_dir = make_results_dir(tmp_path)
 
     # Act
-    metric_views = build_metric_views(input_data)
-    accumulate_on_disk(metric_views, ParquetViewSinker(results_dir))
+    load_sum_view, load_avg_view = build_metric_views(input_data)
+    accumulate_on_disk([load_sum_view, load_avg_view], ParquetViewSinker(results_dir))
 
     # Assert
     view = fetch_view(results_dir)
-    assert view.shape[0] == pre_merge_row_count(metric_views) == 4
+    assert view.shape[0] == pre_merge_row_count([load_sum_view, load_avg_view]) == 4
 
     for metric_id, expected_by_day in (("LOAD_SUM", EXPECTED_LOAD_SUM_BY_DAY), ("LOAD_AVG", EXPECTED_LOAD_AVG_BY_DAY)):
         by_day = get_metric_values_by_day(view, metric_id)

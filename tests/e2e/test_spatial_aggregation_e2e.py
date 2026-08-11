@@ -154,10 +154,9 @@ def test_extra_locations_values_in_final_metric_views(tmp_path: Path) -> None:
     input_data = build_input(tmp_path)
 
     # Act
-    metric_views = build_metric_views(input_data)
+    load_view, prod_view = build_metric_views(input_data)
 
     # Assert
-    load_view, prod_view = metric_views
     assert extract_values_from_view(load_view) == approx(EXPECTED_LOAD)
     assert extract_values_from_view(prod_view) == approx(EXPECTED_PROD)
 
@@ -167,10 +166,9 @@ def test_temporal_views_are_consistent_with_each_other(tmp_path: Path) -> None:
     input_data = build_input(tmp_path)
 
     # Act
-    metric_views = build_metric_views(input_data)
+    load_view, prod_view = build_metric_views(input_data)
 
     # Assert
-    load_view, prod_view = metric_views
     load_df = pl.read_parquet(load_view.persistence_path)
     prod_df = pl.read_parquet(prod_view.persistence_path)
 

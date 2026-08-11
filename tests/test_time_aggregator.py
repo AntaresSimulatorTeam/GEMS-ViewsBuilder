@@ -19,11 +19,6 @@ from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView
 
 
-def apply_date_column(date: datetime, aggregation: TimeGranularity | None) -> datetime:
-    df = pl.DataFrame({"granular_date": [date]}, schema={"granular_date": pl.Datetime})
-    return cast(datetime, df.select(date_column_into_time_granularity(aggregation)).item())
-
-
 def apply_aggregation_operator(values: list[float], time_operator: AggregOperatorType) -> float:
     df = pl.DataFrame({"granular_metric_value": values})
     return float(df.select(aggregation_operator(time_operator)).item())
