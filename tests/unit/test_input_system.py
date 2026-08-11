@@ -10,7 +10,7 @@ from gems_views_builder.input.system import load_system
 
 
 def test_input_system_using(test_dataset_dir: Path) -> None:
-    input_system_path = test_dataset_dir / "input" / "system.yml"
+    input_system_path = test_dataset_dir / "system.yml"
     assert input_system_path.exists(), f"System file not found: {input_system_path}"
     with open(input_system_path, encoding="utf-8") as f:
         input_system = parse_yaml_system(f)
@@ -19,7 +19,7 @@ def test_input_system_using(test_dataset_dir: Path) -> None:
 
 
 def test_system_exposes_components_and_connections(test_dataset_dir: Path) -> None:
-    library_path = test_dataset_dir / "input" / "model-libraries" / "library.yml"
-    system = load_system(test_dataset_dir / "input" / "system.yml", resolve_libraries(library_path))
+    library_path = test_dataset_dir / "libraries" / "library.yml"
+    system = load_system(test_dataset_dir / "system.yml", resolve_libraries(library_path))
     assert len(system.components) > 0
     assert isinstance(system.connections, list)

@@ -156,7 +156,7 @@ def test_production_by_technology_matches_simulation(
 ) -> None:
     """Per scenario, PRODUCTION_BY_TECH nuclear / gas totals match raw ``generation`` sums."""
     dataset_dir, view = filtering_and_breakdown_workspace
-    sim = pl.read_parquet(next((dataset_dir / "output").glob("*/simulation_table.parquet")))
+    sim = pl.read_parquet(next(dataset_dir.glob("simulation_table.parquet")))
 
     for tech, bd in (("nuclear", "{(technology,nuclear)}"), ("gas", "{(technology,gas)}")):
         got = _view_generation_total_by_scenario(view, "PRODUCTION_BY_TECH", breakdown_properties=bd)
@@ -169,7 +169,7 @@ def test_production_by_company_matches_simulation(
 ) -> None:
     """Per scenario, company breakdown totals match simulation sums for that company."""
     dataset_dir, view = filtering_and_breakdown_workspace
-    sim = pl.read_parquet(next((dataset_dir / "output").glob("*/simulation_table.parquet")))
+    sim = pl.read_parquet(next(dataset_dir.glob("simulation_table.parquet")))
 
     for company, bd in (
         ("rhonepower", "{(company,rhonepower)}"),
@@ -188,7 +188,7 @@ def test_production_by_technology_and_company_matches_simulation(
     per-scenario totals must match that component's summed ``generation`` in the simulation table.
     """
     dataset_dir, view = filtering_and_breakdown_workspace
-    sim = pl.read_parquet(next((dataset_dir / "output").glob("*/simulation_table.parquet")))
+    sim = pl.read_parquet(next(dataset_dir.glob("simulation_table.parquet")))
 
     cases: tuple[tuple[str, str, str], ...] = (
         ("nuclear", "rhonepower", "{(technology,nuclear),(company,rhonepower)}"),
@@ -206,7 +206,7 @@ def test_single_generator_slice_matches_component_simulation_sum(
 ) -> None:
     """Concrete check: nuclear + rhonepower is only ``nuclear_1`` — compare to its simulation total (scenario 0)."""
     dataset_dir, view = filtering_and_breakdown_workspace
-    sim = pl.read_parquet(next((dataset_dir / "output").glob("*/simulation_table.parquet")))
+    sim = pl.read_parquet(next(dataset_dir.glob("simulation_table.parquet")))
     scenario = 0
     expected = (
         sim.filter(

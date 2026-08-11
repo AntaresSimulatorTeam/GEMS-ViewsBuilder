@@ -9,7 +9,7 @@ from gems_views_builder import TimeGranularity, ViewConfig, load_view_config
 
 
 def test_loads(test_dataset_dir: Path) -> None:
-    config_path = test_dataset_dir / "input" / "view-configs" / "view_config.yml"
+    config_path = test_dataset_dir / "view_config.yml"
     config = load_view_config(config_path)
     assert isinstance(config, ViewConfig)
     assert isinstance(config.id, str)
@@ -20,14 +20,14 @@ def test_loads(test_dataset_dir: Path) -> None:
 
 
 def test_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
-    config_path = test_dataset_dir / "input" / "view-configs" / "view_config.yml"
+    config_path = test_dataset_dir / "view_config.yml"
     config = load_view_config(config_path)
     for catalog_id in config.catalog_ids:
         assert isinstance(catalog_id, str)
 
 
 def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
-    config_path = test_dataset_dir / "input" / "view-configs" / "view_config.yml"
+    config_path = test_dataset_dir / "view_config.yml"
     config = load_view_config(config_path)
     for metric_id in config.metric_ids:
         assert isinstance(metric_id, str)
@@ -38,7 +38,7 @@ def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
 
 
 def test_known_values(test_dataset_dir: Path) -> None:
-    config = load_view_config(test_dataset_dir / "input" / "view-configs" / "view_config.yml")
+    config = load_view_config(test_dataset_dir / "view_config.yml")
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.catalog_ids == {"catalog"}
@@ -53,12 +53,12 @@ def test_known_values(test_dataset_dir: Path) -> None:
 
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
-    config = load_view_config(test_dataset_dir / "input" / "view-configs" / "view_config.yml")
+    config = load_view_config(test_dataset_dir / "view_config.yml")
     assert config.time_aggr_granularity == TimeGranularity.HOUR
 
 
 def test_scenario_aggregation(test_dataset_dir: Path) -> None:
-    config = load_view_config(test_dataset_dir / "input" / "view-configs" / "view_config.yml")
+    config = load_view_config(test_dataset_dir / "view_config.yml")
     assert config.scenario_aggregation is False
 
 

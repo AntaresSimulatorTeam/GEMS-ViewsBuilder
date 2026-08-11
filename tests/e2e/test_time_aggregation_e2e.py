@@ -48,7 +48,7 @@ def test_yaml_time_aggregation_drives_full_pipeline(
     # Arrange
     dataset_dir = tmp_path / "test_3"
     shutil.copytree(test_files_root / "test_3", dataset_dir)
-    replace_aggregation(dataset_dir / "input" / "view-configs" / "view_config.yml", aggregation_time)
+    replace_aggregation(dataset_dir / "view_config.yml", aggregation_time)
     results_dir = make_results_dir(tmp_path)
 
     # Act
@@ -63,7 +63,7 @@ def test_yaml_time_aggregation_drives_full_pipeline(
 def test_yaml_missing_aggregation_key_fails_to_parse(test_files_root: Path, tmp_path: Path) -> None:
     dataset_dir = tmp_path / "test_3"
     shutil.copytree(test_files_root / "test_3", dataset_dir)
-    config_path = dataset_dir / "input" / "view-configs" / "view_config.yml"
+    config_path = dataset_dir / "view_config.yml"
     config_path.write_text(config_path.read_text().replace(AGGREGATION_BLOCK, ""))
 
     with pytest.raises(ValueError, match="aggregation"):

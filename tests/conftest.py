@@ -27,24 +27,23 @@ def test_files_root() -> Path:
 
 
 DATASET_REQUIRED_FILES: tuple[str, ...] = (
-    "input/calendar_file.csv",
-    "input/system.yml",
-    "input/taxonomy/taxonomy.yml",
-    "input/view-configs/view_config.yml",
+    "calendar_file.csv",
+    "system.yml",
+    "taxonomy.yml",
+    "view_config.yml",
 )
 
 
 def layout_from_dataset(dataset_dir: Path) -> InputLayout:
-    """Build an InputLayout from a test dataset directory."""
-    input_dir = dataset_dir / "input"
+    """Build an InputLayout from a flat test dataset directory."""
     return InputLayout(
-        libraries_dir=input_dir / "model-libraries",
-        catalogs_dir=input_dir / "catalogs",
-        system=input_dir / "system.yml",
-        calendar=input_dir / "calendar_file.csv",
-        taxonomy=input_dir / "taxonomy" / "taxonomy.yml",
-        view_config=input_dir / "view-configs" / "view_config.yml",
-        simulation_table=next((dataset_dir / "output").glob("*/simulation_table*")),
+        libraries_dir=dataset_dir / "libraries",
+        catalogs_dir=dataset_dir / "catalogs",
+        system=dataset_dir / "system.yml",
+        calendar=dataset_dir / "calendar_file.csv",
+        taxonomy=dataset_dir / "taxonomy.yml",
+        view_config=dataset_dir / "view_config.yml",
+        simulation_table=next(dataset_dir.glob("simulation_table*")),
     )
 
 
@@ -55,24 +54,13 @@ def _dataset_dirs(test_inputs_path: Path) -> list[str]:
 def _is_valid_dataset_dir(dataset_dir: Path) -> bool:
     if not all((dataset_dir / rel).is_file() for rel in DATASET_REQUIRED_FILES):
         return False
-    model_libraries_dir = dataset_dir / "input" / "model-libraries"
-    if not model_libraries_dir.is_dir():
+    libraries_dir = dataset_dir / "libraries"
+    if not libraries_dir.is_dir() or not list(libraries_dir.glob("*.yml")):
         return False
-    if not list(model_libraries_dir.glob("*.yml")):
+    catalogs_dir = dataset_dir / "catalogs"
+    if not catalogs_dir.is_dir() or not list(catalogs_dir.glob("*.yml")):
         return False
-    catalogs_dir = dataset_dir / "input" / "catalogs"
-    if not catalogs_dir.is_dir():
-        return False
-    if not list(catalogs_dir.glob("*.yml")):
-        return False
-    output_dir = dataset_dir / "output"
-    if not output_dir.is_dir():
-        return False
-    simulation_dirs = [d for d in output_dir.iterdir() if d.is_dir()]
-    if len(simulation_dirs) != 1:
-        return False
-    simulation_tables = list(simulation_dirs[0].glob("simulation_table*.parquet"))
-    if len(simulation_tables) != 1:
+    if not list(dataset_dir.glob("simulation_table*")):
         return False
     return True
 
@@ -101,7 +89,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     if not dataset_dirs:
         raise FileNotFoundError(
             f"No dataset directories found in {TEST_INPUTS_PATH} "
-            f"(expected dirs with {list(DATASET_REQUIRED_FILES)} + catalogs/*.yml + simulation_table*.parquet)."
+            f"(expected dirs with {list(DATASET_REQUIRED_FILES)} + libraries/*.yml + catalogs/*.yml + simulation_table*)."
         )
 
     metafunc.parametrize(

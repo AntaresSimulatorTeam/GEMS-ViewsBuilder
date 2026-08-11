@@ -10,7 +10,7 @@ from gems_views_builder.input.catalog import MetricData, TermData
 
 
 def test_catalog_loads(test_dataset_dir: Path) -> None:
-    catalog_path = sorted((test_dataset_dir / "input" / "catalogs").glob("*.yml"))[0]
+    catalog_path = sorted((test_dataset_dir / "catalogs").glob("*.yml"))[0]
     catalog = load_catalog(catalog_path)
     assert isinstance(catalog.id, str)
     assert isinstance(catalog.taxonomy, str)
@@ -19,7 +19,7 @@ def test_catalog_loads(test_dataset_dir: Path) -> None:
 
 
 def test_catalog_metrics_are_typed(test_dataset_dir: Path) -> None:
-    catalog_path = sorted((test_dataset_dir / "input" / "catalogs").glob("*.yml"))[0]
+    catalog_path = sorted((test_dataset_dir / "catalogs").glob("*.yml"))[0]
     catalog = load_catalog(catalog_path)
     for metric in catalog.metrics.values():
         assert isinstance(metric, Metric)
@@ -30,7 +30,7 @@ def test_catalog_metrics_are_typed(test_dataset_dir: Path) -> None:
 
 
 def test_catalog_terms_are_typed(test_dataset_dir: Path) -> None:
-    catalog_path = sorted((test_dataset_dir / "input" / "catalogs").glob("*.yml"))[0]
+    catalog_path = sorted((test_dataset_dir / "catalogs").glob("*.yml"))[0]
     catalog = load_catalog(catalog_path)
     for metric in catalog.metrics.values():
         for term in metric.terms:
@@ -41,7 +41,7 @@ def test_catalog_terms_are_typed(test_dataset_dir: Path) -> None:
 
 
 def test_catalog_known_metrics(test_dataset_dir: Path) -> None:
-    catalog = load_catalog(sorted((test_dataset_dir / "input" / "catalogs").glob("*.yml"))[0])
+    catalog = load_catalog(sorted((test_dataset_dir / "catalogs").glob("*.yml"))[0])
     metric_ids = set(catalog.metrics.keys())
     assert "LOAD" in metric_ids
 
@@ -73,7 +73,7 @@ def test_term_location_port_blank_string_is_rejected() -> None:
 
 
 def test_catalog_operators_valid_values(test_dataset_dir: Path) -> None:
-    catalog = load_catalog(sorted((test_dataset_dir / "input" / "catalogs").glob("*.yml"))[0])
+    catalog = load_catalog(sorted((test_dataset_dir / "catalogs").glob("*.yml"))[0])
     for metric in catalog.metrics.values():
         assert metric.terms_operator in (AggregOperatorType.SUM, AggregOperatorType.AVG)
         assert metric.time_operator in (AggregOperatorType.SUM, AggregOperatorType.AVG)
