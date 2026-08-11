@@ -15,11 +15,11 @@ from gems_views_builder.aggregators.time_aggregator import (
     time_aggregation_expression,
 )
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
-from gems_views_builder.input.view_config import TimeAggregation
+from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView
 
 
-def apply_date_expr(date: datetime, aggregation: TimeAggregation) -> datetime:
+def apply_date_expr(date: datetime, aggregation: TimeGranularity | None) -> datetime:
     df = pl.DataFrame({"granular_date": [date]}, schema={"granular_date": pl.Datetime})
     return cast(datetime, df.select(granular_date_expression(aggregation)).item())
 
@@ -56,14 +56,15 @@ def make_metric(time_operator: AggregOperatorType) -> Metric:
 @pytest.mark.parametrize(
     ("aggregation", "input_date", "expected_date"),
     [
-        (TimeAggregation.HOUR, datetime(2026, 1, 1, 3, 30), datetime(2026, 1, 1, 3, 0)),
-        (TimeAggregation.DAY, datetime(2026, 1, 1, 20, 0), datetime(2026, 1, 1, 0, 0)),
-        (TimeAggregation.MONTH, datetime(2026, 1, 15, 10, 0), datetime(2026, 1, 1, 0, 0)),
-        (TimeAggregation.YEAR, datetime(2026, 3, 15, 10, 0), datetime(2026, 1, 1, 0, 0)),
+        (TimeGranularity.HOUR, datetime(2026, 1, 1, 3, 30), datetime(2026, 1, 1, 3, 0)),
+        (TimeGranularity.DAY, datetime(2026, 1, 1, 20, 0), datetime(2026, 1, 1, 0, 0)),
+        (TimeGranularity.MONTH, datetime(2026, 1, 15, 10, 0), datetime(2026, 1, 1, 0, 0)),
+        (TimeGranularity.YEAR, datetime(2026, 3, 15, 10, 0), datetime(2026, 1, 1, 0, 0)),
+        (None, datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 3, 0)),
     ],
 )
 def test_granular_date_expression(
-    aggregation: TimeAggregation,
+    aggregation: TimeGranularity | None,
     input_date: datetime,
     expected_date: datetime,
 ) -> None:
@@ -83,7 +84,7 @@ def test_time_aggregation_expression(time_operator: AggregOperatorType, values: 
 
 def test_truncation_groups_by_window(tmp_path: Path) -> None:
     # Arrange
-    aggregator = TimeAggregator(TimeAggregation.DAY)
+    aggregator = TimeAggregator(TimeGranularity.DAY)
     rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
     metric = make_metric(AggregOperatorType.SUM)
@@ -101,7 +102,7 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
 
 def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     # Arrange
-    aggregator = TimeAggregator(TimeAggregation.DAY)
+    aggregator = TimeAggregator(TimeGranularity.DAY)
     rows = [(datetime(2026, 1, 1, 1, 0), 10.0), (datetime(2026, 1, 1, 2, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
     metric = make_metric(AggregOperatorType.AVG)
@@ -118,7 +119,7 @@ def test_temporal_aggregation_avg(tmp_path: Path) -> None:
 
 def test_part_counter_increments_file_names(tmp_path: Path) -> None:
     # Arrange
-    aggregator = TimeAggregator(TimeAggregation.DAY)
+    aggregator = TimeAggregator(TimeGranularity.DAY)
     metric = make_metric(AggregOperatorType.SUM)
     rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)

@@ -8,7 +8,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder.__main__ import load_and_validate_input_data, run_view_building_process
-from gems_views_builder.input.view_config import TimeAggregation, load_view_config
+from gems_views_builder.input.view_config import TimeGranularity, load_view_config
 from gems_views_builder.view import ParquetViewSinker
 from tests.e2e.utils import fetch_view, make_results_dir
 
@@ -19,17 +19,22 @@ AGGREGATION_BLOCK = "  aggregation:\n    time: hour\n    scenario: false\n"
 HOURLY_DATES = [datetime(2025, 1, 1, h) for h in range(24)]
 
 EXPECTED_DATES_BY_AGGREGATION = {
-    TimeAggregation.HOUR: HOURLY_DATES,
-    TimeAggregation.DAY: [datetime(2025, 1, 1)],
-    TimeAggregation.WEEK: [datetime(2024, 12, 30)],
-    TimeAggregation.MONTH: [datetime(2025, 1, 1)],
-    TimeAggregation.YEAR: [datetime(2025, 1, 1)],
+    TimeGranularity.HOUR: HOURLY_DATES,
+    TimeGranularity.DAY: [datetime(2025, 1, 1)],
+    TimeGranularity.WEEK: [datetime(2024, 12, 30)],
+    TimeGranularity.MONTH: [datetime(2025, 1, 1)],
+    TimeGranularity.YEAR: [datetime(2025, 1, 1)],
+    None: HOURLY_DATES,  # kept as-is
 }
 
 
-def replace_aggregation(view_config_path: Path, aggregation_time: TimeAggregation) -> None:
+def replace_aggregation(view_config_path: Path, aggregation_time: TimeGranularity | None) -> None:
     text = view_config_path.read_text()
-    replacement = f"  aggregation:\n    time: {aggregation_time.value}\n    scenario: false\n"
+    replacement = (
+        "  aggregation:\n    scenario: false\n"
+        if aggregation_time is None
+        else f"  aggregation:\n    time: {aggregation_time.value}\n    scenario: false\n"
+    )
     if AGGREGATION_BLOCK not in text:
         raise AssertionError(f"Expected aggregation block not found in {view_config_path}")
     view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
@@ -40,9 +45,9 @@ def extract_filtered_rows_from_view(view: pl.DataFrame) -> list[datetime]:
     return rows["view_date"].to_list()
 
 
-@pytest.mark.parametrize("aggregation_time", list(TimeAggregation))
+@pytest.mark.parametrize("aggregation_time", [*TimeGranularity, None])
 def test_yaml_time_aggregation_drives_full_pipeline(
-    test_files_root: Path, tmp_path: Path, aggregation_time: TimeAggregation
+    test_files_root: Path, tmp_path: Path, aggregation_time: TimeGranularity | None
 ) -> None:
     # Arrange
     dataset_dir = tmp_path / "test_3"

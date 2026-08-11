@@ -20,7 +20,7 @@ class ExtraLocation(ViewBuilderBasedModel):
     id: str
 
 
-class TimeAggregation(Enum):
+class TimeGranularity(Enum):
     HOUR = "hour"
     DAY = "day"
     WEEK = "week"
@@ -34,7 +34,7 @@ class Scope(ViewBuilderBasedModel):
 
 
 class Aggregation(ViewBuilderBasedModel):
-    time: TimeAggregation
+    time: TimeGranularity | None = None
     scenario: bool
     extra_locations: list[ExtraLocation] | None = None
 
@@ -61,8 +61,8 @@ class ViewConfig:
     input_data_path: Path
     calendar_id: str
     location_taxonomy_category: str
-    time_aggregation: TimeAggregation
-    scenario_aggregation: bool
+    time_aggregation: TimeGranularity | None = None
+    scenario_aggregation: bool = False
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)

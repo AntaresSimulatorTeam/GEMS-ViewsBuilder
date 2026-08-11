@@ -11,21 +11,21 @@ import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
-from gems_views_builder.input.view_config import TimeAggregation
+from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView
 
 # # Polars truncate windows are strings like "1h", "1d", "1w", "1mo", "1y".
-TRUNCATE_WINDOWS: dict[TimeAggregation, str] = {
-    TimeAggregation.HOUR: "1h",
-    TimeAggregation.DAY: "1d",
-    TimeAggregation.WEEK: "1w",
-    TimeAggregation.MONTH: "1mo",
-    TimeAggregation.YEAR: "1y",
+TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
+    TimeGranularity.HOUR: "1h",
+    TimeGranularity.DAY: "1d",
+    TimeGranularity.WEEK: "1w",
+    TimeGranularity.MONTH: "1mo",
+    TimeGranularity.YEAR: "1y",
 }
 
 
 class TimeAggregator:
-    def __init__(self, time_aggregation: TimeAggregation) -> None:
+    def __init__(self, time_aggregation: TimeGranularity | None) -> None:
         self._time_aggregation = time_aggregation
         self._root_dir = Path(tempfile.mkdtemp())
         self._temporal_aggregation_dir = self._root_dir / "views" / "temporal_aggregation"
@@ -87,8 +87,10 @@ class TimeAggregator:
         return MetricView(out_path)
 
 
-def granular_date_expression(time_aggregation: TimeAggregation) -> pl.Expr:
-    return pl.col("granular_date").dt.truncate(TRUNCATE_WINDOWS[time_aggregation]).alias("view_date")
+def granular_date_expression(time_aggregation: TimeGranularity | None) -> pl.Expr:
+    if time_aggregation:
+        return pl.col("granular_date").dt.truncate(TRUNCATE_WINDOWS[time_aggregation]).alias("view_date")
+    return pl.col("granular_date").alias("view_date")
 
 
 def time_aggregation_expression(time_operator: AggregOperatorType) -> pl.Expr:

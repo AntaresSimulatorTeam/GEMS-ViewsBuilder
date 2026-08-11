@@ -14,7 +14,7 @@ import polars as pl
 from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
 from gems_views_builder.input.input_data import InputData
-from gems_views_builder.input.view_config import TimeAggregation, ViewConfig
+from gems_views_builder.input.view_config import TimeGranularity, ViewConfig
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.view.view import accumulate_on_disk
 from gems_views_builder.view.view_sinker import ParquetViewSinker
@@ -65,7 +65,7 @@ def build_input(tmp_path: Path) -> InputData:
         calendar_id="calendar",
         location_taxonomy_category=LOCATION_TAXONOMY_CATEGORY,
         catalog_ids=set(),
-        time_aggregation=TimeAggregation.DAY,
+        time_aggregation=TimeGranularity.DAY,
         extra_locations=[],
         metric_ids=["catalog.LOAD_SUM", "catalog.LOAD_AVG"],
         metrics=[load_sum_metric, load_avg_metric],

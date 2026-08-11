@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder import TimeAggregation, ViewConfig, load_view_config
+from gems_views_builder import TimeGranularity, ViewConfig, load_view_config
 
 
 def test_loads(test_dataset_dir: Path) -> None:
@@ -54,7 +54,7 @@ def test_known_values(test_dataset_dir: Path) -> None:
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.time_aggregation == TimeAggregation.HOUR
+    assert config.time_aggregation == TimeGranularity.HOUR
 
 
 def test_scenario_aggregation(test_dataset_dir: Path) -> None:
@@ -107,7 +107,7 @@ view:
         load_view_config(config_path)
 
 
-def test_raises_when_aggregation_time_is_missing(tmp_path: Path) -> None:
+def test_aggregation_time_defaults_to_none_when_missing(tmp_path: Path) -> None:
     config_path = tmp_path / "view_config.yml"
     config_path.write_text(
         """
@@ -125,8 +125,8 @@ view:
 """.strip()
     )
 
-    with pytest.raises(ValueError, match="time"):
-        load_view_config(config_path)
+    config = load_view_config(config_path)
+    assert config.time_aggregation is None
 
 
 def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path) -> None:
