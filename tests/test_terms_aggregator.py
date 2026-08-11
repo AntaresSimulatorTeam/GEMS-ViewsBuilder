@@ -1,24 +1,15 @@
-# Copyright (c) 2026, RTE (https://www.rte-france.com)
-#
-# See AUTHORS.txt
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-#
-# This file is part of the Antares project.
 
 from pathlib import Path
 
 import polars as pl
 from pytest import approx
 
+from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.metric_structure_table import MetricStructureTable
-from gems_views_builder.terms_aggregator import TermsAggregator
 
 
 def _filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationTable:

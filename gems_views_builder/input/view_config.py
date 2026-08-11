@@ -1,14 +1,5 @@
-# Copyright (c) 2026, RTE (https://www.rte-france.com)
-#
-# See AUTHORS.txt
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-#
-# This file is part of the Antares project.
 
 """ViewConfig models and lazy loaders for view_config.yml."""
 
@@ -39,7 +30,8 @@ class Scope(ViewBuilderBasedModel):
 
 
 class Aggregation(ViewBuilderBasedModel):
-    time: TimeAggregation | None = None
+    time: TimeAggregation
+    scenario: bool
 
 
 class CatalogId(ViewBuilderBasedModel):
@@ -53,7 +45,7 @@ class MetricId(ViewBuilderBasedModel):
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: list[Scope]
-    aggregation: list[Aggregation]
+    aggregation: Aggregation
     catalog: list[CatalogId]
     metrics: list[MetricId]
 
@@ -64,8 +56,9 @@ class ViewConfig:
     input_data_path: Path
     calendar_id: str
     location_taxonomy_category: str
+    time_aggregation: TimeAggregation
+    scenario_aggregation: bool
     catalog_ids: set[str] = field(default_factory=set)
-    time_aggregation: TimeAggregation | None = None
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
@@ -114,13 +107,15 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         raise ValueError(
             f"view_config.yml '{raw_view_config.id}': no calendar configured in scope. One calendar must be configured in scope"
         )
+
     view_config = ViewConfig(
         id=raw_view_config.id,
         input_data_path=input_data_path,
         calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalog},
-        time_aggregation=raw_view_config.aggregation[0].time if raw_view_config.aggregation else None,
+        time_aggregation=raw_view_config.aggregation.time,
+        scenario_aggregation=raw_view_config.aggregation.scenario,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
     )
     logging.info(

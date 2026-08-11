@@ -1,3 +1,6 @@
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
+# SPDX-License-Identifier: MPL-2.0
+
 import logging
 import tempfile
 from pathlib import Path
@@ -31,14 +34,14 @@ class TermsAggregator:
         logging.info(f"[{metric.id}] Aggregating terms with operator {metric.terms_operator.value}")
         value_agg = pl.col("value").sum() if metric.terms_operator == TermsOperator.SUM else pl.col("value").mean()
         metric_view = (
-            structured_simulation_table.with_columns(pl.col("scenario_index").alias("scenario"))
+            structured_simulation_table.with_columns(pl.col("scenario_index").alias("scenario_id"))
             .group_by(
                 [
                     "metric_id",
                     "metric_location",
                     "breakdown_properties",
                     "absolute_time_index",
-                    "scenario",
+                    "scenario_id",
                 ]
             )
             .agg(
@@ -54,7 +57,7 @@ class TermsAggregator:
                     "metric_location",
                     "breakdown_properties",
                     "absolute_time_index",
-                    "scenario",
+                    "scenario_id",
                     "granular_metric_value",
                     "granular_date",
                 ]

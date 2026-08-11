@@ -1,14 +1,5 @@
-# Copyright (c) 2026, RTE (https://www.rte-france.com)
-#
-# See AUTHORS.txt
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-#
-# This file is part of the Antares project.
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -20,7 +11,8 @@ from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.input.view_config import TimeAggregation, load_view_config
 from gems_views_builder.view import ParquetViewSinker
 
-AGGREGATION_BLOCK = "  aggregation:\n    - time: hour\n"
+AGGREGATION_BLOCK = "  aggregation:\n    time: hour\n    scenario: false\n"
+
 
 # test_3/calendar_file.csv spans 2025-01-01 00:00 .. 2025-01-01 23:00 (24 granular hours).
 HOURLY_DATES = [datetime(2025, 1, 1, h) for h in range(24)]
@@ -31,26 +23,23 @@ EXPECTED_DATES_BY_AGGREGATION = {
     TimeAggregation.WEEK: [datetime(2024, 12, 30)],
     TimeAggregation.MONTH: [datetime(2025, 1, 1)],
     TimeAggregation.YEAR: [datetime(2025, 1, 1)],
-    None: HOURLY_DATES,  # kept as-is
 }
 
 
-def replace_aggregation(view_config_path: Path, aggregation_time: TimeAggregation | None) -> None:
-    text = view_config_path.read_text()
-    replacement = (
-        "  aggregation: []\n" if aggregation_time is None else f"  aggregation:\n    - time: {aggregation_time.value}\n"
-    )
-    view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
-
-
-@pytest.mark.parametrize("aggregation_time", [*TimeAggregation, None])
+@pytest.mark.parametrize("aggregation_time", list(TimeAggregation))
 def test_yaml_time_aggregation_drives_full_pipeline(
-    test_files_root: Path, tmp_path: Path, aggregation_time: TimeAggregation | None
+    test_files_root: Path, tmp_path: Path, aggregation_time: TimeAggregation
 ) -> None:
     # Arrange, copy test_3 fixture and set aggregation to value under test
     dataset_dir = tmp_path / "test_3"
     shutil.copytree(test_files_root / "test_3", dataset_dir)
-    replace_aggregation(dataset_dir / "view_config.yml", aggregation_time)
+    config_path = dataset_dir / "view_config.yml"
+    config_path.write_text(
+        config_path.read_text().replace(
+            AGGREGATION_BLOCK,
+            f"  aggregation:\n    time: {aggregation_time.value}\n    scenario: false\n",
+        )
+    )
     results_dir = tmp_path / "results"
     results_dir.mkdir()
 

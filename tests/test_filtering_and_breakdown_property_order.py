@@ -1,14 +1,5 @@
-# Copyright (c) 2026, RTE (https://www.rte-france.com)
-#
-# See AUTHORS.txt
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-#
-# This file is part of the Antares project.
 
 """Regression tests: component property declaration order must not affect breakdown groupby."""
 
@@ -59,7 +50,7 @@ def property_order_workspace(test_files_root: Path, tmp_path: Path) -> tuple[Pat
 
 
 def _assert_totals_close(got: pl.DataFrame, exp: pl.DataFrame, *, msg: str = "") -> None:
-    merged = got.join(exp, on="scenario", how="inner")
+    merged = got.join(exp, on="scenario_id", how="inner")
     assert merged.height == exp.height, msg
     raw_max = (merged["view_total"] - merged["expected_total"]).abs().max()
     assert isinstance(raw_max, Real), f"{msg} unexpected max diff type: {type(raw_max)}"
@@ -93,8 +84,8 @@ def test_same_breakdown_group_sums_all_matching_generators(property_order_worksp
         sim.filter((pl.col("output") == "generation") & pl.col("component").is_in(_GAS_RHONEPOWER_GENERATORS))
         .group_by("scenario_index")
         .agg(pl.col("value").sum().alias("expected_total"))
-        .rename({"scenario_index": "scenario"})
-        .sort("scenario")
+        .rename({"scenario_index": "scenario_id"})
+        .sort("scenario_id")
     )
 
     got = (
@@ -102,9 +93,9 @@ def test_same_breakdown_group_sums_all_matching_generators(property_order_worksp
             (pl.col("metric_id") == "PRODUCTION_BY_TECH_AND_COMPANY")
             & (pl.col("breakdown_properties") == _GAS_RHONEPOWER_BREAKDOWN)
         )
-        .group_by("scenario")
+        .group_by("scenario_id")
         .agg(pl.col("metric_value").sum().alias("view_total"))
-        .sort("scenario")
+        .sort("scenario_id")
     )
 
     _assert_totals_close(got, expected, msg="PRODUCTION_BY_TECH_AND_COMPANY (gas, rhonepower)")

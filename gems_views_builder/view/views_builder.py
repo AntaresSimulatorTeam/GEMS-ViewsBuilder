@@ -1,22 +1,14 @@
-# Copyright (c) 2026, RTE (https://www.rte-france.com)
-#
-# See AUTHORS.txt
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-#
-# This file is part of the Antares project.
 
 """ViewBuilder."""
 
+from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
+from gems_views_builder.aggregators.time_aggregator import TimeAggregator
 from gems_views_builder.input.input_data import InputData
+from gems_views_builder.into_scenario_view import make_scenario_operator, to_scenario_view
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
-from gems_views_builder.terms_aggregator import TermsAggregator
-from gems_views_builder.time_aggregator import TimeAggregator
 
 
 class ViewBuilder:
@@ -30,12 +22,15 @@ class ViewBuilder:
         # # Aggregator for step 2C
         self.time_aggregator = TimeAggregator(self.input_data.view_config.time_aggregation)
 
+        self.scenario_operator = make_scenario_operator(self.input_data.view_config.scenario_aggregation)
+
     def build(self) -> list[MetricView]:
         metric_views: list[MetricView] = []
         for metric in self.input_data.view_config.metrics:
             metric_structure_table = self.metric_structure_table_builder.build(metric)
             metric_view = self.terms_aggregator.run(metric_structure_table, metric)
             temporal_metric_view = self.time_aggregator.run(metric_view, metric)
+            to_scenario_view(temporal_metric_view, self.scenario_operator)
             metric_views.append(temporal_metric_view)
 
         return metric_views

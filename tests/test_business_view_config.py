@@ -1,14 +1,5 @@
-# Copyright (c) 2026, RTE (https://www.rte-france.com)
-#
-# See AUTHORS.txt
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-#
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-#
-# This file is part of the Antares project.
 
 from pathlib import Path
 
@@ -66,6 +57,11 @@ def test_time_aggregation(test_dataset_dir: Path) -> None:
     assert config.time_aggregation == TimeAggregation.HOUR
 
 
+def test_scenario_aggregation(test_dataset_dir: Path) -> None:
+    config = load_view_config(test_dataset_dir / "view_config.yml")
+    assert config.scenario_aggregation is False
+
+
 def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
     invalid_config = tmp_path / "view_config.yml"
     invalid_config.write_text(
@@ -76,7 +72,8 @@ view:
     - taxonomy-category: balance
     - calendar: calendar_file
   aggregation:
-    - time: hour
+    time: hour
+    scenario: false
   catalog:
     - id: catalog_1
   metrics:
@@ -88,3 +85,47 @@ view:
 
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
         config.fetch_metrics({})
+
+
+def test_raises_when_aggregation_time_is_missing(tmp_path: Path) -> None:
+    config_path = tmp_path / "view_config.yml"
+    config_path.write_text(
+        """
+view:
+  id: missing_time
+  scope:
+    - taxonomy-category: balance
+    - calendar: calendar_file
+  aggregation:
+    scenario: false
+  catalog:
+    - id: catalog
+  metrics:
+    - id: catalog.LOAD
+""".strip()
+    )
+
+    with pytest.raises(ValueError, match="time"):
+        load_view_config(config_path)
+
+
+def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path) -> None:
+    config_path = tmp_path / "view_config.yml"
+    config_path.write_text(
+        """
+view:
+  id: missing_scenario
+  scope:
+    - taxonomy-category: balance
+    - calendar: calendar_file
+  aggregation:
+    time: hour
+  catalog:
+    - id: catalog
+  metrics:
+    - id: catalog.LOAD
+""".strip()
+    )
+
+    with pytest.raises(ValueError, match="scenario"):
+        load_view_config(config_path)
