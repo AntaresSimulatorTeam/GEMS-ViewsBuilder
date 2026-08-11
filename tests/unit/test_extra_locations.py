@@ -51,6 +51,7 @@ view:
     - calendar: calendar_file
   aggregation:
     time: hour
+    scenario: false
     extra-locations:
       - id: country
       - id: district
@@ -81,6 +82,7 @@ view:
     - calendar: calendar_file
   aggregation:
     time: hour
+    scenario: false
   catalog:
     - id: catalog
   metrics:
