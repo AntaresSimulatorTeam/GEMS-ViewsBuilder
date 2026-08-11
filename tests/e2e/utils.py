@@ -3,7 +3,7 @@
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, cast
+from typing import Any
 
 import polars as pl
 
@@ -60,8 +60,7 @@ def make_filtered_simulation_table(
 
 def build_input_data(
     input_dir: Path,
-    raw_components: list[Any],
-    raw_connections: list[Any],
+    system: Any,
     taxonomy_category_by_model: dict[str, str],
     view_config: ViewConfig,
     filtered_st: FilteredSimulationTable,
@@ -82,7 +81,7 @@ def build_input_data(
             models_by_taxonomy_category={},
             taxonomy_category_by_model=taxonomy_category_by_model,
         ),
-        system=cast(Any, SimpleNamespace(components=raw_components, connections=raw_connections)),
+        system=system,
         view_config=view_config,
         filtered_st=filtered_st,
     )

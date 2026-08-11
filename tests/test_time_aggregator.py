@@ -54,7 +54,7 @@ def make_metric(time_operator: AggregOperatorType) -> Metric:
 
 
 @pytest.mark.parametrize(
-    ("aggregation", "input_date", "expected_date"),
+    ("time_granularity", "input_date", "expected_date"),
     [
         (TimeGranularity.HOUR, datetime(2026, 1, 1, 3, 30), datetime(2026, 1, 1, 3, 0)),
         (TimeGranularity.DAY, datetime(2026, 1, 1, 20, 0), datetime(2026, 1, 1, 0, 0)),
@@ -63,12 +63,19 @@ def make_metric(time_operator: AggregOperatorType) -> Metric:
         (None, datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 3, 0)),
     ],
 )
-def test_granular_date_expression(
-    aggregation: TimeGranularity | None,
+def test_date_column_into_time_granularity_function(
+    time_granularity: TimeGranularity | None,
     input_date: datetime,
     expected_date: datetime,
 ) -> None:
-    assert apply_date_column(input_date, aggregation) == expected_date
+    # Arrange: creating a dataframe with one column "granular_date"
+    df = pl.DataFrame({"granular_date": [input_date]}, schema={"granular_date": pl.Datetime})
+
+    # Act
+    date_col = date_column_into_time_granularity(time_granularity)
+
+    # Assert
+    assert cast(datetime, df.select(date_col).item()) == expected_date
 
 
 @pytest.mark.parametrize(

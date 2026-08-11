@@ -15,6 +15,7 @@
 
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import polars as pl
@@ -23,13 +24,16 @@ from pytest import approx
 from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Metric, PropertySchema, Term
 from gems_views_builder.input.input_data import InputData
+from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_view import MetricView
 from tests.e2e.utils import (
     build_input_data,
-    make_filtered_simulation_table,
     make_raw_component,
     make_raw_connection,
+)
+from tests.e2e.utils import (
+    make_filtered_simulation_table as build_filtered_simulation_table,
 )
 
 TAXONOMY_CATEGORY_BY_MODEL = {"bus": "balance", "load": "load"}
@@ -38,15 +42,19 @@ T1 = datetime(2026, 1, 1, 3, 0)
 T2 = datetime(2026, 1, 1, 20, 0)
 
 
-def build_input(tmp_path: Path) -> InputData:
-    raw_components: list[Any] = [
-        make_raw_component("busA", "lib.bus", {"country": "France", "region": "West"}),
-        make_raw_component("busB", "lib.bus", {"country": "France", "region": "East"}),
-        make_raw_component("busC", "lib.bus", {"country": "Germany"}),
-        make_raw_component("loadX", "lib.load", {}),
-    ]
-    raw_connections: list[Any] = [make_raw_connection("loadX", "injection", "busA", "injection")]
+def make_system() -> Any:
+    return SimpleNamespace(
+        components=[
+            make_raw_component("busA", "lib.bus", {"country": "France", "region": "West"}),
+            make_raw_component("busB", "lib.bus", {"country": "France", "region": "East"}),
+            make_raw_component("busC", "lib.bus", {"country": "Germany"}),
+            make_raw_component("loadX", "lib.load", {}),
+        ],
+        connections=[make_raw_connection("loadX", "injection", "busA", "injection")],
+    )
 
+
+def make_metrics() -> list[Metric]:
     load_metric = Metric(
         id="LOAD",
         terms=[Term(taxonomy_category="load", output_id="active_load", location_port="injection")],
@@ -60,7 +68,24 @@ def build_input(tmp_path: Path) -> InputData:
         time_operator=AggregOperatorType.AVG,
         filter=PropertySchema(key="country", value="France"),
     )
+    return [load_metric, prod_metric]
 
+
+def make_view_config(tmp_path: Path, metrics: list[Metric]) -> ViewConfig:
+    return ViewConfig(
+        id="view_area",
+        input_data_path=tmp_path,
+        calendar_id="calendar",
+        location_taxonomy_category="balance",
+        catalog_ids=set(),  # keeps validate_catalogs_against_taxonomy disk-free (no catalogs to load)
+        time_aggregation=None,
+        extra_locations=["country", "region"],
+        metric_ids=["catalog.LOAD", "catalog.PROD"],
+        metrics=metrics,
+    )
+
+
+def make_filtered_simulation_table(tmp_path: Path) -> FilteredSimulationTable:
     rows = [
         ("loadX", "active_load", 0, T1, 10.0),
         ("loadX", "active_load", 0, T2, 20.0),
@@ -71,26 +96,15 @@ def build_input(tmp_path: Path) -> InputData:
         ("busC", "active_power", 0, T1, 999.0),  # filtering out by country=France
         ("busC", "active_power", 0, T2, 999.0),
     ]
+    return build_filtered_simulation_table(rows, tmp_path)
 
-    view_config = ViewConfig(
-        id="view_area",
-        input_data_path=tmp_path,
-        calendar_id="calendar",
-        location_taxonomy_category="balance",
-        catalog_ids=set(),  # keeps validate_catalogs_against_taxonomy disk-free (no catalogs to load)
-        time_aggregation=None,
-        extra_locations=["country", "region"],
-        metric_ids=["catalog.LOAD", "catalog.PROD"],
-        metrics=[load_metric, prod_metric],
-    )
-    return build_input_data(
-        tmp_path,
-        raw_components,
-        raw_connections,
-        TAXONOMY_CATEGORY_BY_MODEL,
-        view_config,
-        make_filtered_simulation_table(rows, tmp_path),
-    )
+
+def build_input(tmp_path: Path) -> InputData:
+    system = make_system()
+    metrics = make_metrics()
+    view_config = make_view_config(tmp_path, metrics)
+    filtered_st = make_filtered_simulation_table(tmp_path)
+    return build_input_data(tmp_path, system, TAXONOMY_CATEGORY_BY_MODEL, view_config, filtered_st)
 
 
 def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], float]:
@@ -135,7 +149,7 @@ EXPECTED_PROD = {
 }
 
 
-def test_all_view_config_locations_are_present(tmp_path: Path) -> None:
+def test_extra_locations_values_in_final_metric_views(tmp_path: Path) -> None:
     # Arrange
     input_data = build_input(tmp_path)
 

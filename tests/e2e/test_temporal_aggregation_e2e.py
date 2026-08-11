@@ -7,6 +7,7 @@ The merged result stays consistent with the pre-merge temporal views.
 
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import polars as pl
@@ -14,6 +15,7 @@ import polars as pl
 from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
 from gems_views_builder.input.input_data import InputData
+from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.input.view_config import TimeGranularity, ViewConfig
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.view.view import accumulate_on_disk
@@ -21,9 +23,11 @@ from gems_views_builder.view.view_sinker import ParquetViewSinker
 from tests.e2e.utils import (
     build_input_data,
     fetch_view,
-    make_filtered_simulation_table,
     make_raw_component,
     make_results_dir,
+)
+from tests.e2e.utils import (
+    make_filtered_simulation_table as build_filtered_simulation_table,
 )
 
 LOCATION_TAXONOMY_CATEGORY = "production"
@@ -32,20 +36,19 @@ TAXONOMY_CATEGORY_BY_MODEL = {MODEL_ID: LOCATION_TAXONOMY_CATEGORY}
 
 DAY_1 = datetime(2026, 1, 1)
 DAY_2 = datetime(2026, 1, 2)
-ROWS = [
-    ("busA", "active_load", 0, datetime(2026, 1, 1, 3, 0), 10.0),
-    ("busA", "active_load", 0, datetime(2026, 1, 1, 20, 0), 20.0),
-    ("busA", "active_load", 0, datetime(2026, 1, 2, 3, 0), 100.0),
-    ("busA", "active_load", 0, datetime(2026, 1, 2, 20, 0), 200.0),
-]
 
 EXPECTED_LOAD_SUM_BY_DAY = {DAY_1: 30.0, DAY_2: 300.0}
 EXPECTED_LOAD_AVG_BY_DAY = {DAY_1: 15.0, DAY_2: 150.0}
 
 
-def build_input(tmp_path: Path) -> InputData:
-    raw_components: list[Any] = [make_raw_component("busA", "lib." + MODEL_ID, {})]
+def make_system() -> Any:
+    return SimpleNamespace(
+        components=[make_raw_component("busA", "lib." + MODEL_ID, {})],
+        connections=[],
+    )
 
+
+def make_metrics() -> list[Metric]:
     load_sum_metric = Metric(
         id="LOAD_SUM",
         terms=[Term(taxonomy_category=LOCATION_TAXONOMY_CATEGORY, output_id="active_load", location_port=None)],
@@ -58,8 +61,11 @@ def build_input(tmp_path: Path) -> InputData:
         terms_operator=AggregOperatorType.SUM,
         time_operator=AggregOperatorType.AVG,
     )
+    return [load_sum_metric, load_avg_metric]
 
-    view_config = ViewConfig(
+
+def make_view_config(tmp_path: Path, metrics: list[Metric]) -> ViewConfig:
+    return ViewConfig(
         id="view_time",
         input_data_path=tmp_path,
         calendar_id="calendar",
@@ -68,16 +74,26 @@ def build_input(tmp_path: Path) -> InputData:
         time_aggregation=TimeGranularity.DAY,
         extra_locations=[],
         metric_ids=["catalog.LOAD_SUM", "catalog.LOAD_AVG"],
-        metrics=[load_sum_metric, load_avg_metric],
+        metrics=metrics,
     )
-    return build_input_data(
-        tmp_path,
-        raw_components,
-        [],
-        TAXONOMY_CATEGORY_BY_MODEL,
-        view_config,
-        make_filtered_simulation_table(ROWS, tmp_path),
-    )
+
+
+def make_filtered_simulation_table(tmp_path: Path) -> FilteredSimulationTable:
+    rows = [
+        ("busA", "active_load", 0, datetime(2026, 1, 1, 3, 0), 10.0),
+        ("busA", "active_load", 0, datetime(2026, 1, 1, 20, 0), 20.0),
+        ("busA", "active_load", 0, datetime(2026, 1, 2, 3, 0), 100.0),
+        ("busA", "active_load", 0, datetime(2026, 1, 2, 20, 0), 200.0),
+    ]
+    return build_filtered_simulation_table(rows, tmp_path)
+
+
+def build_input(tmp_path: Path) -> InputData:
+    system = make_system()
+    metrics = make_metrics()
+    view_config = make_view_config(tmp_path, metrics)
+    filtered_st = make_filtered_simulation_table(tmp_path)
+    return build_input_data(tmp_path, system, TAXONOMY_CATEGORY_BY_MODEL, view_config, filtered_st)
 
 
 def values_by_day(path: Path) -> dict[datetime, float]:
