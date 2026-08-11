@@ -12,7 +12,7 @@ from typing import Any
 import polars as pl
 
 from gems_views_builder.__main__ import build_metric_views
-from gems_views_builder.input.catalog import Metric, Term, TermsOperator, TimeOperator
+from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.view_config import TimeAggregation, ViewConfig
 from gems_views_builder.metric_view import MetricView
@@ -49,14 +49,14 @@ def build_input(tmp_path: Path) -> InputData:
     load_sum_metric = Metric(
         id="LOAD_SUM",
         terms=[Term(taxonomy_category=LOCATION_TAXONOMY_CATEGORY, output_id="active_load", location_port=None)],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.SUM,
+        terms_operator=AggregOperatorType.SUM,
+        time_operator=AggregOperatorType.SUM,
     )
     load_avg_metric = Metric(
         id="LOAD_AVG",
         terms=[Term(taxonomy_category=LOCATION_TAXONOMY_CATEGORY, output_id="active_load", location_port=None)],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.AVG,
+        terms_operator=AggregOperatorType.SUM,
+        time_operator=AggregOperatorType.AVG,
     )
 
     view_config = ViewConfig(

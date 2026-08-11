@@ -10,7 +10,7 @@ from shutil import rmtree
 import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
-from gems_views_builder.input.catalog import Metric, TimeOperator
+from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeAggregation
 from gems_views_builder.metric_view import MetricView
 
@@ -91,9 +91,9 @@ def granular_date_expression(time_aggregation: TimeAggregation) -> pl.Expr:
     return pl.col("granular_date").dt.truncate(TRUNCATE_WINDOWS[time_aggregation]).alias("view_date")
 
 
-def time_aggregation_expression(time_operator: TimeOperator) -> pl.Expr:
+def time_aggregation_expression(time_operator: AggregOperatorType) -> pl.Expr:
     return (
         pl.col("granular_metric_value").sum()
-        if time_operator == TimeOperator.SUM
+        if time_operator == AggregOperatorType.SUM
         else pl.col("granular_metric_value").mean()
     ).alias("metric_value")

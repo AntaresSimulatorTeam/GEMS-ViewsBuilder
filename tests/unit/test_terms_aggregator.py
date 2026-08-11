@@ -7,7 +7,7 @@ import polars as pl
 from pytest import approx
 
 from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
-from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
+from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
@@ -46,13 +46,13 @@ def _structure() -> MetricStructureTable:
     return MetricStructureTable(rows, "M")
 
 
-def _metric(terms_operator: TermsOperator) -> Metric:
-    return Metric(id="M", terms=[], terms_operator=terms_operator, time_operator=TimeOperator.SUM)
+def _metric(terms_operator: AggregOperatorType) -> Metric:
+    return Metric(id="M", terms=[], terms_operator=terms_operator, time_operator=AggregOperatorType.SUM)
 
 
 def test_terms_aggregation_sum(tmp_path: Path) -> None:
     aggregator = TermsAggregator(_filtered_st([2.0, 3.0], tmp_path))
-    metric_view = aggregator.run(_structure(), _metric(TermsOperator.SUM))
+    metric_view = aggregator.run(_structure(), _metric(AggregOperatorType.SUM))
     df = pl.read_parquet(metric_view.persistence_path)
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(5.0)
@@ -60,7 +60,7 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
 
 def test_terms_aggregation_avg(tmp_path: Path) -> None:
     aggregator = TermsAggregator(_filtered_st([2.0, 3.0], tmp_path))
-    metric_view = aggregator.run(_structure(), _metric(TermsOperator.AVG))
+    metric_view = aggregator.run(_structure(), _metric(AggregOperatorType.AVG))
     df = pl.read_parquet(metric_view.persistence_path)
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(2.5)

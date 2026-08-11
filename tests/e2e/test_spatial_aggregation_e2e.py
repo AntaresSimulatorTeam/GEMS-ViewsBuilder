@@ -21,7 +21,7 @@ import polars as pl
 from pytest import approx
 
 from gems_views_builder.__main__ import build_metric_views
-from gems_views_builder.input.catalog import Metric, PropertySchema, Term, TermsOperator, TimeOperator
+from gems_views_builder.input.catalog import AggregOperatorType, Metric, PropertySchema, Term
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_view import MetricView
@@ -50,14 +50,14 @@ def build_input(tmp_path: Path) -> InputData:
     load_metric = Metric(
         id="LOAD",
         terms=[Term(taxonomy_category="load", output_id="active_load", location_port="injection")],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.SUM,
+        terms_operator=AggregOperatorType.SUM,
+        time_operator=AggregOperatorType.SUM,
     )
     prod_metric = Metric(
         id="PROD",
         terms=[Term(taxonomy_category="balance", output_id="active_power", location_port=None)],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.AVG,
+        terms_operator=AggregOperatorType.SUM,
+        time_operator=AggregOperatorType.AVG,
         filter=PropertySchema(key="country", value="France"),
     )
 

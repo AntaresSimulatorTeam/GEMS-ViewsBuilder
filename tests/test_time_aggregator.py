@@ -14,7 +14,7 @@ from gems_views_builder.aggregators.time_aggregator import (
     granular_date_expression,
     time_aggregation_expression,
 )
-from gems_views_builder.input.catalog import Metric, TermsOperator, TimeOperator
+from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeAggregation
 from gems_views_builder.metric_view import MetricView
 
@@ -24,7 +24,7 @@ def apply_date_expr(date: datetime, aggregation: TimeAggregation) -> datetime:
     return cast(datetime, df.select(granular_date_expression(aggregation)).item())
 
 
-def apply_agg_expr(values: list[float], time_operator: TimeOperator) -> float:
+def apply_agg_expr(values: list[float], time_operator: AggregOperatorType) -> float:
     df = pl.DataFrame({"granular_metric_value": values})
     return float(df.select(time_aggregation_expression(time_operator)).item())
 
@@ -49,8 +49,8 @@ def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> Metr
     return MetricView(path)
 
 
-def make_metric(time_operator: TimeOperator) -> Metric:
-    return Metric(id="M", terms=[], terms_operator=TermsOperator.SUM, time_operator=time_operator)
+def make_metric(time_operator: AggregOperatorType) -> Metric:
+    return Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=time_operator)
 
 
 @pytest.mark.parametrize(
@@ -73,11 +73,11 @@ def test_granular_date_expression(
 @pytest.mark.parametrize(
     ("time_operator", "values", "expected"),
     [
-        (TimeOperator.SUM, [10.0, 20.0], 30.0),
-        (TimeOperator.AVG, [10.0, 20.0], 15.0),
+        (AggregOperatorType.SUM, [10.0, 20.0], 30.0),
+        (AggregOperatorType.AVG, [10.0, 20.0], 15.0),
     ],
 )
-def test_time_aggregation_expression(time_operator: TimeOperator, values: list[float], expected: float) -> None:
+def test_time_aggregation_expression(time_operator: AggregOperatorType, values: list[float], expected: float) -> None:
     assert apply_agg_expr(values, time_operator) == approx(expected)
 
 
@@ -86,7 +86,7 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
     aggregator = TimeAggregator(TimeAggregation.DAY)
     rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
-    metric = make_metric(TimeOperator.SUM)
+    metric = make_metric(AggregOperatorType.SUM)
 
     # Act
     out_metric_view = aggregator.run(metric_view, metric)
@@ -104,7 +104,7 @@ def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     aggregator = TimeAggregator(TimeAggregation.DAY)
     rows = [(datetime(2026, 1, 1, 1, 0), 10.0), (datetime(2026, 1, 1, 2, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
-    metric = make_metric(TimeOperator.AVG)
+    metric = make_metric(AggregOperatorType.AVG)
 
     # Act
     out_metric_view = aggregator.run(metric_view, metric)
@@ -119,7 +119,7 @@ def test_temporal_aggregation_avg(tmp_path: Path) -> None:
 def test_part_counter_increments_file_names(tmp_path: Path) -> None:
     # Arrange
     aggregator = TimeAggregator(TimeAggregation.DAY)
-    metric = make_metric(TimeOperator.SUM)
+    metric = make_metric(AggregOperatorType.SUM)
     rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
 

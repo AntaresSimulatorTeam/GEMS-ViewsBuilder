@@ -9,11 +9,10 @@ import polars as pl
 import pytest
 
 from gems_views_builder import (
+    AggregOperatorType,
     Metric,
     PropertySchema,
     Term,
-    TermsOperator,
-    TimeOperator,
     load_catalog,
     load_library,
     load_taxonomy,
@@ -236,8 +235,8 @@ def test_single_port_multiple_peers_of_other_categories_are_skipped_not_raised(
                 location_port="p_balance_port",
             )
         ],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.SUM,
+        terms_operator=AggregOperatorType.SUM,
+        time_operator=AggregOperatorType.SUM,
     )
     builder = MetricStructureTableBuilder(
         test_3_components["view_config"],
@@ -266,8 +265,8 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity() -> None:
     metric = Metric(
         id="AMBIGUITY_TEST",
         terms=[Term(taxonomy_category="cat", output_id="o", location_port="p0_port")],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.SUM,
+        terms_operator=AggregOperatorType.SUM,
+        time_operator=AggregOperatorType.SUM,
     )
 
     # Act / Assert
@@ -304,8 +303,8 @@ def test_none_location_port_resolves_to_the_component_itself(test_3_components: 
                 location_port=None,
             )
         ],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.SUM,
+        terms_operator=AggregOperatorType.SUM,
+        time_operator=AggregOperatorType.SUM,
     )
     supply_components_with_locations(test_3_components["components_by_taxon"], [metric], location_taxonomy_category)
     builder = MetricStructureTableBuilder(

@@ -19,12 +19,11 @@ from gems_craft.model.parsing import (  # type: ignore
 
 from gems_views_builder.input.calendar import Calendar, load_calendar
 from gems_views_builder.input.catalog import (
+    AggregOperatorType,
     Catalog,
     Metric,
     PropertySchema,
     Term,
-    TermsOperator,
-    TimeOperator,
     load_catalog,
     load_catalogs,
 )
@@ -58,8 +57,7 @@ __all__ = [
     "Metric",
     "PropertySchema",
     "Term",
-    "TermsOperator",
-    "TimeOperator",
+    "AggregOperatorType",
     "ConstraintSchema",
     "ExtraOutputSchema",
     "Library",

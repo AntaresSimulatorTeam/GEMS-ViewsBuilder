@@ -4,7 +4,7 @@
 from pathlib import Path
 from types import SimpleNamespace
 
-from gems_views_builder.input.catalog import Metric, Term, TermsOperator, TimeOperator
+from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
 from gems_views_builder.input.component import Component
 from gems_views_builder.input.view_config import ViewConfig, load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
@@ -23,8 +23,8 @@ def make_component(component_id: str, properties: dict[str, str] | None = None) 
 def make_metric() -> Metric:
     return Metric(
         id="LOAD",
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.SUM,
+        terms_operator=AggregOperatorType.SUM,
+        time_operator=AggregOperatorType.SUM,
         terms=[Term(taxonomy_category="production", output_id="p", location_port=None)],
     )
 
