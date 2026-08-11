@@ -11,22 +11,22 @@ from pytest import approx
 
 from gems_views_builder.aggregators.time_aggregator import (
     TimeAggregator,
-    granular_date_expression,
-    time_aggregation_expression,
+    aggregation_operator,
+    date_column_into_time_granularity,
 )
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView
 
 
-def apply_date_expr(date: datetime, aggregation: TimeGranularity | None) -> datetime:
+def apply_date_column(date: datetime, aggregation: TimeGranularity | None) -> datetime:
     df = pl.DataFrame({"granular_date": [date]}, schema={"granular_date": pl.Datetime})
-    return cast(datetime, df.select(granular_date_expression(aggregation)).item())
+    return cast(datetime, df.select(date_column_into_time_granularity(aggregation)).item())
 
 
-def apply_agg_expr(values: list[float], time_operator: AggregOperatorType) -> float:
+def apply_aggregation_operator(values: list[float], time_operator: AggregOperatorType) -> float:
     df = pl.DataFrame({"granular_metric_value": values})
-    return float(df.select(time_aggregation_expression(time_operator)).item())
+    return float(df.select(aggregation_operator(time_operator)).item())
 
 
 def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> MetricView:
@@ -68,7 +68,7 @@ def test_granular_date_expression(
     input_date: datetime,
     expected_date: datetime,
 ) -> None:
-    assert apply_date_expr(input_date, aggregation) == expected_date
+    assert apply_date_column(input_date, aggregation) == expected_date
 
 
 @pytest.mark.parametrize(
@@ -79,7 +79,7 @@ def test_granular_date_expression(
     ],
 )
 def test_time_aggregation_expression(time_operator: AggregOperatorType, values: list[float], expected: float) -> None:
-    assert apply_agg_expr(values, time_operator) == approx(expected)
+    assert apply_aggregation_operator(values, time_operator) == approx(expected)
 
 
 def test_truncation_groups_by_window(tmp_path: Path) -> None:

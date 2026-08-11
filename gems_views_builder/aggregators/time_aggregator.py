@@ -25,8 +25,8 @@ TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
 
 
 class TimeAggregator:
-    def __init__(self, time_aggregation: TimeGranularity | None) -> None:
-        self._time_aggregation = time_aggregation
+    def __init__(self, time_granularity: TimeGranularity | None) -> None:
+        self._time_granularity = time_granularity
         self._root_dir = Path(tempfile.mkdtemp())
         self._temporal_aggregation_dir = self._root_dir / "views" / "temporal_aggregation"
         self._temporal_aggregation_dir.mkdir(parents=True, exist_ok=True)
@@ -45,11 +45,11 @@ class TimeAggregator:
         logging.info(f"[{metric.id}] Aggregating temporally with operator {metric.time_operator.value}")
         lazy_metric_view = pl.scan_parquet(metric_view.persistence_path)
 
-        agg_expr = time_aggregation_expression(metric.time_operator)
-        date_expr = granular_date_expression(self._time_aggregation)
+        aggreg_op = aggregation_operator(metric.time_operator)
+        date_column = date_column_into_time_granularity(self._time_granularity)
 
         view = (
-            lazy_metric_view.with_columns(date_expr)
+            lazy_metric_view.with_columns(date_column)
             .group_by(
                 [
                     "metric_id",
@@ -59,7 +59,7 @@ class TimeAggregator:
                     "view_date",
                 ]
             )
-            .agg(agg_expr)
+            .agg(aggreg_op)
             .select(
                 [
                     "metric_id",
@@ -87,13 +87,13 @@ class TimeAggregator:
         return MetricView(out_path)
 
 
-def granular_date_expression(time_aggregation: TimeGranularity | None) -> pl.Expr:
-    if time_aggregation:
-        return pl.col("granular_date").dt.truncate(TRUNCATE_WINDOWS[time_aggregation]).alias("view_date")
+def date_column_into_time_granularity(time_granularity: TimeGranularity | None) -> pl.Expr:
+    if time_granularity:
+        return pl.col("granular_date").dt.truncate(TRUNCATE_WINDOWS[time_granularity]).alias("view_date")
     return pl.col("granular_date").alias("view_date")
 
 
-def time_aggregation_expression(time_operator: AggregOperatorType) -> pl.Expr:
+def aggregation_operator(time_operator: AggregOperatorType) -> pl.Expr:
     return (
         pl.col("granular_metric_value").sum()
         if time_operator == AggregOperatorType.SUM
