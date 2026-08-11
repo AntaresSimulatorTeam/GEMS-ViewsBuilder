@@ -17,7 +17,7 @@ from gems_views_builder import (
     load_catalog,
     load_library,
 )
-from gems_views_builder.__main__ import load_and_validate_input_data, run_view_building_process
+from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
@@ -30,6 +30,7 @@ from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.view import ParquetViewSinker
+from tests.conftest import layout_from_dataset
 
 # Same (technology, company) as filtering_and_breakdown, but YAML property order differs per component.
 _GAS_RHONEPOWER_GENERATORS = ("gas_1", "gas_2")
@@ -44,7 +45,7 @@ def property_order_workspace(test_files_root: Path, tmp_path: Path) -> tuple[Pat
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     shutil.copytree(src, dst)
-    run_view_building_process(load_and_validate_input_data(dst), ParquetViewSinker(results_dir))
+    run_view_building_process(layout_from_dataset(dst), ParquetViewSinker(results_dir))
     view = pl.read_parquet(next(results_dir.glob("view*.parquet")))
     return dst, view
 
@@ -107,10 +108,9 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     Breakdown must list (key,None) for missing keys, not omit them or return "{}".
     """
     root = test_files_root / "filtering_and_breakdown_property_order"
-    library = load_library(root / "input" / "model-libraries" / "library.yml")
-    system = load_system(
-        root / "input" / "system.yml", resolve_libraries(root / "input" / "model-libraries" / "library.yml")
-    )
+    library_path = root / "input" / "model-libraries" / "library.yml"
+    library = load_library(library_path)
+    system = load_system(root / "input" / "system.yml", resolve_libraries(library_path))
     catalog = load_catalog(root / "input" / "catalogs" / "catalog.yml")
     view_config = load_view_config(root / "input" / "view-configs" / "view_config.yml")
     metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")

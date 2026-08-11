@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import (
@@ -16,7 +15,7 @@ from gems_views_builder.input.component import (
 )
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input_data import create_view_building_input
-from gems_views_builder.input_layout import InputLayout
+from gems_views_builder.input_layout import InputLayout, create_input_layout_from_args
 from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
@@ -25,8 +24,7 @@ from gems_views_builder.validation.input_layout_validator import InputLayoutVali
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
-def load_and_validate_input_data(input_dir: Path) -> RawInputData:
-    input_layout = InputLayout(input_dir)
+def load_and_validate_input_data(input_layout: InputLayout) -> RawInputData:
     raw_input_data = Loader(input_layout).load()
     validate_catalogs_against_taxonomy(
         input_layout.catalogs_dir, raw_input_data.view_config.catalog_ids, raw_input_data.taxonomy
@@ -53,7 +51,8 @@ def build_metric_views(raw_input_data: RawInputData) -> list[MetricView]:
     return ViewBuilder(view_building_input, metric_structure_table_builder).build()
 
 
-def run_view_building_process(raw_input_data: RawInputData, view_sinker: ViewSinker) -> None:
+def run_view_building_process(input_layout: InputLayout, view_sinker: ViewSinker) -> None:
+    raw_input_data = load_and_validate_input_data(input_layout)
     metric_views = build_metric_views(raw_input_data)
     accumulate_on_disk(metric_views, view_sinker)
 
@@ -72,21 +71,15 @@ def main(argv: list[str] | None = None) -> int:
         return error
 
     try:
-        input_layout = InputLayout(args.input_dir)
+        input_layout = create_input_layout_from_args(args)
         InputLayoutValidator(input_layout).validate()
-        if args.results_dir is not None:
-            results_dir = args.results_dir
-        else:
-            results_dir = input_layout.views_output_dir(input_layout.simulation_dir)
-        results_dir.mkdir(parents=True, exist_ok=True)
-        view_sinker = ViewSinkerFactory(results_dir, args.output_format).make()
-        raw_input_data = load_and_validate_input_data(args.input_dir)
-        run_view_building_process(raw_input_data, view_sinker)
+        view_sinker = ViewSinkerFactory(args.output, args.output_format).make()
+        run_view_building_process(input_layout, view_sinker)
     except Exception:
         logging.exception("View building failed")
         return 1
 
-    logging.info(f"View successfully written to {results_dir}")
+    logging.info(f"View successfully written to {view_sinker.output_path}")
     return 0
 
 

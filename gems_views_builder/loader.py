@@ -22,19 +22,18 @@ class Loader:
     def load(self) -> RawInputData:
         """Perform all input data I/O and return populated raw input data."""
 
-        logging.info(f"Loading inputs from {self.input_layout.input_dir}")
-        view_config: ViewConfig = load_view_config(self.input_layout.view_config_path)
+        logging.info("Loading inputs from explicit input layout paths")
+        view_config: ViewConfig = load_view_config(self.input_layout.view_config)
 
+        library_file = self.input_layout.library_file
         raw_input_data = RawInputData(
-            input_data_path=self.input_layout.root_dir,
-            taxonomy=load_taxonomy(self.input_layout.taxonomy_path),
+            input_data_path=self.input_layout.view_config.parent,
+            taxonomy=load_taxonomy(self.input_layout.taxonomy),
             view_config=view_config,
-            library=load_library(self.input_layout.model_libraries_path),
-            system=load_system(
-                self.input_layout.system_file, resolve_libraries(self.input_layout.model_libraries_path)
-            ),
-            simulation_table=load_simulation_table(self.input_layout.simulation_table_path),
-            calendar=load_calendar(self.input_layout.input_dir, view_config.calendar_id),
+            library=load_library(library_file),
+            system=load_system(self.input_layout.system, resolve_libraries(library_file)),
+            simulation_table=load_simulation_table(self.input_layout.simulation_table),
+            calendar=load_calendar(self.input_layout.calendar),
             catalogs=load_catalogs(self.input_layout.catalogs_dir, view_config.catalog_ids),
         )
 

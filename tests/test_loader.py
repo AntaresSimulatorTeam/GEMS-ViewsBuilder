@@ -13,6 +13,7 @@ from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.input_layout import InputLayout
 from gems_views_builder.loader import Loader
+from tests.conftest import layout_from_dataset
 
 
 def test_loader_init_has_no_io() -> None:
@@ -20,17 +21,25 @@ def test_loader_init_has_no_io() -> None:
     Constructor should not touch the filesystem (no glob/yaml/parquet reads).
     """
     missing = Path("/this/path/should/not/exist")
-    layout = InputLayout(missing)
+    layout = InputLayout(
+        libraries_dir=missing / "libraries",
+        catalogs_dir=missing / "catalogs",
+        system=missing / "system.yml",
+        calendar=missing / "calendar.csv",
+        taxonomy=missing / "taxonomy.yml",
+        view_config=missing / "view_config.yml",
+        simulation_table=missing / "simulation_table.parquet",
+    )
     loader = Loader(layout)
     assert loader.input_layout is layout
-    assert loader.input_layout.root_dir == missing
+    assert loader.input_layout.libraries_dir == missing / "libraries"
 
 
 def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
-    raw_input_data = Loader(InputLayout(test_dataset_dir)).load()
+    raw_input_data = Loader(layout_from_dataset(test_dataset_dir)).load()
 
     assert isinstance(raw_input_data, RawInputData)
-    assert raw_input_data.input_data_path == test_dataset_dir
+    assert raw_input_data.input_data_path == test_dataset_dir / "input" / "view-configs"
     assert isinstance(raw_input_data.taxonomy, Taxonomy)
     assert isinstance(raw_input_data.view_config, ViewConfig)
     assert isinstance(raw_input_data.library, Library)
@@ -43,11 +52,11 @@ def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
 
 
 def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
-    loader = Loader(InputLayout(test_dataset_dir))
+    loader = Loader(layout_from_dataset(test_dataset_dir))
     raw_input_data = loader.load()
 
     assert isinstance(raw_input_data, RawInputData)
-    assert raw_input_data.input_data_path == test_dataset_dir
+    assert raw_input_data.input_data_path == test_dataset_dir / "input" / "view-configs"
     assert isinstance(raw_input_data.taxonomy, Taxonomy)
     assert isinstance(raw_input_data.view_config, ViewConfig)
     assert isinstance(raw_input_data.library, Library)

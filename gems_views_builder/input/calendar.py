@@ -28,11 +28,9 @@ class Calendar:
     dataframe: pl.LazyFrame
 
 
-def load_calendar(input_data_path: Path, calendar_id: str) -> Calendar:
-    """
-    Load and validate a calendar.csv file into a plain Calendar dataclass.
-    """
-    calendar_file_path = input_data_path / f"{calendar_id}.csv"
+def load_calendar(calendar_file_path: Path) -> Calendar:
+    """Load and validate a calendar CSV file into a plain Calendar dataclass."""
+    calendar_id = calendar_file_path.stem
     dataframe = _read_calendar_file(calendar_file_path)
     _check_calendar_columns(calendar_id=calendar_id, dataframe=dataframe)
     return Calendar(id=calendar_id, dataframe=dataframe)
@@ -45,9 +43,7 @@ def _read_calendar_file(calendar_file_path: Path) -> pl.LazyFrame:
 
 
 def _check_calendar_columns(calendar_id: str, dataframe: pl.LazyFrame) -> None:
-    df = dataframe.collect(
-        engine="streaming"
-    )  # # calendar isn't big too much,so I think we could perform safely streaming
+    df = dataframe.collect(engine="streaming")  # # calendar isn't big we could perform safely streaming
 
     actual = list(df.schema.keys())
     expected_columns = list(EXPECTED_CALENDAR_COLUMNS)

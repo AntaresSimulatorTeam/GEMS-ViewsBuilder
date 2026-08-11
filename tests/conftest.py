@@ -7,6 +7,7 @@ from typing import cast
 import pytest
 
 from gems_views_builder.common import configure_logging
+from gems_views_builder.input_layout import InputLayout
 
 RESOURCES_TEST_FILES_ROOT = Path(__file__).resolve().parent.parent / "resources"
 TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
@@ -32,7 +33,19 @@ DATASET_REQUIRED_FILES: tuple[str, ...] = (
     "input/view-configs/view_config.yml",
 )
 
-DATASET_LIBRARY_FILES: tuple[str, ...] = ("input/model-libraries/library.yml",)
+
+def layout_from_dataset(dataset_dir: Path) -> InputLayout:
+    """Build an InputLayout from a test dataset directory."""
+    input_dir = dataset_dir / "input"
+    return InputLayout(
+        libraries_dir=input_dir / "model-libraries",
+        catalogs_dir=input_dir / "catalogs",
+        system=input_dir / "system.yml",
+        calendar=input_dir / "calendar_file.csv",
+        taxonomy=input_dir / "taxonomy" / "taxonomy.yml",
+        view_config=input_dir / "view-configs" / "view_config.yml",
+        simulation_table=next((dataset_dir / "output").glob("*/simulation_table*")),
+    )
 
 
 def _dataset_dirs(test_inputs_path: Path) -> list[str]:
@@ -42,7 +55,10 @@ def _dataset_dirs(test_inputs_path: Path) -> list[str]:
 def _is_valid_dataset_dir(dataset_dir: Path) -> bool:
     if not all((dataset_dir / rel).is_file() for rel in DATASET_REQUIRED_FILES):
         return False
-    if not any((dataset_dir / rel).is_file() for rel in DATASET_LIBRARY_FILES):
+    model_libraries_dir = dataset_dir / "input" / "model-libraries"
+    if not model_libraries_dir.is_dir():
+        return False
+    if not list(model_libraries_dir.glob("*.yml")):
         return False
     catalogs_dir = dataset_dir / "input" / "catalogs"
     if not catalogs_dir.is_dir():
