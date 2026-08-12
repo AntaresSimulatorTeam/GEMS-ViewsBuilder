@@ -34,7 +34,7 @@ class Scope(ViewBuilderBasedModel):
 
 
 class Aggregation(ViewBuilderBasedModel):
-    time: TimeGranularity | None = None
+    time: TimeGranularity
     scenario: bool
     extra_locations: list[ExtraLocation] | None = None
 
@@ -61,8 +61,8 @@ class ViewConfig:
     input_data_path: Path
     calendar_id: str
     location_taxonomy_category: str
-    time_aggr_granularity: TimeGranularity | None = None
-    scenario_aggregation: bool = False
+    time_aggr_granularity: TimeGranularity
+    scenario_aggregation: bool
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)

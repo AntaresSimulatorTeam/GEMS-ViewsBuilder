@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
 from gems_views_builder.input.component import Component
-from gems_views_builder.input.view_config import ViewConfig, load_view_config
+from gems_views_builder.input.view_config import TimeGranularity, ViewConfig, load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
@@ -35,6 +35,8 @@ def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
         input_data_path=Path("."),
         calendar_id="calendar_file",
         location_taxonomy_category="balance",
+        time_aggr_granularity=TimeGranularity.HOUR,
+        scenario_aggregation=False,
         extra_locations=extra_locations or [],
     )
 

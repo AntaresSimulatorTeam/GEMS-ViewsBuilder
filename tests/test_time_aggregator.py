@@ -50,11 +50,10 @@ def make_metric(time_operator: AggregOperatorType) -> Metric:
         (TimeGranularity.DAY, datetime(2026, 1, 1, 20, 0), datetime(2026, 1, 1, 0, 0)),
         (TimeGranularity.MONTH, datetime(2026, 1, 15, 10, 0), datetime(2026, 1, 1, 0, 0)),
         (TimeGranularity.YEAR, datetime(2026, 3, 15, 10, 0), datetime(2026, 1, 1, 0, 0)),
-        (None, datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 3, 0)),
     ],
 )
 def test_date_column_function(
-    time_granularity: TimeGranularity | None,
+    time_granularity: TimeGranularity,
     input_date: datetime,
     expected_date: datetime,
 ) -> None:

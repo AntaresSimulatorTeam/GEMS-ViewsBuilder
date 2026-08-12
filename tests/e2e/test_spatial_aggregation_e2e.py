@@ -25,7 +25,7 @@ from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Metric, PropertySchema, Term
 from gems_views_builder.input.input_data import InputData
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
-from gems_views_builder.input.view_config import ViewConfig
+from gems_views_builder.input.view_config import TimeGranularity, ViewConfig
 from gems_views_builder.metric_view import MetricView
 from tests.e2e.utils import (
     build_input_data,
@@ -78,7 +78,8 @@ def make_view_config(tmp_path: Path, metrics: list[Metric]) -> ViewConfig:
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids=set(),  # keeps validate_catalogs_against_taxonomy disk-free (no catalogs to load)
-        time_aggr_granularity=None,
+        time_aggr_granularity=TimeGranularity.HOUR,
+        scenario_aggregation=False,
         extra_locations=["country", "region"],
         metric_ids=["catalog.LOAD", "catalog.PROD"],
         metrics=metrics,
@@ -120,7 +121,7 @@ def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], flo
 # loadX's location is resolved through its port connection to busA, so LOAD is reported under
 # busA's location (and busA's extra-locations), not under "loadX".
 #
-# With time_aggr_granularity=None each granular timestamp stays its own view_date.
+# With time_aggr_granularity=HOUR each granular timestamp maps to its hour bucket.
 # LOAD: terms SUM + time SUM, one value per (location, timestamp) => the granular value.
 EXPECTED_LOAD = {
     ("busA", T1): 10.0,

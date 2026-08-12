@@ -24,17 +24,12 @@ EXPECTED_DATES_BY_AGGREGATION = {
     TimeGranularity.WEEK: [datetime(2024, 12, 30)],
     TimeGranularity.MONTH: [datetime(2025, 1, 1)],
     TimeGranularity.YEAR: [datetime(2025, 1, 1)],
-    None: HOURLY_DATES,  # kept as-is
 }
 
 
-def replace_aggregation(view_config_path: Path, aggregation_time: TimeGranularity | None) -> None:
+def replace_aggregation(view_config_path: Path, aggregation_time: TimeGranularity) -> None:
     text = view_config_path.read_text()
-    replacement = (
-        "  aggregation:\n    scenario: false\n"
-        if aggregation_time is None
-        else f"  aggregation:\n    time: {aggregation_time.value}\n    scenario: false\n"
-    )
+    replacement = f"  aggregation:\n    time: {aggregation_time.value}\n    scenario: false\n"
     if AGGREGATION_BLOCK not in text:
         raise AssertionError(f"Expected aggregation block not found in {view_config_path}")
     view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
@@ -45,9 +40,9 @@ def extract_filtered_rows_from_view(view: pl.DataFrame) -> list[datetime]:
     return rows["view_date"].to_list()
 
 
-@pytest.mark.parametrize("aggregation_time", [*TimeGranularity, None])
+@pytest.mark.parametrize("aggregation_time", list(TimeGranularity))
 def test_yaml_time_aggregation_drives_full_pipeline(
-    test_files_root: Path, tmp_path: Path, aggregation_time: TimeGranularity | None
+    test_files_root: Path, tmp_path: Path, aggregation_time: TimeGranularity
 ) -> None:
     # Arrange
     dataset_dir = tmp_path / "test_3"

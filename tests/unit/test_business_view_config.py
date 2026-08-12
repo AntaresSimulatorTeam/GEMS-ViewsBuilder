@@ -107,7 +107,7 @@ view:
         load_view_config(config_path)
 
 
-def test_aggregation_time_defaults_to_none_when_missing(tmp_path: Path) -> None:
+def test_raises_when_aggregation_time_is_missing(tmp_path: Path) -> None:
     config_path = tmp_path / "view_config.yml"
     config_path.write_text(
         """
@@ -125,8 +125,8 @@ view:
 """.strip()
     )
 
-    config = load_view_config(config_path)
-    assert config.time_aggr_granularity is None
+    with pytest.raises(ValueError, match="time"):
+        load_view_config(config_path)
 
 
 def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path) -> None:
