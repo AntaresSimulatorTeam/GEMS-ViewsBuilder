@@ -19,11 +19,10 @@ class ViewBuilder:
     ) -> None:
         self.view_building_input = view_building_input
         self.metric_structure_table_builder = metric_structure_table_builder
-        # # Aggregator for step 2B
-        self.terms_aggregator = TermsAggregator(self.input_data.filtered_st)
-        # # Aggregator for step 2C
-        self.time_aggregator = TimeAggregator(self.input_data.view_config.time_aggr_granularity)
-
+        # Aggregator for step 2B
+        self.terms_aggregator = TermsAggregator(self.view_building_input.filtered_st)
+        # Aggregator for step 2C
+        self.time_aggregator = TimeAggregator(self.view_building_input.view_config.time_aggr_granularity)
         self.scenario_operator = make_scenario_operator(self.view_building_input.view_config.scenario_aggregation)
 
     def build(self) -> list[MetricView]:
