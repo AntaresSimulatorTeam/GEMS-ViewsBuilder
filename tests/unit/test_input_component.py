@@ -14,11 +14,18 @@ def make_raw_component(component_id: str, model: str, properties: dict[str, str]
     return SimpleNamespace(id=component_id, model=SimpleNamespace(id=model), properties=properties or {})
 
 
-def test_get_location_none_returns_own_id() -> None:
+def test_location_none_returns_own_component() -> None:
     component = Component(make_raw_component("area", "basic_lib.area"))
-    component.locations[(None, "balance")] = component.id
+    component.locations[(None, "balance")] = component
     assert component.is_located_at(None, "balance") is True
-    assert component.resolve_location(None, "balance") == "area"
+    location = component.location(None, "balance")
+    assert location.id == "area"
+    assert location.match_extra_locations([]) == []
+
+
+def test_match_extra_locations_reads_own_properties() -> None:
+    location = Component(make_raw_component("paris", "lib.bus", {"country": "France", "district": "IleDeFrance"}))
+    assert location.match_extra_locations(["country", "district", "city_part"]) == ["France", "IleDeFrance"]
 
 
 def test_supply_components_with_taxonomy_categories() -> None:

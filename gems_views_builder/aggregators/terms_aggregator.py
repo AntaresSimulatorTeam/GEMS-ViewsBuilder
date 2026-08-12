@@ -9,7 +9,7 @@ from shutil import rmtree
 import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
-from gems_views_builder.input.catalog import Metric, TermsOperator
+from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.metric_view import MetricView
@@ -32,7 +32,7 @@ class TermsAggregator:
 
         # # 2B group by
         logging.info(f"[{metric.id}] Aggregating terms with operator {metric.terms_operator.value}")
-        value_agg = pl.col("value").sum() if metric.terms_operator == TermsOperator.SUM else pl.col("value").mean()
+        value_agg = pl.col("value").sum() if metric.terms_operator == AggregOperatorType.SUM else pl.col("value").mean()
         metric_view = (
             structured_simulation_table.with_columns(pl.col("scenario_index").alias("scenario_id"))
             .group_by(

@@ -9,31 +9,29 @@ from gems_views_builder.common import (
     configure_logging,
 )
 from gems_views_builder.input.component import (
-    build_component_port_connections,
     create_components,
+    enrich_components,
     group_components_by_taxon,
     supply_components_with_locations,
-    supply_components_with_port_connections,
-    supply_components_with_taxonomy_categories,
 )
+from gems_views_builder.input.input_data import InputData
 from gems_views_builder.loader import Loader
+from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
-def run_view_building_process(input_dir: Path, view_sinker: ViewSinker) -> None:
-    """Run the full pipeline and accumulate the results to the results directory."""
-
-    # # Load pipeline input
+def load_and_validate_input_data(input_dir: Path) -> InputData:
     input_data = Loader(input_dir).load()
+    validate_catalogs_against_taxonomy(input_dir, input_data.view_config.catalog_ids, input_data.taxonomy)
+    return input_data
 
-    # # Create GVB components from system raw components
+
+def build_metric_views(input_data: InputData) -> list[MetricView]:
     components = create_components(input_data.system.components)
-    supply_components_with_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
-    component_port_connections = build_component_port_connections(input_data.system.connections)
-    supply_components_with_port_connections(components, component_port_connections)
+    enrich_components(components, input_data)
     components_by_taxon = group_components_by_taxon(components)
     supply_components_with_locations(
         components_by_taxon,
@@ -41,15 +39,15 @@ def run_view_building_process(input_dir: Path, view_sinker: ViewSinker) -> None:
         input_data.view_config.location_taxonomy_category,
     )
 
-    # # Only one instance of MetricStructureTableBuilder is needed
     metric_structure_table_builder = MetricStructureTableBuilder(
-        input_data.view_config.location_taxonomy_category,
+        input_data.view_config,
         components_by_taxon,
     )
-    # # Validate catalogs against taxonomy
-    validate_catalogs_against_taxonomy(input_dir, input_data.view_config.catalog_ids, input_data.taxonomy)
+    return ViewBuilder(input_data, metric_structure_table_builder).build()
 
-    metric_views = ViewBuilder(input_data, metric_structure_table_builder).build()
+
+def run_view_building_process(input_data: InputData, view_sinker: ViewSinker) -> None:
+    metric_views = build_metric_views(input_data)
     accumulate_on_disk(metric_views, view_sinker)
 
 
@@ -69,7 +67,8 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         StudyLayoutValidator(args.input_dir).validate()
-        run_view_building_process(args.input_dir, view_sinker)
+        input_data = load_and_validate_input_data(args.input_dir)
+        run_view_building_process(input_data, view_sinker)
     except Exception:
         logging.exception("View building failed")
         return 1

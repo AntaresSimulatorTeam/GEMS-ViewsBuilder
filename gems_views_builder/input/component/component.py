@@ -23,12 +23,9 @@ class Component:
     taxonomy_category: str | None = None
     # Connections holding the peer components connected on each port
     connections: ConnectionsThroughPort = field(default_factory=ConnectionsThroughPort)
-    # (location_port, taxonomy_category) -> resolved location component id.
-    # Populated by ``supply_components_with_locations``:
-    # - location_port set: unique peer on that port for the peer's taxonomy category;
-    # - location_port None: the component itself for the view's location taxonomy category.
-    # Absence of a key means no location can be determined for that (port, category).
-    locations: dict[tuple[str | None, str], str] = field(default_factory=dict)
+    # Where this component is located for a given (location_port, taxonomy_category).
+    # Missing key: no location for that port/category.
+    locations: dict[tuple[str | None, str], "Component"] = field(default_factory=dict)
 
     @property
     def id(self) -> str:
@@ -56,9 +53,12 @@ class Component:
             )
         return located
 
-    def resolve_location(self, location_port: str | None, location_taxonomy_category: str) -> str:
-        """Return the resolved location, previously checked via ``is_located_at``."""
+    def location(self, location_port: str | None, location_taxonomy_category: str) -> "Component":
         return self.locations[(location_port, location_taxonomy_category)]
+
+    def match_extra_locations(self, extra_locations: list[str]) -> list[str]:
+        """Return property values for configured extra-location keys present on this component."""
+        return [self.properties[location] for location in extra_locations if location in self.properties]
 
     def format_breakdown_properties(self, breakdown: list[PropertySchema] | None) -> str:
         if not breakdown:

@@ -7,23 +7,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
-import polars as pl
-
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
 PARQUET_ROW_GROUP_SIZE = 64_000
-
-METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
-    {
-        "metric_id": pl.Utf8,
-        "component": pl.Utf8,
-        "metric_location": pl.Utf8,
-        "breakdown_properties": pl.Utf8,
-        "output": pl.Utf8,
-        "weight_output_id": pl.Utf8,
-    }
-)
-
 
 LOG_DIR = Path.cwd() / "logs"
 

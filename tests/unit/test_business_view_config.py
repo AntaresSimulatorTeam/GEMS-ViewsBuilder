@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder import TimeAggregation, ViewConfig, load_view_config
+from gems_views_builder import TimeGranularity, ViewConfig, load_view_config
 
 
 def test_loads(test_dataset_dir: Path) -> None:
@@ -54,7 +54,7 @@ def test_known_values(test_dataset_dir: Path) -> None:
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.time_aggregation == TimeAggregation.HOUR
+    assert config.time_aggr_granularity == TimeGranularity.HOUR
 
 
 def test_scenario_aggregation(test_dataset_dir: Path) -> None:
@@ -85,6 +85,26 @@ view:
 
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
         config.fetch_metrics({})
+
+
+def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
+    config_path = tmp_path / "view_config.yml"
+    config_path.write_text(
+        """
+view:
+  id: missing_aggregation
+  scope:
+    - taxonomy-category: balance
+    - calendar: calendar_file
+  catalog:
+    - id: catalog
+  metrics:
+    - id: catalog.LOAD
+""".strip()
+    )
+
+    with pytest.raises(ValueError, match="aggregation"):
+        load_view_config(config_path)
 
 
 def test_raises_when_aggregation_time_is_missing(tmp_path: Path) -> None:

@@ -9,11 +9,10 @@ import polars as pl
 import pytest
 
 from gems_views_builder import (
+    AggregOperatorType,
     Metric,
     PropertySchema,
     Term,
-    TermsOperator,
-    TimeOperator,
     load_catalog,
     load_library,
     load_taxonomy,
@@ -67,6 +66,7 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
         "taxonomy": taxonomy,
         "library": library,
         "catalog": catalog,
+        "view_config": view_config,
         "location_taxonomy_category": view_config.location_taxonomy_category,
         "components_by_taxon": components_by_taxon,
         "components_by_id": {
@@ -78,7 +78,7 @@ def test_3_components(test_files_root: Path) -> dict[str, Any]:
 def build(metric_id: str, components: dict[str, Any]) -> pl.DataFrame:
     metric = components["catalog"].get_metric(metric_id)
     table = MetricStructureTableBuilder(
-        components["location_taxonomy_category"],
+        components["view_config"],
         components["components_by_taxon"],
     ).build(metric)
     return table.dataframe.collect()
@@ -151,10 +151,8 @@ def test_prod_structure_locations(test_3_components: dict[str, Any]) -> None:
         comp_rows = df.filter(pl.col("component") == comp)
         if len(comp_rows) == 0:
             continue
-        resolved = components_by_id[comp].resolve_location(
-            "p_balance_port", test_3_components["location_taxonomy_category"]
-        )
-        assert comp_rows["metric_location"].to_list() == [resolved]
+        location = components_by_id[comp].location("p_balance_port", test_3_components["location_taxonomy_category"])
+        assert comp_rows["metric_location"].to_list() == [location.id]
 
 
 def test_prod_structure_output(test_3_components: dict[str, Any]) -> None:
@@ -237,11 +235,11 @@ def test_single_port_multiple_peers_of_other_categories_are_skipped_not_raised(
                 location_port="p_balance_port",
             )
         ],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.SUM,
+        terms_operator=AggregOperatorType.SUM,
+        time_operator=AggregOperatorType.SUM,
     )
     builder = MetricStructureTableBuilder(
-        test_3_components["location_taxonomy_category"],
+        test_3_components["view_config"],
         test_3_components["components_by_taxon"],
     )
 
@@ -267,8 +265,8 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity() -> None:
     metric = Metric(
         id="AMBIGUITY_TEST",
         terms=[Term(taxonomy_category="cat", output_id="o", location_port="p0_port")],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.SUM,
+        terms_operator=AggregOperatorType.SUM,
+        time_operator=AggregOperatorType.SUM,
     )
 
     # Act / Assert
@@ -276,18 +274,16 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity() -> None:
         supply_components_with_locations(components_by_taxon, [metric], "cat")
 
 
-def test_resolve_location_returns_peer(test_3_components: dict[str, Any]) -> None:
-    """A location_port resolves to its connected peer."""
+def test_location_returns_peer_component(test_3_components: dict[str, Any]) -> None:
+    """A location_port resolves to its connected peer component."""
     # Arrange
     components_by_id = test_3_components["components_by_id"]
 
     # Act
-    location = components_by_id["link_link_AB"].resolve_location(
-        "p0_port", test_3_components["location_taxonomy_category"]
-    )
+    location = components_by_id["link_link_AB"].location("p0_port", test_3_components["location_taxonomy_category"])
 
     # Assert
-    assert location == "busA"
+    assert location.id == "busA"
 
 
 def test_none_location_port_resolves_to_the_component_itself(test_3_components: dict[str, Any]) -> None:
@@ -307,12 +303,12 @@ def test_none_location_port_resolves_to_the_component_itself(test_3_components: 
                 location_port=None,
             )
         ],
-        terms_operator=TermsOperator.SUM,
-        time_operator=TimeOperator.SUM,
+        terms_operator=AggregOperatorType.SUM,
+        time_operator=AggregOperatorType.SUM,
     )
     supply_components_with_locations(test_3_components["components_by_taxon"], [metric], location_taxonomy_category)
     builder = MetricStructureTableBuilder(
-        location_taxonomy_category,
+        test_3_components["view_config"],
         test_3_components["components_by_taxon"],
     )
 

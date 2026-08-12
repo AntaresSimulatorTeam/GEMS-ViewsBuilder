@@ -17,7 +17,7 @@ from gems_views_builder import (
     load_catalog,
     load_library,
 )
-from gems_views_builder.__main__ import run_view_building_process
+from gems_views_builder.__main__ import load_and_validate_input_data, run_view_building_process
 from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
@@ -44,7 +44,7 @@ def property_order_workspace(test_files_root: Path, tmp_path: Path) -> tuple[Pat
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     shutil.copytree(src, dst)
-    run_view_building_process(dst, ParquetViewSinker(results_dir))
+    run_view_building_process(load_and_validate_input_data(dst), ParquetViewSinker(results_dir))
     view = pl.read_parquet(next(results_dir.glob("view*.parquet")))
     return dst, view
 
@@ -121,7 +121,7 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     supply_components_with_locations(components_by_taxon, [metric], view_config.location_taxonomy_category)
 
     table = MetricStructureTableBuilder(
-        view_config.location_taxonomy_category,
+        view_config,
         components_by_taxon,
     ).build(metric)
     df = table.dataframe.collect()

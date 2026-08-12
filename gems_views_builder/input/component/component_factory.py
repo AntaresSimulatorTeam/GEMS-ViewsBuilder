@@ -1,9 +1,11 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from gems_craft.study import Component as GemsPyComponent  # type: ignore
 
@@ -11,9 +13,21 @@ from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component.component import Component
 from gems_views_builder.input.component.connection import ConnectionsThroughPort
 
+if TYPE_CHECKING:
+    from gems_views_builder.input.input_data import InputData
+
 
 def create_components(gemspy_components: list[GemsPyComponent]) -> list[Component]:
     return [Component(component) for component in gemspy_components]
+
+
+def enrich_components(components: list[Component], input_data: InputData) -> None:
+    """
+    Attach taxonomy categories and port connections to components.
+    """
+    supply_components_with_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
+    component_port_connections = build_component_port_connections(input_data.system.connections)
+    supply_components_with_port_connections(components, component_port_connections)
 
 
 def supply_components_with_taxonomy_categories(
@@ -107,28 +121,31 @@ def supply_components_with_locations(
     - ``supply_components_with_taxonomy_categories``
     - ``supply_components_with_port_connections``
 
-    For each metric term and each component in that term's taxonomy category:
+    For each metric term and each component in that term's taxonomy category,
+    resolve ``(location_port, location_taxonomy_category)`` once per component
+    (later metrics that reuse the same term shape are skipped):
 
     - ``location_port is None``: the component is its own location; store
-      ``(None, location_taxonomy_category) -> component.id``.
-    - ``location_port`` is set: look at peers connected on that port, group them by
-      *peer* taxonomy category, then:
-      - exactly one peer of a category → store ``(location_port, peer_category) -> peer.id``;
-      - more than one peer of the same category → raise (ambiguous location).
+      ``(None, location_taxonomy_category) -> component``.
+    - ``location_port`` is set: require exactly one peer on that port belonging to
+      ``location_taxonomy_category``, then store that peer component; more than one raises.
 
-    Later read via ``Component.is_located_at`` / ``Component.resolve_location``, which both
-    look up ``(location_port, location_taxonomy_category)`` in ``Component.locations``.
+    Later read via ``Component.is_located_at`` / ``Component.location``, which look up
+    ``(location_port, location_taxonomy_category)`` in ``Component.locations``.
     """
     for metric in metrics:
         for term in metric.terms:
             for c in components_by_taxon[term.taxonomy_category]:
+                location_key = (term.location_port, location_taxonomy_category)
+                if location_key in c.locations:
+                    continue
                 if term.location_port is None:
                     if term.taxonomy_category != location_taxonomy_category:
                         raise ValueError(
                             f"Component {c.id!r} has taxonomy category {c.taxonomy_category!r}, "
                             f"expected {location_taxonomy_category!r}"
                         )
-                    c.locations[(None, location_taxonomy_category)] = c.id
+                    c.locations[location_key] = c
                 else:
                     supply_component_with_location(c, term.location_port, location_taxonomy_category)
 
@@ -141,4 +158,4 @@ def supply_component_with_location(component: Component, location_port: str, loc
         raise ValueError(
             f"Component {component.id!r} port {location_port} has peer {peers[0].id!r} with taxonomy category {peers[0].taxonomy_category!r}, expected {location_taxonomy_category!r}"
         )
-    component.locations[(location_port, location_taxonomy_category)] = peers[0].id
+    component.locations[(location_port, location_taxonomy_category)] = peers[0]

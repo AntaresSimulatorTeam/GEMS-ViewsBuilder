@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder import Metric, PropertySchema, Term, TermsOperator, TimeOperator, load_catalog
+from gems_views_builder import AggregOperatorType, Metric, PropertySchema, Term, load_catalog
 from gems_views_builder.input.catalog import MetricData, TermData
 
 
@@ -24,8 +24,8 @@ def test_catalog_metrics_are_typed(test_dataset_dir: Path) -> None:
     for metric in catalog.metrics.values():
         assert isinstance(metric, Metric)
         assert isinstance(metric.id, str)
-        assert isinstance(metric.terms_operator, TermsOperator)
-        assert isinstance(metric.time_operator, TimeOperator)
+        assert isinstance(metric.terms_operator, AggregOperatorType)
+        assert isinstance(metric.time_operator, AggregOperatorType)
         assert len(metric.terms) > 0
 
 
@@ -51,8 +51,8 @@ def test_metric_filter_property_requires_value() -> None:
         MetricData(
             id="X",
             terms=[],
-            terms_operator=TermsOperator.SUM,
-            time_operator=TimeOperator.SUM,
+            terms_operator=AggregOperatorType.SUM,
+            time_operator=AggregOperatorType.SUM,
             filter=PropertySchema(key="technology"),
         )
 
@@ -75,5 +75,5 @@ def test_term_location_port_blank_string_is_rejected() -> None:
 def test_catalog_operators_valid_values(test_dataset_dir: Path) -> None:
     catalog = load_catalog(sorted((test_dataset_dir / "catalogs").glob("*.yml"))[0])
     for metric in catalog.metrics.values():
-        assert metric.terms_operator in (TermsOperator.SUM, TermsOperator.AVG)
-        assert metric.time_operator in (TimeOperator.SUM, TimeOperator.AVG)
+        assert metric.terms_operator in (AggregOperatorType.SUM, AggregOperatorType.AVG)
+        assert metric.time_operator in (AggregOperatorType.SUM, AggregOperatorType.AVG)

@@ -20,7 +20,7 @@ class ViewBuilder:
         # # Aggregator for step 2B
         self.terms_aggregator = TermsAggregator(self.input_data.filtered_st)
         # # Aggregator for step 2C
-        self.time_aggregator = TimeAggregator(self.input_data.view_config.time_aggregation)
+        self.time_aggregator = TimeAggregator(self.input_data.view_config.time_aggr_granularity)
 
         self.scenario_operator = make_scenario_operator(self.input_data.view_config.scenario_aggregation)
 
