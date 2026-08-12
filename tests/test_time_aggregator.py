@@ -19,11 +19,6 @@ from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView
 
 
-def apply_aggregation_operator(values: list[float], time_operator: AggregOperatorType) -> float:
-    df = pl.DataFrame({"granular_metric_value": values})
-    return float(df.select(aggregation_operator(time_operator)).item())
-
-
 def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> MetricView:
     """Granular metric-view parquet (output of the terms aggregation step)."""
     n = len(rows)
@@ -58,7 +53,7 @@ def make_metric(time_operator: AggregOperatorType) -> Metric:
         (None, datetime(2026, 1, 1, 3, 0), datetime(2026, 1, 1, 3, 0)),
     ],
 )
-def test_date_column_into_time_granularity_function(
+def test_date_column_function(
     time_granularity: TimeGranularity | None,
     input_date: datetime,
     expected_date: datetime,
@@ -74,14 +69,21 @@ def test_date_column_into_time_granularity_function(
 
 
 @pytest.mark.parametrize(
-    ("time_operator", "values", "expected"),
+    ("agg_operator", "values", "expected"),
     [
         (AggregOperatorType.SUM, [10.0, 20.0], 30.0),
         (AggregOperatorType.AVG, [10.0, 20.0], 15.0),
     ],
 )
-def test_time_aggregation_expression(time_operator: AggregOperatorType, values: list[float], expected: float) -> None:
-    assert apply_aggregation_operator(values, time_operator) == approx(expected)
+def test_time_aggregation(agg_operator: AggregOperatorType, values: list[float], expected: float) -> None:
+    # Arrange
+    df = pl.DataFrame({"granular_metric_value": values})
+
+    # Act
+    time_aggregated_col = aggregation_operator(agg_operator)
+
+    # Assert
+    assert float(df.select(time_aggregated_col).item()) == approx(expected)
 
 
 def test_truncation_groups_by_window(tmp_path: Path) -> None:
