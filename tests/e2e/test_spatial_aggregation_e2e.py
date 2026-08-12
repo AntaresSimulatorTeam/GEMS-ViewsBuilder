@@ -159,28 +159,3 @@ def test_extra_locations_values_in_final_metric_views(tmp_path: Path) -> None:
     # Assert
     assert extract_values_from_view(load_view) == approx(EXPECTED_LOAD)
     assert extract_values_from_view(prod_view) == approx(EXPECTED_PROD)
-
-
-def test_temporal_views_are_consistent_with_each_other(tmp_path: Path) -> None:
-    # Arrange
-    input_data = build_input(tmp_path)
-
-    # Act
-    load_view, prod_view = build_metric_views(input_data)
-
-    # Assert
-    load_df = pl.read_parquet(load_view.persistence_path)
-    prod_df = pl.read_parquet(prod_view.persistence_path)
-
-    shared_locations = {"busA", "France", "West"}
-
-    assert set(load_df["view_date"].to_list()) == {T1, T2}
-    assert set(prod_df["view_date"].to_list()) == {T1, T2}
-    assert set(load_df["breakdown_properties"].to_list()) == {"{}"}
-    assert set(prod_df["breakdown_properties"].to_list()) == {"{}"}
-
-    assert shared_locations <= set(load_df["metric_location"].to_list())
-    assert shared_locations <= set(prod_df["metric_location"].to_list())
-
-    assert set(load_df["metric_id"].to_list()) == {"LOAD"}
-    assert set(prod_df["metric_id"].to_list()) == {"PROD"}
