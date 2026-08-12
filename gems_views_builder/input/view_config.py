@@ -61,7 +61,7 @@ class ViewConfig:
     input_data_path: Path
     calendar_id: str
     location_taxonomy_category: str
-    time_aggregation: TimeGranularity | None = None
+    time_aggr_granularity: TimeGranularity | None = None
     scenario_aggregation: bool = False
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
@@ -120,7 +120,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalog},
-        time_aggregation=raw_view_config.aggregation.time,
+        time_aggr_granularity=raw_view_config.aggregation.time,
         scenario_aggregation=raw_view_config.aggregation.scenario,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.aggregation.extra_locations or [])],

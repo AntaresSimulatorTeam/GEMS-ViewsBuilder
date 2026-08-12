@@ -54,7 +54,7 @@ def test_known_values(test_dataset_dir: Path) -> None:
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.time_aggregation == TimeGranularity.HOUR
+    assert config.time_aggr_granularity == TimeGranularity.HOUR
 
 
 def test_scenario_aggregation(test_dataset_dir: Path) -> None:
@@ -126,7 +126,7 @@ view:
     )
 
     config = load_view_config(config_path)
-    assert config.time_aggregation is None
+    assert config.time_aggr_granularity is None
 
 
 def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path) -> None:

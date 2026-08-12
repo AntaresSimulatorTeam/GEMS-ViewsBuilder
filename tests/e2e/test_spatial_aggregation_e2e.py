@@ -78,7 +78,7 @@ def make_view_config(tmp_path: Path, metrics: list[Metric]) -> ViewConfig:
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids=set(),  # keeps validate_catalogs_against_taxonomy disk-free (no catalogs to load)
-        time_aggregation=None,
+        time_aggr_granularity=None,
         extra_locations=["country", "region"],
         metric_ids=["catalog.LOAD", "catalog.PROD"],
         metrics=metrics,
@@ -120,7 +120,7 @@ def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], flo
 # loadX's location is resolved through its port connection to busA, so LOAD is reported under
 # busA's location (and busA's extra-locations), not under "loadX".
 #
-# With time_aggregation=None each granular timestamp stays its own view_date.
+# With time_aggr_granularity=None each granular timestamp stays its own view_date.
 # LOAD: terms SUM + time SUM, one value per (location, timestamp) => the granular value.
 EXPECTED_LOAD = {
     ("busA", T1): 10.0,
