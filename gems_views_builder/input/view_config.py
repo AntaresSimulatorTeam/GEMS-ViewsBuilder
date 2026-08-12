@@ -4,7 +4,6 @@
 """ViewConfig models and lazy loaders for view_config.yml."""
 
 import logging
-from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -69,14 +68,8 @@ class ViewConfig:
     metrics: list[Metric] = field(default_factory=list)
 
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
-        metric_ids_by_catalog = self._group_metrics_by_catalog()
-        for catalog_id in metric_ids_by_catalog:
-            for metric_id in metric_ids_by_catalog[catalog_id]:
-                self.metrics.append(catalogs[catalog_id].get_metric(metric_id))
-
-    def _group_metrics_by_catalog(self) -> dict[str, set[str]]:
-        logging.debug(f"Grouping {len(self.metric_ids)} metric id(s) by catalog")
-        metric_ids_by_catalog: dict[str, set[str]] = defaultdict(set)
+        """Resolve metric refs in view-config order into ``self.metrics``."""
+        logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
         for metric_ref in self.metric_ids:
             if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
                 raise ValueError(
@@ -86,9 +79,8 @@ class ViewConfig:
             catalog_id, metric_id = metric_ref.split(".", 1)
             if catalog_id not in self.catalog_ids:
                 raise ValueError(f"Catalog {catalog_id!r} not found in view config")
-            metric_ids_by_catalog[catalog_id].add(metric_id)
             logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
-        return metric_ids_by_catalog
+            self.metrics.append(catalogs[catalog_id].get_metric(metric_id))
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics

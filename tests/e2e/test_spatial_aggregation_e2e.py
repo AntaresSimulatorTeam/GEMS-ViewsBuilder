@@ -22,18 +22,19 @@ import polars as pl
 from pytest import approx
 
 from gems_views_builder.__main__ import build_metric_views
-from gems_views_builder.input.catalog import AggregOperatorType, Metric, PropertySchema, Term
-from gems_views_builder.input.input_data import InputData
-from gems_views_builder.input.simulation_table import FilteredSimulationTable
+from gems_views_builder.input.calendar import Calendar
+from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
+from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.simulation_table import SimulationTable
 from gems_views_builder.input.view_config import TimeGranularity, ViewConfig
 from gems_views_builder.metric_view import MetricView
 from tests.e2e.utils import (
-    build_input_data,
+    build_raw_input_data,
     make_raw_component,
     make_raw_connection,
 )
 from tests.e2e.utils import (
-    make_filtered_simulation_table as build_filtered_simulation_table,
+    make_simulation_table_and_calendar as build_simulation_table_and_calendar,
 )
 
 TAXONOMY_CATEGORY_BY_MODEL = {"bus": "balance", "load": "load"}
@@ -71,22 +72,33 @@ def make_metrics() -> list[Metric]:
     return [load_metric, prod_metric]
 
 
-def make_view_config(tmp_path: Path, metrics: list[Metric]) -> ViewConfig:
+def make_view_config(tmp_path: Path) -> ViewConfig:
     return ViewConfig(
         id="view_area",
         input_data_path=tmp_path,
         calendar_id="calendar",
         location_taxonomy_category="balance",
-        catalog_ids=set(),  # keeps validate_catalogs_against_taxonomy disk-free (no catalogs to load)
+        catalog_ids={"catalog"},
         time_aggr_granularity=TimeGranularity.HOUR,
         scenario_aggregation=False,
         extra_locations=["country", "region"],
         metric_ids=["catalog.LOAD", "catalog.PROD"],
-        metrics=metrics,
     )
 
 
-def make_filtered_simulation_table(tmp_path: Path) -> FilteredSimulationTable:
+def make_catalogs(metrics: list[Metric]) -> dict[str, Catalog]:
+    load_metric, prod_metric = metrics
+    return {
+        "catalog": Catalog(
+            id="catalog",
+            taxonomy="taxonomy",
+            location_taxonomy_category="balance",
+            metrics={"LOAD": load_metric, "PROD": prod_metric},
+        )
+    }
+
+
+def make_simulation_table_and_calendar(tmp_path: Path) -> tuple[SimulationTable, Calendar]:
     rows = [
         ("loadX", "active_load", 0, T1, 10.0),
         ("loadX", "active_load", 0, T2, 20.0),
@@ -97,15 +109,24 @@ def make_filtered_simulation_table(tmp_path: Path) -> FilteredSimulationTable:
         ("busC", "active_power", 0, T1, 999.0),  # filtering out by country=France
         ("busC", "active_power", 0, T2, 999.0),
     ]
-    return build_filtered_simulation_table(rows, tmp_path)
+    return build_simulation_table_and_calendar(rows, tmp_path)
 
 
-def build_input(tmp_path: Path) -> InputData:
+def build_input(tmp_path: Path) -> RawInputData:
     system = make_system()
     metrics = make_metrics()
-    view_config = make_view_config(tmp_path, metrics)
-    filtered_st = make_filtered_simulation_table(tmp_path)
-    return build_input_data(tmp_path, system, TAXONOMY_CATEGORY_BY_MODEL, view_config, filtered_st)
+    view_config = make_view_config(tmp_path)
+    catalogs = make_catalogs(metrics)
+    simulation_table, calendar = make_simulation_table_and_calendar(tmp_path)
+    return build_raw_input_data(
+        tmp_path,
+        system,
+        TAXONOMY_CATEGORY_BY_MODEL,
+        view_config,
+        simulation_table,
+        calendar,
+        catalogs=catalogs,
+    )
 
 
 def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], float]:
