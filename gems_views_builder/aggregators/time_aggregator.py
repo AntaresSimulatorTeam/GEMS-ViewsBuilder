@@ -45,7 +45,7 @@ class TimeAggregator:
         logging.info(f"[{metric.id}] Aggregating temporally with operator {metric.time_operator.value}")
         lazy_metric_view = pl.scan_parquet(metric_view.persistence_path)
 
-        aggreg_op = aggregation_operator(metric.time_operator)
+        aggreg_op = aggregate_into_column(metric.time_operator, "granular_metric_value")
         date_column = date_column_into_time_granularity(self._time_granularity)
 
         view = (
@@ -93,9 +93,7 @@ def date_column_into_time_granularity(time_granularity: TimeGranularity | None) 
     return pl.col("granular_date").alias("view_date")
 
 
-def aggregation_operator(time_operator: AggregOperatorType) -> pl.Expr:
-    return (
-        pl.col("granular_metric_value").sum()
-        if time_operator == AggregOperatorType.SUM
-        else pl.col("granular_metric_value").mean()
-    ).alias("metric_value")
+def aggregate_into_column(agg_operator: AggregOperatorType, column_name: str) -> pl.Expr:
+    return (pl.col(column_name).sum() if agg_operator == AggregOperatorType.SUM else pl.col(column_name).mean()).alias(
+        "metric_value"
+    )

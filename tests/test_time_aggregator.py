@@ -11,7 +11,7 @@ from pytest import approx
 
 from gems_views_builder.aggregators.time_aggregator import (
     TimeAggregator,
-    aggregation_operator,
+    aggregate_into_column,
     date_column_into_time_granularity,
 )
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
@@ -80,7 +80,7 @@ def test_time_aggregation(agg_operator: AggregOperatorType, values: list[float],
     df = pl.DataFrame({"granular_metric_value": values})
 
     # Act
-    time_aggregated_col = aggregation_operator(agg_operator)
+    time_aggregated_col = aggregate_into_column(agg_operator, "granular_metric_value")
 
     # Assert
     assert float(df.select(time_aggregated_col).item()) == approx(expected)
