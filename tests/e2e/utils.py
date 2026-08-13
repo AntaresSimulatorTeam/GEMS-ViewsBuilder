@@ -61,7 +61,7 @@ def make_simulation_table_and_calendar(
     )
     calendar = Calendar(
         id="calendar",
-        dataframe=pl.DataFrame(
+        calendar=pl.DataFrame(
             {
                 "absolute_time_index": absolute_time_index,
                 "block": block,

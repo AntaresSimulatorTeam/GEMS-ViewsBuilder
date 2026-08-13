@@ -25,7 +25,7 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     # Time-dependent rows must have (absolute_time_index, block) in the calendar.
     # Non-time-dependent rows (null absolute_time_index) are passed through as-is.
     time_dep = filtered.filter(pl.col("absolute_time_index").is_not_null())
-    calendar_df = calendar.dataframe.collect()
+    calendar_df = calendar.calendar.collect()
     in_calendar = time_dep.join(calendar_df, on=["absolute_time_index", "block"], how="semi")
     assert in_calendar.height == time_dep.height, (
         "Every filtered row must have (absolute_time_index, block) in the calendar"
@@ -33,7 +33,7 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
 
     # Total count = time-dep (inner join + block match) + non-time-dep (null index)
     time_dep_count = (
-        simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
+        simulation_table.dataframe.join(calendar.calendar, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
         .collect(engine="streaming")
         .height
@@ -83,7 +83,7 @@ def test_filter_simulation_table_writes_parquet(
     assert filtered_table.file_path.exists(), "Output parquet should be created"
     written = filtered_table.dataframe.collect()
     expected = (
-        simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
+        simulation_table.dataframe.join(calendar.calendar, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
         .drop("block_right")
         .collect(engine="streaming")
