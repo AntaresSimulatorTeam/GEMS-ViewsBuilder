@@ -38,26 +38,22 @@ def _check_calendar_columns(calendar_id: str, calendar: pl.LazyFrame) -> None:
     if calendar_df.is_empty():
         return
 
-    _check_for_missing_or_unexpected_columns(calendar_id=calendar_id, calendar_df=calendar_df)
+    _check_for_missing_columns(actual_column_titles=set(calendar_df.schema.keys()), calendar_id=calendar_id)
+    _check_for_unexpected_columns(actual_column_titles=set(calendar_df.schema.keys()), calendar_id=calendar_id)
     _check_time_indices_conformity(calendar_id=calendar_id, calendar_df=calendar_df)
     _check_dates_conformity(calendar_id=calendar_id, calendar_df=calendar_df)
 
 
-def _check_for_missing_or_unexpected_columns(calendar_id: str, calendar_df: pl.DataFrame) -> None:
-    actual_column_titles = calendar_df.schema.keys()
-    if actual_column_titles != EXPECTED_CALENDAR_COLUMNS:
-        missing = EXPECTED_CALENDAR_COLUMNS - actual_column_titles
-        unexpected = actual_column_titles - EXPECTED_CALENDAR_COLUMNS
-        parts: list[str] = []
-        if missing:
-            parts.append(f"missing columns: {missing}")
-        if unexpected:
-            parts.append(f"unexpected columns: {unexpected}")
-        if not missing and not unexpected:
-            parts.append(f"wrong column order: expected {EXPECTED_CALENDAR_COLUMNS}, got {actual_column_titles}")
-        else:
-            parts.append(f"actual columns: {actual_column_titles}")
-        raise ValueError(f"Calendar '{calendar_id}' has invalid columns: {'; '.join(parts)}")
+def _check_for_missing_columns(actual_column_titles: set[str], calendar_id: str) -> None:
+    missing_columns = EXPECTED_CALENDAR_COLUMNS - actual_column_titles
+    if missing_columns:
+        raise ValueError(f"Calendar '{calendar_id}' is missing columns: {missing_columns}")
+
+
+def _check_for_unexpected_columns(actual_column_titles: set[str], calendar_id: str) -> None:
+    unexpected_cols = EXPECTED_CALENDAR_COLUMNS - actual_column_titles
+    if unexpected_cols:
+        raise ValueError(f"Calendar '{calendar_id}' has unexpected columns: {unexpected_cols}")
 
 
 def _check_time_indices_conformity(calendar_id: str, calendar_df: pl.DataFrame) -> None:
