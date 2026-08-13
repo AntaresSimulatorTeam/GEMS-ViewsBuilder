@@ -15,7 +15,7 @@ from gems_views_builder.input.component import (
 )
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input_data import create_view_building_input
-from gems_views_builder.input_paths import InputPaths, create_input_paths_from_args
+from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
@@ -71,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
         return error
 
     try:
-        input_paths = create_input_paths_from_args(args)
+        input_paths = InputPaths(args)
         InputPathsValidator(input_paths).validate()
         view_sinker = ViewSinkerFactory(args.output, args.output_format).make()
         run_view_building_process(input_paths, view_sinker)

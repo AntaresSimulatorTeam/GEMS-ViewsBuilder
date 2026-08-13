@@ -1,6 +1,7 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
+from argparse import Namespace
 from pathlib import Path
 
 from gems_views_builder.input.calendar import Calendar
@@ -22,13 +23,15 @@ def test_loader_init_has_no_io() -> None:
     """
     missing = Path("/this/path/should/not/exist")
     paths = InputPaths(
-        libraries_dir=missing / "libraries",
-        catalogs_dir=missing / "catalogs",
-        system=missing / "system.yml",
-        calendar=missing / "calendar.csv",
-        taxonomy=missing / "taxonomy.yml",
-        view_config=missing / "view_config.yml",
-        simulation_table=missing / "simulation_table.parquet",
+        Namespace(
+            libraries_dir=missing / "libraries",
+            catalogs_dir=missing / "catalogs",
+            system=missing / "system.yml",
+            calendar=missing / "calendar.csv",
+            taxonomy=missing / "taxonomy.yml",
+            view_config=missing / "view_config.yml",
+            simulation_table=missing / "simulation_table.parquet",
+        )
     )
     loader = Loader(paths)
     assert loader.input_paths is paths

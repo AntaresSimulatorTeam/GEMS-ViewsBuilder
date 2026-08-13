@@ -13,33 +13,20 @@
 """Explicit on-disk paths consumed by GEMS-ViewsBuilder (provided directly via CLI)."""
 
 from argparse import Namespace
-from dataclasses import dataclass
 from pathlib import Path
 
 
-@dataclass
 class InputPaths:
-    libraries_dir: Path
-    catalogs_dir: Path
-    system: Path
-    calendar: Path
-    taxonomy: Path
-    view_config: Path
-    simulation_table: Path
+    def __init__(self, args: Namespace) -> None:
+        self.libraries_dir: Path = Path(args.libraries_dir)
+        self.catalogs_dir: Path = Path(args.catalogs_dir)
+        self.system: Path = Path(args.system)
+        self.calendar: Path = Path(args.calendar)
+        self.taxonomy: Path = Path(args.taxonomy)
+        self.view_config: Path = Path(args.view_config)
+        self.simulation_table: Path = Path(args.simulation_table)
 
     @property
     def library_file(self) -> Path:
         """Single library file currently supported under libraries_dir."""
         return self.libraries_dir / "library.yml"
-
-
-def create_input_paths_from_args(args: Namespace) -> InputPaths:
-    return InputPaths(
-        libraries_dir=args.libraries_dir,
-        catalogs_dir=args.catalogs_dir,
-        system=args.system,
-        calendar=args.calendar,
-        taxonomy=args.taxonomy,
-        view_config=args.view_config,
-        simulation_table=args.simulation_table,
-    )

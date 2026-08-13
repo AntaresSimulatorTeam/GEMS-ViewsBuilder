@@ -1,6 +1,7 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
+from argparse import Namespace
 from pathlib import Path
 from typing import cast
 
@@ -37,13 +38,15 @@ DATASET_REQUIRED_FILES: tuple[str, ...] = (
 def paths_from_dataset(dataset_dir: Path) -> InputPaths:
     """Build InputPaths from a flat test dataset directory."""
     return InputPaths(
-        libraries_dir=dataset_dir / "libraries",
-        catalogs_dir=dataset_dir / "catalogs",
-        system=dataset_dir / "system.yml",
-        calendar=dataset_dir / "calendar_file.csv",
-        taxonomy=dataset_dir / "taxonomy.yml",
-        view_config=dataset_dir / "view_config.yml",
-        simulation_table=next(dataset_dir.glob("simulation_table*")),
+        Namespace(
+            libraries_dir=dataset_dir / "libraries",
+            catalogs_dir=dataset_dir / "catalogs",
+            system=dataset_dir / "system.yml",
+            calendar=dataset_dir / "calendar_file.csv",
+            taxonomy=dataset_dir / "taxonomy.yml",
+            view_config=dataset_dir / "view_config.yml",
+            simulation_table=next(dataset_dir.glob("simulation_table*")),
+        )
     )
 
 

@@ -3,7 +3,7 @@
 
 """Tests for ``InputPathsValidator.validate()``."""
 
-from dataclasses import replace
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
@@ -29,13 +29,15 @@ def write_minimal_paths(root: Path) -> InputPaths:
         path.touch()
 
     return InputPaths(
-        libraries_dir=libraries_dir,
-        catalogs_dir=catalogs_dir,
-        system=system,
-        calendar=calendar,
-        taxonomy=taxonomy,
-        view_config=view_config,
-        simulation_table=simulation_table,
+        Namespace(
+            libraries_dir=libraries_dir,
+            catalogs_dir=catalogs_dir,
+            system=system,
+            calendar=calendar,
+            taxonomy=taxonomy,
+            view_config=view_config,
+            simulation_table=simulation_table,
+        )
     )
 
 
@@ -78,36 +80,42 @@ def test_validate_passes_with_multiple_catalogs(tmp_path: Path) -> None:
 
 def test_validate_raises_when_system_has_wrong_extension(tmp_path: Path) -> None:
     paths = write_minimal_paths(tmp_path)
+    paths.system = tmp_path / "system.yaml"
     with pytest.raises(ValueError, match="System file"):
-        InputPathsValidator(replace(paths, system=tmp_path / "system.yaml")).validate()
+        InputPathsValidator(paths).validate()
 
 
 def test_validate_raises_when_calendar_has_wrong_extension(tmp_path: Path) -> None:
     paths = write_minimal_paths(tmp_path)
+    paths.calendar = tmp_path / "calendar.txt"
     with pytest.raises(ValueError, match="Calendar file"):
-        InputPathsValidator(replace(paths, calendar=tmp_path / "calendar.txt")).validate()
+        InputPathsValidator(paths).validate()
 
 
 def test_validate_raises_when_taxonomy_has_wrong_extension(tmp_path: Path) -> None:
     paths = write_minimal_paths(tmp_path)
+    paths.taxonomy = tmp_path / "taxonomy.txt"
     with pytest.raises(ValueError, match="Taxonomy file"):
-        InputPathsValidator(replace(paths, taxonomy=tmp_path / "taxonomy.txt")).validate()
+        InputPathsValidator(paths).validate()
 
 
 def test_validate_raises_when_view_config_has_wrong_extension(tmp_path: Path) -> None:
     paths = write_minimal_paths(tmp_path)
+    paths.view_config = tmp_path / "view_config.json"
     with pytest.raises(ValueError, match="View config file"):
-        InputPathsValidator(replace(paths, view_config=tmp_path / "view_config.json")).validate()
+        InputPathsValidator(paths).validate()
 
 
 def test_validate_raises_when_simulation_table_has_wrong_extension(tmp_path: Path) -> None:
     paths = write_minimal_paths(tmp_path)
+    paths.simulation_table = tmp_path / "simulation_table.xls"
     with pytest.raises(ValueError, match="Simulation table"):
-        InputPathsValidator(replace(paths, simulation_table=tmp_path / "simulation_table.xls")).validate()
+        InputPathsValidator(paths).validate()
 
 
 def test_validate_passes_when_simulation_table_is_csv(tmp_path: Path) -> None:
     paths = write_minimal_paths(tmp_path)
     csv_table = tmp_path / "simulation_table.csv"
     csv_table.touch()
-    InputPathsValidator(replace(paths, simulation_table=csv_table)).validate()
+    paths.simulation_table = csv_table
+    InputPathsValidator(paths).validate()
