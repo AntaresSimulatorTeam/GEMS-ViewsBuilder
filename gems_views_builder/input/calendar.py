@@ -32,7 +32,9 @@ def load_calendar(calendar_file_path: Path) -> Calendar:
 
 
 def _check_calendar_columns(calendar_id: str, calendar: pl.LazyFrame) -> None:
-    calendar_df = calendar.collect(engine="streaming")  # # calendar isn't big we could perform safely streaming
+    calendar_df = calendar.collect(
+        engine="streaming"
+    ).drop_nulls()  # # calendar isn't big we could perform safely streaming
     if calendar_df.is_empty():
         return
 
@@ -60,15 +62,15 @@ def _check_for_missing_or_unexpected_columns(calendar_id: str, calendar_df: pl.D
 
 def _check_time_indices_conformity(calendar_id: str, calendar_df: pl.DataFrame) -> None:
     # absolute_time_index must equal row index (contiguous 0..N-1, no misses)
-    abs_idx = calendar_df.get_column("absolute_time_index")
-    expected_abs_idx = pl.arange(0, calendar_df.height, eager=True).cast(abs_idx.dtype)
-    if not (abs_idx == expected_abs_idx).all():
+    abs_time_ind = calendar_df.get_column("absolute_time_index")
+    exp_abs_time_ind = pl.arange(0, calendar_df.height, eager=True).cast(abs_time_ind.dtype)
+    if not (abs_time_ind == exp_abs_time_ind).all():
         raise ValueError(f"Calendar '{calendar_id}' has non-contiguous or mismatched absolute_time_index values")
 
 
 def _check_dates_conformity(calendar_id: str, calendar_df: pl.DataFrame) -> None:
     # granular_date difference between adjacent rows must be constant
-    dates = calendar_df.get_column("granular_date").drop_nulls()
+    dates = calendar_df.get_column("granular_date")
     if dates.is_empty():
         return
 
