@@ -101,10 +101,6 @@ def check_options(args: argparse.Namespace) -> None:
         raise NotADirectoryError(f"Log directory does not exist: {args.log_dir}")
 
 
-def _dest_name(option: str) -> str:
-    return option.replace("-", "_")
-
-
 def give_paths_options_a_value(args: argparse.Namespace) -> None:
     for option in REQUIRED_PATHS_OPTIONS:
-        option.path = getattr(args, _dest_name(option.name))
+        option.path = getattr(args, option.name.replace("-", "_"))
