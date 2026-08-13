@@ -35,9 +35,8 @@ def load_calendar(calendar_file_path: Path) -> Calendar:
 
 
 def _check_calendar_columns(calendar: pl.LazyFrame) -> None:
-    calendar_df = calendar.collect(
-        engine="streaming"
-    ).drop_nulls()  # # calendar isn't big we could perform safely streaming
+    # # calendar isn't big we could perform safely streaming
+    calendar_df = calendar.collect(engine="streaming").drop_nulls()
 
     _check_for_missing_columns(actual_column_titles=set(calendar_df.schema.keys()))
     _check_for_unexpected_columns(actual_column_titles=set(calendar_df.schema.keys()))
