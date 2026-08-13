@@ -67,8 +67,6 @@ def _check_time_indices_conformity(calendar_df: pl.DataFrame) -> None:
 def _check_dates_conformity(calendar_df: pl.DataFrame) -> None:
     # granular_date difference between adjacent rows must be constant
     dates = calendar_df.get_column("granular_date")
-
-    time_index_diffs = dates.diff()[1:].n_unique()
-
-    if time_index_diffs > 1:
+    dates_diffs = dates.diff()[1:].n_unique()
+    if dates_diffs > 1:
         raise ValueError("Calendar has non-constant differences between consecutive granular_date values")
