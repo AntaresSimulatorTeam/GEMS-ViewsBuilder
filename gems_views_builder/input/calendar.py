@@ -21,7 +21,7 @@ class Calendar:
     """
 
     id: str
-    calendar: pl.LazyFrame
+    dataframe: pl.LazyFrame
 
 
 def load_calendar(calendar_file_path: Path) -> Calendar:
@@ -31,7 +31,7 @@ def load_calendar(calendar_file_path: Path) -> Calendar:
         _check_calendar_columns(calendar=calendar)
     except ValueError as exc:
         raise ValueError(f"Calendar '{calendar_file_path.stem}' is invalid: {exc}") from exc
-    return Calendar(id=calendar_file_path.stem, calendar=calendar)
+    return Calendar(id=calendar_file_path.stem, dataframe=calendar)
 
 
 def _check_calendar_columns(calendar: pl.LazyFrame) -> None:
