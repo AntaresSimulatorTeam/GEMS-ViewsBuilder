@@ -23,7 +23,7 @@ class InputPathsValidator:
 
     input_paths: InputPaths
 
-    def _check_lib_dir(self) -> None:
+    def _check_libraries_directory(self) -> None:
         """Strictly reject any entry in the libraries directory that is not a .yml file."""
         libraries_dir = self.input_paths.libraries_dir
         logging.info(f"Validating model libraries directory {libraries_dir}")
@@ -35,7 +35,7 @@ class InputPathsValidator:
                 f"Model libraries directory {libraries_dir} contains non-.yml entries: {', '.join(unexpected)}"
             )
 
-    def _check_catalogs_dir(self) -> None:
+    def _check_catalogs_directory(self) -> None:
         """Strictly reject any entry in the catalogs directory that is not a .yml file."""
         catalogs_dir = self.input_paths.catalogs_dir
         logging.info(f"Validating catalogs directory {catalogs_dir}")
@@ -45,19 +45,19 @@ class InputPathsValidator:
         if unexpected:
             raise ValueError(f"Catalogs directory {catalogs_dir} contains non-.yml entries: {', '.join(unexpected)}")
 
-    def _check_sys_file(self) -> None:
+    def _check_system_file(self) -> None:
         require_suffix(self.input_paths.system, {YAML_SUFFIX}, "System file")
 
-    def _check_tax_file(self) -> None:
+    def _check_taxonomy_file(self) -> None:
         require_suffix(self.input_paths.taxonomy, {YAML_SUFFIX}, "Taxonomy file")
 
-    def _check_cal_file(self) -> None:
+    def _check_calendar_file(self) -> None:
         require_suffix(self.input_paths.calendar, {CSV_SUFFIX}, "Calendar file")
 
-    def _check_vc_file(self) -> None:
+    def _check_view_config_file(self) -> None:
         require_suffix(self.input_paths.view_config, {YAML_SUFFIX}, "View config file")
 
-    def _check_st_file(self) -> None:
+    def _check_simulation_table_file(self) -> None:
         require_suffix(
             self.input_paths.simulation_table,
             SIMULATION_TABLE_SUFFIXES,
@@ -66,13 +66,13 @@ class InputPathsValidator:
 
     def validate(self) -> None:
         logging.info("Starting input paths validation")
-        self._check_lib_dir()
-        self._check_catalogs_dir()
-        self._check_sys_file()
-        self._check_tax_file()
-        self._check_cal_file()
-        self._check_vc_file()
-        self._check_st_file()
+        self._check_libraries_directory()
+        self._check_catalogs_directory()
+        self._check_system_file()
+        self._check_taxonomy_file()
+        self._check_calendar_file()
+        self._check_view_config_file()
+        self._check_simulation_table_file()
         logging.info("Input paths validation completed successfully")
 
 
