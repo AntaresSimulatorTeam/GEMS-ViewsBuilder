@@ -15,19 +15,19 @@ from gems_views_builder.input.component import (
 )
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input_data import create_view_building_input
-from gems_views_builder.input_layout import InputLayout, create_input_layout_from_args
+from gems_views_builder.input_paths import InputPaths, create_input_paths_from_args
 from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
-from gems_views_builder.validation.input_layout_validator import InputLayoutValidator
+from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
-def load_and_validate_input_data(input_layout: InputLayout) -> RawInputData:
-    raw_input_data = Loader(input_layout).load()
+def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
+    raw_input_data = Loader(input_paths).load()
     validate_catalogs_against_taxonomy(
-        input_layout.catalogs_dir, raw_input_data.view_config.catalog_ids, raw_input_data.taxonomy
+        input_paths.catalogs_dir, raw_input_data.view_config.catalog_ids, raw_input_data.taxonomy
     )
     return raw_input_data
 
@@ -51,8 +51,8 @@ def build_metric_views(raw_input_data: RawInputData) -> list[MetricView]:
     return ViewBuilder(view_building_input, metric_structure_table_builder).build()
 
 
-def run_view_building_process(input_layout: InputLayout, view_sinker: ViewSinker) -> None:
-    raw_input_data = load_and_validate_input_data(input_layout)
+def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) -> None:
+    raw_input_data = load_and_validate_input_data(input_paths)
     metric_views = build_metric_views(raw_input_data)
     accumulate_on_disk(metric_views, view_sinker)
 
@@ -71,10 +71,10 @@ def main(argv: list[str] | None = None) -> int:
         return error
 
     try:
-        input_layout = create_input_layout_from_args(args)
-        InputLayoutValidator(input_layout).validate()
+        input_paths = create_input_paths_from_args(args)
+        InputPathsValidator(input_paths).validate()
         view_sinker = ViewSinkerFactory(args.output, args.output_format).make()
-        run_view_building_process(input_layout, view_sinker)
+        run_view_building_process(input_paths, view_sinker)
     except Exception:
         logging.exception("View building failed")
         return 1

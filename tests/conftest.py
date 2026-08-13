@@ -7,7 +7,7 @@ from typing import cast
 import pytest
 
 from gems_views_builder.common import configure_logging
-from gems_views_builder.input_layout import InputLayout
+from gems_views_builder.input_paths import InputPaths
 
 RESOURCES_TEST_FILES_ROOT = Path(__file__).resolve().parent.parent / "resources"
 TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
@@ -34,9 +34,9 @@ DATASET_REQUIRED_FILES: tuple[str, ...] = (
 )
 
 
-def layout_from_dataset(dataset_dir: Path) -> InputLayout:
-    """Build an InputLayout from a flat test dataset directory."""
-    return InputLayout(
+def paths_from_dataset(dataset_dir: Path) -> InputPaths:
+    """Build InputPaths from a flat test dataset directory."""
+    return InputPaths(
         libraries_dir=dataset_dir / "libraries",
         catalogs_dir=dataset_dir / "catalogs",
         system=dataset_dir / "system.yml",

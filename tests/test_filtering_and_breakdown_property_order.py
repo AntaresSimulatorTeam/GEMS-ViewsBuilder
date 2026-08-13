@@ -30,7 +30,7 @@ from gems_views_builder.input.library import resolve_libraries
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.view import ParquetViewSinker
-from tests.conftest import layout_from_dataset
+from tests.conftest import paths_from_dataset
 
 # Same (technology, company) as filtering_and_breakdown, but YAML property order differs per component.
 _GAS_RHONEPOWER_GENERATORS = ("gas_1", "gas_2")
@@ -45,7 +45,7 @@ def property_order_workspace(test_files_root: Path, tmp_path: Path) -> tuple[Pat
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     shutil.copytree(src, dst)
-    run_view_building_process(layout_from_dataset(dst), ParquetViewSinker(results_dir))
+    run_view_building_process(paths_from_dataset(dst), ParquetViewSinker(results_dir))
     view = pl.read_parquet(next(results_dir.glob("view*.parquet")))
     return dst, view
 

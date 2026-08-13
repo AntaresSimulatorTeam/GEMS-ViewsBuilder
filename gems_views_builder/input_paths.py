@@ -18,7 +18,7 @@ from pathlib import Path
 
 
 @dataclass
-class InputLayout:
+class InputPaths:
     libraries_dir: Path
     catalogs_dir: Path
     system: Path
@@ -33,8 +33,8 @@ class InputLayout:
         return self.libraries_dir / "library.yml"
 
 
-def create_input_layout_from_args(args: Namespace) -> InputLayout:
-    return InputLayout(
+def create_input_paths_from_args(args: Namespace) -> InputPaths:
+    return InputPaths(
         libraries_dir=args.libraries_dir,
         catalogs_dir=args.catalogs_dir,
         system=args.system,
