@@ -4,11 +4,34 @@
 """Command line interface for GEMS-ViewsBuilder."""
 
 import argparse
-import logging
+from collections.abc import Callable
+from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 
-REQUIRED_DIRECTORIES = ["catalogs-dir", "libraries-dir"]
-REQUIRED_FILES = ["system", "calendar", "taxonomy", "simulation-table", "view-config"]
+
+class SystemType(Enum):
+    DIRECTORY = "directory"
+    FILE = "file"
+
+
+@dataclass
+class PathOption:
+    name: str
+    system_type: SystemType
+    system_check: Callable[[Path], bool]
+    path: Path = Path()
+
+
+REQUIRED_PATHS_OPTIONS: list[PathOption] = [
+    PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
+    PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir),
+    PathOption("system", SystemType.FILE, Path.is_file),
+    PathOption("calendar", SystemType.FILE, Path.is_file),
+    PathOption("taxonomy", SystemType.FILE, Path.is_file),
+    PathOption("simulation-table", SystemType.FILE, Path.is_file),
+    PathOption("view-config", SystemType.FILE, Path.is_file),
+]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -17,8 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Build aggregated metric views from a GEMS simulation dataset.",
     )
 
-    add_directory_arguments(parser, REQUIRED_DIRECTORIES)
-    add_file_arguments(parser, REQUIRED_FILES)
+    add_path_options(parser, REQUIRED_PATHS_OPTIONS)
 
     parser.add_argument(
         "-o",
@@ -50,61 +72,32 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def add_directory_arguments(parser: argparse.ArgumentParser, directory_arguments: list[str]) -> None:
-    for directory_argument in directory_arguments:
+def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOption]) -> None:
+    for option in path_options:
         parser.add_argument(
-            f"--{directory_argument}",
+            f"--{option.name}",
             type=Path,
             required=True,
-            help=f"Directory for {directory_argument}.",
+            help=f"{option.system_type.value} for {option.name}.",
         )
 
 
-def add_file_arguments(parser: argparse.ArgumentParser, file_arguments: list[str]) -> None:
-    for file_argument in file_arguments:
-        parser.add_argument(
-            f"--{file_argument}",
-            type=Path,
-            required=True,
-            help=f"File containing the {file_argument}.",
-        )
+def check_paths_options() -> None:
+    for option in REQUIRED_PATHS_OPTIONS:
+        if not option.system_check(option.path):
+            raise OSError(f"--{option.name} is not a {option.system_type.value}: {option.path}")
 
 
-def _dest_name(option: str) -> str:
-    return option.replace("-", "_")
-
-
-def check_directory_options(directory_options: list[tuple[str, Path]]) -> int | None:
-    for option, path in directory_options:
-        if not path.is_dir():
-            logging.error(f"{option} is not a directory: {path}")
-            return 2
-    return None
-
-
-def check_file_options(file_options: list[tuple[str, Path]]) -> int | None:
-    for option, path in file_options:
-        if not path.is_file():
-            logging.error(f"{option} is not a file: {path}")
-            return 2
-    return None
-
-
-def check_options(args: argparse.Namespace) -> int | None:
-    directory_options = [(f"--{name}", getattr(args, _dest_name(name))) for name in REQUIRED_DIRECTORIES]
-    file_options = [(f"--{name}", getattr(args, _dest_name(name))) for name in REQUIRED_FILES]
-
-    if (error := check_directory_options(directory_options)) is not None:
-        return error
-    if (error := check_file_options(file_options)) is not None:
-        return error
+def check_options(args: argparse.Namespace) -> None:
+    check_paths_options()
 
     if not args.output.is_dir():
-        logging.error(f"--output is not a directory: {args.output}")
-        return 2
+        raise NotADirectoryError(f"--output is not a directory: {args.output}")
 
     if args.log_dir is not None and not args.log_dir.is_dir():
-        logging.error(f"Log directory does not exist: {args.log_dir}")
-        return 2
+        raise NotADirectoryError(f"Log directory does not exist: {args.log_dir}")
 
-    return None
+
+def give_paths_options_a_value(args: argparse.Namespace) -> None:
+    for option in REQUIRED_PATHS_OPTIONS:
+        option.path = getattr(args, option.name.replace("-", "_"))

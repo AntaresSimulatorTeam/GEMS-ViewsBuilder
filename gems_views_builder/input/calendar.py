@@ -21,7 +21,7 @@ class Calendar:
     """
 
     id: str
-    calendar: pl.LazyFrame
+    dataframe: pl.LazyFrame
 
 
 def load_calendar(calendar_file_path: Path) -> Calendar:
@@ -31,13 +31,12 @@ def load_calendar(calendar_file_path: Path) -> Calendar:
         _check_calendar_columns(calendar=calendar)
     except ValueError as exc:
         raise ValueError(f"Calendar '{calendar_file_path.stem}' is invalid: {exc}") from exc
-    return Calendar(id=calendar_file_path.stem, calendar=calendar)
+    return Calendar(id=calendar_file_path.stem, dataframe=calendar)
 
 
 def _check_calendar_columns(calendar: pl.LazyFrame) -> None:
-    calendar_df = calendar.collect(
-        engine="streaming"
-    ).drop_nulls()  # # calendar isn't big we could perform safely streaming
+    # # calendar isn't big we could perform safely streaming
+    calendar_df = calendar.collect(engine="streaming").drop_nulls()
 
     _check_for_missing_columns(actual_column_titles=set(calendar_df.schema.keys()))
     _check_for_unexpected_columns(actual_column_titles=set(calendar_df.schema.keys()))
@@ -68,8 +67,6 @@ def _check_time_indices_conformity(calendar_df: pl.DataFrame) -> None:
 def _check_dates_conformity(calendar_df: pl.DataFrame) -> None:
     # granular_date difference between adjacent rows must be constant
     dates = calendar_df.get_column("granular_date")
-
-    time_index_diffs = dates.diff()[1:].n_unique()
-
-    if time_index_diffs > 1:
+    dates_diffs = dates.diff()[1:].n_unique()
+    if dates_diffs > 1:
         raise ValueError("Calendar has non-constant differences between consecutive granular_date values")

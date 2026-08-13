@@ -83,7 +83,7 @@ def filter_simulation_table(simulation_table: SimulationTable, calendar: Calenda
     # Time-dependent rows: keep only timesteps present in the calendar.
     time_dep_path = output_path.with_suffix(".time_dep.parquet")
     (
-        simulation_table.dataframe.join(calendar.calendar, on="absolute_time_index", how="inner")
+        simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
         .drop("block_right")
     ).sink_parquet(time_dep_path, compression="zstd", compression_level=3)

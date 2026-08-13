@@ -1,13 +1,14 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
+from argparse import Namespace
 from pathlib import Path
 from typing import cast
 
 import pytest
 
 from gems_views_builder.common import configure_logging
-from gems_views_builder.input_layout import InputLayout
+from gems_views_builder.input_paths import InputPaths
 
 RESOURCES_TEST_FILES_ROOT = Path(__file__).resolve().parent.parent / "resources"
 TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
@@ -34,16 +35,18 @@ DATASET_REQUIRED_FILES: tuple[str, ...] = (
 )
 
 
-def layout_from_dataset(dataset_dir: Path) -> InputLayout:
-    """Build an InputLayout from a flat test dataset directory."""
-    return InputLayout(
-        libraries_dir=dataset_dir / "libraries",
-        catalogs_dir=dataset_dir / "catalogs",
-        system=dataset_dir / "system.yml",
-        calendar=dataset_dir / "calendar_file.csv",
-        taxonomy=dataset_dir / "taxonomy.yml",
-        view_config=dataset_dir / "view_config.yml",
-        simulation_table=next(dataset_dir.glob("simulation_table*")),
+def paths_from_dataset(dataset_dir: Path) -> InputPaths:
+    """Build InputPaths from a flat test dataset directory."""
+    return InputPaths(
+        Namespace(
+            libraries_dir=dataset_dir / "libraries",
+            catalogs_dir=dataset_dir / "catalogs",
+            system=dataset_dir / "system.yml",
+            calendar=dataset_dir / "calendar_file.csv",
+            taxonomy=dataset_dir / "taxonomy.yml",
+            view_config=dataset_dir / "view_config.yml",
+            simulation_table=next(dataset_dir.glob("simulation_table*")),
+        )
     )
 
 
