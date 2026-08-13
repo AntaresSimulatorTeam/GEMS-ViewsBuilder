@@ -11,7 +11,7 @@ view:
 
     - calendar: calendar_file # calendar_file.csv
 
-  aggregation:
+  aggregations:
     time: hour
     scenario: false
 

@@ -11,7 +11,7 @@ view:
 
     - calendar: calendar_file # change this in for test purposes
 
-  aggregation:
+  aggregations:
     time: hour
     scenario: false
 

@@ -12,7 +12,7 @@ from gems_views_builder.input.view_config import TimeGranularity, load_view_conf
 from gems_views_builder.view import ParquetViewSinker
 from tests.e2e.utils import fetch_view, make_results_dir
 
-AGGREGATION_BLOCK = "  aggregation:\n    time: hour\n    scenario: false\n"
+AGGREGATION_BLOCK = "  aggregations:\n    time: hour\n    scenario: false\n"
 
 
 # test_3/calendar_file.csv spans 2025-01-01 00:00 .. 2025-01-01 23:00 (24 granular hours).
@@ -29,7 +29,7 @@ EXPECTED_DATES_BY_AGGREGATION = {
 
 def replace_aggregation(view_config_path: Path, aggregation_time: TimeGranularity) -> None:
     text = view_config_path.read_text()
-    replacement = f"  aggregation:\n    time: {aggregation_time.value}\n    scenario: false\n"
+    replacement = f"  aggregations:\n    time: {aggregation_time.value}\n    scenario: false\n"
     if AGGREGATION_BLOCK not in text:
         raise AssertionError(f"Expected aggregation block not found in {view_config_path}")
     view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
@@ -65,5 +65,5 @@ def test_yaml_missing_aggregation_key_fails_to_parse(test_files_root: Path, tmp_
     config_path = dataset_dir / "view_config.yml"
     config_path.write_text(config_path.read_text().replace(AGGREGATION_BLOCK, ""))
 
-    with pytest.raises(ValueError, match="aggregation"):
+    with pytest.raises(ValueError, match="aggregations"):
         load_view_config(config_path)

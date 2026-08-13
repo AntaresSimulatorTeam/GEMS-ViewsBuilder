@@ -51,7 +51,7 @@ view:
   scope:
     - taxonomy-category: balance
     - calendar: calendar_file
-  aggregation:
+  aggregations:
     time: hour
     scenario: false
     extra-locations:
@@ -82,7 +82,7 @@ view:
   scope:
     - taxonomy-category: balance
     - calendar: calendar_file
-  aggregation:
+  aggregations:
     time: hour
     scenario: false
   catalogs:

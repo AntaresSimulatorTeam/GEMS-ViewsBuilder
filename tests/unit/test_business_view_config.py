@@ -71,7 +71,7 @@ view:
   scope:
     - taxonomy-category: balance
     - calendar: calendar_file
-  aggregation:
+  aggregations:
     time: hour
     scenario: false
   catalogs:
@@ -103,7 +103,7 @@ view:
 """.strip()
     )
 
-    with pytest.raises(ValueError, match="aggregation"):
+    with pytest.raises(ValueError, match="aggregations"):
         load_view_config(config_path)
 
 
@@ -116,7 +116,7 @@ view:
   scope:
     - taxonomy-category: balance
     - calendar: calendar_file
-  aggregation:
+  aggregations:
     scenario: false
   catalogs:
     - id: catalog
@@ -138,7 +138,7 @@ view:
   scope:
     - taxonomy-category: balance
     - calendar: calendar_file
-  aggregation:
+  aggregations:
     time: hour
   catalogs:
     - id: catalog
