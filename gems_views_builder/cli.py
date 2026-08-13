@@ -85,10 +85,7 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
 def check_paths_options() -> None:
     for option in REQUIRED_PATHS_OPTIONS:
         if not option.system_check(option.path):
-            if option.system_type is SystemType.DIRECTORY:
-                raise NotADirectoryError(f"--{option.name} is not a directory: {option.path}")
-            else:
-                raise FileNotFoundError(f"--{option.name} is not a file: {option.path}")
+            raise OSError(f"--{option.name} is not a {option.system_type.value}: {option.path}")
 
 
 def check_options(args: argparse.Namespace) -> None:
