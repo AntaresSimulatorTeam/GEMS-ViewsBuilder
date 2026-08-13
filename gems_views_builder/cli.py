@@ -4,7 +4,6 @@
 """Command line interface for GEMS-ViewsBuilder."""
 
 import argparse
-import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -83,27 +82,23 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
         )
 
 
-def check_paths_options() -> int | None:
+def check_paths_options() -> None:
     for option in REQUIRED_PATHS_OPTIONS:
         if not option.system_check(option.path):
-            logging.error(f"--{option.name} is not a {option.system_type.value}: {option.path}")
-            return 2
-    return None
+            if option.system_type is SystemType.DIRECTORY:
+                raise NotADirectoryError(f"--{option.name} is not a directory: {option.path}")
+            else:
+                raise FileNotFoundError(f"--{option.name} is not a file: {option.path}")
 
 
-def check_options(args: argparse.Namespace) -> int | None:
-    if (error := check_paths_options()) is not None:
-        return error
+def check_options(args: argparse.Namespace) -> None:
+    check_paths_options()
 
     if not args.output.is_dir():
-        logging.error(f"--output is not a directory: {args.output}")
-        return 2
+        raise NotADirectoryError(f"--output is not a directory: {args.output}")
 
     if args.log_dir is not None and not args.log_dir.is_dir():
-        logging.error(f"Log directory does not exist: {args.log_dir}")
-        return 2
-
-    return None
+        raise NotADirectoryError(f"Log directory does not exist: {args.log_dir}")
 
 
 def _dest_name(option: str) -> str:

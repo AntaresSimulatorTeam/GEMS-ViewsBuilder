@@ -67,9 +67,10 @@ def main(argv: list[str] | None = None) -> int:
     configure_logging(verbose=args.verbose, log_dir=args.log_dir)
 
     give_paths_options_a_value(args)
-    error = check_options(args)
-    if error is not None:
-        return error
+    try:
+        check_options(args)
+    except Exception:
+        return 2
 
     try:
         input_paths = InputPaths(args)
