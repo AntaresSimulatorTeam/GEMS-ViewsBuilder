@@ -50,7 +50,7 @@ class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: list[Scope]
     aggregation: Aggregation
-    catalog: list[CatalogId]
+    catalogs: list[CatalogId]
     metrics: list[MetricId]
 
 
@@ -111,7 +111,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         input_data_path=input_data_path,
         calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
-        catalog_ids={c.id for c in raw_view_config.catalog},
+        catalog_ids={c.id for c in raw_view_config.catalogs},
         time_aggr_granularity=raw_view_config.aggregation.time,
         scenario_aggregation=raw_view_config.aggregation.scenario,
         metric_ids=[metric.id for metric in raw_view_config.metrics],

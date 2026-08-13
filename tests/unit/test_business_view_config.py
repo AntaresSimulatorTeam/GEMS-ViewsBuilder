@@ -74,7 +74,7 @@ view:
   aggregation:
     time: hour
     scenario: false
-  catalog:
+  catalogs:
     - id: catalog_1
   metrics:
     - id: invalid_metric_id
@@ -96,7 +96,7 @@ view:
   scope:
     - taxonomy-category: balance
     - calendar: calendar_file
-  catalog:
+  catalogs:
     - id: catalog
   metrics:
     - id: catalog.LOAD
@@ -118,7 +118,7 @@ view:
     - calendar: calendar_file
   aggregation:
     scenario: false
-  catalog:
+  catalogs:
     - id: catalog
   metrics:
     - id: catalog.LOAD
@@ -140,7 +140,7 @@ view:
     - calendar: calendar_file
   aggregation:
     time: hour
-  catalog:
+  catalogs:
     - id: catalog
   metrics:
     - id: catalog.LOAD

@@ -58,7 +58,7 @@ view:
       - id: country
       - id: district
       - id: city_part
-  catalog:
+  catalogs:
     - id: catalog
   metrics:
     - id: catalog.LOAD
@@ -85,7 +85,7 @@ view:
   aggregation:
     time: hour
     scenario: false
-  catalog:
+  catalogs:
     - id: catalog
   metrics:
     - id: catalog.LOAD
