@@ -24,20 +24,18 @@ def create_components(gemspy_components: list[GemsPyComponent]) -> list[Componen
 
 def enrich_components(components: list[Component], raw_input_data: RawInputData) -> None:
     """Attach taxonomy categories and port connections to components."""
-    supply_components_with_taxonomy_categories(components, merge_taxonomy_category_by_model(raw_input_data.libraries))
+    supply_components_with_taxon(components, merge_taxonomy_category_by_model(raw_input_data.libraries))
     component_port_connections = build_component_port_connections(raw_input_data.system.connections)
     supply_components_with_port_connections(components, component_port_connections)
 
 
-def supply_components_with_taxonomy_categories(
-    components: list[Component], taxonomy_category_by_model: dict[str, str]
-) -> None:
+def supply_components_with_taxon(components: list[Component], taxonomy_category_by_model: dict[str, str]) -> None:
     for component in components:
         component.taxonomy_category = taxonomy_category_by_model[component.model_id]
 
 
 def group_components_by_taxon(components: list[Component]) -> dict[str, list[Component]]:
-    """Group components by taxonomy category. Requires ``supply_components_with_taxonomy_categories`` first."""
+    """Group components by taxonomy category. Requires ``supply_components_with_taxon`` first."""
     components_by_taxon: dict[str, list[Component]] = defaultdict(list)
     for component in components:
         components_by_taxon[cast(str, component.taxonomy_category)].append(component)
@@ -117,7 +115,7 @@ def supply_components_with_locations(
     """Precompute each component's metric locations from catalog terms.
 
     Must run after:
-    - ``supply_components_with_taxonomy_categories``
+    - ``supply_components_with_taxon``
     - ``supply_components_with_port_connections``
 
     For each metric term and each component in that term's taxonomy category,

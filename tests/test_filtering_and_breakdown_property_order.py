@@ -23,7 +23,7 @@ from gems_views_builder.input.component import (
     group_components_by_taxon,
     supply_components_with_locations,
     supply_components_with_port_connections,
-    supply_components_with_taxonomy_categories,
+    supply_components_with_taxon,
 )
 from gems_views_builder.input.library import (
     create_lib_from_schema,
@@ -120,7 +120,7 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")
 
     components = [Component(component) for component in system.components]
-    supply_components_with_taxonomy_categories(components, merge_taxonomy_category_by_model({library.id: library}))
+    supply_components_with_taxon(components, merge_taxonomy_category_by_model({library.id: library}))
     components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
     supply_components_with_port_connections(components, component_port_connections)

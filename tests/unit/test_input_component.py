@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from gems_views_builder.input.component import (
     Component,
     group_components_by_taxon,
-    supply_components_with_taxonomy_categories,
+    supply_components_with_taxon,
 )
 
 
@@ -28,9 +28,9 @@ def test_match_extra_locations_reads_own_properties() -> None:
     assert location.match_extra_locations(["country", "district", "city_part"]) == ["France", "IleDeFrance"]
 
 
-def test_supply_components_with_taxonomy_categories() -> None:
+def test_supply_components_with_taxon() -> None:
     components = [Component(make_raw_component("gen", "lib.generator"))]
-    supply_components_with_taxonomy_categories(components, {"lib.generator": "production"})
+    supply_components_with_taxon(components, {"lib.generator": "production"})
     assert components[0].taxonomy_category == "production"
 
 

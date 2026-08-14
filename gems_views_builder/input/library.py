@@ -62,7 +62,7 @@ def load_library_schemas(library_dir: Path) -> list[LibrarySchema]:
     logging.info(f"Loading model libraries from {library_dir}")
     schemas: list[LibrarySchema] = []
     seen_ids: set[str] = set()
-    for library_file_path in discover_library_files(library_dir):
+    for library_file_path in collect_lib_files(library_dir):
         parsed = load_library_file(library_file_path)
         if parsed.id in seen_ids:
             raise ValueError(
@@ -80,7 +80,7 @@ def load_libraries(library_dir: Path) -> dict[str, Library]:
     return {parsed.id: create_lib_from_schema(parsed) for parsed in load_library_schemas(library_dir)}
 
 
-def discover_library_files(library_dir: Path) -> list[Path]:
+def collect_lib_files(library_dir: Path) -> list[Path]:
     return list(library_dir.glob("*.yml"))
 
 
