@@ -19,7 +19,7 @@ class PathOption:
     name: str
     system_type: SystemType
     system_check: Callable[[Path], bool]
-    args_attribute: str
+    args_attribute: str = ""
 
     def __post_init__(self) -> None:
         self.args_attribute = self.name.replace("-", "_")
