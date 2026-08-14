@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from gems_views_builder.input.calendar import load_calendar
 from gems_views_builder.input.catalog import load_catalogs
-from gems_views_builder.input.library import create_lib_from_schema, load_library_schemas
+from gems_views_builder.input.library import create_lib_from_yml, load_yml_libs
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import load_simulation_table
 from gems_views_builder.input.system import load_system
@@ -24,13 +24,13 @@ class Loader:
 
         logging.info("Loading inputs from explicit input paths")
         view_config: ViewConfig = load_view_config(self.input_paths.view_config)
-        libs_schemas = load_library_schemas(self.input_paths.libraries_dir)
+        yml_libs = load_yml_libs(self.input_paths.libraries_dir)
         raw_input_data = RawInputData(
             input_data_path=self.input_paths.view_config.parent,
             taxonomy=load_taxonomy(self.input_paths.taxonomy),
             view_config=view_config,
-            libraries={lib_schema.id: create_lib_from_schema(lib_schema) for lib_schema in libs_schemas},
-            system=load_system(self.input_paths.system, libs_schemas),
+            libraries={yml_lib.id: create_lib_from_yml(yml_lib) for yml_lib in yml_libs},
+            system=load_system(self.input_paths.system, yml_libs),
             simulation_table=load_simulation_table(self.input_paths.simulation_table),
             calendar=load_calendar(self.input_paths.calendar),
             catalogs=load_catalogs(self.input_paths.catalogs_dir, view_config.catalog_ids),

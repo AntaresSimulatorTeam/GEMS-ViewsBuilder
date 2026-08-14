@@ -40,10 +40,10 @@ class System:
         return cast(list[Any], getattr(self._system, "connections", None) or [])
 
 
-def load_system(system_file_path: Path, parsed_libraries: list[LibrarySchema]) -> System:
+def load_system(system_file_path: Path, yml_libs: list[LibrarySchema]) -> System:
     logging.info("Loading system")
     with open(system_file_path, encoding="utf-8") as f:
-        parsed = parse_yaml_system(f)
-    resolved = resolve_system(parsed, resolve_library(parsed_libraries))
+        yml_system = parse_yaml_system(f)
+    resolved_system = resolve_system(yml_system, resolve_library(yml_libs))
     logging.info(f"System loaded and resolved from {system_file_path}")
-    return System(cast(GemsPySystem, resolved))
+    return System(cast(GemsPySystem, resolved_system))

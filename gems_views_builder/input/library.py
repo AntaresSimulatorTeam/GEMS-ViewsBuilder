@@ -43,7 +43,7 @@ class Library:
         return self.models_by_taxonomy_category.get(taxonomy_category, [])
 
 
-def create_lib_from_schema(parsed: LibrarySchema) -> Library:
+def create_lib_from_yml(parsed: LibrarySchema) -> Library:
     return Library(
         id=parsed.id,
         description=parsed.description or "",
@@ -57,50 +57,38 @@ def create_lib_from_schema(parsed: LibrarySchema) -> Library:
     )
 
 
-def load_library_schemas(library_dir: Path) -> list[LibrarySchema]:
-    """Parse every library YAML file in library_dir, rejecting duplicate library ids."""
+def load_yml_libs(library_dir: Path) -> list[LibrarySchema]:
     logging.info(f"Loading model libraries from {library_dir}")
-    schemas: list[LibrarySchema] = []
+    yml_libs: list[LibrarySchema] = []
     seen_ids: set[str] = set()
     for library_file_path in collect_lib_files(library_dir):
-        parsed = load_library_file(library_file_path)
-        if parsed.id in seen_ids:
+        yml_lib = load_lib_file(library_file_path)
+        if yml_lib.id in seen_ids:
             raise ValueError(
-                f"Library id {parsed.id!r} defined more than once in {library_dir} (also found in a different file)"
+                f"Library id {yml_lib.id!r} defined more than once in {library_dir} (also found in a different file)"
             )
-        seen_ids.add(parsed.id)
-        schemas.append(parsed)
-    return schemas
-
-
-def load_libraries(library_dir: Path) -> dict[str, Library]:
-    """
-    Load every library YAML file (any file name) in library_dir, keyed by library id.
-    """
-    return {parsed.id: create_lib_from_schema(parsed) for parsed in load_library_schemas(library_dir)}
+        seen_ids.add(yml_lib.id)
+        yml_libs.append(yml_lib)
+    return yml_libs
 
 
 def collect_lib_files(library_dir: Path) -> list[Path]:
     return list(library_dir.glob("*.yml"))
 
 
-def merge_taxonomy_category_by_model(libraries: dict[str, Library]) -> dict[str, str]:
-    """
-    Merge each library's taxonomy_category_by_model into one dict keyed by qualified
-    model id (<library_id>.<model_id>).
-    """
-    merged: dict[str, str] = {}
+def associate_models_with_a_taxon(libraries: dict[str, Library]) -> dict[str, str]:
+    taxon_by_model: dict[str, str] = {}
     for library_id, library in libraries.items():
         for model_id, category in library.taxonomy_category_by_model.items():
-            merged[f"{library_id}.{model_id}"] = category
-    return merged
+            taxon_by_model[f"{library_id}.{model_id}"] = category
+    return taxon_by_model
 
 
-def load_library_file(library_file_path: Path) -> LibrarySchema:
+def load_lib_file(library_file_path: Path) -> LibrarySchema:
     # # GEMS Craft future library could have option to load library model from path
     # # Current blueprint of method inside gemspy is typing.TextIO idk why ?
     logging.debug(f"Loading library YAML from {library_file_path}")
     with open(library_file_path, encoding="utf-8") as f:
-        parsed = parse_yaml_library(f)
+        yml_lib = parse_yaml_library(f)
     logging.debug("Library YAML parsed successfully")
-    return parsed
+    return yml_lib

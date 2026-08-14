@@ -5,7 +5,7 @@ from pathlib import Path
 
 from gems_craft.study.parsing import SystemSchema, parse_yaml_system  # type: ignore
 
-from gems_views_builder.input.library import load_library_schemas
+from gems_views_builder.input.library import load_yml_libs
 from gems_views_builder.input.system import load_system
 
 
@@ -20,6 +20,6 @@ def test_input_system_using(test_dataset_dir: Path) -> None:
 
 def test_system_exposes_components_and_connections(test_dataset_dir: Path) -> None:
     library_dir = test_dataset_dir / "libraries"
-    system = load_system(test_dataset_dir / "system.yml", load_library_schemas(library_dir))
+    system = load_system(test_dataset_dir / "system.yml", load_yml_libs(library_dir))
     assert len(system.components) > 0
     assert isinstance(system.connections, list)

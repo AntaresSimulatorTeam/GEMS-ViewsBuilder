@@ -12,7 +12,7 @@ from gems_craft.study import Component as GemsPyComponent  # type: ignore
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component.component import Component
 from gems_views_builder.input.component.connection import ConnectionsThroughPort
-from gems_views_builder.input.library import merge_taxonomy_category_by_model
+from gems_views_builder.input.library import associate_models_with_a_taxon
 
 if TYPE_CHECKING:
     from gems_views_builder.input.raw_input_data import RawInputData
@@ -24,7 +24,7 @@ def create_components(gemspy_components: list[GemsPyComponent]) -> list[Componen
 
 def enrich_components(components: list[Component], raw_input_data: RawInputData) -> None:
     """Attach taxonomy categories and port connections to components."""
-    supply_components_with_taxon(components, merge_taxonomy_category_by_model(raw_input_data.libraries))
+    supply_components_with_taxon(components, associate_models_with_a_taxon(raw_input_data.libraries))
     component_port_connections = build_component_port_connections(raw_input_data.system.connections)
     supply_components_with_port_connections(components, component_port_connections)
 
