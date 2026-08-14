@@ -42,7 +42,6 @@ def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
     raw_input_data = Loader(paths_from_dataset(test_dataset_dir)).load()
 
     assert isinstance(raw_input_data, RawInputData)
-    assert raw_input_data.input_data_path == test_dataset_dir
     assert isinstance(raw_input_data.taxonomy, Taxonomy)
     assert isinstance(raw_input_data.view_config, ViewConfig)
     assert isinstance(raw_input_data.library, Library)
@@ -59,7 +58,6 @@ def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path
     raw_input_data = loader.load()
 
     assert isinstance(raw_input_data, RawInputData)
-    assert raw_input_data.input_data_path == test_dataset_dir
     assert isinstance(raw_input_data.taxonomy, Taxonomy)
     assert isinstance(raw_input_data.view_config, ViewConfig)
     assert isinstance(raw_input_data.library, Library)

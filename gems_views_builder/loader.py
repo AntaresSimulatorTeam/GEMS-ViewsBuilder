@@ -27,7 +27,6 @@ class Loader:
 
         library_file = self.input_paths.library_file
         raw_input_data = RawInputData(
-            input_data_path=self.input_paths.view_config.parent,
             taxonomy=load_taxonomy(self.input_paths.taxonomy),
             view_config=view_config,
             library=load_library(library_file),

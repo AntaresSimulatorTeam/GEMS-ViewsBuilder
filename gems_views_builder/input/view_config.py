@@ -57,7 +57,6 @@ class RawViewConfig(ViewBuilderBasedModel):
 @dataclass
 class ViewConfig:
     id: str
-    input_data_path: Path
     calendar_id: str
     location_taxonomy_category: str
     time_aggr_granularity: TimeGranularity
@@ -89,7 +88,6 @@ class ViewConfig:
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
-    input_data_path = config_file_path.parent
     location_taxonomy_category = next(
         (item.taxonomy_category for item in raw_view_config.scope if item.taxonomy_category),
         None,
@@ -108,7 +106,6 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
 
     view_config = ViewConfig(
         id=raw_view_config.id,
-        input_data_path=input_data_path,
         calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalog},
