@@ -19,7 +19,7 @@ class PathOption:
     name: str
     system_type: SystemType
     system_check: Callable[[Path], bool]
-    args_attribute: str = field(default="", kw_only=True)
+    args_attribute: str | None = None
 
     def __post_init__(self) -> None:
         if not self.args_attribute:
