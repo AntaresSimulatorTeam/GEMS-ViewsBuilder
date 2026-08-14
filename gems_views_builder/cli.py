@@ -5,7 +5,7 @@
 
 import argparse
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
@@ -19,10 +19,15 @@ class PathOption:
     name: str
     system_type: SystemType
     system_check: Callable[[Path], bool]
+    args_attribute: str = field(default="", kw_only=True)
+
+    def __post_init__(self) -> None:
+        if not self.args_attribute:
+            self.args_attribute = self.name
 
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
-    PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
-    PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir),
+    PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir, "catalogs_dir"),
+    PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir, "libraries_dir"),
     PathOption("system", SystemType.FILE, Path.is_file),
     PathOption("calendar", SystemType.FILE, Path.is_file),
     PathOption("taxonomy", SystemType.FILE, Path.is_file),
@@ -80,7 +85,7 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
 
 def check_paths_options(args: argparse.Namespace) -> None:
     for option in REQUIRED_PATHS_OPTIONS:
-        option_value = getattr(args, option.name.replace("-", "_"))
+        option_value = getattr(args, option.args_attribute)
         if not option.system_check(option_value):
             raise OSError(f"--{option.name} is not a {option.system_type.value}: {option_value}")
 
