@@ -3,7 +3,7 @@
 
 import logging
 
-from gems_views_builder.cli import build_parser, check_options, give_paths_options_a_value
+from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import (
     configure_logging,
 )
