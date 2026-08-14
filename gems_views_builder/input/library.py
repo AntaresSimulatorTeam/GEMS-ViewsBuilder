@@ -26,14 +26,12 @@ class Library:
     taxon_by_model: dict[str, str]
 
     def get_model(self, model_id: str) -> ModelSchema:
-        """Return the full model definition, or None if not found."""
         try:
             return self.models[model_id]
         except KeyError:
             raise ValueError(f"Model {model_id} not found in library")
 
     def get_model_taxon(self, model_id: str) -> str:
-        """Return the taxonomy category for a given model id."""
         model = self.get_model(model_id)
         if model.taxonomy_category is None:
             raise ValueError(f"Model {model_id} has no taxonomy category in library")
