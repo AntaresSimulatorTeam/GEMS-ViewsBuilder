@@ -1,12 +1,15 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
+from argparse import Namespace
 from pathlib import Path
 from typing import cast
 
 import pytest
 
 from gems_views_builder.common import configure_logging
+from gems_views_builder.input_paths import InputPaths
+from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 
 RESOURCES_TEST_FILES_ROOT = Path(__file__).resolve().parent.parent / "resources"
 TEST_INPUTS_PATH = RESOURCES_TEST_FILES_ROOT / "tests_inputs"
@@ -25,32 +28,30 @@ def test_files_root() -> Path:
     return TEST_INPUTS_PATH
 
 
-DATASET_REQUIRED_FILES: tuple[str, ...] = (
-    "calendar_file.csv",
-    "system.yml",
-    "taxonomy.yml",
-    "view_config.yml",
-)
-
-DATASET_LIBRARY_FILES: tuple[str, ...] = ("library.yml",)
+def paths_from_dataset(dataset_dir: Path) -> InputPaths:
+    """Build InputPaths from a flat test dataset directory."""
+    return InputPaths(
+        Namespace(
+            libraries_dir=dataset_dir / "libraries",
+            catalogs_dir=dataset_dir / "catalogs",
+            system=dataset_dir / "system.yml",
+            calendar=dataset_dir / "calendar_file.csv",
+            taxonomy=dataset_dir / "taxonomy.yml",
+            view_config=dataset_dir / "view_config.yml",
+            simulation_table=next(dataset_dir.glob("simulation_table*")),
+        )
+    )
 
 
 def _dataset_dirs(test_inputs_path: Path) -> list[str]:
-    return sorted(d.name for d in test_inputs_path.iterdir() if d.is_dir() and _is_valid_dataset_dir(d))
+    return sorted(d.name for d in test_inputs_path.iterdir() if d.is_dir() and is_valid_dataset_dir(d))
 
 
-def _is_valid_dataset_dir(dataset_dir: Path) -> bool:
-    if not all((dataset_dir / rel).is_file() for rel in DATASET_REQUIRED_FILES):
-        return False
-    if not any((dataset_dir / rel).is_file() for rel in DATASET_LIBRARY_FILES):
-        return False
-    catalogs_dir = dataset_dir / "catalogs"
-    if not catalogs_dir.is_dir():
-        return False
-    if not list(catalogs_dir.glob("*.yml")):
-        return False
-    simulation_tables = list(dataset_dir.glob("simulation_table*.parquet"))
-    if len(simulation_tables) != 1:
+def is_valid_dataset_dir(dataset_dir: Path) -> bool:
+    try:
+        paths = paths_from_dataset(dataset_dir)
+        InputPathsValidator(paths).validate()
+    except (OSError, ValueError, StopIteration):
         return False
     return True
 
@@ -63,7 +64,7 @@ def test_dataset_dir(test_files_root: Path, request: pytest.FixtureRequest) -> P
     dataset_dir = test_files_root / dataset_name
     if not dataset_dir.is_dir():
         raise FileNotFoundError(f"{dataset_name} is not a directory in extracted test files")
-    if not _is_valid_dataset_dir(dataset_dir):
+    if not is_valid_dataset_dir(dataset_dir):
         raise FileNotFoundError(f"{dataset_name} does not look like a full dataset directory")
     return dataset_dir
 
@@ -79,7 +80,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     if not dataset_dirs:
         raise FileNotFoundError(
             f"No dataset directories found in {TEST_INPUTS_PATH} "
-            f"(expected dirs with {list(DATASET_REQUIRED_FILES)} + catalogs/*.yml + simulation_table*.parquet)."
+            "(expected a directory that satisfies InputPathsValidator "
         )
 
     metafunc.parametrize(

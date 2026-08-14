@@ -7,9 +7,10 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.__main__ import load_and_validate_input_data, run_view_building_process
+from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.input.view_config import TimeGranularity, load_view_config
 from gems_views_builder.view import ParquetViewSinker
+from tests.conftest import paths_from_dataset
 from tests.e2e.utils import fetch_view, make_results_dir
 
 AGGREGATION_BLOCK = "  aggregation:\n    time: hour\n    scenario: false\n"
@@ -51,7 +52,7 @@ def test_yaml_time_aggregation_drives_full_pipeline(
     results_dir = make_results_dir(tmp_path)
 
     # Act
-    run_view_building_process(load_and_validate_input_data(dataset_dir), ParquetViewSinker(results_dir))
+    run_view_building_process(paths_from_dataset(dataset_dir), ParquetViewSinker(results_dir))
 
     # Assert
     view = fetch_view(results_dir)

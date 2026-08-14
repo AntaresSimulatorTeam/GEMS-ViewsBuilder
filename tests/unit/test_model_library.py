@@ -15,8 +15,8 @@ from gems_views_builder import (
 )
 
 
-def _library_path(test_dataset_dir: Path) -> Path | None:
-    generic = Path(test_dataset_dir) / "library.yml"
+def _library_path(test_dataset_dir: Path) -> Path:
+    generic = test_dataset_dir / "libraries" / "library.yml"
     if generic.is_file():
         return generic
     pytest.skip("No model library file found (expected library.yml)")
@@ -24,8 +24,6 @@ def _library_path(test_dataset_dir: Path) -> Path | None:
 
 def test_model_library_loads(test_dataset_dir: Path) -> None:
     library_path = _library_path(test_dataset_dir)
-    if library_path is None:
-        pytest.skip("No model library file found (expected library.yml)")
     library = load_library(library_path)
     assert isinstance(library, Library)
     assert isinstance(library.id, str)
@@ -34,8 +32,6 @@ def test_model_library_loads(test_dataset_dir: Path) -> None:
 
 def test_model_library_models_are_typed(test_dataset_dir: Path) -> None:
     library_path = _library_path(test_dataset_dir)
-    if library_path is None:
-        pytest.skip("No model library file found (expected library.yml)")
     library = load_library(library_path)
     for model in library.models.values():
         assert isinstance(model, ModelSchema)
@@ -57,8 +53,6 @@ _KNOWN_TAXONOMY_CATEGORIES: dict[str, str] = {
 
 def test_model_library_taxonomy_categories(test_dataset_dir: Path) -> None:
     library_path = _library_path(test_dataset_dir)
-    if library_path is None:
-        pytest.skip("No model library file found (expected library.yml)")
     library = load_library(library_path)
     for model_id, expected_category in _KNOWN_TAXONOMY_CATEGORIES.items():
         if model_id not in library.models:
@@ -68,8 +62,6 @@ def test_model_library_taxonomy_categories(test_dataset_dir: Path) -> None:
 
 def test_model_library_get_taxonomy_category_unknown_model(test_dataset_dir: Path) -> None:
     library_path = _library_path(test_dataset_dir)
-    if library_path is None:
-        pytest.skip("No model library file found (expected library.yml)")
     library = load_library(library_path)
     with pytest.raises(ValueError, match="Model unknown_model not found in library"):
         library.get_taxonomy_category("unknown_model")
@@ -78,8 +70,6 @@ def test_model_library_get_taxonomy_category_unknown_model(test_dataset_dir: Pat
 def test_model_library_full_model_loaded(test_dataset_dir: Path) -> None:
     """Full model definition with parameters, variables, ports is loaded."""
     library_path = _library_path(test_dataset_dir)
-    if library_path is None:
-        pytest.skip("No model library file found (expected library.yml)")
     library = load_library(library_path)
     try:
         generator = library.get_model("generator")
@@ -101,8 +91,6 @@ def test_model_library_full_model_loaded(test_dataset_dir: Path) -> None:
 def test_model_library_port_types_loaded(test_dataset_dir: Path) -> None:
     """Port types at library level are loaded."""
     library_path = _library_path(test_dataset_dir)
-    if library_path is None:
-        pytest.skip("No model library file found (expected library.yml)")
     library = load_library(library_path)
     assert len(library.port_types) > 0
     flow_port = next((p for p in library.port_types if p.id == "flow"), None)
