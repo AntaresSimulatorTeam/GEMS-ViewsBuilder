@@ -72,8 +72,10 @@ view:
     - taxonomy-category: balance
     - calendar: calendar_file
   aggregations:
-    time: hour
-    scenario: false
+    scenario-aggregations:
+      - id: default
+        time: hour
+        scenario: false
   catalogs:
     - id: catalog_1
   metrics:
@@ -117,7 +119,9 @@ view:
     - taxonomy-category: balance
     - calendar: calendar_file
   aggregations:
-    scenario: false
+    scenario-aggregations:
+      - id: default
+        scenario: false
   catalogs:
     - id: catalog
   metrics:
@@ -139,7 +143,9 @@ view:
     - taxonomy-category: balance
     - calendar: calendar_file
   aggregations:
-    time: hour
+    scenario-aggregations:
+      - id: default
+        time: hour
   catalogs:
     - id: catalog
   metrics:
@@ -148,4 +154,54 @@ view:
     )
 
     with pytest.raises(ValueError, match="scenario"):
+        load_view_config(config_path)
+
+
+def test_raises_when_scenario_aggregations_is_empty(tmp_path: Path) -> None:
+    config_path = tmp_path / "view_config.yml"
+    config_path.write_text(
+        """
+view:
+  id: empty_scenario_aggregations
+  scope:
+    - taxonomy-category: balance
+    - calendar: calendar_file
+  aggregations:
+    scenario-aggregations: []
+  catalogs:
+    - id: catalog
+  metrics:
+    - id: catalog.LOAD
+""".strip()
+    )
+
+    with pytest.raises(ValueError, match="exactly one scenario aggregation"):
+        load_view_config(config_path)
+
+
+def test_raises_when_multiple_scenario_aggregations_are_configured(tmp_path: Path) -> None:
+    config_path = tmp_path / "view_config.yml"
+    config_path.write_text(
+        """
+view:
+  id: multiple_scenario_aggregations
+  scope:
+    - taxonomy-category: balance
+    - calendar: calendar_file
+  aggregations:
+    scenario-aggregations:
+      - id: hourly
+        time: hour
+        scenario: false
+      - id: daily
+        time: day
+        scenario: true
+  catalogs:
+    - id: catalog
+  metrics:
+    - id: catalog.LOAD
+""".strip()
+    )
+
+    with pytest.raises(ValueError, match="exactly one scenario aggregation"):
         load_view_config(config_path)

@@ -26,7 +26,7 @@ from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import SimulationTable
-from gems_views_builder.input.view_config import TimeGranularity, ViewConfig
+from gems_views_builder.input.view_config import ScenarioAggregation, TimeGranularity, ViewConfig
 from gems_views_builder.metric_view import MetricView
 from tests.e2e.utils import (
     build_raw_input_data,
@@ -79,8 +79,9 @@ def make_view_config(tmp_path: Path) -> ViewConfig:
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids={"catalog"},
-        time_aggr_granularity=TimeGranularity.HOUR,
-        scenario_aggregation=False,
+        scenario_aggregations=[
+            ScenarioAggregation(id="default", time=TimeGranularity.HOUR, scenario=False),
+        ],
         extra_locations=["country", "region"],
         metric_ids=["catalog.LOAD", "catalog.PROD"],
     )

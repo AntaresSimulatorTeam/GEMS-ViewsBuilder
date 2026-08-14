@@ -29,7 +29,7 @@ class ViewBuilder:
         metric_views: list[MetricView] = []
         # # Before this step locations are built, practically we know what is located where
         for metric in self.view_building_input.view_config.metrics:
-            # # Create metric 
+            # # Create metric
             metric_structure_table = self.metric_structure_table_builder.build(metric)
             metric_view = self.terms_aggregator.run(metric_structure_table, metric)
             # # Here is problem

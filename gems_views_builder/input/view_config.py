@@ -32,9 +32,14 @@ class Scope(ViewBuilderBasedModel):
     calendar: str | None = None
 
 
-class Aggregation(ViewBuilderBasedModel):
+class ScenarioAggregation(ViewBuilderBasedModel):
+    id: str
     time: TimeGranularity
     scenario: bool
+
+
+class Aggregations(ViewBuilderBasedModel):
+    scenario_aggregations: list[ScenarioAggregation]
     extra_locations: list[ExtraLocation] | None = None
 
 
@@ -49,7 +54,7 @@ class MetricId(ViewBuilderBasedModel):
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: list[Scope]
-    aggregations: Aggregation
+    aggregations: Aggregations
     catalogs: list[CatalogId]
     metrics: list[MetricId]
 
@@ -60,12 +65,22 @@ class ViewConfig:
     input_data_path: Path
     calendar_id: str
     location_taxonomy_category: str
-    time_aggr_granularity: TimeGranularity
-    scenario_aggregation: bool
+    scenario_aggregations: list[ScenarioAggregation]
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        _require_single_scenario_aggregation(self.scenario_aggregations, self.id)
+
+    @property
+    def time_aggr_granularity(self) -> TimeGranularity:
+        return self.scenario_aggregations[0].time
+
+    @property
+    def scenario_aggregation(self) -> bool:
+        return self.scenario_aggregations[0].scenario
 
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
         """Resolve metric refs in view-config order into ``self.metrics``."""
@@ -112,8 +127,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalogs},
-        time_aggr_granularity=raw_view_config.aggregations.time,
-        scenario_aggregation=raw_view_config.aggregations.scenario,
+        scenario_aggregations=raw_view_config.aggregations.scenario_aggregations,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.aggregations.extra_locations or [])],
     )
@@ -132,3 +146,14 @@ def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
         raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
     logging.info(f"View config YAML parsed successfully from {view_file_path}")
     return RawViewConfig.model_validate(raw["view"])
+
+
+def _require_single_scenario_aggregation(
+    scenario_aggregations: list[ScenarioAggregation], view_id: str
+) -> ScenarioAggregation:
+    if len(scenario_aggregations) != 1:
+        raise ValueError(
+            f"view_config.yml '{view_id}': exactly one scenario aggregation is supported for now, "
+            f"found {len(scenario_aggregations)}"
+        )
+    return scenario_aggregations[0]

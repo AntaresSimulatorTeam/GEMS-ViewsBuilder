@@ -12,8 +12,10 @@ view:
     - calendar: calendar_file # calendar_file.csv
 
   aggregations:
-    time: hour
-    scenario: false
+    scenario-aggregations:
+      - id: default
+        time: hour
+        scenario: false
 
   catalogs: #Pointer to "catalogs" = "Business Metrics definitions files".
       - id: catalog
