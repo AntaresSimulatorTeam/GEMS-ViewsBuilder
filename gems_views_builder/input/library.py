@@ -23,7 +23,7 @@ class Library:
     port_types: list[PortTypeSchema]
     models: dict[str, ModelSchema]
     models_by_taxonomy_category: dict[str, list[str]]
-    taxonomy_category_by_model: dict[str, str]
+    taxon_by_model: dict[str, str]
 
     def get_model(self, model_id: str) -> ModelSchema:
         """Return the full model definition, or None if not found."""
@@ -43,17 +43,17 @@ class Library:
         return self.models_by_taxonomy_category.get(taxonomy_category, [])
 
 
-def create_lib_from_yml(parsed: LibrarySchema) -> Library:
+def create_lib_from_yml(yml_lib: LibrarySchema) -> Library:
     return Library(
-        id=parsed.id,
-        description=parsed.description or "",
-        port_types=parsed.port_types,
-        models={m.id: m for m in parsed.models},
+        id=yml_lib.id,
+        description=yml_lib.description or "",
+        port_types=yml_lib.port_types,
+        models={m.id: m for m in yml_lib.models},
         models_by_taxonomy_category={
-            cat: [m.id for m in parsed.models if m.taxonomy_category == cat]
-            for cat in {m.taxonomy_category for m in parsed.models if m.taxonomy_category}
+            cat: [m.id for m in yml_lib.models if m.taxonomy_category == cat]
+            for cat in {m.taxonomy_category for m in yml_lib.models if m.taxonomy_category}
         },
-        taxonomy_category_by_model={m.id: m.taxonomy_category for m in parsed.models if m.taxonomy_category},
+        taxon_by_model={m.id: m.taxonomy_category for m in yml_lib.models if m.taxonomy_category},
     )
 
 
@@ -79,8 +79,8 @@ def collect_lib_files(library_dir: Path) -> list[Path]:
 def associate_models_with_a_taxon(libraries: dict[str, Library]) -> dict[str, str]:
     taxon_by_model: dict[str, str] = {}
     for library_id, library in libraries.items():
-        for model_id, category in library.taxonomy_category_by_model.items():
-            taxon_by_model[f"{library_id}.{model_id}"] = category
+        for model_id, taxon in library.taxon_by_model.items():
+            taxon_by_model[f"{library_id}.{model_id}"] = taxon
     return taxon_by_model
 
 
