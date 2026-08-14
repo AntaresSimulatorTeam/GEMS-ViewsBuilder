@@ -14,14 +14,11 @@ class SystemType(Enum):
     DIRECTORY = "directory"
     FILE = "file"
 
-
 @dataclass
 class PathOption:
     name: str
     system_type: SystemType
     system_check: Callable[[Path], bool]
-    path: Path = Path()
-
 
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
     PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
@@ -81,23 +78,18 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
             help=f"{option.system_type.value} for {option.name}.",
         )
 
-
-def check_paths_options() -> None:
+def check_paths_options(args: argparse.Namespace) -> None:
     for option in REQUIRED_PATHS_OPTIONS:
-        if not option.system_check(option.path):
-            raise OSError(f"--{option.name} is not a {option.system_type.value}: {option.path}")
+        option_value = getattr(args, option.name.replace("-", "_"))
+        if not option.system_check(option_value):
+            raise OSError(f"--{option.name} is not a {option.system_type.value}: {option_value}")
 
 
 def check_options(args: argparse.Namespace) -> None:
-    check_paths_options()
+    check_paths_options(args)
 
     if not args.output.is_dir():
         raise NotADirectoryError(f"--output is not a directory: {args.output}")
 
     if args.log_dir is not None and not args.log_dir.is_dir():
         raise NotADirectoryError(f"Log directory does not exist: {args.log_dir}")
-
-
-def give_paths_options_a_value(args: argparse.Namespace) -> None:
-    for option in REQUIRED_PATHS_OPTIONS:
-        option.path = getattr(args, option.name.replace("-", "_"))

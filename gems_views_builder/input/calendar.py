@@ -51,7 +51,7 @@ def _check_for_missing_columns(actual_column_titles: set[str]) -> None:
 
 
 def _check_for_unexpected_columns(actual_column_titles: set[str]) -> None:
-    unexpected_cols = EXPECTED_CALENDAR_COLUMNS - actual_column_titles
+    unexpected_cols =  actual_column_titles - EXPECTED_CALENDAR_COLUMNS
     if unexpected_cols:
         raise ValueError(f"Calendar has unexpected columns: {unexpected_cols}")
 
