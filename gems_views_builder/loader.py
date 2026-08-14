@@ -26,7 +26,6 @@ class Loader:
         view_config: ViewConfig = load_view_config(self.input_paths.view_config)
         yml_libs = load_yml_libs(self.input_paths.libraries_dir)
         raw_input_data = RawInputData(
-            input_data_path=self.input_paths.view_config.parent,
             taxonomy=load_taxonomy(self.input_paths.taxonomy),
             view_config=view_config,
             libraries={yml_lib.id: create_lib_from_yml(yml_lib) for yml_lib in yml_libs},

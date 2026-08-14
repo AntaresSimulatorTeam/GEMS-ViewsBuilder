@@ -16,7 +16,6 @@ def test_loads(test_dataset_dir: Path) -> None:
     assert isinstance(config.location_taxonomy_category, str)
     assert isinstance(config.calendar_id, str)
     assert len(config.catalog_ids) > 0
-    assert config.input_data_path == config_path.parent
 
 
 def test_catalog_ids_are_strings(test_dataset_dir: Path) -> None:

@@ -74,7 +74,6 @@ def make_simulation_table_and_calendar(
 
 
 def build_raw_input_data(
-    input_dir: Path,
     system: Any,
     taxonomy_category_by_model: dict[str, str],
     view_config: ViewConfig,
@@ -88,7 +87,6 @@ def build_raw_input_data(
     enough to drive the pipeline steps under test.
     """
     return RawInputData(
-        input_data_path=input_dir,
         taxonomy=Taxonomy(id="taxonomy"),
         libraries={
             "lib": Library(
