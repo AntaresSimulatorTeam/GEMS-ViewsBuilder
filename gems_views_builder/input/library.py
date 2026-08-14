@@ -32,7 +32,7 @@ class Library:
         except KeyError:
             raise ValueError(f"Model {model_id} not found in library")
 
-    def get_taxonomy_category(self, model_id: str) -> str:
+    def get_model_taxon(self, model_id: str) -> str:
         """Return the taxonomy category for a given model id."""
         model = self.get_model(model_id)
         if model.taxonomy_category is None:

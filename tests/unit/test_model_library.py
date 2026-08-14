@@ -57,14 +57,14 @@ def test_model_library_taxonomy_categories(test_dataset_dir: Path) -> None:
     for model_id, expected_category in _KNOWN_TAXONOMY_CATEGORIES.items():
         if model_id not in library.models:
             continue
-        assert library.get_taxonomy_category(model_id) == expected_category
+        assert library.get_model_taxon(model_id) == expected_category
 
 
 def test_model_library_get_taxonomy_category_unknown_model(test_dataset_dir: Path) -> None:
     library_path = _library_path(test_dataset_dir)
     library = create_lib_from_yml(load_lib_file(library_path))
     with pytest.raises(ValueError, match="Model unknown_model not found in library"):
-        library.get_taxonomy_category("unknown_model")
+        library.get_model_taxon("unknown_model")
 
 
 def test_model_library_full_model_loaded(test_dataset_dir: Path) -> None:
