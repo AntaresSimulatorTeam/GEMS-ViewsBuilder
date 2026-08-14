@@ -22,12 +22,11 @@ class PathOption:
     args_attribute: str = ""
 
     def __post_init__(self) -> None:
-        if not self.args_attribute:
-            self.args_attribute = self.name
+        self.args_attribute = self.name.replace("-", "_")
 
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
-    PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir, "catalogs_dir"),
-    PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir, "libraries_dir"),
+    PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
+    PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir),
     PathOption("system", SystemType.FILE, Path.is_file),
     PathOption("calendar", SystemType.FILE, Path.is_file),
     PathOption("taxonomy", SystemType.FILE, Path.is_file),
