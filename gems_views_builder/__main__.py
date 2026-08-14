@@ -3,7 +3,7 @@
 
 import logging
 
-from gems_views_builder.cli import build_parser, check_options, give_paths_options_a_value
+from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import (
     configure_logging,
 )
@@ -66,7 +66,6 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose, log_dir=args.log_dir)
 
-    give_paths_options_a_value(args)
     try:
         check_options(args)
     except Exception:
