@@ -26,7 +26,6 @@ class PathOption:
         self.args_attribute = self.name.replace("-", "_")
 
 
-
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
     PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
     PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir),
