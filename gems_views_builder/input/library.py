@@ -60,14 +60,14 @@ def create_lib_from_yml(parsed: LibrarySchema) -> Library:
 def load_yml_libs(library_dir: Path) -> list[LibrarySchema]:
     logging.info(f"Loading model libraries from {library_dir}")
     yml_libs: list[LibrarySchema] = []
-    seen_ids: set[str] = set()
+    already_loaded_libs: set[str] = set()
     for library_file_path in collect_lib_files(library_dir):
         yml_lib = load_lib_file(library_file_path)
-        if yml_lib.id in seen_ids:
+        if yml_lib.id in already_loaded_libs:
             raise ValueError(
                 f"Library id {yml_lib.id!r} defined more than once in {library_dir} (also found in a different file)"
             )
-        seen_ids.add(yml_lib.id)
+        already_loaded_libs.add(yml_lib.id)
         yml_libs.append(yml_lib)
     return yml_libs
 
