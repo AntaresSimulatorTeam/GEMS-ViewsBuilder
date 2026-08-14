@@ -14,7 +14,6 @@ from gems_views_builder import (
     PropertySchema,
     Term,
     load_catalog,
-    load_library,
     load_taxonomy,
 )
 from gems_views_builder.input.component import (
@@ -26,7 +25,12 @@ from gems_views_builder.input.component import (
     supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
-from gems_views_builder.input.library import merge_taxonomy_category_by_model, resolve_libraries
+from gems_views_builder.input.library import (
+    create_lib_from_schema,
+    load_library_file,
+    load_library_schemas,
+    merge_taxonomy_category_by_model,
+)
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
@@ -54,9 +58,9 @@ def build_components_by_taxonomy_category(
 def test_3_components(test_files_root: Path) -> dict[str, Any]:
     test_3 = test_files_root / "test_3"
     library_dir = test_3 / "libraries"
-    system = load_system(test_3 / "system.yml", resolve_libraries(library_dir))
+    system = load_system(test_3 / "system.yml", load_library_schemas(library_dir))
     taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
-    library = load_library(library_dir / "library.yml")
+    library = create_lib_from_schema(load_library_file(library_dir / "library.yml"))
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     view_config = load_view_config(test_3 / "view_config.yml")
     components_by_taxon = build_components_by_taxonomy_category(

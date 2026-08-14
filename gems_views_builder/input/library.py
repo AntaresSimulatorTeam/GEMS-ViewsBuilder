@@ -8,9 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from gems_craft.model.library import Library as GemsLibrary  # type: ignore
 from gems_craft.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema, parse_yaml_library  # type: ignore
-from gems_craft.model.resolve_library import resolve_library  # type: ignore
 
 
 @dataclass
@@ -45,9 +43,7 @@ class Library:
         return self.models_by_taxonomy_category.get(taxonomy_category, [])
 
 
-def load_library(library_file_path: Path) -> Library:
-    logging.info(f"Loading model library from {library_file_path}")
-    parsed = load_library_file(library_file_path)
+def create_lib_from_schema(parsed: LibrarySchema) -> Library:
     return Library(
         id=parsed.id,
         description=parsed.description or "",
@@ -61,31 +57,27 @@ def load_library(library_file_path: Path) -> Library:
     )
 
 
+def load_library_schemas(library_dir: Path) -> list[LibrarySchema]:
+    """Parse every library YAML file in library_dir, rejecting duplicate library ids."""
+    logging.info(f"Loading model libraries from {library_dir}")
+    schemas: list[LibrarySchema] = []
+    seen_ids: set[str] = set()
+    for library_file_path in discover_library_files(library_dir):
+        parsed = load_library_file(library_file_path)
+        if parsed.id in seen_ids:
+            raise ValueError(
+                f"Library id {parsed.id!r} defined more than once in {library_dir} (also found in a different file)"
+            )
+        seen_ids.add(parsed.id)
+        schemas.append(parsed)
+    return schemas
+
+
 def load_libraries(library_dir: Path) -> dict[str, Library]:
     """
     Load every library YAML file (any file name) in library_dir, keyed by library id.
     """
-    logging.info(f"Loading model libraries from {library_dir}")
-    libraries: dict[str, Library] = {}
-    for library_file_path in discover_library_files(library_dir):
-        library = load_library(library_file_path)
-        if library.id in libraries:
-            raise ValueError(
-                f"Library id {library.id!r} defined more than once in {library_dir} (also found in a different file)"
-            )
-        libraries[library.id] = library
-    return libraries
-
-
-def resolve_libraries(library_dir: Path) -> dict[str, GemsLibrary]:
-    """Resolve library YAMLs in ``library_dir`` into GemsPy's fully-resolved libraries, keyed by library id.
-
-    This is the shape ``gems_craft.study.resolve_components.resolve_system`` needs to resolve
-    the study's components, distinct from the schema-level :class:`Library` wrapper above.
-    """
-    logging.info(f"Resolving model libraries from {library_dir}")
-    parsed = [load_library_file(p) for p in discover_library_files(library_dir)]
-    return cast(dict[str, GemsLibrary], resolve_library(parsed))
+    return {parsed.id: create_lib_from_schema(parsed) for parsed in load_library_schemas(library_dir)}
 
 
 def discover_library_files(library_dir: Path) -> list[Path]:

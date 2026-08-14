@@ -15,7 +15,6 @@ import pytest
 from gems_views_builder import (
     MetricStructureTableBuilder,
     load_catalog,
-    load_library,
 )
 from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.input.component import (
@@ -26,7 +25,12 @@ from gems_views_builder.input.component import (
     supply_components_with_port_connections,
     supply_components_with_taxonomy_categories,
 )
-from gems_views_builder.input.library import merge_taxonomy_category_by_model, resolve_libraries
+from gems_views_builder.input.library import (
+    create_lib_from_schema,
+    load_library_file,
+    load_library_schemas,
+    merge_taxonomy_category_by_model,
+)
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.view import ParquetViewSinker
@@ -109,8 +113,8 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     """
     root = test_files_root / "filtering_and_breakdown_property_order"
     library_dir = root / "libraries"
-    library = load_library(library_dir / "library.yml")
-    system = load_system(root / "system.yml", resolve_libraries(library_dir))
+    library = create_lib_from_schema(load_library_file(library_dir / "library.yml"))
+    system = load_system(root / "system.yml", load_library_schemas(library_dir))
     catalog = load_catalog(root / "catalogs" / "catalog.yml")
     view_config = load_view_config(root / "view_config.yml")
     metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")
