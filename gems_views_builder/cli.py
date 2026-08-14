@@ -20,6 +20,10 @@ class PathOption:
     name: str
     system_type: SystemType
     system_check: Callable[[Path], bool]
+    args_attribute: str = ""
+
+    def __post_init__(self) -> None:
+        self.args_attribute = self.name.replace("-", "_")
 
 
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
@@ -83,7 +87,7 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
 
 def check_paths_options(args: argparse.Namespace) -> None:
     for option in REQUIRED_PATHS_OPTIONS:
-        option_value = getattr(args, option.name.replace("-", "_"))
+        option_value = getattr(args, option.args_attribute)
         if not option.system_check(option_value):
             raise OSError(f"--{option.name} is not a {option.system_type.value}: {option_value}")
 
