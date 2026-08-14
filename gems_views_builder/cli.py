@@ -14,11 +14,13 @@ class SystemType(Enum):
     DIRECTORY = "directory"
     FILE = "file"
 
+
 @dataclass
 class PathOption:
     name: str
     system_type: SystemType
     system_check: Callable[[Path], bool]
+
 
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
     PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
@@ -77,6 +79,7 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
             required=True,
             help=f"{option.system_type.value} for {option.name}.",
         )
+
 
 def check_paths_options(args: argparse.Namespace) -> None:
     for option in REQUIRED_PATHS_OPTIONS:
