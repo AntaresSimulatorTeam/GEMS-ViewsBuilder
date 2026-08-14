@@ -82,7 +82,7 @@ def check_paths_options(args: argparse.Namespace) -> None:
     for option in REQUIRED_PATHS_OPTIONS:
         option_value = getattr(args, option.name.replace("-", "_"))
         if not option.system_check(option_value):
-            raise OSError(f"--{option.name} is not a {option.system_type.value}: {option.path}")
+            raise OSError(f"--{option.name} is not a {option.system_type.value}: {option_value}")
 
 
 def check_options(args: argparse.Namespace) -> None:
