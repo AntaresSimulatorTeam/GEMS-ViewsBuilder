@@ -75,7 +75,7 @@ def make_simulation_table_and_calendar(
 
 def build_raw_input_data(
     system: Any,
-    taxonomy_category_by_model: dict[str, str],
+    taxon_by_model: dict[str, str],
     view_config: ViewConfig,
     simulation_table: SimulationTable,
     calendar: Calendar,
@@ -83,19 +83,21 @@ def build_raw_input_data(
 ) -> RawInputData:
     """
     Build a real RawInputData, skipping only the disk-reading Loader.load() step:
-    system/library/taxonomy are minimal but real objects, populated with just
+    system/libraries/taxonomy are minimal but real objects, populated with just
     enough to drive the pipeline steps under test.
     """
     return RawInputData(
         taxonomy=Taxonomy(id="taxonomy"),
-        library=Library(
-            id="lib",
-            description="",
-            port_types=[],
-            models={},
-            models_by_taxonomy_category={},
-            taxonomy_category_by_model=taxonomy_category_by_model,
-        ),
+        libraries={
+            "lib": Library(
+                id="lib",
+                description="",
+                port_types=[],
+                models={},
+                models_by_taxonomy_category={},
+                taxon_by_model=taxon_by_model,
+            )
+        },
         system=system,
         view_config=view_config,
         simulation_table=simulation_table,

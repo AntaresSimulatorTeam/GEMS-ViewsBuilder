@@ -27,7 +27,7 @@ from gems_views_builder.input.catalog import (
     load_catalog,
     load_catalogs,
 )
-from gems_views_builder.input.library import Library, load_library
+from gems_views_builder.input.library import Library, associate_models_with_a_taxon
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import (
     FilteredSimulationTable,
@@ -65,7 +65,7 @@ __all__ = [
     "ExtraOutputSchema",
     "Library",
     "LibrarySchema",
-    "load_library",
+    "associate_models_with_a_taxon",
     "ModelSchema",
     "ModelPortSchema",
     "ObjectiveContributionSchema",
