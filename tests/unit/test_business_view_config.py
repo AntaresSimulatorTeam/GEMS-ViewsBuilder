@@ -54,12 +54,12 @@ def test_known_values(test_dataset_dir: Path) -> None:
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.time_aggr_granularity == TimeGranularity.HOUR
+    assert config.scenario_aggregations[0].time == TimeGranularity.HOUR
 
 
 def test_scenario_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.scenario_aggregation is False
+    assert config.scenario_aggregations[0].scenario is False
 
 
 def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
@@ -69,12 +69,12 @@ def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
 view:
   id: invalid_metric_format
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    location:
+      taxonomy-category: balance
+    calendar: calendar_file
   aggregations:
     scenario-aggregations:
-      - id: default
-        time: hour
+      - time: hour
         scenario: false
   catalogs:
     - id: catalog_1
@@ -96,8 +96,9 @@ def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
 view:
   id: missing_aggregation
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    location:
+      taxonomy-category: balance
+    calendar: calendar_file
   catalogs:
     - id: catalog
   metrics:
@@ -116,12 +117,12 @@ def test_raises_when_aggregation_time_is_missing(tmp_path: Path) -> None:
 view:
   id: missing_time
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    location:
+      taxonomy-category: balance
+    calendar: calendar_file
   aggregations:
     scenario-aggregations:
-      - id: default
-        scenario: false
+      - scenario: false
   catalogs:
     - id: catalog
   metrics:
@@ -140,12 +141,12 @@ def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path) -> None:
 view:
   id: missing_scenario
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    location:
+      taxonomy-category: balance
+    calendar: calendar_file
   aggregations:
     scenario-aggregations:
-      - id: default
-        time: hour
+      - time: hour
   catalogs:
     - id: catalog
   metrics:

@@ -12,9 +12,7 @@ from gems_views_builder.input.view_config import TimeGranularity, load_view_conf
 from gems_views_builder.view import ParquetViewSinker
 from tests.e2e.utils import fetch_view, make_results_dir
 
-AGGREGATION_BLOCK = (
-    "  aggregations:\n    scenario-aggregations:\n      - id: default\n        time: hour\n        scenario: false\n"
-)
+AGGREGATION_BLOCK = "  aggregations:\n    scenario-aggregations:\n      - time: hour\n        scenario: false\n"
 
 
 # test_3/calendar_file.csv spans 2025-01-01 00:00 .. 2025-01-01 23:00 (24 granular hours).
@@ -34,8 +32,7 @@ def replace_aggregation(view_config_path: Path, aggregation_time: TimeGranularit
     replacement = (
         "  aggregations:\n"
         "    scenario-aggregations:\n"
-        "      - id: default\n"
-        f"        time: {aggregation_time.value}\n"
+        f"      - time: {aggregation_time.value}\n"
         "        scenario: false\n"
     )
     view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))

@@ -27,19 +27,23 @@ class TimeGranularity(Enum):
     YEAR = "year"
 
 
+class Location(ViewBuilderBasedModel):
+    taxonomy_category: str
+    # Here will be filter in  PR
+
+
 class Scope(ViewBuilderBasedModel):
-    taxonomy_category: str | None = Field(None, alias="taxonomy-category")
-    calendar: str | None = None
+    location: Location
+    calendar: str
 
 
 class ScenarioAggregation(ViewBuilderBasedModel):
-    id: str
     time: TimeGranularity
     scenario: bool
 
 
 class Aggregations(ViewBuilderBasedModel):
-    scenario_aggregations: list[ScenarioAggregation] = Field(min_length=1)
+    scenario_aggregations: tuple[ScenarioAggregation, ...] = Field(min_length=1)
     extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
@@ -53,7 +57,7 @@ class MetricId(ViewBuilderBasedModel):
 
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
-    scope: list[Scope]
+    scope: Scope
     aggregations: Aggregations
     catalogs: list[CatalogId]
     metrics: list[MetricId]
@@ -65,19 +69,11 @@ class ViewConfig:
     input_data_path: Path
     calendar_id: str
     location_taxonomy_category: str
-    scenario_aggregations: list[ScenarioAggregation]
+    scenario_aggregations: tuple[ScenarioAggregation, ...]
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
-
-    @property
-    def time_aggr_granularity(self) -> TimeGranularity:
-        return self.scenario_aggregations[0].time
-
-    @property
-    def scenario_aggregation(self) -> bool:
-        return self.scenario_aggregations[0].scenario
 
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
         """Resolve metric refs in view-config order into ``self.metrics``."""
@@ -102,27 +98,12 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
     input_data_path = config_file_path.parent
-    location_taxonomy_category = next(
-        (item.taxonomy_category for item in raw_view_config.scope if item.taxonomy_category),
-        None,
-    )
-    if location_taxonomy_category is None:
-        raise ValueError(
-            f"view_config.yml '{raw_view_config.id}': no 'taxonomy-category' found in scope. "
-            f"At least one scope entry must define a taxonomy-category"
-        )
-
-    calendar_id = next((item.calendar for item in raw_view_config.scope if item.calendar), None)
-    if calendar_id is None:
-        raise ValueError(
-            f"view_config.yml '{raw_view_config.id}': no calendar configured in scope. One calendar must be configured in scope"
-        )
 
     view_config = ViewConfig(
         id=raw_view_config.id,
         input_data_path=input_data_path,
-        calendar_id=calendar_id,
-        location_taxonomy_category=location_taxonomy_category,
+        calendar_id=raw_view_config.scope.calendar,
+        location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalogs},
         scenario_aggregations=raw_view_config.aggregations.scenario_aggregations,
         metric_ids=[metric.id for metric in raw_view_config.metrics],

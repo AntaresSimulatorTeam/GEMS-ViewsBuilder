@@ -22,17 +22,19 @@ class ViewBuilder:
         # Aggregator for step 2B
         self.terms_aggregator = TermsAggregator(self.view_building_input.filtered_st)
         # Aggregator for step 2C
-        self.time_aggregator = TimeAggregator(self.view_building_input.view_config.time_aggr_granularity)
-        self.scenario_operator = make_scenario_operator(self.view_building_input.view_config.scenario_aggregation)
+
+        # # Here we need to introduce multiple TimeAggregators for each scenario aggregation
+        self.time_aggregator = TimeAggregator(self.view_building_input.view_config.scenario_aggregations[0].time)
+        self.scenario_operator = make_scenario_operator(
+            self.view_building_input.view_config.scenario_aggregations[0].scenario
+        )
 
     def build(self) -> list[MetricView]:
         metric_views: list[MetricView] = []
-        # # Before this step locations are built, practically we know what is located where
         for metric in self.view_building_input.view_config.metrics:
-            # # Create metric
             metric_structure_table = self.metric_structure_table_builder.build(metric)
             metric_view = self.terms_aggregator.run(metric_structure_table, metric)
-            # # Here is problem
+            # # Here is problem, we need to loop over scenarios and run the time aggregation for each scenario
             temporal_metric_view = self.time_aggregator.run(metric_view, metric)
             to_scenario_view(temporal_metric_view, self.scenario_operator)
             metric_views.append(temporal_metric_view)

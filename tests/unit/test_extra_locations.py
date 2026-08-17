@@ -35,9 +35,7 @@ def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
         input_data_path=Path("."),
         calendar_id="calendar_file",
         location_taxonomy_category="balance",
-        scenario_aggregations=[
-            ScenarioAggregation(id="default", time=TimeGranularity.HOUR, scenario=False),
-        ],
+        scenario_aggregations=(ScenarioAggregation(time=TimeGranularity.HOUR, scenario=False),),
         extra_locations=extra_locations or [],
     )
 
@@ -50,12 +48,12 @@ def test_view_config_parses_extra_locations(tmp_path: Path) -> None:
 view:
   id: view_area
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    location:
+      taxonomy-category: balance
+    calendar: calendar_file
   aggregations:
     scenario-aggregations:
-      - id: default
-        time: hour
+      - time: hour
         scenario: false
     extra-locations:
       - id: country
@@ -83,12 +81,12 @@ def test_view_config_extra_locations_defaults_to_empty_list(tmp_path: Path) -> N
 view:
   id: view_area
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    location:
+      taxonomy-category: balance
+    calendar: calendar_file
   aggregations:
     scenario-aggregations:
-      - id: default
-        time: hour
+      - time: hour
         scenario: false
   catalogs:
     - id: catalog

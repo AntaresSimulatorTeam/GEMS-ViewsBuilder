@@ -79,9 +79,7 @@ def make_view_config(tmp_path: Path) -> ViewConfig:
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids={"catalog"},
-        scenario_aggregations=[
-            ScenarioAggregation(id="default", time=TimeGranularity.HOUR, scenario=False),
-        ],
+        scenario_aggregations=(ScenarioAggregation(time=TimeGranularity.HOUR, scenario=False),),
         extra_locations=["country", "region"],
         metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
