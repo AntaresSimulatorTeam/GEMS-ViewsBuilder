@@ -25,8 +25,9 @@ TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
 
 
 class TimeAggregator:
-    def __init__(self, time_granularity: TimeGranularity) -> None:
+    def __init__(self, time_granularity: TimeGranularity, scenario_id: str) -> None:
         self._time_granularity = time_granularity
+        self._scenario_id = scenario_id
         self._root_dir = Path(tempfile.mkdtemp())
         self._temporal_aggregation_dir = self._root_dir / "views" / "temporal_aggregation"
         self._temporal_aggregation_dir.mkdir(parents=True, exist_ok=True)
@@ -70,14 +71,15 @@ class TimeAggregator:
                 ]
             )
         )
+        file_path = self._temporal_aggregation_dir / f"{metric.id}_{self._scenario_id}.parquet"
         view.sink_parquet(
-            path=self._temporal_aggregation_dir / f"{metric.id}.parquet",
+            path=file_path,
             compression=PARQUET_COMPRESSION,
             compression_level=PARQUET_COMPRESSION_LEVEL,
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
-        logg_write(metric, self._temporal_aggregation_dir / f"{metric.id}.parquet")
-        return MetricView(self._temporal_aggregation_dir / f"{metric.id}.parquet")
+        logg_write(metric, file_path)
+        return MetricView(file_path)
 
 
 def logg_write(metric: Metric, file_path: Path) -> None:

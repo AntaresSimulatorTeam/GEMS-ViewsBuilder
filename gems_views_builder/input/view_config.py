@@ -38,6 +38,7 @@ class Scope(ViewBuilderBasedModel):
 
 
 class ScenarioAggregation(ViewBuilderBasedModel):
+    id: str
     time: TimeGranularity
     scenario: bool
 

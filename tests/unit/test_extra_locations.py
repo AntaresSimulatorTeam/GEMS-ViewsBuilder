@@ -35,7 +35,7 @@ def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
         input_data_path=Path("."),
         calendar_id="calendar_file",
         location_taxonomy_category="balance",
-        scenario_aggregations=(ScenarioAggregation(time=TimeGranularity.HOUR, scenario=False),),
+        scenario_aggregations=(ScenarioAggregation(id="hourly", time=TimeGranularity.HOUR, scenario=False),),
         extra_locations=extra_locations or [],
     )
 
@@ -53,7 +53,8 @@ view:
     calendar: calendar_file
   aggregations:
     scenario-aggregations:
-      - time: hour
+      - id: hourly
+        time: hour
         scenario: false
     extra-locations:
       - id: country
@@ -86,7 +87,8 @@ view:
     calendar: calendar_file
   aggregations:
     scenario-aggregations:
-      - time: hour
+      - id: hourly
+        time: hour
         scenario: false
   catalogs:
     - id: catalog

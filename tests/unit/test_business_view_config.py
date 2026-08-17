@@ -59,6 +59,7 @@ def test_time_aggregation(test_dataset_dir: Path) -> None:
 
 def test_scenario_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
+    assert config.scenario_aggregations[0].id == "hourly"
     assert config.scenario_aggregations[0].scenario is False
 
 
@@ -74,7 +75,8 @@ view:
     calendar: calendar_file
   aggregations:
     scenario-aggregations:
-      - time: hour
+      - id: hourly
+        time: hour
         scenario: false
   catalogs:
     - id: catalog_1
@@ -122,7 +124,8 @@ view:
     calendar: calendar_file
   aggregations:
     scenario-aggregations:
-      - scenario: false
+      - id: hourly
+        scenario: false
   catalogs:
     - id: catalog
   metrics:
@@ -146,7 +149,8 @@ view:
     calendar: calendar_file
   aggregations:
     scenario-aggregations:
-      - time: hour
+      - id: hourly
+        time: hour
   catalogs:
     - id: catalog
   metrics:
