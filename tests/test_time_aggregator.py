@@ -118,27 +118,3 @@ def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     assert df.shape[0] == 1
     assert df["view_date"][0] == datetime(2026, 1, 1, 0, 0)
     assert df["metric_value"][0] == approx(15.0)  # mean(10.0, 20.0)
-
-
-def test_part_counter_increments_file_names(tmp_path: Path) -> None:
-    # Arrange
-    aggregator = TimeAggregator(TimeGranularity.DAY)
-    metric = make_metric(AggregOperatorType.SUM)
-    rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]
-    metric_view = make_metric_view(rows, tmp_path)
-
-    # Act
-    first = aggregator.run(metric_view, metric)
-    second = aggregator.run(make_metric_view(rows, tmp_path), metric)
-
-    # Assert
-    assert first.persistence_path != second.persistence_path
-    assert first.persistence_path.name.endswith("-0.parquet")
-    assert second.persistence_path.name.endswith("-1.parquet")
-
-    # Each part is truncated to its day and the two intra-day values are summed.
-    for part in (first, second):
-        df = pl.read_parquet(part.persistence_path)
-        assert df.shape[0] == 1
-        assert df["view_date"][0] == datetime(2026, 1, 1, 0, 0)
-        assert df["metric_value"][0] == approx(30.0)

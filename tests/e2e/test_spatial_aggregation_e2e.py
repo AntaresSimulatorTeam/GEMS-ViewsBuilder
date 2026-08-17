@@ -81,7 +81,7 @@ def make_view_config(tmp_path: Path) -> ViewConfig:
         catalog_ids={"catalog"},
         scenario_aggregations=(ScenarioAggregation(time=TimeGranularity.HOUR, scenario=False),),
         extra_locations=["country", "region"],
-        metric_ids=["catalog.LOAD", "catalog.PROD"],
+        metric_ids={"catalog.LOAD", "catalog.PROD"},
     )
 
 
@@ -175,8 +175,8 @@ def test_extra_locations_values_in_final_metric_views(tmp_path: Path) -> None:
     input_data = build_input(tmp_path)
 
     # Act
-    load_view, prod_view = build_metric_views(input_data)
+    views = {view.persistence_path.stem: view for view in build_metric_views(input_data)}
 
     # Assert
-    assert extract_values_from_view(load_view) == approx(EXPECTED_LOAD)
-    assert extract_values_from_view(prod_view) == approx(EXPECTED_PROD)
+    assert extract_values_from_view(views["LOAD"]) == approx(EXPECTED_LOAD)
+    assert extract_values_from_view(views["PROD"]) == approx(EXPECTED_PROD)

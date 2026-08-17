@@ -72,12 +72,13 @@ class ViewConfig:
     scenario_aggregations: tuple[ScenarioAggregation, ...]
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
-    metric_ids: list[str] = field(default_factory=list)
+    metric_ids: set[str] = field(default_factory=set)
     metrics: list[Metric] = field(default_factory=list)
 
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
         """Resolve metric refs in view-config order into ``self.metrics``."""
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
+        unique_metric_ids = set()
         for metric_ref in self.metric_ids:
             if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
                 raise ValueError(
@@ -85,9 +86,22 @@ class ViewConfig:
                     f"Expected format '<catalog_id>.<metric_id>' for catalog {self.catalog_ids}"
                 )
             catalog_id, metric_id = metric_ref.split(".", 1)
+
+            # Temporary solution this needs to be handled while validating
+            # With this we can safely remove part counter from TimeAggregator
+            # Catalog <-> ViewConfig validation
+            # View Config <-> Taxonomy
+            # Catalog <-> Taxonomy
+            if metric_id in unique_metric_ids:
+                raise ValueError(f"Metric id={metric_id!r} is already defined in some catalog")
+
+            unique_metric_ids.add(metric_id)
+
             if catalog_id not in self.catalog_ids:
                 raise ValueError(f"Catalog {catalog_id!r} not found in view config")
+
             logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
+
             self.metrics.append(catalogs[catalog_id].get_metric(metric_id))
 
     def get_metrics(self) -> list[Metric]:
@@ -106,7 +120,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalogs},
         scenario_aggregations=raw_view_config.aggregations.scenario_aggregations,
-        metric_ids=[metric.id for metric in raw_view_config.metrics],
+        metric_ids={metric.id for metric in raw_view_config.metrics},
         extra_locations=[loc.id for loc in (raw_view_config.aggregations.extra_locations or [])],
     )
     logging.info(
