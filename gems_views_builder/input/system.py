@@ -38,38 +38,24 @@ class System:
         return cast(list[Any], getattr(self._system, "connections", None) or [])
 
 
-def _resolve_properties(raw_properties: Any, component_id: str) -> dict[str, str]:
-    if raw_properties is None:
-        return {}
-    properties: dict[str, str] = {}
-    for item in raw_properties:
-        if item.id in properties:
-            raise ValueError(f"Component {component_id!r}: duplicate properties id {item.id!r}")
-        properties[item.id] = item.value
-    return properties
-
-
 def _resolve_component_without_parameter_check(
     resolved_libraries: dict[str, Any], component: ComponentSchema
 ) -> GemsPyComponent:
-    lib_id, model_id = component.model.split(".")
-    model = resolved_libraries[lib_id].models[f"{lib_id}.{model_id}"]
+    lib_id, _ = component.model.split(".")
+    model = resolved_libraries[lib_id].models[component.model]
 
-    properties = _resolve_properties(component.properties, component.id)
+    properties: dict[str, str] = {}
+    for item in component.properties or []:
+        if item.id in properties:
+            raise ValueError(f"Component {component.id!r}: duplicate properties id {item.id!r}")
+        properties[item.id] = item.value
     missing = sorted(k for k in model.properties if k not in properties)
     if missing:
         raise ValueError(
-            f"Component {component.id!r} (model {model.id!r}) is missing "
-            f"propert{'y' if len(missing) == 1 else 'ies'} declared by the model: "
-            f"{missing}."
+            f"Component {component.id!r} (model {model.id!r}) is missing properties declared by the model: {missing}"
         )
 
-    return GemsPyComponent(
-        model=model,
-        id=component.id,
-        scenario_group=component.scenario_group,
-        properties=properties,
-    )
+    return GemsPyComponent(model=model, id=component.id, scenario_group=component.scenario_group, properties=properties)
 
 
 def resolve_system_tolerating_missing_parameters(
@@ -77,25 +63,22 @@ def resolve_system_tolerating_missing_parameters(
 ) -> GemsPySystem:
     """Resolve a system like GemsPy's ``resolve_system``, minus the parameter completeness check.
 
-    GemsPy's ``resolve_system`` raises when a component omits parameters declared by its
-    model. The ViewsBuilder never reads parameter values (only component ids, model ids,
-    properties and connections — the resolved GemsPy ``Component`` does not even carry
-    parameter values), so systems written for view building may omit ``parameters``
-    entirely. Property completeness is still enforced, as views rely on properties.
+    The ViewsBuilder reads component ids, model ids, properties and connections, never
+    parameter values (the resolved GemsPy ``Component`` does not carry them), so systems
+    written for view building may omit ``parameters``. Property completeness is still enforced.
     """
-    components = [_resolve_component_without_parameter_check(resolved_libraries, c) for c in yml_system.components]
     system = GemsPySystem("study")
-    for component in components:
+    components_by_id: dict[str, Any] = {}
+    for component_schema in yml_system.components:
+        component = _resolve_component_without_parameter_check(resolved_libraries, component_schema)
         system.add_component(component)
+        components_by_id[component.id] = component
 
-    components_by_id = {component.id: component for component in components}
     for connection in yml_system.connections or []:
-        try:
-            component_1 = components_by_id[connection.component1]
-            component_2 = components_by_id[connection.component2]
-        except KeyError as e:
-            raise ValueError(f"Connection references unknown component {e.args[0]!r}")
-        system.connect(PortRef(component_1, connection.port1), PortRef(component_2, connection.port2))
+        system.connect(
+            PortRef(components_by_id[connection.component1], connection.port1),
+            PortRef(components_by_id[connection.component2], connection.port2),
+        )
     return system
 
 

@@ -33,8 +33,9 @@ def test_load_system_tolerates_missing_component_parameters(test_dataset_dir: Pa
     system_file = tmp_path / "system.yml"
     system_file.write_text(yaml.safe_dump(data), encoding="utf-8")
 
-    reference_system = load_system(test_dataset_dir / "system.yml", load_yml_libs(test_dataset_dir / "libraries"))
-    system = load_system(system_file, load_yml_libs(test_dataset_dir / "libraries"))
+    yml_libs = load_yml_libs(test_dataset_dir / "libraries")
+    reference_system = load_system(test_dataset_dir / "system.yml", yml_libs)
+    system = load_system(system_file, yml_libs)
 
     assert {c.id for c in system.components} == {c.id for c in reference_system.components}
     assert len(system.connections) == len(reference_system.connections)
