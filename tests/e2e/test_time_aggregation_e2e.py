@@ -38,8 +38,6 @@ def replace_aggregation(view_config_path: Path, aggregation_time: TimeGranularit
         f"        time: {aggregation_time.value}\n"
         "        scenario: false\n"
     )
-    if AGGREGATION_BLOCK not in text:
-        raise AssertionError(f"Expected aggregation block not found in {view_config_path}")
     view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
 
 
@@ -73,5 +71,19 @@ def test_yaml_missing_aggregation_key_fails_to_parse(test_files_root: Path, tmp_
     config_path = dataset_dir / "view_config.yml"
     config_path.write_text(config_path.read_text().replace(AGGREGATION_BLOCK, ""))
 
+    with pytest.raises(ValueError, match="aggregations"):
+        load_view_config(config_path)
+
+
+def test_yaml_missing_scenario_aggregation_completely_fails_to_parse(test_files_root: Path, tmp_path: Path) -> None:
+    # Arrange
+    dataset_dir = tmp_path / "test_3"
+    shutil.copytree(test_files_root / "test_3", dataset_dir)
+    config_path = dataset_dir / "view_config.yml"
+
+    # Act
+    config_path.write_text(config_path.read_text().replace(AGGREGATION_BLOCK, ""))
+
+    # Assert
     with pytest.raises(ValueError, match="aggregations"):
         load_view_config(config_path)

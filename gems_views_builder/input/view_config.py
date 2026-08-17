@@ -39,8 +39,8 @@ class ScenarioAggregation(ViewBuilderBasedModel):
 
 
 class Aggregations(ViewBuilderBasedModel):
-    scenario_aggregations: list[ScenarioAggregation]
-    extra_locations: list[ExtraLocation] | None = None
+    scenario_aggregations: list[ScenarioAggregation] = Field(min_length=1)
+    extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
 class CatalogId(ViewBuilderBasedModel):
@@ -70,9 +70,6 @@ class ViewConfig:
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
-
-    def __post_init__(self) -> None:
-        _require_single_scenario_aggregation(self.scenario_aggregations, self.id)
 
     @property
     def time_aggr_granularity(self) -> TimeGranularity:
@@ -146,14 +143,3 @@ def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
         raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
     logging.info(f"View config YAML parsed successfully from {view_file_path}")
     return RawViewConfig.model_validate(raw["view"])
-
-
-def _require_single_scenario_aggregation(
-    scenario_aggregations: list[ScenarioAggregation], view_id: str
-) -> ScenarioAggregation:
-    if len(scenario_aggregations) != 1:
-        raise ValueError(
-            f"view_config.yml '{view_id}': exactly one scenario aggregation is supported for now, "
-            f"found {len(scenario_aggregations)}"
-        )
-    return scenario_aggregations[0]
