@@ -3,6 +3,7 @@
 
 from pathlib import Path
 
+import yaml
 from gems_craft.study.parsing import SystemSchema, parse_yaml_system  # type: ignore
 
 from gems_views_builder.input.library import load_yml_libs
@@ -23,3 +24,17 @@ def test_system_exposes_components_and_connections(test_dataset_dir: Path) -> No
     system = load_system(test_dataset_dir / "system.yml", load_yml_libs(library_dir))
     assert len(system.components) > 0
     assert isinstance(system.connections, list)
+
+
+def test_load_system_tolerates_missing_component_parameters(test_dataset_dir: Path, tmp_path: Path) -> None:
+    data = yaml.safe_load((test_dataset_dir / "system.yml").read_text(encoding="utf-8"))
+    for component in data["system"]["components"]:
+        component.pop("parameters", None)
+    system_file = tmp_path / "system.yml"
+    system_file.write_text(yaml.safe_dump(data), encoding="utf-8")
+
+    reference_system = load_system(test_dataset_dir / "system.yml", load_yml_libs(test_dataset_dir / "libraries"))
+    system = load_system(system_file, load_yml_libs(test_dataset_dir / "libraries"))
+
+    assert {c.id for c in system.components} == {c.id for c in reference_system.components}
+    assert len(system.connections) == len(reference_system.connections)
