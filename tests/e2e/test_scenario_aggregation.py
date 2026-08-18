@@ -29,7 +29,6 @@ from tests.e2e.utils import (
     make_simulation_table_and_calendar,
 )
 
-
 TAXONOMY_CATEGORY_BY_MODEL = {"bus": "balance", "load": "load"}
 
 T1 = datetime(2026, 1, 1, 3, 0)
@@ -137,7 +136,7 @@ def test_one_output_file_per_time_granularity_merges_all_scenarios(tmp_path: Pat
     day_view = pl.read_parquet(result_files["day"])
 
     # Assert
-    assert set(result_files) == {"hour", "day","month"}
+    assert set(result_files) == {"hour", "day", "month"}
     assert len(result_files) == 3
     assert set(hour_view["metric_id"].to_list()) == {"LOAD", "PROD"}
     assert set(hour_view["scenario_aggregation"].to_list()) == {True, False}
