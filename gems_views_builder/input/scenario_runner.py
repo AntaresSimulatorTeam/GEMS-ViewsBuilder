@@ -4,10 +4,10 @@
 from dataclasses import dataclass
 
 from gems_views_builder.aggregators.time_aggregator import TimeAggregator
+from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import ScenarioAggregation
 from gems_views_builder.into_scenario_view import ScenarioOperator, make_scenario_operator, to_scenario_view
 from gems_views_builder.metric_view import MetricView
-from gems_views_builder.input.catalog import Metric
 
 
 # # Combinatorial formula 5 * 2 = 10 at maximum
@@ -19,7 +19,6 @@ class ScenarioAggregationStep:
     scenario_operator: ScenarioOperator
 
 
-@dataclass
 class ScenarioAggregationRunner:
     def __init__(self, scenario_aggregations: tuple[ScenarioAggregation, ...]) -> None:
         self.scenario_aggregation_steps = [

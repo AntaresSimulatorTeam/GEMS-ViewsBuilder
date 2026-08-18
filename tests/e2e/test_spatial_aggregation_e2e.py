@@ -178,5 +178,5 @@ def test_extra_locations_values_in_final_metric_views(tmp_path: Path) -> None:
     views = {view.persistence_path.stem: view for view in build_metric_views(input_data)}
 
     # Assert
-    assert extract_values_from_view(views["LOAD"]) == approx(EXPECTED_LOAD)
-    assert extract_values_from_view(views["PROD"]) == approx(EXPECTED_PROD)
+    assert extract_values_from_view(views["LOAD_hourly"]) == approx(EXPECTED_LOAD)
+    assert extract_values_from_view(views["PROD_hourly"]) == approx(EXPECTED_PROD)
