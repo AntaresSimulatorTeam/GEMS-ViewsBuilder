@@ -27,15 +27,16 @@ def test_system_exposes_components_and_connections(test_dataset_dir: Path) -> No
 
 
 def test_load_system_tolerates_missing_component_parameters(test_dataset_dir: Path, tmp_path: Path) -> None:
-    data = yaml.safe_load((test_dataset_dir / "system.yml").read_text(encoding="utf-8"))
-    for component in data["system"]["components"]:
+    yml_system = yaml.safe_load((test_dataset_dir / "system.yml").read_text(encoding="utf-8"))
+    for component in yml_system["system"]["components"]:
         component.pop("parameters", None)
-    system_file = tmp_path / "system.yml"
-    system_file.write_text(yaml.safe_dump(data), encoding="utf-8")
+
+    system_missing_params_file = tmp_path / "sys_with_missing_parameters.yml"
+    system_missing_params_file.write_text(yaml.safe_dump(yml_system), encoding="utf-8")
 
     yml_libs = load_yml_libs(test_dataset_dir / "libraries")
-    reference_system = load_system(test_dataset_dir / "system.yml", yml_libs)
-    system = load_system(system_file, yml_libs)
+    system = load_system(test_dataset_dir / "system.yml", yml_libs)
+    system_with_missing_parameters = load_system(system_missing_params_file, yml_libs)
 
-    assert {c.id for c in system.components} == {c.id for c in reference_system.components}
-    assert len(system.connections) == len(reference_system.connections)
+    assert {c.id for c in system_with_missing_parameters.components} == {c.id for c in system.components}
+    assert len(system_with_missing_parameters.connections) == len(system.connections)
