@@ -71,7 +71,9 @@ class TimeAggregator:
                 ]
             )
         )
-        file_path = self._temporal_aggregation_dir / f"{metric.id}_{self._scenario_id}.parquet"
+        file_path = (
+            self._temporal_aggregation_dir / f"{self._time_granularity.value}_{self._scenario_id}_{metric.id}.parquet"
+        )
         view.sink_parquet(
             path=file_path,
             compression=PARQUET_COMPRESSION,

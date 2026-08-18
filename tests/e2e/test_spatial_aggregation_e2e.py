@@ -138,6 +138,14 @@ def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], flo
     )
 
 
+def views_by_metric_id(metric_views: list[MetricView]) -> dict[str, MetricView]:
+    by_metric_id: dict[str, MetricView] = {}
+    for view in metric_views:
+        metric_id = pl.read_parquet(view.persistence_path, columns=["metric_id"])["metric_id"][0]
+        by_metric_id[str(metric_id)] = view
+    return by_metric_id
+
+
 # loadX's location is resolved through its port connection to busA, so LOAD is reported under
 # busA's location (and busA's extra-locations), not under "loadX".
 #
@@ -175,8 +183,8 @@ def test_extra_locations_values_in_final_metric_views(tmp_path: Path) -> None:
     input_data = build_input(tmp_path)
 
     # Act
-    views = {view.persistence_path.stem: view for view in build_metric_views(input_data)}
+    views = views_by_metric_id(build_metric_views(input_data))
 
     # Assert
-    assert extract_values_from_view(views["LOAD_hourly"]) == approx(EXPECTED_LOAD)
-    assert extract_values_from_view(views["PROD_hourly"]) == approx(EXPECTED_PROD)
+    assert extract_values_from_view(views["LOAD"]) == approx(EXPECTED_LOAD)
+    assert extract_values_from_view(views["PROD"]) == approx(EXPECTED_PROD)

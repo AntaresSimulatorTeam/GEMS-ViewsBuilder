@@ -17,13 +17,13 @@ class ViewSinker(ABC):
         self.timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
 
     @abstractmethod
-    def sink(self, merged: pl.LazyFrame) -> View:
+    def sink(self, merged: pl.LazyFrame, time_granularity: str) -> View:
         pass
 
 
 class ParquetViewSinker(ViewSinker):
-    def sink(self, merged: pl.LazyFrame) -> View:
-        result_path = self.output_path / f"view{self.timestamp}.parquet"
+    def sink(self, merged: pl.LazyFrame, time_granularity: str) -> View:
+        result_path = self.output_path / f"view_{time_granularity}_{self.timestamp}.parquet"
         merged.sink_parquet(
             result_path,
             compression=PARQUET_COMPRESSION,
@@ -35,8 +35,8 @@ class ParquetViewSinker(ViewSinker):
 
 
 class CsvViewSinker(ViewSinker):
-    def sink(self, merged: pl.LazyFrame) -> View:
-        result_path = self.output_path / f"view{self.timestamp}.csv"
+    def sink(self, merged: pl.LazyFrame, time_granularity: str) -> View:
+        result_path = self.output_path / f"view_{time_granularity}_{self.timestamp}.csv"
         merged.sink_csv(result_path)
         logging.info("Results merged into csv file")
         return View(dataframe=pl.scan_csv(result_path))

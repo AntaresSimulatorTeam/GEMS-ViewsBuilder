@@ -30,5 +30,4 @@ class ViewBuilder:
             metric_view = self.terms_aggregator.run(metric_structure_table, metric)
             scenario_aggregated_views = self.scenario_aggregation_runner.run(metric_view, metric)
             metric_views.extend(scenario_aggregated_views)
-
         return metric_views
