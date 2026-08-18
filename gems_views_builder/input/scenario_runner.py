@@ -34,7 +34,7 @@ def spatial_filter(metric_view: MetricView, spatial_filter: list[str] | None) ->
         file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
         os.close(file_descriptor)
 
-        view = pl.scan_parquet(metric_view.persistence_path).filter(pl.col("location_id").is_in(spatial_filter))
+        view = pl.scan_parquet(metric_view.persistence_path).filter(pl.col("metric_location").is_in(spatial_filter))
         view.sink_parquet(
             tmp_path,
             compression=PARQUET_COMPRESSION,
@@ -64,6 +64,7 @@ class ScenarioAggregationRunner:
         scenario_aggregation_views: list[MetricView] = []
         for step in self.scenario_aggregation_steps:
             temporal_metric_view = step.time_aggregator.run(metric_view, metric)
+            # # Open question , we could merge this 2 steps to avoid multiple I/O disk operations
             to_scenario_view(temporal_metric_view, step.scenario_operator)
             spatial_filter(temporal_metric_view, step.spatial_filter)
             scenario_aggregation_views.append(temporal_metric_view)
