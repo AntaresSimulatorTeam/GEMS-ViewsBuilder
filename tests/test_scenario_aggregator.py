@@ -130,7 +130,7 @@ def scenario_independent_temporal_metric_view(
     return MetricView(path)
 
 
-def test_scenario_aggregation_false_preserves_scenario_independent_row(
+def test_to_scenario_view_with_columns_addition_preserves_scenario_independent_row(
     tmp_path: Path,
 ) -> None:
     # Arrange
@@ -151,7 +151,7 @@ def test_scenario_aggregation_false_preserves_scenario_independent_row(
     assert df["metric_value"].to_list() == [approx(42.0)]
 
 
-def test_scenario_aggregation_true_scenario_independent_output_is_not_double_counted(
+def test_to_scenario_view_with_aggregation_does_not_double_count_scenario_independent_output(
     tmp_path: Path,
 ) -> None:
     # Arrange
