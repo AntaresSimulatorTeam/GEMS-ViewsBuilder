@@ -115,7 +115,8 @@ def build_input(tmp_path: Path, spatial_filter: list[str] | None) -> RawInputDat
 
 
 def prod_locations(results_dir: Path) -> set[str]:
-    view_path = next(results_dir.glob("view_*.parquet"))
+    # # All scenarios with same time granularity are written into same time granularity file
+    view_path = next(results_dir.glob("view_hour_*.parquet"))
     return set(pl.read_parquet(view_path)["metric_location"].unique().to_list())
 
 

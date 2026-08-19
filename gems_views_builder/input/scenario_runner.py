@@ -42,7 +42,7 @@ def spatial_filter(metric_view: MetricView, spatial_filter: list[str] | None) ->
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
 
-        os.replace(tmp_path, metric_view.persistence_path)
+        os.replace(src=tmp_path, dst=metric_view.persistence_path)
     except Exception:
         # If something goes wrong, remove the temporary file to avoid leaving a half-written file
         os.remove(tmp_path)

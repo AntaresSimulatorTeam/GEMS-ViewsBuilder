@@ -95,7 +95,7 @@ def to_scenario_view(temporal_metric_view: MetricView, scenario_operator: Scenar
 
         scenario_operator.run(temporal_metric_view, Path(tmp_path))
 
-        os.replace(tmp_path, temporal_metric_view.persistence_path)
+        os.replace(src=tmp_path, dst=temporal_metric_view.persistence_path)
     except Exception:
         # If something goes wrong, remove the temporary file to avoid leaving a half-written file
         os.remove(tmp_path)
