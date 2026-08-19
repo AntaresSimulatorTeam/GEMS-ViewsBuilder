@@ -4,7 +4,7 @@
 
 """GEMS-ViewsBuilder public package namespace."""
 
-from gems.model.parsing import (  # type: ignore
+from gems_craft.model.parsing import (  # type: ignore
     ConstraintSchema,
     ExtraOutputSchema,
     LibrarySchema,
@@ -19,17 +19,16 @@ from gems.model.parsing import (  # type: ignore
 
 from gems_views_builder.input.calendar import Calendar, load_calendar
 from gems_views_builder.input.catalog import (
+    AggregOperatorType,
     Catalog,
     Metric,
     PropertySchema,
     Term,
-    TermsOperator,
-    TimeOperator,
     load_catalog,
     load_catalogs,
 )
-from gems_views_builder.input.input_data import InputData
-from gems_views_builder.input.library import Library, load_library
+from gems_views_builder.input.library import Library, associate_models_with_a_taxon
+from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import (
     FilteredSimulationTable,
     SimulationTable,
@@ -38,7 +37,8 @@ from gems_views_builder.input.simulation_table import (
 )
 from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
-from gems_views_builder.input.view_config import TimeAggregation, ViewConfig, load_view_config
+from gems_views_builder.input.view_building_input_data import ViewBuildingInputData, create_view_building_input
+from gems_views_builder.input.view_config import TimeGranularity, ViewConfig, load_view_config
 from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
@@ -54,17 +54,18 @@ __all__ = [
     "Catalog",
     "load_catalog",
     "load_catalogs",
-    "InputData",
+    "RawInputData",
+    "ViewBuildingInputData",
+    "create_view_building_input",
     "Metric",
     "PropertySchema",
     "Term",
-    "TermsOperator",
-    "TimeOperator",
+    "AggregOperatorType",
     "ConstraintSchema",
     "ExtraOutputSchema",
     "Library",
     "LibrarySchema",
-    "load_library",
+    "associate_models_with_a_taxon",
     "ModelSchema",
     "ModelPortSchema",
     "ObjectiveContributionSchema",
@@ -76,7 +77,7 @@ __all__ = [
     "TaxonomyCategory",
     "TaxonomyItem",
     "load_taxonomy",
-    "TimeAggregation",
+    "TimeGranularity",
     "ViewConfig",
     "load_view_config",
     "MetricStructureTable",

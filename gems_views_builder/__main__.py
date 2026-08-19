@@ -2,54 +2,56 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import (
     configure_logging,
 )
 from gems_views_builder.input.component import (
-    build_component_port_connections,
     create_components,
+    enrich_components,
     group_components_by_taxon,
     supply_components_with_locations,
-    supply_components_with_port_connections,
-    supply_components_with_taxonomy_categories,
 )
+from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.view_building_input_data import create_view_building_input
+from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
+from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
-from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
+from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
-def run_view_building_process(input_dir: Path, view_sinker: ViewSinker) -> None:
-    """Run the full pipeline and accumulate the results to the results directory."""
+def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
+    raw_input_data = Loader(input_paths).load()
+    validate_catalogs_against_taxonomy(raw_input_data.catalogs, raw_input_data.taxonomy)
+    return raw_input_data
 
-    # # Load pipeline input
-    input_data = Loader(input_dir).load()
 
-    # # Create GVB components from system raw components
-    components = create_components(input_data.system.components)
-    supply_components_with_taxonomy_categories(components, input_data.library.taxonomy_category_by_model)
-    component_port_connections = build_component_port_connections(input_data.system.connections)
-    supply_components_with_port_connections(components, component_port_connections)
+def build_metric_views(raw_input_data: RawInputData) -> list[MetricView]:
+    components = create_components(raw_input_data.system.components)
+    enrich_components(components, raw_input_data)
     components_by_taxon = group_components_by_taxon(components)
+
+    view_building_input = create_view_building_input(raw_input_data)
     supply_components_with_locations(
         components_by_taxon,
-        input_data.view_config.get_metrics(),
-        input_data.view_config.location_taxonomy_category,
+        view_building_input.view_config.get_metrics(),
+        view_building_input.view_config.location_taxonomy_category,
     )
 
-    # # Only one instance of MetricStructureTableBuilder is needed
     metric_structure_table_builder = MetricStructureTableBuilder(
-        input_data.view_config.location_taxonomy_category,
+        view_building_input.view_config,
         components_by_taxon,
     )
-    # # Validate catalogs against taxonomy
-    validate_catalogs_against_taxonomy(input_dir, input_data.view_config.catalog_ids, input_data.taxonomy)
+    return ViewBuilder(view_building_input, metric_structure_table_builder).build()
 
-    metric_views = ViewBuilder(input_data, metric_structure_table_builder).build()
+
+def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) -> None:
+    raw_input_data = load_and_validate_input_data(input_paths)
+    metric_views = build_metric_views(raw_input_data)
     accumulate_on_disk(metric_views, view_sinker)
 
 
@@ -61,20 +63,22 @@ def main(argv: list[str] | None = None) -> int:
     """
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose, log_dir=args.log_dir)
-    view_sinker = ViewSinkerFactory(args.results_dir, args.output_format).make()
-
-    error = check_options(args)
-    if error is not None:
-        return error
 
     try:
-        StudyLayoutValidator(args.input_dir).validate()
-        run_view_building_process(args.input_dir, view_sinker)
+        check_options(args)
+    except Exception:
+        return 2
+
+    try:
+        input_paths = InputPaths(args)
+        InputPathsValidator(input_paths).validate()
+        view_sinker = ViewSinkerFactory(args.output, args.output_format).make()
+        run_view_building_process(input_paths, view_sinker)
     except Exception:
         logging.exception("View building failed")
         return 1
 
-    logging.info(f"View successfully written to {args.results_dir}")
+    logging.info(f"View successfully written to {view_sinker.output_path}")
     return 0
 
 

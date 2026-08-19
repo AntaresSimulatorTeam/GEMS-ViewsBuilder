@@ -19,12 +19,7 @@ In fact they represent the different operators
 """
 
 
-class TermsOperator(Enum):
-    SUM = "sum"
-    AVG = "avg"
-
-
-class TimeOperator(Enum):
+class AggregOperatorType(Enum):
     SUM = "sum"
     AVG = "avg"
 
@@ -53,8 +48,8 @@ class PropertySchema(ViewBuilderBasedModel):
 class MetricData(ViewBuilderBasedModel):
     id: str
     terms: list[TermData]
-    terms_operator: TermsOperator
-    time_operator: TimeOperator
+    terms_operator: AggregOperatorType
+    time_operator: AggregOperatorType
     breakdown: list[PropertySchema] | None = None
     filter: PropertySchema | None = None
 
@@ -89,8 +84,8 @@ class Term:
 class Metric:
     id: str
     terms: list[Term]
-    terms_operator: TermsOperator
-    time_operator: TimeOperator
+    terms_operator: AggregOperatorType
+    time_operator: AggregOperatorType
     breakdown: list[PropertySchema] | None = None
     filter: PropertySchema | None = None
 
@@ -131,8 +126,7 @@ def to_metric(metric_data: MetricData) -> Metric:
     )
 
 
-def load_catalogs(input_data_path: Path, catalog_ids: set[str]) -> dict[str, Catalog]:
-    catalogs_dir = input_data_path / "catalogs"
+def load_catalogs(catalogs_dir: Path, catalog_ids: set[str]) -> dict[str, Catalog]:
     catalogs: dict[str, Catalog] = {}
     for catalog_id in catalog_ids:
         catalogs[catalog_id] = load_catalog(catalogs_dir / f"{catalog_id}.yml")

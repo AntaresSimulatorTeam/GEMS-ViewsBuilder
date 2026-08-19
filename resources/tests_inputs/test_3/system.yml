@@ -1,3 +1,6 @@
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
+# SPDX-License-Identifier: MPL-2.0
+
 system:
   id: two_bus_example
   model_libraries: pypsa_models
@@ -268,4 +271,3 @@ system:
     port1: p_balance_port
     component2: link_link_AB
     port2: p1_port
-  area_connections: null

@@ -8,10 +8,11 @@ from gems_views_builder.input.component.component_factory import (
     build_component_port_connections,
     create_components,
     endpoint,
+    enrich_components,
     group_components_by_taxon,
     supply_components_with_locations,
     supply_components_with_port_connections,
-    supply_components_with_taxonomy_categories,
+    supply_components_with_taxon,
 )
 from gems_views_builder.input.component.connection import ConnectionsThroughPort
 
@@ -21,8 +22,9 @@ __all__ = [
     "build_component_port_connections",
     "create_components",
     "endpoint",
+    "enrich_components",
     "group_components_by_taxon",
     "supply_components_with_locations",
     "supply_components_with_port_connections",
-    "supply_components_with_taxonomy_categories",
+    "supply_components_with_taxon",
 ]

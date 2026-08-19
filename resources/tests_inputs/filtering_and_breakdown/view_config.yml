@@ -1,3 +1,6 @@
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
+# SPDX-License-Identifier: MPL-2.0
+
 view:
 
   id: view_area
@@ -10,6 +13,7 @@ view:
 
   aggregation:
     time: hour
+    scenario: false
 
   catalog: #Pointer to "catalogs" = "Business Metrics definitions files".
       - id: catalog

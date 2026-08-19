@@ -9,7 +9,7 @@ from statistics import pstdev as std_deviation
 import polars as pl
 from pytest import approx
 
-from gems_views_builder.aggregators.scenario_aggregator import (
+from gems_views_builder.into_scenario_view import (
     ScenarioAggregation,
     ScenarioColumnsAddition,
     make_scenario_operator,
@@ -52,9 +52,7 @@ def test_make_scenario_operator_returns_aggregation_when_enabled() -> None:
     assert isinstance(make_scenario_operator(True), ScenarioAggregation)
 
 
-def test_scenario_aggregation_false_preserves_rows_and_adds_columns(
-    tmp_path: Path,
-) -> None:
+def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -> None:
     # Arrange
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
@@ -75,9 +73,7 @@ def test_scenario_aggregation_false_preserves_rows_and_adds_columns(
     assert df["metric_value"].to_list() == [approx(10.0), approx(20.0), approx(30.0)]
 
 
-def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(
-    tmp_path: Path,
-) -> None:
+def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path) -> None:
     # Arrange
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
@@ -95,9 +91,7 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(
     assert df["scenario_aggregation"].to_list() == [True] * 4
     assert df["scenario_id"].null_count() == 4
 
-    stats_to_values = {
-        row["scenario_stat"]: row["metric_value"] for row in df.iter_rows(named=True)
-    }
+    stats_to_values = {row["scenario_stat"]: row["metric_value"] for row in df.iter_rows(named=True)}
     assert stats_to_values["exp"] == approx(mean(values))
     assert stats_to_values["std"] == approx(std_deviation(values))
     assert stats_to_values["min"] == approx(min(values))

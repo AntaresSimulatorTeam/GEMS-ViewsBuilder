@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder import TimeAggregation, ViewConfig, load_view_config
+from gems_views_builder import TimeGranularity, ViewConfig, load_view_config
 
 
 def test_loads(test_dataset_dir: Path) -> None:
@@ -16,7 +16,6 @@ def test_loads(test_dataset_dir: Path) -> None:
     assert isinstance(config.location_taxonomy_category, str)
     assert isinstance(config.calendar_id, str)
     assert len(config.catalog_ids) > 0
-    assert config.input_data_path == test_dataset_dir
 
 
 def test_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
@@ -54,7 +53,12 @@ def test_known_values(test_dataset_dir: Path) -> None:
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.time_aggregation == TimeAggregation.HOUR
+    assert config.time_aggr_granularity == TimeGranularity.HOUR
+
+
+def test_scenario_aggregation(test_dataset_dir: Path) -> None:
+    config = load_view_config(test_dataset_dir / "view_config.yml")
+    assert config.scenario_aggregation is False
 
 
 def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
@@ -68,6 +72,7 @@ view:
     - calendar: calendar_file
   aggregation:
     time: hour
+    scenario: false
   catalog:
     - id: catalog_1
   metrics:
@@ -79,3 +84,67 @@ view:
 
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
         config.fetch_metrics({})
+
+
+def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
+    config_path = tmp_path / "view_config.yml"
+    config_path.write_text(
+        """
+view:
+  id: missing_aggregation
+  scope:
+    - taxonomy-category: balance
+    - calendar: calendar_file
+  catalog:
+    - id: catalog
+  metrics:
+    - id: catalog.LOAD
+""".strip()
+    )
+
+    with pytest.raises(ValueError, match="aggregation"):
+        load_view_config(config_path)
+
+
+def test_raises_when_aggregation_time_is_missing(tmp_path: Path) -> None:
+    config_path = tmp_path / "view_config.yml"
+    config_path.write_text(
+        """
+view:
+  id: missing_time
+  scope:
+    - taxonomy-category: balance
+    - calendar: calendar_file
+  aggregation:
+    scenario: false
+  catalog:
+    - id: catalog
+  metrics:
+    - id: catalog.LOAD
+""".strip()
+    )
+
+    with pytest.raises(ValueError, match="time"):
+        load_view_config(config_path)
+
+
+def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path) -> None:
+    config_path = tmp_path / "view_config.yml"
+    config_path.write_text(
+        """
+view:
+  id: missing_scenario
+  scope:
+    - taxonomy-category: balance
+    - calendar: calendar_file
+  aggregation:
+    time: hour
+  catalog:
+    - id: catalog
+  metrics:
+    - id: catalog.LOAD
+""".strip()
+    )
+
+    with pytest.raises(ValueError, match="scenario"):
+        load_view_config(config_path)

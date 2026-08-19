@@ -7,11 +7,7 @@ from pathlib import Path
 import polars as pl
 
 # Expected CSV columns (name and order)
-EXPECTED_CALENDAR_COLUMNS: tuple[str, ...] = (
-    "absolute_time_index",
-    "block",
-    "granular_date",
-)
+EXPECTED_CALENDAR_COLUMNS: set[str] = {"absolute_time_index", "block", "granular_date"}
 
 
 @dataclass
@@ -28,65 +24,49 @@ class Calendar:
     dataframe: pl.LazyFrame
 
 
-def load_calendar(input_data_path: Path, calendar_id: str) -> Calendar:
-    """
-    Load and validate a calendar.csv file into a plain Calendar dataclass.
-    """
-    calendar_file_path = input_data_path / f"{calendar_id}.csv"
-    dataframe = _read_calendar_file(calendar_file_path)
-    _check_calendar_columns(calendar_id=calendar_id, dataframe=dataframe)
-    return Calendar(id=calendar_id, dataframe=dataframe)
+def load_calendar(calendar_file_path: Path) -> Calendar:
+    """Load and validate a calendar CSV file into a plain Calendar dataclass."""
+    calendar = pl.scan_csv(calendar_file_path, try_parse_dates=True)
+    try:
+        _check_calendar_columns(calendar=calendar)
+    except ValueError as exc:
+        raise ValueError(f"Calendar '{calendar_file_path.stem}' is invalid: {exc}") from exc
+    return Calendar(id=calendar_file_path.stem, dataframe=calendar)
 
 
-def _read_calendar_file(calendar_file_path: Path) -> pl.LazyFrame:
-    if not calendar_file_path.exists():
-        raise FileNotFoundError(f"Calendar file {calendar_file_path} not found")
-    return pl.scan_csv(calendar_file_path, try_parse_dates=True)
+def _check_calendar_columns(calendar: pl.LazyFrame) -> None:
+    # # calendar isn't big we could perform safely streaming
+    calendar_df = calendar.collect(engine="streaming").drop_nulls()
+
+    _check_for_missing_columns(actual_column_titles=set(calendar_df.schema.keys()))
+    _check_for_unexpected_columns(actual_column_titles=set(calendar_df.schema.keys()))
+    _check_time_indices_conformity(calendar_df=calendar_df)
+    _check_dates_conformity(calendar_df=calendar_df)
 
 
-def _check_calendar_columns(calendar_id: str, dataframe: pl.LazyFrame) -> None:
-    df = dataframe.collect(
-        engine="streaming"
-    )  # # calendar isn't big too much,so I think we could perform safely streaming
+def _check_for_missing_columns(actual_column_titles: set[str]) -> None:
+    missing_columns = EXPECTED_CALENDAR_COLUMNS - actual_column_titles
+    if missing_columns:
+        raise ValueError(f"Calendar is missing columns: {missing_columns}")
 
-    actual = list(df.schema.keys())
-    expected_columns = list(EXPECTED_CALENDAR_COLUMNS)
-    if actual != expected_columns:
-        actual_set = set(actual)
-        expected_set = set(expected_columns)
-        missing = sorted(expected_set - actual_set)
-        unexpected = sorted(actual_set - expected_set)
-        parts: list[str] = []
-        if missing:
-            parts.append(f"missing columns: {missing}")
-        if unexpected:
-            parts.append(f"unexpected columns: {unexpected}")
-        if not missing and not unexpected:
-            parts.append(f"wrong column order: expected {expected_columns}, got {actual}")
-        else:
-            parts.append(f"actual columns: {actual}")
-        raise ValueError(f"Calendar '{calendar_id}' has invalid columns: {'; '.join(parts)}")
-    if df.is_empty():
-        return
 
+def _check_for_unexpected_columns(actual_column_titles: set[str]) -> None:
+    unexpected_cols = actual_column_titles - EXPECTED_CALENDAR_COLUMNS
+    if unexpected_cols:
+        raise ValueError(f"Calendar has unexpected columns: {unexpected_cols}")
+
+
+def _check_time_indices_conformity(calendar_df: pl.DataFrame) -> None:
     # absolute_time_index must equal row index (contiguous 0..N-1, no misses)
-    abs_idx = df.get_column("absolute_time_index")
-    expected_abs_idx = pl.arange(0, df.height, eager=True).cast(abs_idx.dtype)
-    if not (abs_idx == expected_abs_idx).all():
-        raise ValueError(f"Calendar '{calendar_id}' has non-contiguous or mismatched absolute_time_index values")
+    abs_time_ind = calendar_df.get_column("absolute_time_index")
+    exp_abs_time_ind = pl.arange(0, calendar_df.height, eager=True).cast(abs_time_ind.dtype)
+    if not (abs_time_ind == exp_abs_time_ind).all():
+        raise ValueError("Calendar has non-contiguous or mismatched absolute_time_index values")
 
+
+def _check_dates_conformity(calendar_df: pl.DataFrame) -> None:
     # granular_date difference between adjacent rows must be constant
-    dates = df.get_column("granular_date")
-    if dates.len() <= 1:
-        return
-
-    diffs = dates.diff()
-    diffs_non_null = diffs.drop_nulls()
-    if diffs_non_null.is_empty():
-        return
-
-    first_diff = diffs_non_null[0]
-    if not (diffs_non_null == first_diff).all():
-        raise ValueError(
-            f"Calendar '{calendar_id}' has non-constant differences between consecutive granular_date values"
-        )
+    dates = calendar_df.get_column("granular_date")
+    dates_diffs = dates.diff()[1:].n_unique()
+    if dates_diffs > 1:
+        raise ValueError("Calendar has non-constant differences between consecutive granular_date values")

@@ -4,7 +4,6 @@
 """ViewConfig models and lazy loaders for view_config.yml."""
 
 import logging
-from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -16,7 +15,11 @@ from gems_views_builder.base_model import ViewBuilderBasedModel
 from gems_views_builder.input.catalog import Catalog, Metric
 
 
-class TimeAggregation(Enum):
+class ExtraLocation(ViewBuilderBasedModel):
+    id: str
+
+
+class TimeGranularity(Enum):
     HOUR = "hour"
     DAY = "day"
     WEEK = "week"
@@ -30,8 +33,9 @@ class Scope(ViewBuilderBasedModel):
 
 
 class Aggregation(ViewBuilderBasedModel):
-    time: TimeAggregation | None = None
-    scenario: bool | None = None
+    time: TimeGranularity
+    scenario: bool
+    extra_locations: list[ExtraLocation] | None = None
 
 
 class CatalogId(ViewBuilderBasedModel):
@@ -53,24 +57,18 @@ class RawViewConfig(ViewBuilderBasedModel):
 @dataclass
 class ViewConfig:
     id: str
-    input_data_path: Path
     calendar_id: str
     location_taxonomy_category: str
+    time_aggr_granularity: TimeGranularity
+    scenario_aggregation: bool
     catalog_ids: set[str] = field(default_factory=set)
-    time_aggregation: TimeAggregation | None = None
-    scenario_aggregation: bool = False
+    extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
-        metric_ids_by_catalog = self._group_metrics_by_catalog()
-        for catalog_id in metric_ids_by_catalog:
-            for metric_id in metric_ids_by_catalog[catalog_id]:
-                self.metrics.append(catalogs[catalog_id].get_metric(metric_id))
-
-    def _group_metrics_by_catalog(self) -> dict[str, set[str]]:
-        logging.debug(f"Grouping {len(self.metric_ids)} metric id(s) by catalog")
-        metric_ids_by_catalog: dict[str, set[str]] = defaultdict(set)
+        """Resolve metric refs in view-config order into ``self.metrics``."""
+        logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
         for metric_ref in self.metric_ids:
             if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
                 raise ValueError(
@@ -80,9 +78,8 @@ class ViewConfig:
             catalog_id, metric_id = metric_ref.split(".", 1)
             if catalog_id not in self.catalog_ids:
                 raise ValueError(f"Catalog {catalog_id!r} not found in view config")
-            metric_ids_by_catalog[catalog_id].add(metric_id)
             logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
-        return metric_ids_by_catalog
+            self.metrics.append(catalogs[catalog_id].get_metric(metric_id))
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
@@ -91,7 +88,6 @@ class ViewConfig:
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
-    input_data_path = config_file_path.parent
     location_taxonomy_category = next(
         (item.taxonomy_category for item in raw_view_config.scope if item.taxonomy_category),
         None,
@@ -110,13 +106,13 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
 
     view_config = ViewConfig(
         id=raw_view_config.id,
-        input_data_path=input_data_path,
         calendar_id=calendar_id,
         location_taxonomy_category=location_taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalog},
-        time_aggregation=raw_view_config.aggregation.time,
-        scenario_aggregation=bool(raw_view_config.aggregation.scenario),
+        time_aggr_granularity=raw_view_config.aggregation.time,
+        scenario_aggregation=raw_view_config.aggregation.scenario,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
+        extra_locations=[loc.id for loc in (raw_view_config.aggregation.extra_locations or [])],
     )
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "

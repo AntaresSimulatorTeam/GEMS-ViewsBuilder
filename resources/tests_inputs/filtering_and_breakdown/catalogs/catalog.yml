@@ -1,3 +1,6 @@
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
+# SPDX-License-Identifier: MPL-2.0
+
 # Such a file for "Business Metrics" definitions should be modified only by expert user in a text editor. No API/GUI is needed.
 # In "secure mode", a user can only refer to "Business Metrics Definition files" that are registered as "safe" in a reference repo.
 # In "free mode", a user can refer to "Business Metrics Definitions files" that are freely modified
