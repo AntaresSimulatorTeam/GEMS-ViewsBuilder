@@ -54,13 +54,13 @@ def test_known_values(test_dataset_dir: Path) -> None:
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.scenario_aggregations[0].time == TimeGranularity.HOUR
+    assert config.patterns[0].time == TimeGranularity.HOUR
 
 
 def test_scenario_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.scenario_aggregations[0].id == "hourly"
-    assert config.scenario_aggregations[0].scenario is False
+    assert config.patterns[0].id == "hourly"
+    assert config.patterns[0].scenario is False
 
 
 def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
@@ -74,7 +74,7 @@ view:
       taxonomy-category: balance
     calendar: calendar_file
   aggregations:
-    scenario-aggregations:
+    patterns:
       - id: hourly
         time: hour
         scenario: false
@@ -123,7 +123,7 @@ view:
       taxonomy-category: balance
     calendar: calendar_file
   aggregations:
-    scenario-aggregations:
+    patterns:
       - id: hourly
         scenario: false
   catalogs:
@@ -148,7 +148,7 @@ view:
       taxonomy-category: balance
     calendar: calendar_file
   aggregations:
-    scenario-aggregations:
+    patterns:
       - id: hourly
         time: hour
   catalogs:

@@ -4,9 +4,9 @@
 """
 E2E test for scenario aggregation through the view-building process.
 
-ScenarioAggregationRunner emits one temporal view per (time, scenario, scenario_id).
+PatternRunner emits one temporal view per (time, scenario, scenario_id).
 accumulate_on_disk then writes one result file per time granularity, merging
-every scenario aggregation that shares that time.
+every pattern that shares that time.
 """
 
 from datetime import datetime
@@ -19,7 +19,7 @@ import polars as pl
 from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.view_config import ScenarioAggregation, TimeGranularity, ViewConfig
+from gems_views_builder.input.view_config import Pattern, TimeGranularity, ViewConfig
 from gems_views_builder.view import ParquetViewSinker
 from tests.e2e.utils import (
     build_raw_input_data,
@@ -34,12 +34,12 @@ TAXONOMY_CATEGORY_BY_MODEL = {"bus": "balance", "load": "load"}
 T1 = datetime(2026, 1, 1, 3, 0)
 T2 = datetime(2026, 1, 1, 20, 0)
 
-SCENARIO_AGGREGATIONS = (
-    ScenarioAggregation(id="hourly", time=TimeGranularity.HOUR, scenario=False),
-    ScenarioAggregation(id="hourly2", time=TimeGranularity.HOUR, scenario=True),
-    ScenarioAggregation(id="daily", time=TimeGranularity.DAY, scenario=False),
-    ScenarioAggregation(id="daily2", time=TimeGranularity.DAY, scenario=True),
-    ScenarioAggregation(id="monthly", time=TimeGranularity.MONTH, scenario=False),
+PATTERNS = (
+    Pattern(id="hourly", time=TimeGranularity.HOUR, scenario=False),
+    Pattern(id="hourly2", time=TimeGranularity.HOUR, scenario=True),
+    Pattern(id="daily", time=TimeGranularity.DAY, scenario=False),
+    Pattern(id="daily2", time=TimeGranularity.DAY, scenario=True),
+    Pattern(id="monthly", time=TimeGranularity.MONTH, scenario=False),
 )
 
 
@@ -76,7 +76,7 @@ def make_view_config(tmp_path: Path) -> ViewConfig:
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids={"catalog"},
-        scenario_aggregations=SCENARIO_AGGREGATIONS,
+        patterns=PATTERNS,
         metric_ids={"catalog.LOAD", "catalog.PROD"},
     )
 

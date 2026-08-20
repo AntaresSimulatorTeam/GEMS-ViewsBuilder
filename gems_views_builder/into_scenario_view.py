@@ -32,13 +32,13 @@ AGGREGATION_OPERATORS = [
 
 
 @dataclass
-class ScenarioOperator(ABC):
+class ScenarioPatternOperator(ABC):
     @abstractmethod
     def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
         pass
 
 
-class ScenarioAggregation(ScenarioOperator):
+class ScenarioPatternAggregation(ScenarioPatternOperator):
     def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
@@ -67,7 +67,7 @@ class ScenarioAggregation(ScenarioOperator):
         )
 
 
-class ScenarioColumnsAddition(ScenarioOperator):
+class ScenarioPatternColumnsAddition(ScenarioPatternOperator):
     def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
         view = pl.scan_parquet(temporal_metric_view.persistence_path).with_columns(
@@ -84,16 +84,16 @@ class ScenarioColumnsAddition(ScenarioOperator):
         )
 
 
-def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
-    return ScenarioAggregation() if scenario_aggregation else ScenarioColumnsAddition()
+def make_scenario_operator(scenario_aggregation: bool) -> ScenarioPatternOperator:
+    return ScenarioPatternAggregation() if scenario_aggregation else ScenarioPatternColumnsAddition()
 
 
-def to_scenario_view(temporal_metric_view: MetricView, scenario_operator: ScenarioOperator) -> None:
+def to_scenario_view(temporal_metric_view: MetricView, scenario_pattern_operator: ScenarioPatternOperator) -> None:
     try:
         file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
         os.close(file_descriptor)
 
-        scenario_operator.run(temporal_metric_view, Path(tmp_path))
+        scenario_pattern_operator.run(temporal_metric_view, Path(tmp_path))
 
         os.replace(tmp_path, temporal_metric_view.persistence_path)
     except Exception:

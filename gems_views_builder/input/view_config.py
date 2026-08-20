@@ -37,14 +37,14 @@ class Scope(ViewBuilderBasedModel):
     calendar: str
 
 
-class ScenarioAggregation(ViewBuilderBasedModel):
+class Pattern(ViewBuilderBasedModel):
     id: str
     time: TimeGranularity
     scenario: bool
 
 
 class Aggregations(ViewBuilderBasedModel):
-    scenario_aggregations: tuple[ScenarioAggregation, ...] = Field(min_length=1)
+    patterns: tuple[Pattern, ...] = Field(min_length=1)
     extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
@@ -77,7 +77,7 @@ class ViewConfig:
     input_data_path: Path
     calendar_id: str
     location_taxonomy_category: str
-    scenario_aggregations: tuple[ScenarioAggregation, ...]
+    patterns: tuple[Pattern, ...]
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: set[str] = field(default_factory=set)
@@ -126,7 +126,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalogs},
-        scenario_aggregations=raw_view_config.aggregations.scenario_aggregations,
+        patterns=raw_view_config.aggregations.patterns,
         metric_ids={metric.id for metric in raw_view_config.metrics},
         extra_locations=[loc.id for loc in (raw_view_config.aggregations.extra_locations or [])],
     )
