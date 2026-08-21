@@ -4,8 +4,8 @@
 """
 E2E test for per-aggregation spatial filter through the view-building process.
 
-After time and scenario aggregation, ScenarioAggregationRunner keeps only rows
-whose metric_location is in that aggregation's spatial_filter.
+After time and scenario aggregation, PatternAggregator keeps only rows
+whose metric_location is in that pattern's spatial_filter.
 """
 
 from datetime import datetime
@@ -15,16 +15,16 @@ from typing import Any
 
 import polars as pl
 
-from gems_views_builder.__main__ import run_view_building_process
+from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.view_config import ScenarioAggregation, TimeGranularity, ViewConfig
-from gems_views_builder.view import ParquetViewSinker
+from gems_views_builder.input.view_config import Pattern, TimeGranularity, ViewConfig
+from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
 from tests.e2e.utils import (
     build_raw_input_data,
+    create_results_dir,
     make_raw_component,
     make_raw_connection,
-    make_results_dir,
     make_simulation_table_and_calendar,
 )
 
@@ -59,15 +59,14 @@ def make_metrics() -> list[Metric]:
     ]
 
 
-def make_view_config(tmp_path: Path, spatial_filter: list[str] | None) -> ViewConfig:
+def make_view_config(spatial_filter: list[str] | None) -> ViewConfig:
     return ViewConfig(
         id="view_area",
-        input_data_path=tmp_path,
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids={"catalog"},
-        scenario_aggregations=(
-            ScenarioAggregation(
+        aggregation_patterns=(
+            Pattern(
                 id="hourly",
                 time=TimeGranularity.HOUR,
                 scenario=False,
@@ -75,7 +74,7 @@ def make_view_config(tmp_path: Path, spatial_filter: list[str] | None) -> ViewCo
             ),
         ),
         extra_locations=["country", "region"],
-        metric_ids={"catalog.PROD"},
+        metric_ids=["catalog.PROD"],
     )
 
 
@@ -104,10 +103,9 @@ def build_input(tmp_path: Path, spatial_filter: list[str] | None) -> RawInputDat
         tmp_path,
     )
     return build_raw_input_data(
-        tmp_path,
         make_system(),
         TAXONOMY_CATEGORY_BY_MODEL,
-        make_view_config(tmp_path, spatial_filter),
+        make_view_config(spatial_filter),
         simulation_table,
         calendar,
         catalogs=make_catalogs(metrics),
@@ -123,10 +121,10 @@ def prod_locations(results_dir: Path) -> set[str]:
 def test_spatial_filter_keeps_only_listed_locations(tmp_path: Path) -> None:
     # Arrange
     input_data = build_input(tmp_path, spatial_filter=["busA"])
-    results_dir = make_results_dir(tmp_path)
+    results_dir = create_results_dir(tmp_path)
 
     # Act
-    run_view_building_process(input_data, ParquetViewSinker(results_dir))
+    accumulate_on_disk(build_metric_views(input_data), ParquetViewSinker(results_dir))
 
     # Assert
     assert prod_locations(results_dir) == {"busA"}
@@ -135,10 +133,10 @@ def test_spatial_filter_keeps_only_listed_locations(tmp_path: Path) -> None:
 def test_spatial_filter_none_keeps_all_locations(tmp_path: Path) -> None:
     # Arrange
     input_data = build_input(tmp_path, spatial_filter=None)
-    results_dir = make_results_dir(tmp_path)
+    results_dir = create_results_dir(tmp_path)
 
     # Act
-    run_view_building_process(input_data, ParquetViewSinker(results_dir))
+    accumulate_on_disk(build_metric_views(input_data), ParquetViewSinker(results_dir))
 
     # Assert
     assert prod_locations(results_dir) == ALL_PROD_LOCATIONS

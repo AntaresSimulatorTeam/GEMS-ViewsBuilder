@@ -11,7 +11,7 @@ view:
     calendar: calendar_file # change this in for test purposes
 
   aggregations:
-    scenario-aggregations:
+    patterns:
       - id: hourly
         time: hour
         scenario: false

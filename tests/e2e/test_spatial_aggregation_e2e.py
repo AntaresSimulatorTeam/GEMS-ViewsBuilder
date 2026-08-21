@@ -26,7 +26,7 @@ from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import SimulationTable
-from gems_views_builder.input.view_config import ScenarioAggregation, TimeGranularity, ViewConfig
+from gems_views_builder.input.view_config import Pattern, TimeGranularity, ViewConfig
 from gems_views_builder.metric_view import MetricView
 from tests.e2e.utils import (
     build_raw_input_data,
@@ -72,16 +72,15 @@ def make_metrics() -> list[Metric]:
     return [load_metric, prod_metric]
 
 
-def make_view_config(tmp_path: Path) -> ViewConfig:
+def make_view_config() -> ViewConfig:
     return ViewConfig(
         id="view_area",
-        input_data_path=tmp_path,
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids={"catalog"},
-        scenario_aggregations=(ScenarioAggregation(id="hourly", time=TimeGranularity.HOUR, scenario=False),),
+        aggregation_patterns=(Pattern(id="hourly", time=TimeGranularity.HOUR, scenario=False),),
         extra_locations=["country", "region"],
-        metric_ids={"catalog.LOAD", "catalog.PROD"},
+        metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
 
 
@@ -114,11 +113,10 @@ def make_simulation_table_and_calendar(tmp_path: Path) -> tuple[SimulationTable,
 def build_input(tmp_path: Path) -> RawInputData:
     system = make_system()
     metrics = make_metrics()
-    view_config = make_view_config(tmp_path)
+    view_config = make_view_config()
     catalogs = make_catalogs(metrics)
     simulation_table, calendar = make_simulation_table_and_calendar(tmp_path)
     return build_raw_input_data(
-        tmp_path,
         system,
         TAXONOMY_CATEGORY_BY_MODEL,
         view_config,

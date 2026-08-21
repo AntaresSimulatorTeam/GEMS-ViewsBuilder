@@ -16,10 +16,10 @@ from gems_views_builder.aggregators.time_aggregator import (
 )
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import TemporalMetricView
 
 
-def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> MetricView:
+def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> TemporalMetricView:
     """Granular metric-view parquet (output of the terms aggregation step)."""
     n = len(rows)
     dataframe = pl.DataFrame(
@@ -36,7 +36,7 @@ def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> Metr
     )
     path = tmp_path / "granular.parquet"
     dataframe.write_parquet(path)
-    return MetricView(path)
+    return TemporalMetricView(path)
 
 
 def make_metric(time_operator: AggregOperatorType) -> Metric:
@@ -87,7 +87,7 @@ def test_time_aggregation(agg_operator: AggregOperatorType, values: list[float],
 
 def test_truncation_groups_by_window(tmp_path: Path) -> None:
     # Arrange
-    aggregator = TimeAggregator(TimeGranularity.DAY, "default_scenario")
+    aggregator = TimeAggregator(TimeGranularity.DAY)
     rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
     metric = make_metric(AggregOperatorType.SUM)
@@ -105,7 +105,7 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
 
 def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     # Arrange
-    aggregator = TimeAggregator(TimeGranularity.DAY, "default_scenario")
+    aggregator = TimeAggregator(TimeGranularity.DAY)
     rows = [(datetime(2026, 1, 1, 1, 0), 10.0), (datetime(2026, 1, 1, 2, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
     metric = make_metric(AggregOperatorType.AVG)

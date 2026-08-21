@@ -7,7 +7,8 @@ import logging
 from pathlib import Path
 from typing import Any, cast
 
-from gems_craft.model.library import Library as GemsLibrary  # type: ignore
+from gems_craft.model.parsing import LibrarySchema  # type: ignore
+from gems_craft.model.resolve_library import resolve_library  # type: ignore
 from gems_craft.study import Component as GemsPyComponent  # type: ignore
 from gems_craft.study.parsing import parse_yaml_system  # type: ignore
 from gems_craft.study.resolve_components import (  # type: ignore
@@ -39,11 +40,10 @@ class System:
         return cast(list[Any], getattr(self._system, "connections", None) or [])
 
 
-def load_system(input_data_path: Path, resolved_libs: dict[str, GemsLibrary]) -> System:
+def load_system(system_file_path: Path, yml_libs: list[LibrarySchema]) -> System:
     logging.info("Loading system")
-    system_path = input_data_path / "system.yml"
-    with open(system_path, encoding="utf-8") as f:
-        parsed = parse_yaml_system(f)
-    resolved = resolve_system(parsed, resolved_libs)
-    logging.info(f"System loaded and resolved from {system_path}")
-    return System(cast(GemsPySystem, resolved))
+    with open(system_file_path, encoding="utf-8") as f:
+        yml_system = parse_yaml_system(f)
+    resolved_system = resolve_system(yml_system, resolve_library(yml_libs))
+    logging.info(f"System loaded and resolved from {system_file_path}")
+    return System(cast(GemsPySystem, resolved_system))

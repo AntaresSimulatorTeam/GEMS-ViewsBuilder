@@ -25,7 +25,6 @@ class MetricStructureTableBuilder:
                     term.location_port, self.view_config.location_taxonomy_category
                 ):
                     location_component = c.location(term.location_port, self.view_config.location_taxonomy_category)
-                    # for each aggregation perform separated extra location matching
                     locations = [location_component.id] + location_component.match_extra_locations(
                         self.view_config.extra_locations
                     )

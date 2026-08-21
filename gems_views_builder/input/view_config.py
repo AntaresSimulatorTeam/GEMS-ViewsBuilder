@@ -9,7 +9,7 @@ from enum import Enum
 from pathlib import Path
 
 import yaml
-from pydantic import Field, field_validator
+from pydantic import Field
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
 from gems_views_builder.input.catalog import Catalog, Metric
@@ -29,15 +29,16 @@ class TimeGranularity(Enum):
 
 class Location(ViewBuilderBasedModel):
     taxonomy_category: str
-    # Here will be filter in  PR
+    # Here will be filter in next PR
 
 
 class Scope(ViewBuilderBasedModel):
     location: Location
     calendar: str
+    extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
-class ScenarioAggregation(ViewBuilderBasedModel):
+class Pattern(ViewBuilderBasedModel):
     id: str
     time: TimeGranularity
     scenario: bool
@@ -45,8 +46,7 @@ class ScenarioAggregation(ViewBuilderBasedModel):
 
 
 class Aggregations(ViewBuilderBasedModel):
-    scenario_aggregations: tuple[ScenarioAggregation, ...] = Field(min_length=1)
-    extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
+    patterns: tuple[Pattern, ...] = Field(min_length=1)
 
 
 class CatalogId(ViewBuilderBasedModel):
@@ -62,31 +62,22 @@ class RawViewConfig(ViewBuilderBasedModel):
     scope: Scope
     aggregations: Aggregations
     catalogs: list[CatalogId]
-    metrics: set[MetricId]
-
-    @field_validator("metrics", mode="before")
-    @classmethod
-    def parse_metric_ids(cls, value: object) -> object:
-        if not isinstance(value, list):
-            return value
-        return {item if isinstance(item, MetricId) else MetricId.model_validate(item) for item in value}
+    metrics: list[MetricId]
 
 
 @dataclass
 class ViewConfig:
     id: str
-    input_data_path: Path
     calendar_id: str
     location_taxonomy_category: str
-    scenario_aggregations: tuple[ScenarioAggregation, ...]
+    aggregation_patterns: tuple[Pattern, ...]
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
-    metric_ids: set[str] = field(default_factory=set)
+    metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
-        unique_metric_ids = set()
         for metric_ref in self.metric_ids:
             if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
                 raise ValueError(
@@ -94,16 +85,6 @@ class ViewConfig:
                     f"Expected format '<catalog_id>.<metric_id>' for catalog {self.catalog_ids}"
                 )
             catalog_id, metric_id = metric_ref.split(".", 1)
-
-            # Temporary solution this needs to be handled while validating
-            # With this we can safely remove part counter from TimeAggregator
-            # Catalog <-> ViewConfig validation
-            # View Config <-> Taxonomy
-            # Catalog <-> Taxonomy
-            if metric_id in unique_metric_ids:
-                raise ValueError(f"Metric id={metric_id!r} is already defined in some catalog")
-
-            unique_metric_ids.add(metric_id)
 
             if catalog_id not in self.catalog_ids:
                 raise ValueError(f"Catalog {catalog_id!r} not found in view config")
@@ -117,25 +98,30 @@ class ViewConfig:
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
+    from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
+
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
-    input_data_path = config_file_path.parent
+    AggregationPatternsValidator(raw_view_config.aggregations.patterns).validate()
 
     view_config = ViewConfig(
         id=raw_view_config.id,
-        input_data_path=input_data_path,
         calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalogs},
-        scenario_aggregations=raw_view_config.aggregations.scenario_aggregations,
-        metric_ids={metric.id for metric in raw_view_config.metrics},
-        extra_locations=[loc.id for loc in (raw_view_config.aggregations.extra_locations or [])],
+        aggregation_patterns=raw_view_config.aggregations.patterns,
+        metric_ids=[metric.id for metric in raw_view_config.metrics],
+        extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )
+    logg_loaded_view_config(view_config)
+    return view_config
+
+
+def logg_loaded_view_config(view_config: ViewConfig) -> None:
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
-        f"catalogs={len(view_config.catalog_ids)}, metrics={len(view_config.metric_ids)}"
+        f"catalogs={len(view_config.catalog_ids)}, metrics={len(view_config.metrics)}"
     )
-    return view_config
 
 
 def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:

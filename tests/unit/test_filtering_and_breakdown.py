@@ -13,8 +13,9 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.__main__ import load_and_validate_input_data, run_view_building_process
+from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.view import ParquetViewSinker
+from tests.conftest import paths_from_dataset
 
 # Generator instances in ``filtering_and_breakdown/system.yml`` (technology, company).
 _FILTERING_AND_BREAKDOWN_GEN_META: dict[str, tuple[str, str]] = {
@@ -35,7 +36,7 @@ def filtering_and_breakdown_workspace(test_files_root: Path, tmp_path: Path) -> 
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     shutil.copytree(src, dst)
-    run_view_building_process(load_and_validate_input_data(dst), ParquetViewSinker(results_dir))
+    run_view_building_process(paths_from_dataset(dst), ParquetViewSinker(results_dir))
     view = pl.read_parquet(next(results_dir.glob("view*.parquet")))
     return dst, view
 
@@ -155,7 +156,7 @@ def test_production_by_technology_matches_simulation(
 ) -> None:
     """Per scenario, PRODUCTION_BY_TECH nuclear / gas totals match raw ``generation`` sums."""
     dataset_dir, view = filtering_and_breakdown_workspace
-    sim = pl.read_parquet(dataset_dir / "simulation_table.parquet")
+    sim = pl.read_parquet(next(dataset_dir.glob("simulation_table.parquet")))
 
     for tech, bd in (("nuclear", "{(technology,nuclear)}"), ("gas", "{(technology,gas)}")):
         got = _view_generation_total_by_scenario(view, "PRODUCTION_BY_TECH", breakdown_properties=bd)
@@ -168,7 +169,7 @@ def test_production_by_company_matches_simulation(
 ) -> None:
     """Per scenario, company breakdown totals match simulation sums for that company."""
     dataset_dir, view = filtering_and_breakdown_workspace
-    sim = pl.read_parquet(dataset_dir / "simulation_table.parquet")
+    sim = pl.read_parquet(next(dataset_dir.glob("simulation_table.parquet")))
 
     for company, bd in (
         ("rhonepower", "{(company,rhonepower)}"),
@@ -187,7 +188,7 @@ def test_production_by_technology_and_company_matches_simulation(
     per-scenario totals must match that component's summed ``generation`` in the simulation table.
     """
     dataset_dir, view = filtering_and_breakdown_workspace
-    sim = pl.read_parquet(dataset_dir / "simulation_table.parquet")
+    sim = pl.read_parquet(next(dataset_dir.glob("simulation_table.parquet")))
 
     cases: tuple[tuple[str, str, str], ...] = (
         ("nuclear", "rhonepower", "{(technology,nuclear),(company,rhonepower)}"),
@@ -205,7 +206,7 @@ def test_single_generator_slice_matches_component_simulation_sum(
 ) -> None:
     """Concrete check: nuclear + rhonepower is only ``nuclear_1`` — compare to its simulation total (scenario 0)."""
     dataset_dir, view = filtering_and_breakdown_workspace
-    sim = pl.read_parquet(dataset_dir / "simulation_table.parquet")
+    sim = pl.read_parquet(next(dataset_dir.glob("simulation_table.parquet")))
     scenario = 0
     expected = (
         sim.filter(

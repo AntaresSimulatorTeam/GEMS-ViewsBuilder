@@ -3,14 +3,11 @@
 
 from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import Path
 
 import polars as pl
 
+from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView
-
-# Temporal aggregation files are named {time}_{scenario_id}_{metric_id}.
-TIME_GRANULARITY_INDEX = 0
 
 
 @dataclass
@@ -22,14 +19,10 @@ class View:
 from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
 
 
-def time_granularity_from_filename(path: Path) -> str:
-    return path.stem.split("_")[TIME_GRANULARITY_INDEX]
-
-
-def group_by_time_granularity(metric_views: list[MetricView]) -> dict[str, list[MetricView]]:
-    views_by_time_granularity: dict[str, list[MetricView]] = defaultdict(list)
+def group_by_time_granularity(metric_views: list[MetricView]) -> dict[TimeGranularity, list[MetricView]]:
+    views_by_time_granularity: dict[TimeGranularity, list[MetricView]] = defaultdict(list)
     for view in metric_views:
-        views_by_time_granularity[time_granularity_from_filename(view.persistence_path)].append(view)
+        views_by_time_granularity[view.time_granularity].append(view)
     return views_by_time_granularity
 
 
