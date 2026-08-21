@@ -10,7 +10,7 @@ import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import TemporalMetricView
 
 
 class TermsAggregator:
@@ -19,7 +19,7 @@ class TermsAggregator:
         self._metric_view_dir = self._root_dir / "views" / "metric_view"
         self._metric_view_dir.mkdir(parents=True, exist_ok=True)
 
-    def run(self, structured_simulation_table: pl.LazyFrame, metric: Metric) -> MetricView:
+    def run(self, structured_simulation_table: pl.LazyFrame, metric: Metric) -> TemporalMetricView:
         # # 2B group by
         logging.info(f"[{metric.id}] Aggregating terms with operator {metric.terms_operator.value}")
         value_agg = pl.col("value").sum() if metric.terms_operator == AggregOperatorType.SUM else pl.col("value").mean()
@@ -61,7 +61,7 @@ class TermsAggregator:
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
         logging.info(f"[{metric.id}] Terms aggregation written to {out_path}")
-        return MetricView(out_path)
+        return TemporalMetricView(out_path)
 
     def __del__(self) -> None:
         rmtree(self._root_dir, ignore_errors=True)
