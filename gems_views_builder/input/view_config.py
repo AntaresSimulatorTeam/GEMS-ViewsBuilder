@@ -29,7 +29,7 @@ class TimeGranularity(Enum):
 
 class Location(ViewBuilderBasedModel):
     taxonomy_category: str
-    # Here will be filter in  PR
+    # Here will be filter in next PR
 
 
 class Scope(ViewBuilderBasedModel):
@@ -116,11 +116,12 @@ class ViewConfig:
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
+    from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
+
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
+    AggregationPatternsValidator(raw_view_config.aggregations.patterns).validate()
     input_data_path = config_file_path.parent
-
-    # # Preprosessing layer
 
     view_config = ViewConfig(
         id=raw_view_config.id,

@@ -160,3 +160,32 @@ view:
 
     with pytest.raises(ValueError, match="scenario"):
         load_view_config(config_path)
+
+
+def test_raises_when_time_and_scenario_pair_is_duplicated(tmp_path: Path) -> None:
+    config_path = tmp_path / "view_config.yml"
+    config_path.write_text(
+        """
+view:
+  id: duplicate_pattern
+  scope:
+    location:
+      taxonomy-category: balance
+    calendar: calendar_file
+  aggregations:
+    patterns:
+      - id: hourly
+        time: hour
+        scenario: false
+      - id: hourly_again
+        time: hour
+        scenario: false
+  catalogs:
+    - id: catalog
+  metrics:
+    - id: catalog.LOAD
+""".strip()
+    )
+
+    with pytest.raises(ValueError, match="already defined"):
+        load_view_config(config_path)
