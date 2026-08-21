@@ -29,12 +29,13 @@ class Component:
 
     @property
     def id(self) -> str:
-        return str(self.raw_component.id)
+        return self.raw_component.id  # type: ignore
 
     @property
     def model_id(self) -> str:
-        # resolved model id is qualified, e.g. "basic_lib.area" -> "area"
-        return str(self.raw_component.model.id).rsplit(".", 1)[-1]
+        # resolved model id is qualified, e.g. "basic_lib.area"; kept qualified so models
+        # sharing an id across different libraries stay distinct.
+        return self.raw_component.model.id  # type: ignore
 
     @property
     def properties(self) -> dict[str, str]:

@@ -72,10 +72,9 @@ def make_metrics() -> list[Metric]:
     return [load_metric, prod_metric]
 
 
-def make_view_config(tmp_path: Path) -> ViewConfig:
+def make_view_config() -> ViewConfig:
     return ViewConfig(
         id="view_area",
-        input_data_path=tmp_path,
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids={"catalog"},
@@ -114,11 +113,10 @@ def make_simulation_table_and_calendar(tmp_path: Path) -> tuple[SimulationTable,
 def build_input(tmp_path: Path) -> RawInputData:
     system = make_system()
     metrics = make_metrics()
-    view_config = make_view_config(tmp_path)
+    view_config = make_view_config()
     catalogs = make_catalogs(metrics)
     simulation_table, calendar = make_simulation_table_and_calendar(tmp_path)
     return build_raw_input_data(
-        tmp_path,
         system,
         TAXONOMY_CATEGORY_BY_MODEL,
         view_config,

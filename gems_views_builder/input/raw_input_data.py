@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.catalog import Catalog
@@ -17,10 +16,9 @@ from gems_views_builder.input.view_config import ViewConfig
 class RawInputData:
     """Study inputs as loaded from disk, before view-building transformations."""
 
-    input_data_path: Path
     taxonomy: Taxonomy
     view_config: ViewConfig
-    library: Library
+    libraries: dict[str, Library]
     system: System
     simulation_table: SimulationTable
     calendar: Calendar

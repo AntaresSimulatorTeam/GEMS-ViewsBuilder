@@ -15,7 +15,7 @@ from gems_views_builder.input.simulation_table import filter_simulation_table, l
 def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path) -> None:
     """Filtered result must satisfy: every row (absolute_time_index, block) in calendar, correct count, rows from sim table."""
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
-    calendar = load_calendar(test_dataset_dir, "calendar_file")
+    calendar = load_calendar(test_dataset_dir / "calendar_file.csv")
     simulation_table = load_simulation_table(simulation_table_file)
 
     filtered_table = filter_simulation_table(simulation_table, calendar)
@@ -47,7 +47,7 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
 
 def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dataset_dir: Path) -> None:
     """Rows whose block does not match the calendar's block for a given absolute_time_index are dropped."""
-    calendar = load_calendar(test_dataset_dir, "calendar_file")
+    calendar = load_calendar(test_dataset_dir / "calendar_file.csv")
     base_sim_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     base_sim_table = load_simulation_table(base_sim_table_file)
 
@@ -73,7 +73,7 @@ def test_filter_simulation_table_writes_parquet(
     test_dataset_dir: Path,
 ) -> None:
     """The filtered table is written to parquet with expected content."""
-    calendar = load_calendar(test_dataset_dir, "calendar_file")
+    calendar = load_calendar(test_dataset_dir / "calendar_file.csv")
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     simulation_table = load_simulation_table(simulation_table_file)
 

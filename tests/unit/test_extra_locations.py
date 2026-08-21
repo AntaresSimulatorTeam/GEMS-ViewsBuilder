@@ -32,7 +32,6 @@ def make_metric() -> Metric:
 def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
     return ViewConfig(
         id="view_area",
-        input_data_path=Path("."),
         calendar_id="calendar_file",
         location_taxonomy_category="balance",
         aggregation_patterns=(Pattern(id="hourly", time=TimeGranularity.HOUR, scenario=False),),

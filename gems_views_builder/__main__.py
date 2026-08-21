@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import (
@@ -16,17 +15,18 @@ from gems_views_builder.input.component import (
 )
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input_data import create_view_building_input
+from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
-from gems_views_builder.validation.study_layout_validator import StudyLayoutValidator
+from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
-def load_and_validate_input_data(input_dir: Path) -> RawInputData:
-    raw_input_data = Loader(input_dir).load()
-    validate_catalogs_against_taxonomy(input_dir, raw_input_data.view_config.catalog_ids, raw_input_data.taxonomy)
+def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
+    raw_input_data = Loader(input_paths).load()
+    validate_catalogs_against_taxonomy(raw_input_data.catalogs, raw_input_data.taxonomy)
     return raw_input_data
 
 
@@ -49,7 +49,8 @@ def build_metric_views(raw_input_data: RawInputData) -> list[MetricView]:
     return ViewBuilder(view_building_input, metric_structure_table_builder).build()
 
 
-def run_view_building_process(raw_input_data: RawInputData, view_sinker: ViewSinker) -> None:
+def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) -> None:
+    raw_input_data = load_and_validate_input_data(input_paths)
     metric_views = build_metric_views(raw_input_data)
     accumulate_on_disk(metric_views, view_sinker)
 
@@ -62,21 +63,22 @@ def main(argv: list[str] | None = None) -> int:
     """
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose, log_dir=args.log_dir)
-    view_sinker = ViewSinkerFactory(args.results_dir, args.output_format).make()
-
-    error = check_options(args)
-    if error is not None:
-        return error
 
     try:
-        StudyLayoutValidator(args.input_dir).validate()
-        raw_input_data = load_and_validate_input_data(args.input_dir)
-        run_view_building_process(raw_input_data, view_sinker)
+        check_options(args)
+    except Exception:
+        return 2
+
+    try:
+        input_paths = InputPaths(args)
+        InputPathsValidator(input_paths).validate()
+        view_sinker = ViewSinkerFactory(args.output, args.output_format).make()
+        run_view_building_process(input_paths, view_sinker)
     except Exception:
         logging.exception("View building failed")
         return 1
 
-    logging.info(f"View successfully written to {args.results_dir}")
+    logging.info(f"View successfully written to {view_sinker.output_path}")
     return 0
 
 
