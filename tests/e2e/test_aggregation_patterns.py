@@ -16,11 +16,11 @@ from typing import Any
 
 import polars as pl
 
-from gems_views_builder.__main__ import run_view_building_process
+from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_config import Pattern, TimeGranularity, ViewConfig
-from gems_views_builder.view import ParquetViewSinker
+from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
 from tests.e2e.utils import (
     build_raw_input_data,
     create_results_dir,
@@ -69,10 +69,9 @@ def make_metrics() -> list[Metric]:
     return [load_metric, prod_metric]
 
 
-def make_view_config(tmp_path: Path) -> ViewConfig:
+def make_view_config() -> ViewConfig:
     return ViewConfig(
         id="view_area",
-        input_data_path=tmp_path,
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids={"catalog"},
@@ -96,7 +95,7 @@ def make_catalogs(metrics: list[Metric]) -> dict[str, Catalog]:
 def build_input(tmp_path: Path) -> RawInputData:
     system = make_system()
     metrics = make_metrics()
-    view_config = make_view_config(tmp_path)
+    view_config = make_view_config()
     catalogs = make_catalogs(metrics)
     simulation_table, calendar = make_simulation_table_and_calendar(
         [
@@ -108,7 +107,6 @@ def build_input(tmp_path: Path) -> RawInputData:
         tmp_path,
     )
     return build_raw_input_data(
-        tmp_path,
         system,
         TAXONOMY_CATEGORY_BY_MODEL,
         view_config,
@@ -133,7 +131,7 @@ def test_one_output_file_per_time_granularity_merges_all_scenarios(tmp_path: Pat
     results_dir = create_results_dir(tmp_path)
 
     # Act
-    run_view_building_process(input_data, ParquetViewSinker(results_dir))
+    accumulate_on_disk(build_metric_views(input_data), ParquetViewSinker(results_dir))
 
     # Assert
     result = sort_by_time_granularity(fetch_result_files(results_dir))
