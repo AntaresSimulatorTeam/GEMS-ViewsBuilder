@@ -3,6 +3,7 @@
 
 from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.input.scenario_runner import PatternRunner
+from gems_views_builder.input.simulation_table import join
 from gems_views_builder.input.view_building_input_data import ViewBuildingInputData
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
@@ -25,7 +26,9 @@ class ViewBuilder:
         metric_views: list[MetricView] = []
         for metric in self.input_data.view_config.metrics:
             metric_structure_table = self.metric_structure_table_builder.build(metric)
-            metric_view = self.terms_aggregator.run(metric_structure_table, metric)
+            structured_simulation_table = join(metric_structure_table, self.input_data.filtered_st)
+            # # Here aggregations processor
+            metric_view = self.terms_aggregator.run(structured_simulation_table, metric)
             pattern_views = self.pattern_runner.run(metric_view, metric)
             metric_views.extend(pattern_views)
         return metric_views

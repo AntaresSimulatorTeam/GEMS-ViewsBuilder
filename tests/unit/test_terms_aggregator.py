@@ -8,12 +8,11 @@ from pytest import approx
 
 from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
-from gems_views_builder.input.simulation_table import FilteredSimulationTable
+from gems_views_builder.input.simulation_table import FilteredSimulationTable, join
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
 
-def _filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationTable:
-    """Filtered simulation rows for a single component/output at one timestep and scenario."""
+def make_filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationTable:
     n = len(values)
     dataframe = pl.DataFrame(
         {
@@ -31,8 +30,7 @@ def _filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationTable
     return FilteredSimulationTable(tmp_path / "dummy.parquet", dataframe)
 
 
-def _structure() -> MetricStructureTable:
-    """Metric structure mapping comp/out to metric M at location L."""
+def make_metric_structure_table() -> MetricStructureTable:
     rows: list[dict[str, object]] = [
         {
             "metric_id": "M",
@@ -46,21 +44,39 @@ def _structure() -> MetricStructureTable:
     return MetricStructureTable(rows, "M")
 
 
-def _metric(terms_operator: AggregOperatorType) -> Metric:
-    return Metric(id="M", terms=[], terms_operator=terms_operator, time_operator=AggregOperatorType.SUM)
-
-
 def test_terms_aggregation_sum(tmp_path: Path) -> None:
-    aggregator = TermsAggregator(_filtered_st([2.0, 3.0], tmp_path))
-    metric_view = aggregator.run(_structure(), _metric(AggregOperatorType.SUM))
+    # Arrange
+    filtered_st = make_filtered_st([2.0, 3.0], tmp_path)
+    metric_structure_table = make_metric_structure_table()
+    aggregator = TermsAggregator(filtered_st)
+
+    # Act
+    structured_simulation_table = join(metric_structure_table, filtered_st)
+    metric_view = aggregator.run(
+        structured_simulation_table,
+        Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
+    )
+
+    # Assert
     df = pl.read_parquet(metric_view.persistence_path)
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(5.0)
 
 
 def test_terms_aggregation_avg(tmp_path: Path) -> None:
-    aggregator = TermsAggregator(_filtered_st([2.0, 3.0], tmp_path))
-    metric_view = aggregator.run(_structure(), _metric(AggregOperatorType.AVG))
+    # Arrange
+    filtered_st = make_filtered_st([2.0, 3.0], tmp_path)
+    metric_structure_table = make_metric_structure_table()
+    aggregator = TermsAggregator(filtered_st)
+
+    # Act
+    structured_simulation_table = join(metric_structure_table, filtered_st)
+    metric_view = aggregator.run(
+        structured_simulation_table,
+        Metric(id="M", terms=[], terms_operator=AggregOperatorType.AVG, time_operator=AggregOperatorType.SUM),
+    )
+
+    # Assert
     df = pl.read_parquet(metric_view.persistence_path)
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(2.5)
