@@ -81,7 +81,7 @@ def make_view_config(tmp_path: Path) -> ViewConfig:
         catalog_ids={"catalog"},
         aggregation_patterns=(Pattern(id="hourly", time=TimeGranularity.HOUR, scenario=False),),
         extra_locations=["country", "region"],
-        metric_ids={"catalog.LOAD", "catalog.PROD"},
+        metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
 
 

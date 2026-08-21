@@ -77,7 +77,7 @@ def make_view_config(tmp_path: Path) -> ViewConfig:
         location_taxonomy_category="balance",
         catalog_ids={"catalog"},
         aggregation_patterns=PATTERNS,
-        metric_ids={"catalog.LOAD", "catalog.PROD"},
+        metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
 
 
