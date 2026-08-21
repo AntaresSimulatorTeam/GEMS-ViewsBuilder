@@ -4,7 +4,7 @@
 """
 E2E test for scenario aggregation through the view-building process.
 
-PatternRunner emits one temporal view per (time, scenario, scenario_id).
+PatternRunner emits one temporal view per (time, scenario) pattern.
 accumulate_on_disk then writes one result file per time granularity, merging
 every pattern that shares that time.
 """

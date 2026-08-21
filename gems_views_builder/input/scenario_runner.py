@@ -14,7 +14,7 @@ class PatternRunner:
     def __init__(self, patterns: tuple[Pattern, ...]) -> None:
         self.pattern_aggregators = [
             PatternAggregator(
-                time_aggregator=TimeAggregator(pattern.time, pattern.id),
+                time_aggregator=TimeAggregator(pattern.time),
                 scenario_operator=make_scenario_operator(pattern.scenario),
             )
             for pattern in patterns

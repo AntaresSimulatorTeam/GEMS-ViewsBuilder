@@ -9,7 +9,7 @@ from enum import Enum
 from pathlib import Path
 
 import yaml
-from pydantic import Field, field_validator
+from pydantic import Field
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
 from gems_views_builder.input.catalog import Catalog, Metric
@@ -61,14 +61,7 @@ class RawViewConfig(ViewBuilderBasedModel):
     scope: Scope
     aggregations: Aggregations
     catalogs: list[CatalogId]
-    metrics: set[MetricId]
-
-    @field_validator("metrics", mode="before")
-    @classmethod
-    def parse_metric_ids(cls, value: object) -> object:
-        if not isinstance(value, list):
-            return value
-        return {item if isinstance(item, MetricId) else MetricId.model_validate(item) for item in value}
+    metrics: list[MetricId]
 
 
 @dataclass

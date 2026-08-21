@@ -9,7 +9,7 @@ import polars as pl
 
 from gems_views_builder.metric_view import MetricView
 
-# Temporal aggregation files are named {time}_{scenario_id}_{metric_id}.
+# Temporal aggregation files are named {time}_{metric_id}_{uuid}.
 TIME_GRANULARITY_INDEX = 0
 
 

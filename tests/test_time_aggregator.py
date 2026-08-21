@@ -87,7 +87,7 @@ def test_time_aggregation(agg_operator: AggregOperatorType, values: list[float],
 
 def test_truncation_groups_by_window(tmp_path: Path) -> None:
     # Arrange
-    aggregator = TimeAggregator(TimeGranularity.DAY, "default_scenario")
+    aggregator = TimeAggregator(TimeGranularity.DAY)
     rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
     metric = make_metric(AggregOperatorType.SUM)
@@ -105,7 +105,7 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
 
 def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     # Arrange
-    aggregator = TimeAggregator(TimeGranularity.DAY, "default_scenario")
+    aggregator = TimeAggregator(TimeGranularity.DAY)
     rows = [(datetime(2026, 1, 1, 1, 0), 10.0), (datetime(2026, 1, 1, 2, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
     metric = make_metric(AggregOperatorType.AVG)

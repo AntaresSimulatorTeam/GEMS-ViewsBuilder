@@ -4,6 +4,7 @@
 import atexit
 import logging
 import tempfile
+import uuid
 from pathlib import Path
 from shutil import rmtree
 
@@ -25,9 +26,8 @@ TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
 
 
 class TimeAggregator:
-    def __init__(self, time_granularity: TimeGranularity, scenario_id: str) -> None:
+    def __init__(self, time_granularity: TimeGranularity) -> None:
         self._time_granularity = time_granularity
-        self._scenario_id = scenario_id
         self._root_dir = Path(tempfile.mkdtemp())
         self._temporal_aggregation_dir = self._root_dir / "views" / "temporal_aggregation"
         self._temporal_aggregation_dir.mkdir(parents=True, exist_ok=True)
@@ -71,8 +71,10 @@ class TimeAggregator:
                 ]
             )
         )
+        # # Safest and most elegant option to remove part counter
+        # # https://www.researchgate.net/publication/215758035_A_Universally_Unique_IDentifier_UUID_URN_Namespace
         file_path = (
-            self._temporal_aggregation_dir / f"{self._time_granularity.value}_{self._scenario_id}_{metric.id}.parquet"
+            self._temporal_aggregation_dir / f"{self._time_granularity.value}_{metric.id}_{uuid.uuid4()}.parquet"
         )
         view.sink_parquet(
             path=file_path,
