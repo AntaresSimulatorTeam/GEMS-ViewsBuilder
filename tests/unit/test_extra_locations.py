@@ -51,15 +51,15 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
+    extra-locations:
+      - id: country
+      - id: district
+      - id: city_part
   aggregations:
     patterns:
       - id: hourly
         time: hour
         scenario: false
-    extra-locations:
-      - id: country
-      - id: district
-      - id: city_part
   catalogs:
     - id: catalog
   metrics:

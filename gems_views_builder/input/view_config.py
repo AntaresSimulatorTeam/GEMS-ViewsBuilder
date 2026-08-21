@@ -35,6 +35,7 @@ class Location(ViewBuilderBasedModel):
 class Scope(ViewBuilderBasedModel):
     location: Location
     calendar: str
+    extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
 class Pattern(ViewBuilderBasedModel):
@@ -45,7 +46,6 @@ class Pattern(ViewBuilderBasedModel):
 
 class Aggregations(ViewBuilderBasedModel):
     patterns: tuple[Pattern, ...] = Field(min_length=1)
-    extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
 class CatalogId(ViewBuilderBasedModel):
@@ -120,6 +120,8 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
     raw_view_config = load_raw_view_config_file(config_file_path)
     input_data_path = config_file_path.parent
 
+    # # Preprosessing layer
+
     view_config = ViewConfig(
         id=raw_view_config.id,
         input_data_path=input_data_path,
@@ -128,7 +130,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         catalog_ids={c.id for c in raw_view_config.catalogs},
         aggregation_patterns=raw_view_config.aggregations.patterns,
         metric_ids={metric.id for metric in raw_view_config.metrics},
-        extra_locations=[loc.id for loc in (raw_view_config.aggregations.extra_locations or [])],
+        extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
