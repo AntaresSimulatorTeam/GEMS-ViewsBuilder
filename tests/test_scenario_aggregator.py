@@ -10,9 +10,9 @@ import polars as pl
 from pytest import approx
 
 from gems_views_builder.aggregators.scenario_aggregator import (
+    ScenarioAggregation,
     ScenarioAggregator,
-    ScenarioPatternAggregation,
-    ScenarioPatternColumnsAddition,
+    ScenarioColumnsAddition,
     make_scenario_operator,
 )
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
@@ -46,11 +46,11 @@ def temporal_metric_view(tmp_path: Path, values: list[float]) -> MetricView:
 
 
 def test_make_scenario_operator_returns_columns_addition_when_disabled() -> None:
-    assert isinstance(make_scenario_operator(False), ScenarioPatternColumnsAddition)
+    assert isinstance(make_scenario_operator(False), ScenarioColumnsAddition)
 
 
 def test_make_scenario_operator_returns_aggregation_when_enabled() -> None:
-    assert isinstance(make_scenario_operator(True), ScenarioPatternAggregation)
+    assert isinstance(make_scenario_operator(True), ScenarioAggregation)
 
 
 def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -> None:

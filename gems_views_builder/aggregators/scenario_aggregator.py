@@ -33,13 +33,13 @@ AGGREGATION_OPERATORS = [
 
 
 @dataclass
-class ScenarioPatternOperator(ABC):
+class ScenarioOperator(ABC):
     @abstractmethod
     def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
         pass
 
 
-class ScenarioPatternAggregation(ScenarioPatternOperator):
+class ScenarioAggregation(ScenarioOperator):
     def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
@@ -68,7 +68,7 @@ class ScenarioPatternAggregation(ScenarioPatternOperator):
         )
 
 
-class ScenarioPatternColumnsAddition(ScenarioPatternOperator):
+class ScenarioColumnsAddition(ScenarioOperator):
     def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
         view = pl.scan_parquet(temporal_metric_view.persistence_path).with_columns(
@@ -85,24 +85,27 @@ class ScenarioPatternColumnsAddition(ScenarioPatternOperator):
         )
 
 
-def make_scenario_operator(scenario_aggregation: bool) -> ScenarioPatternOperator:
-    return ScenarioPatternAggregation() if scenario_aggregation else ScenarioPatternColumnsAddition()
+def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
+    return ScenarioAggregation() if scenario_aggregation else ScenarioColumnsAddition()
 
 
 @dataclass
 class ScenarioAggregator:
-    scenario_pattern_operator: ScenarioPatternOperator
+    scenario_operator: ScenarioOperator
 
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
-        tmp_path: str | None = None
         try:
             file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
             os.close(file_descriptor)
-            self.scenario_pattern_operator.run(metric_view, Path(tmp_path))
-            os.replace(tmp_path, metric_view.persistence_path)
+
+            self.scenario_operator.run(metric_view, Path(tmp_path))
+
+            os.replace(src=tmp_path, dst=metric_view.persistence_path)
         except Exception:
-            if tmp_path is not None:
-                os.remove(tmp_path)
-            raise
-        logging.info(f"[{metric.id}] Scenario view written to {metric_view.persistence_path}")
+            os.remove(tmp_path)
+        logg_write(metric, metric_view.persistence_path)
         return metric_view
+
+
+def logg_write(metric: Metric, file_path: Path) -> None:
+    logging.info(f"[{metric.id}] Scenario view written to {file_path}")

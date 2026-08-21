@@ -48,7 +48,7 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
     # Arrange
     filtered_st = create_filtered_st([2.0, 3.0], tmp_path)
     metric_structure_table = create_metric_structure_table()
-    aggregator = TermsAggregator(filtered_st)
+    aggregator = TermsAggregator()
 
     # Act
     structured_simulation_table = join(metric_structure_table, filtered_st)
@@ -67,7 +67,7 @@ def test_terms_aggregation_avg(tmp_path: Path) -> None:
     # Arrange
     filtered_st = create_filtered_st([2.0, 3.0], tmp_path)
     metric_structure_table = create_metric_structure_table()
-    aggregator = TermsAggregator(filtered_st)
+    aggregator = TermsAggregator()
 
     # Act
     structured_simulation_table = join(metric_structure_table, filtered_st)

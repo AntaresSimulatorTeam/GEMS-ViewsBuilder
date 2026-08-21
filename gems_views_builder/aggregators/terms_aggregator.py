@@ -10,15 +10,11 @@ import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
-from gems_views_builder.input.simulation_table import FilteredSimulationTable
 from gems_views_builder.metric_view import MetricView
 
 
 class TermsAggregator:
-    filtered_simulation_table: FilteredSimulationTable
-
-    def __init__(self, filtered_simulation_table: FilteredSimulationTable) -> None:
-        self.filtered_simulation_table = filtered_simulation_table
+    def __init__(self) -> None:
         self._root_dir = Path(tempfile.mkdtemp())
         self._metric_view_dir = self._root_dir / "views" / "metric_view"
         self._metric_view_dir.mkdir(parents=True, exist_ok=True)
