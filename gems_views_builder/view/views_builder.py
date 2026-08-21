@@ -11,19 +11,19 @@ from gems_views_builder.metrics_structure_builder import MetricStructureTableBui
 class ViewBuilder:
     def __init__(
         self,
-        view_building_input: ViewBuildingInputData,
+        input_data: ViewBuildingInputData,
         metric_structure_table_builder: MetricStructureTableBuilder,
     ) -> None:
-        self.view_building_input = view_building_input
+        self.input_data = input_data
         self.metric_structure_table_builder = metric_structure_table_builder
         # Aggregator for step 2B
-        self.terms_aggregator = TermsAggregator(self.view_building_input.filtered_st)
+        self.terms_aggregator = TermsAggregator(self.input_data.filtered_st)
         # Aggregator for step 2C extended for multiple scenarios
-        self.pattern_runner = PatternRunner(self.view_building_input.view_config.aggregation_patterns)
+        self.pattern_runner = PatternRunner(self.input_data.view_config.aggregation_patterns)
 
     def build(self) -> list[MetricView]:
         metric_views: list[MetricView] = []
-        for metric in self.view_building_input.view_config.metrics:
+        for metric in self.input_data.view_config.metrics:
             metric_structure_table = self.metric_structure_table_builder.build(metric)
             metric_view = self.terms_aggregator.run(metric_structure_table, metric)
             pattern_views = self.pattern_runner.run(metric_view, metric)
