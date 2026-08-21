@@ -19,7 +19,7 @@ class ViewBuilder:
         # Aggregator for step 2B
         self.terms_aggregator = TermsAggregator(self.view_building_input.filtered_st)
         # Aggregator for step 2C extended for multiple scenarios
-        self.pattern_runner = PatternRunner(self.view_building_input.view_config.patterns)
+        self.pattern_runner = PatternRunner(self.view_building_input.view_config.aggregation_patterns)
 
     def build(self) -> list[MetricView]:
         metric_views: list[MetricView] = []

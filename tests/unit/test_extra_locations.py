@@ -35,7 +35,7 @@ def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
         input_data_path=Path("."),
         calendar_id="calendar_file",
         location_taxonomy_category="balance",
-        patterns=(Pattern(id="hourly", time=TimeGranularity.HOUR, scenario=False),),
+        aggregation_patterns=(Pattern(id="hourly", time=TimeGranularity.HOUR, scenario=False),),
         extra_locations=extra_locations or [],
     )
 

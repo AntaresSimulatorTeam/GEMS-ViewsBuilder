@@ -16,7 +16,7 @@ from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
 
 
-def make_results_dir(tmp_path: Path) -> Path:
+def create_results_dir(tmp_path: Path) -> Path:
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     return results_dir

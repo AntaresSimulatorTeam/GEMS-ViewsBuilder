@@ -10,7 +10,7 @@ import pytest
 from gems_views_builder.__main__ import load_and_validate_input_data, run_view_building_process
 from gems_views_builder.input.view_config import TimeGranularity, load_view_config
 from gems_views_builder.view import ParquetViewSinker
-from tests.e2e.utils import fetch_view, make_results_dir
+from tests.e2e.utils import create_results_dir, fetch_view
 
 AGGREGATION_BLOCK = "  aggregations:\n    patterns:\n      - id: hourly\n        time: hour\n        scenario: false\n"
 
@@ -52,7 +52,7 @@ def test_yaml_time_aggregation_drives_full_pipeline(
     dataset_dir = tmp_path / "test_3"
     shutil.copytree(test_files_root / "test_3", dataset_dir)
     replace_aggregation(dataset_dir / "view_config.yml", aggregation_time)
-    results_dir = make_results_dir(tmp_path)
+    results_dir = create_results_dir(tmp_path)
 
     # Act
     run_view_building_process(load_and_validate_input_data(dataset_dir), ParquetViewSinker(results_dir))
