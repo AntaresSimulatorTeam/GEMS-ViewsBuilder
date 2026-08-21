@@ -9,12 +9,13 @@ from statistics import pstdev as std_deviation
 import polars as pl
 from pytest import approx
 
-from gems_views_builder.into_scenario_view import (
+from gems_views_builder.aggregators.scenario_aggregator import (
+    ScenarioAggregator,
     ScenarioPatternAggregation,
     ScenarioPatternColumnsAddition,
     make_scenario_operator,
-    to_scenario_view,
 )
+from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.metric_view import MetricView
 
 
@@ -57,10 +58,13 @@ def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
     original_path = metric_view.persistence_path
-    operator = make_scenario_operator(False)
+    aggregator = ScenarioAggregator(make_scenario_operator(False))
 
     # Act
-    to_scenario_view(metric_view, operator)
+    aggregator.run(
+        metric_view,
+        Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
+    )
 
     # Assert
     df = pl.read_parquet(metric_view.persistence_path).sort("scenario_id")
@@ -78,10 +82,13 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
     original_path = metric_view.persistence_path
-    operator = make_scenario_operator(True)
+    aggregator = ScenarioAggregator(make_scenario_operator(True))
 
     # Act
-    to_scenario_view(metric_view, operator)
+    aggregator.run(
+        metric_view,
+        Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
+    )
 
     # Assert
     df = pl.read_parquet(metric_view.persistence_path)

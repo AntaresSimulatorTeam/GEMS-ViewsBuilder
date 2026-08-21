@@ -12,7 +12,7 @@ from gems_views_builder.input.simulation_table import FilteredSimulationTable, j
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
 
-def make_filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationTable:
+def create_filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationTable:
     n = len(values)
     dataframe = pl.DataFrame(
         {
@@ -30,7 +30,7 @@ def make_filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationT
     return FilteredSimulationTable(tmp_path / "dummy.parquet", dataframe)
 
 
-def make_metric_structure_table() -> MetricStructureTable:
+def create_metric_structure_table() -> MetricStructureTable:
     rows: list[dict[str, object]] = [
         {
             "metric_id": "M",
@@ -46,8 +46,8 @@ def make_metric_structure_table() -> MetricStructureTable:
 
 def test_terms_aggregation_sum(tmp_path: Path) -> None:
     # Arrange
-    filtered_st = make_filtered_st([2.0, 3.0], tmp_path)
-    metric_structure_table = make_metric_structure_table()
+    filtered_st = create_filtered_st([2.0, 3.0], tmp_path)
+    metric_structure_table = create_metric_structure_table()
     aggregator = TermsAggregator(filtered_st)
 
     # Act
@@ -65,8 +65,8 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
 
 def test_terms_aggregation_avg(tmp_path: Path) -> None:
     # Arrange
-    filtered_st = make_filtered_st([2.0, 3.0], tmp_path)
-    metric_structure_table = make_metric_structure_table()
+    filtered_st = create_filtered_st([2.0, 3.0], tmp_path)
+    metric_structure_table = create_metric_structure_table()
     aggregator = TermsAggregator(filtered_st)
 
     # Act

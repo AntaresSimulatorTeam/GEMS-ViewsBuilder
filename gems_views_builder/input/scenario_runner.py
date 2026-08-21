@@ -3,10 +3,10 @@
 
 
 from gems_views_builder.aggregators.pattern_aggregator import PatternAggregator
+from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator, make_scenario_operator
 from gems_views_builder.aggregators.time_aggregator import TimeAggregator
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import Pattern
-from gems_views_builder.into_scenario_view import make_scenario_operator
 from gems_views_builder.metric_view import MetricView
 
 
@@ -15,7 +15,7 @@ class PatternRunner:
         self.pattern_aggregators = [
             PatternAggregator(
                 time_aggregator=TimeAggregator(pattern.time),
-                scenario_operator=make_scenario_operator(pattern.scenario),
+                scenario_aggregator=ScenarioAggregator(make_scenario_operator(pattern.scenario)),
             )
             for pattern in patterns
         ]

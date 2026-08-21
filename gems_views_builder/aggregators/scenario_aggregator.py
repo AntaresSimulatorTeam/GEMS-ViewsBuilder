@@ -12,6 +12,7 @@ from pathlib import Path
 import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
+from gems_views_builder.input.catalog import Metric
 from gems_views_builder.metric_view import MetricView
 
 
@@ -88,15 +89,20 @@ def make_scenario_operator(scenario_aggregation: bool) -> ScenarioPatternOperato
     return ScenarioPatternAggregation() if scenario_aggregation else ScenarioPatternColumnsAddition()
 
 
-def to_scenario_view(temporal_metric_view: MetricView, scenario_pattern_operator: ScenarioPatternOperator) -> None:
-    try:
-        file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
-        os.close(file_descriptor)
+@dataclass
+class ScenarioAggregator:
+    scenario_pattern_operator: ScenarioPatternOperator
 
-        scenario_pattern_operator.run(temporal_metric_view, Path(tmp_path))
-
-        os.replace(tmp_path, temporal_metric_view.persistence_path)
-    except Exception:
-        # If something goes wrong, remove the temporary file to avoid leaving a half-written file
-        os.remove(tmp_path)
-    logging.info(f"Scenario view written to {temporal_metric_view.persistence_path}")
+    def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
+        tmp_path: str | None = None
+        try:
+            file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
+            os.close(file_descriptor)
+            self.scenario_pattern_operator.run(metric_view, Path(tmp_path))
+            os.replace(tmp_path, metric_view.persistence_path)
+        except Exception:
+            if tmp_path is not None:
+                os.remove(tmp_path)
+            raise
+        logging.info(f"[{metric.id}] Scenario view written to {metric_view.persistence_path}")
+        return metric_view
