@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
 from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator, make_scenario_operator
-from gems_views_builder.aggregators.spatial_filter import SpatialFilter
 from gems_views_builder.aggregators.time_aggregator import TimeAggregator
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_view import MetricView, TemporalMetricView
+from gems_views_builder.spatial_filter import SpatialFilter
 
 
 @dataclass
