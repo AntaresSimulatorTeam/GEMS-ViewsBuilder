@@ -42,7 +42,7 @@ class Taxonomy:
 
     id: str
     description: str = ""
-    categories: list[TaxonomyCategory] = field(default_factory=list)
+    categories: dict[str, TaxonomyCategory] = field(default_factory=dict)
 
 
 def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
@@ -51,7 +51,7 @@ def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
     taxonomy = Taxonomy(
         id=parsed.id,
         description=parsed.description,
-        categories=parsed.categories,
+        categories={category.id: category for category in parsed.categories},
     )
     logging.info(f"Taxonomy {taxonomy.id!r} loaded with {len(taxonomy.categories)} categor(ies)")
     return taxonomy

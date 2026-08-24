@@ -34,6 +34,7 @@ def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
         id="view_area",
         calendar_id="calendar_file",
         location_taxonomy_category="balance",
+        taxonomy_id="my_taxonomy",
         time_aggr_granularity=TimeGranularity.HOUR,
         scenario_aggregation=False,
         extra_locations=extra_locations or [],
@@ -47,9 +48,11 @@ def test_view_config_parses_extra_locations(tmp_path: Path) -> None:
         """
 view:
   id: view_area
+  taxonomy: my_taxonomy
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    location:
+      taxonomy-category: balance
+    calendar: calendar_file
   aggregation:
     time: hour
     scenario: false
@@ -78,9 +81,11 @@ def test_view_config_extra_locations_defaults_to_empty_list(tmp_path: Path) -> N
         """
 view:
   id: view_area
+  taxonomy: my_taxonomy
   scope:
-    - taxonomy-category: balance
-    - calendar: calendar_file
+    location:
+      taxonomy-category: balance
+    calendar: calendar_file
   aggregation:
     time: hour
     scenario: false

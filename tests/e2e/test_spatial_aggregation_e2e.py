@@ -77,6 +77,7 @@ def make_view_config() -> ViewConfig:
         id="view_area",
         calendar_id="calendar",
         location_taxonomy_category="balance",
+        taxonomy_id="taxonomy",
         catalog_ids={"catalog"},
         time_aggr_granularity=TimeGranularity.HOUR,
         scenario_aggregation=False,

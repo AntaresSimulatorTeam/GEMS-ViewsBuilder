@@ -4,6 +4,7 @@
 """ViewConfig models and lazy loaders for view_config.yml."""
 
 import logging
+from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -27,9 +28,13 @@ class TimeGranularity(Enum):
     YEAR = "year"
 
 
+class Location(ViewBuilderBasedModel):
+    taxonomy_category: str
+
+
 class Scope(ViewBuilderBasedModel):
-    taxonomy_category: str | None = Field(None, alias="taxonomy-category")
-    calendar: str | None = None
+    location: Location
+    calendar: str
 
 
 class Aggregation(ViewBuilderBasedModel):
@@ -48,10 +53,11 @@ class MetricId(ViewBuilderBasedModel):
 
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
-    scope: list[Scope]
+    scope: Scope
+    taxonomy: str
     aggregation: Aggregation
-    catalog: list[CatalogId]
-    metrics: list[MetricId]
+    catalog: list[CatalogId] = Field(min_length=1)  # We need minimum one catalog and metric
+    metrics: list[MetricId] = Field(min_length=1)  # If we don't have it call of GVB is useless
 
 
 @dataclass
@@ -59,12 +65,21 @@ class ViewConfig:
     id: str
     calendar_id: str
     location_taxonomy_category: str
+    taxonomy_id: str
     time_aggr_granularity: TimeGranularity
     scenario_aggregation: bool
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
+
+    def group_metrics_by_catalog(self) -> dict[str, set[str]]:
+        """Group configured metric refs (``<catalog_id>.<metric_id>``) by catalog id."""
+        metric_ids_by_catalog: dict[str, set[str]] = defaultdict(set)
+        for metric_ref in self.metric_ids:
+            catalog_id, metric_id = metric_ref.split(".", 1)
+            metric_ids_by_catalog[catalog_id].add(metric_id)
+        return metric_ids_by_catalog
 
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
         """Resolve metric refs in view-config order into ``self.metrics``."""
@@ -88,26 +103,12 @@ class ViewConfig:
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
-    location_taxonomy_category = next(
-        (item.taxonomy_category for item in raw_view_config.scope if item.taxonomy_category),
-        None,
-    )
-    if location_taxonomy_category is None:
-        raise ValueError(
-            f"view_config.yml '{raw_view_config.id}': no 'taxonomy-category' found in scope. "
-            f"At least one scope entry must define a taxonomy-category"
-        )
-
-    calendar_id = next((item.calendar for item in raw_view_config.scope if item.calendar), None)
-    if calendar_id is None:
-        raise ValueError(
-            f"view_config.yml '{raw_view_config.id}': no calendar configured in scope. One calendar must be configured in scope"
-        )
 
     view_config = ViewConfig(
         id=raw_view_config.id,
-        calendar_id=calendar_id,
-        location_taxonomy_category=location_taxonomy_category,
+        calendar_id=raw_view_config.scope.calendar,
+        location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
+        taxonomy_id=raw_view_config.taxonomy,
         catalog_ids={c.id for c in raw_view_config.catalog},
         time_aggr_granularity=raw_view_config.aggregation.time,
         scenario_aggregation=raw_view_config.aggregation.scenario,

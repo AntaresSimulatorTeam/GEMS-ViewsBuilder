@@ -3,16 +3,18 @@
 
 """Cross-artifact and input-paths validation."""
 
-from gems_views_builder.validation.catalog_taxonomy_validator import (
-    validate_catalog_against_taxonomy,
-    validate_catalogs_against_taxonomy,
-)
+from gems_views_builder.validation.catalog_view_config_validator import CatalogsViewConfigValidator
+from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTaxonomyValidator
+from gems_views_builder.validation.input_consistency_validator import InputConsistencyValidator
 from gems_views_builder.validation.input_paths_validator import (
     InputPathsValidator,
 )
+from gems_views_builder.validation.view_config_taxonomy import ViewConfigTaxonomyValidator
 
 __all__ = [
+    "CatalogsTaxonomyValidator",
+    "CatalogsViewConfigValidator",
+    "InputConsistencyValidator",
     "InputPathsValidator",
-    "validate_catalog_against_taxonomy",
-    "validate_catalogs_against_taxonomy",
+    "ViewConfigTaxonomyValidator",
 ]
