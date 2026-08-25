@@ -11,17 +11,17 @@ from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTaxonomyValidator
 
 
-def test_catalogs_taxonomy_validator_passes_for_test_dataset(test_dataset_dir: Path) -> None:
+def test_passes_for_test_dataset(test_dataset_dir: Path) -> None:
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
-    CatalogsTaxonomyValidator({catalog.id: catalog}, taxonomy).validate()
+    CatalogsTaxonomyValidator([catalog], taxonomy).validate()
 
 
-def test_catalogs_taxonomy_validator_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
+def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     catalogs = load_catalogs(test_dataset_dir / "catalogs", view_config.catalog_ids)
-    CatalogsTaxonomyValidator(catalogs, taxonomy).validate()
+    CatalogsTaxonomyValidator(list(catalogs.values()), taxonomy).validate()
 
 
 @pytest.mark.parametrize(
@@ -33,7 +33,7 @@ def test_catalogs_taxonomy_validator_passes_for_loaded_catalogs(test_dataset_dir
         ("output_id", "unknown_output", "uses output-id"),
     ],
 )
-def test_catalogs_taxonomy_validator_rejects_invalid_references(
+def test_rejects_invalid_references(
     test_dataset_dir: Path, attribute: str, value: str, match: str
 ) -> None:
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
@@ -41,4 +41,4 @@ def test_catalogs_taxonomy_validator_rejects_invalid_references(
     target = catalog if attribute == "taxonomy" else next(iter(catalog.metrics.values())).terms[0]
     setattr(target, attribute, value)
     with pytest.raises(ValueError, match=match):
-        CatalogsTaxonomyValidator({catalog.id: catalog}, taxonomy).validate()
+        CatalogsTaxonomyValidator([catalog], taxonomy).validate()
