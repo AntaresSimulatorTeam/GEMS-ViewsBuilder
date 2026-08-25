@@ -10,7 +10,7 @@ import polars as pl
 from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.view_config import Pattern, TimeGranularity, ViewConfig
+from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
 from tests.e2e.utils import (
     build_raw_input_data,
@@ -58,9 +58,9 @@ def make_view_config(spatial_filter: list[str] | None) -> ViewConfig:
         location_taxonomy_category="balance",
         catalog_ids={"catalog"},
         aggregation_patterns=(
-            Pattern(
+            AggregationPattern(
                 id="hourly",
-                time=TimeGranularity.HOUR,
+                time_granularity=TimeGranularity.HOUR,
                 scenario=False,
                 spatial_filter=spatial_filter,
             ),

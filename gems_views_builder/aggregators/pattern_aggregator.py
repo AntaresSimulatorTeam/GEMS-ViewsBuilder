@@ -1,3 +1,6 @@
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
+# SPDX-License-Identifier: MPL-2.0
+
 from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator, make_scenario_operator
 from gems_views_builder.aggregators.time_aggregator import TimeAggregator
 from gems_views_builder.input.catalog import Metric
@@ -9,7 +12,10 @@ from gems_views_builder.spatial_filter import SpatialFilter
 class PatternAggregator:
     def __init__(self, pattern: AggregationPattern):
         self.time_aggregator = TimeAggregator(pattern.time_granularity)
-        self.scenario_aggregator = ScenarioAggregator(make_scenario_operator(pattern.scenario))
+        self.scenario_aggregator = ScenarioAggregator(
+            make_scenario_operator(pattern.scenario),
+            SpatialFilter(pattern.spatial_filter),
+        )
 
     def run(self, metric_view: TemporalMetricView, metric: Metric) -> MetricView:
         temporal_metric_view = self.time_aggregator.run(metric_view, metric)
