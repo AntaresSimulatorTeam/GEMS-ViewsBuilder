@@ -14,6 +14,7 @@ import polars as pl
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.metric_view import MetricView
+from gems_views_builder.spatial_filter import SpatialFilter, apply_spatial_filter
 
 
 class Operator(Enum):
@@ -35,12 +36,12 @@ AGGREGATION_OPERATORS = [
 @dataclass
 class ScenarioOperator(ABC):
     @abstractmethod
-    def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
+    def run(self, temporal_metric_view: MetricView, tmp_path: Path, spatial_filter: SpatialFilter) -> None:
         pass
 
 
 class ScenarioAggregation(ScenarioOperator):
-    def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
+    def run(self, temporal_metric_view: MetricView, tmp_path: Path, spatial_filter: SpatialFilter) -> None:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
         view = (
@@ -60,6 +61,7 @@ class ScenarioAggregation(ScenarioOperator):
                 ]
             )
         )
+        view = apply_spatial_filter(view, spatial_filter)
         view.sink_parquet(
             tmp_path,
             compression=PARQUET_COMPRESSION,
@@ -69,7 +71,7 @@ class ScenarioAggregation(ScenarioOperator):
 
 
 class ScenarioColumnsAddition(ScenarioOperator):
-    def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
+    def run(self, temporal_metric_view: MetricView, tmp_path: Path, spatial_filter: SpatialFilter) -> None:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
         view = pl.scan_parquet(temporal_metric_view.persistence_path).with_columns(
             [
@@ -77,6 +79,7 @@ class ScenarioColumnsAddition(ScenarioOperator):
                 pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
             ]
         )
+        view = apply_spatial_filter(view, spatial_filter)
         view.sink_parquet(
             tmp_path,
             compression=PARQUET_COMPRESSION,
@@ -89,16 +92,23 @@ def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
     return ScenarioAggregation() if scenario_aggregation else ScenarioColumnsAddition()
 
 
+"""
+Indeed spatial filter is part of the pattern
+Funtional design, why we're merging this 2 operations == We want to avoid multiple read/write operations
+"""
+
+
 @dataclass
 class ScenarioAggregator:
     scenario_operator: ScenarioOperator
+    spatial_filter: SpatialFilter
 
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         try:
             file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
             os.close(file_descriptor)
 
-            self.scenario_operator.run(metric_view, Path(tmp_path))
+            self.scenario_operator.run(metric_view, Path(tmp_path), self.spatial_filter)
 
             os.replace(src=tmp_path, dst=metric_view.persistence_path)
         except Exception:

@@ -12,20 +12,19 @@ from gems_views_builder.spatial_filter import SpatialFilter
 class PatternAggregator:
     time_aggregator: TimeAggregator
     scenario_aggregator: ScenarioAggregator
-    spatial_filter: SpatialFilter
 
     def run(self, metric_view: TemporalMetricView, metric: Metric) -> MetricView:
         temporal_metric_view = self.time_aggregator.run(metric_view, metric)
-        scenario_metric_view = self.scenario_aggregator.run(temporal_metric_view, metric)
-        return self.spatial_filter.run(scenario_metric_view, metric)
+        return self.scenario_aggregator.run(temporal_metric_view, metric)
 
 
 def aggregations_factory(view_config: ViewConfig) -> list[PatternAggregator]:
     return [
         PatternAggregator(
             time_aggregator=TimeAggregator(pattern.time),
-            scenario_aggregator=ScenarioAggregator(make_scenario_operator(pattern.scenario)),
-            spatial_filter=SpatialFilter(pattern.spatial_filter),
+            scenario_aggregator=ScenarioAggregator(
+                make_scenario_operator(pattern.scenario), SpatialFilter(pattern.spatial_filter)
+            ),
         )
         for pattern in view_config.aggregation_patterns
     ]

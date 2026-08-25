@@ -1,13 +1,5 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-
-"""
-E2E test for per-aggregation spatial filter through the view-building process.
-
-After time and scenario aggregation, PatternAggregator keeps only rows
-whose metric_location is in that pattern's spatial_filter.
-"""
-
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
