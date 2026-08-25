@@ -13,7 +13,6 @@ from gems_views_builder.metric_view import MetricView
 @dataclass
 class View:
     dataframe: pl.LazyFrame
-    # # Here we could store ViewConfig in future versions
 
 
 from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
