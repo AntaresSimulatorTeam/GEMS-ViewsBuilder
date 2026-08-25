@@ -9,7 +9,7 @@ import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 from gems_views_builder.input.view_config import TimeGranularity
-from gems_views_builder.view.view import View
+from gems_views_builder.view.accumulate_views import View
 
 
 class ViewSinker(ABC):
