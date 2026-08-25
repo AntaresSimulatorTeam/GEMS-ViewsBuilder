@@ -76,6 +76,9 @@ class ViewConfig:
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
+    def get_time_granularities(self) -> set[TimeGranularity]:
+        return {pattern.time for pattern in self.aggregation_patterns}
+
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
         for metric_ref in self.metric_ids:

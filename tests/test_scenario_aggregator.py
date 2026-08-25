@@ -15,7 +15,6 @@ from gems_views_builder.aggregators.scenario_aggregator import (
     ScenarioColumnsAddition,
     make_scenario_operator,
 )
-from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.spatial_filter import SpatialFilter
@@ -63,13 +62,11 @@ def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -
     aggregator = ScenarioAggregator(make_scenario_operator(False), SpatialFilter(None))
 
     # Act
-    aggregator.run(
-        metric_view,
-        Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
-    )
+    result = aggregator.run(metric_view)
 
     # Assert
-    df = pl.read_parquet(metric_view.persistence_path).sort("scenario_id")
+    df = pl.read_parquet(result.persistence_path).sort("scenario_id")
+    assert result.persistence_path != original_path
     assert metric_view.persistence_path == original_path
     assert "scenario_aggregation" in df.columns and "scenario_stat" in df.columns
     assert df.height == 3
@@ -87,13 +84,11 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
     aggregator = ScenarioAggregator(make_scenario_operator(True), SpatialFilter(None))
 
     # Act
-    aggregator.run(
-        metric_view,
-        Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
-    )
+    result = aggregator.run(metric_view)
 
     # Assert
-    df = pl.read_parquet(metric_view.persistence_path)
+    df = pl.read_parquet(result.persistence_path)
+    assert result.persistence_path != original_path
     assert metric_view.persistence_path == original_path
     assert df.height == 4
     assert set(df["scenario_stat"].to_list()) == {"exp", "std", "min", "max"}

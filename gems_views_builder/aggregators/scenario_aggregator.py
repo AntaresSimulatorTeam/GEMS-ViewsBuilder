@@ -2,12 +2,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-import os
-import tempfile
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from uuid import uuid4
 
 import polars as pl
 
@@ -36,14 +35,15 @@ AGGREGATION_OPERATORS = [
 @dataclass
 class ScenarioOperator(ABC):
     @abstractmethod
-    def run(self, temporal_metric_view: MetricView, tmp_path: Path, spatial_filter: SpatialFilter) -> None:
+    def run(self, temporal_metric_view: MetricView, spatial_filter: SpatialFilter) -> MetricView:
         pass
 
 
 class ScenarioAggregation(ScenarioOperator):
-    def run(self, temporal_metric_view: MetricView, tmp_path: Path, spatial_filter: SpatialFilter) -> None:
+    def run(self, temporal_metric_view: MetricView, spatial_filter: SpatialFilter) -> MetricView:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
+        new_path = temporal_metric_view.persistence_path.parent / f"{uuid4()}.parquet"
         view = (
             pl.scan_parquet(temporal_metric_view.persistence_path)
             .group_by(index_columns)
@@ -63,16 +63,19 @@ class ScenarioAggregation(ScenarioOperator):
         )
         view = apply_spatial_filter(view, spatial_filter)
         view.sink_parquet(
-            tmp_path,
+            new_path,
             compression=PARQUET_COMPRESSION,
             compression_level=PARQUET_COMPRESSION_LEVEL,
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
 
+        return MetricView(new_path, temporal_metric_view.time_granularity)
+
 
 class ScenarioColumnsAddition(ScenarioOperator):
-    def run(self, temporal_metric_view: MetricView, tmp_path: Path, spatial_filter: SpatialFilter) -> None:
+    def run(self, temporal_metric_view: MetricView, spatial_filter: SpatialFilter) -> MetricView:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
+        new_path = temporal_metric_view.persistence_path.parent / f"{uuid4()}.parquet"
         view = pl.scan_parquet(temporal_metric_view.persistence_path).with_columns(
             [
                 pl.lit(False, dtype=pl.Boolean).alias("scenario_aggregation"),
@@ -81,11 +84,13 @@ class ScenarioColumnsAddition(ScenarioOperator):
         )
         view = apply_spatial_filter(view, spatial_filter)
         view.sink_parquet(
-            tmp_path,
+            new_path,
             compression=PARQUET_COMPRESSION,
             compression_level=PARQUET_COMPRESSION_LEVEL,
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
+
+        return MetricView(new_path, temporal_metric_view.time_granularity)
 
 
 def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
@@ -103,18 +108,8 @@ class ScenarioAggregator:
     scenario_operator: ScenarioOperator
     spatial_filter: SpatialFilter
 
-    def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
-        try:
-            file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
-            os.close(file_descriptor)
-
-            self.scenario_operator.run(metric_view, Path(tmp_path), self.spatial_filter)
-
-            os.replace(src=tmp_path, dst=metric_view.persistence_path)
-        except Exception:
-            os.remove(tmp_path)
-        logg_write(metric, metric_view.persistence_path)
-        return metric_view
+    def run(self, metric_view: MetricView) -> MetricView:
+        return self.scenario_operator.run(metric_view, self.spatial_filter)
 
 
 def logg_write(metric: Metric, file_path: Path) -> None:
