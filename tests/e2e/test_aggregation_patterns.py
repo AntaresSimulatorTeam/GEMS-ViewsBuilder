@@ -35,11 +35,11 @@ T1 = datetime(2026, 1, 1, 3, 0)
 T2 = datetime(2026, 1, 1, 20, 0)
 
 PATTERNS = (
-    Pattern(id="hourly", time=TimeGranularity.HOUR, scenario=False),
-    Pattern(id="hourly2", time=TimeGranularity.HOUR, scenario=True),
-    Pattern(id="daily", time=TimeGranularity.DAY, scenario=False),
-    Pattern(id="daily2", time=TimeGranularity.DAY, scenario=True),
-    Pattern(id="monthly", time=TimeGranularity.MONTH, scenario=False),
+    Pattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),
+    Pattern(id="hourly2", time_granularity=TimeGranularity.HOUR, scenario=True),
+    Pattern(id="daily", time_granularity=TimeGranularity.DAY, scenario=False),
+    Pattern(id="daily2", time_granularity=TimeGranularity.DAY, scenario=True),
+    Pattern(id="monthly", time_granularity=TimeGranularity.MONTH, scenario=False),
 )
 
 

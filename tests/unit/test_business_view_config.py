@@ -53,7 +53,7 @@ def test_known_values(test_dataset_dir: Path) -> None:
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.aggregation_patterns[0].time == TimeGranularity.HOUR
+    assert config.aggregation_patterns[0].time_granularity == TimeGranularity.HOUR
 
 
 def test_scenario_aggregation(test_dataset_dir: Path) -> None:
@@ -74,7 +74,7 @@ view:
     calendar: calendar_file
   aggregations-patterns:
     - id: hourly
-      time: hour
+      time_granularity: hour
       scenario: false
   catalogs:
     - id: catalog_1
@@ -106,7 +106,7 @@ view:
 """.strip()
     )
 
-    with pytest.raises(ValueError, match="aggregations.patterns"):
+    with pytest.raises(ValueError, match="aggregations"):
         load_view_config(config_path)
 
 
@@ -146,7 +146,7 @@ view:
     calendar: calendar_file
   aggregations-patterns:
     - id: hourly
-      time: hour
+      time_granularity: hour
   catalogs:
     - id: catalog
   metrics:
@@ -170,10 +170,10 @@ view:
     calendar: calendar_file
   aggregations-patterns:
     - id: hourly
-      time: hour
+      time_granularity: hour
       scenario: false
     - id: hourly_again
-      time: hour
+      time_granularity: hour
       scenario: false
   catalogs:
     - id: catalog

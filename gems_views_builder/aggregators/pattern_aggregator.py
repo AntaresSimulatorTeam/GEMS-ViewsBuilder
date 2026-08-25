@@ -20,7 +20,7 @@ class PatternAggregator:
 def aggregations_factory(view_config: ViewConfig) -> list[PatternAggregator]:
     return [
         PatternAggregator(
-            time_aggregator=TimeAggregator(pattern.time),
+            time_aggregator=TimeAggregator(pattern.time_granularity),
             scenario_aggregator=ScenarioAggregator(make_scenario_operator(pattern.scenario)),
         )
         for pattern in view_config.aggregation_patterns

@@ -25,6 +25,6 @@ class AggregationPatternsValidator:
 
         pattern_combinations = set()
         for pattern in self.patterns:
-            if (pattern.time, pattern.scenario) in pattern_combinations:
-                raise ValueError(f"Pattern ({pattern.time}, {pattern.scenario}) is already defined")
-            pattern_combinations.add((pattern.time, pattern.scenario))
+            if (pattern.time_granularity, pattern.scenario) in pattern_combinations:
+                raise ValueError(f"Pattern ({pattern.time_granularity}, {pattern.scenario}) is already defined")
+            pattern_combinations.add((pattern.time_granularity, pattern.scenario))

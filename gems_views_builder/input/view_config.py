@@ -40,7 +40,7 @@ class Scope(ViewBuilderBasedModel):
 
 class Pattern(ViewBuilderBasedModel):
     id: str
-    time: TimeGranularity
+    time_granularity: TimeGranularity
     scenario: bool
 
 

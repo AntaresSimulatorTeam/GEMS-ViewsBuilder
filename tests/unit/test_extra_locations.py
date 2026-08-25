@@ -34,7 +34,7 @@ def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
         id="view_area",
         calendar_id="calendar_file",
         location_taxonomy_category="balance",
-        aggregation_patterns=(Pattern(id="hourly", time=TimeGranularity.HOUR, scenario=False),),
+        aggregation_patterns=(Pattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
         extra_locations=extra_locations or [],
     )
 
@@ -56,7 +56,7 @@ view:
       - id: city_part
   aggregations-patterns:
     - id: hourly
-      time: hour
+      time_granularity: hour
       scenario: false
   catalogs:
     - id: catalog
@@ -85,7 +85,7 @@ view:
     calendar: calendar_file
   aggregations-patterns:
     - id: hourly
-      time: hour
+      time_granularity: hour
       scenario: false
   catalogs:
     - id: catalog
