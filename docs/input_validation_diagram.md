@@ -8,7 +8,9 @@ graph LR
     catalog(("catalog.yml<br/>(one or more)"))
     taxonomy(("taxonomy.yml"))
     view_config(("view_config.yml"))
-    library(("library.yml"))
+    library_1(("library_1.yml"))
+    library_dots["⋮"]
+    library_n(("library_N.yml"))
     system(("system.yml"))
     simulation_table(("simulation_table.parquet/csv"))
     calendar(("calendar.csv"))
@@ -17,11 +19,15 @@ graph LR
     view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --- taxonomy
     view_config -- "• taxonomy id matches<br/>• location taxonomy category matches<br/>• selected metrics exist in catalogs<br/>• unique metric ids across catalogs" --- catalog
 
-    library -. "checked by gemspy" .- system
+    library_1 --- library_dots --- library_n
+    library_1 -. "checked by gemspy" .- system
+    library_n -. "checked by gemspy" .- system
     view_config -.- calendar
 
     classDef unvalidated stroke-dasharray: 4 4;
-    class library,system,simulation_table,calendar unvalidated;
+    classDef plain stroke: none, fill: none;
+    class library_1,library_n,system,simulation_table,calendar unvalidated;
+    class library_dots plain;
 ```
 
 Solid edges = content is cross-validated. Dashed edges = files are read
