@@ -6,12 +6,13 @@ from pathlib import Path
 
 import pytest
 
+from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
 from gems_views_builder.validation.input_consistency_validator import InputConsistencyValidator
 
 
-def _load_raw_input_data(test_dataset_dir: Path):
+def _load_raw_input_data(test_dataset_dir: Path) -> RawInputData:
     input_paths = InputPaths(
         Namespace(
             libraries_dir=test_dataset_dir / "libraries",
