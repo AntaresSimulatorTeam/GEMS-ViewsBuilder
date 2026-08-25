@@ -9,14 +9,14 @@ from gems_views_builder.input.view_config import ViewConfig
 
 @dataclass
 class CatalogsViewConfigValidator:
-    catalogs: dict[str, Catalog]
+    catalogs: list[Catalog]
     view_config: ViewConfig
 
     def validate(self) -> None:
         logging.info(f"Validating {len(self.catalogs)} catalog(s) against view config {self.view_config.id!r}")
         view_config_metric_ids_by_catalog = self.view_config.group_metrics_by_catalog()
-        for catalog_id in self.catalogs.keys():
-            self._validate_catalog_against_view_config(catalog_id, view_config_metric_ids_by_catalog)
+        for catalog in self.catalogs:
+            self._validate_catalog_against_view_config(catalog, view_config_metric_ids_by_catalog)
         logging.info(f"All catalogs are consistent with view config {self.view_config.id!r}")
 
     def _match_taxonomy(self, catalog: Catalog) -> None:
@@ -37,12 +37,12 @@ class CatalogsViewConfigValidator:
             )
 
     def _validate_catalog_against_view_config(
-        self, catalog_id: str, view_config_metric_ids_by_catalog: dict[str, set[str]]
+        self, catalog: Catalog, view_config_metric_ids_by_catalog: dict[str, set[str]]
     ) -> None:
-        logging.info(f"Validating catalog {catalog_id!r} against view config {self.view_config.id!r}")
-        self._match_taxonomy(self.catalogs[catalog_id])
-        self._match_location_taxonomy_category(self.catalogs[catalog_id])
-        validate_used_metric_ids(self.catalogs[catalog_id], view_config_metric_ids_by_catalog, self.view_config.id)
+        logging.info(f"Validating catalog {catalog.id!r} against view config {self.view_config.id!r}")
+        self._match_taxonomy(catalog)
+        self._match_location_taxonomy_category(catalog)
+        validate_used_metric_ids(catalog, view_config_metric_ids_by_catalog, self.view_config.id)
 
 
 def validate_used_metric_ids(

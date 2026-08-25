@@ -38,7 +38,7 @@ def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
 def test_passes_for_test_dataset(test_dataset_dir: Path) -> None:
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    validator = CatalogsViewConfigValidator({catalog.id: catalog}, view_config)
+    validator = CatalogsViewConfigValidator([catalog], view_config)
 
     validator.validate()
 
@@ -50,14 +50,14 @@ def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     catalogs = load_catalogs(test_dataset_dir / "catalogs", view_config.catalog_ids)
 
-    CatalogsViewConfigValidator(catalogs, view_config).validate()
+    CatalogsViewConfigValidator(list(catalogs.values()), view_config).validate()
 
 
 def test_raises_on_taxonomy_id_mismatch(test_dataset_dir: Path) -> None:
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     catalog.taxonomy = "wrong_taxonomy"
-    validator = CatalogsViewConfigValidator({catalog.id: catalog}, view_config)
+    validator = CatalogsViewConfigValidator([catalog], view_config)
 
     with pytest.raises(ValueError, match="references taxonomy"):
         validator.validate()
@@ -67,7 +67,7 @@ def test_raises_on_location_category_mismatch(test_dataset_dir: Path) -> None:
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     catalog.location_taxonomy_category = "wrong_category"
-    validator = CatalogsViewConfigValidator({catalog.id: catalog}, view_config)
+    validator = CatalogsViewConfigValidator([catalog], view_config)
 
     with pytest.raises(ValueError, match="location taxonomy category"):
         validator.validate()
@@ -77,15 +77,15 @@ def test_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     view_config.catalog_ids = {"catalog_a", "catalog_b"}
     view_config.metric_ids = ["catalog_a.LOAD", "catalog_a.PROD", "catalog_b.BALANCE", "catalog_b.FLOW"]
-    catalogs = {
-        "catalog_a": make_catalog("catalog_a", ["LOAD", "PROD"]),
-        "catalog_b": make_catalog("catalog_b", ["BALANCE", "FLOW"]),
-    }
+    catalogs = [
+        make_catalog("catalog_a", ["LOAD", "PROD"]),
+        make_catalog("catalog_b", ["BALANCE", "FLOW"]),
+    ]
     validator = CatalogsViewConfigValidator(catalogs, view_config)
 
     validator.validate()
 
-    assert {metric_id for catalog in catalogs.values() for metric_id in catalog.metrics} == {
+    assert {metric_id for catalog in catalogs for metric_id in catalog.metrics} == {
         "LOAD",
         "PROD",
         "BALANCE",
@@ -97,7 +97,7 @@ def test_raises_when_metric_missing_from_catalog(test_dataset_dir: Path) -> None
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     view_config.catalog_ids = {"catalog"}
     view_config.metric_ids = ["catalog.MISSING_METRIC"]
-    catalogs = {"catalog": make_catalog("catalog", ["LOAD", "PROD"])}
+    catalogs = [make_catalog("catalog", ["LOAD", "PROD"])]
     validator = CatalogsViewConfigValidator(catalogs, view_config)
 
     with pytest.raises(ValueError, match=r"metric 'catalog.MISSING_METRIC' is not defined in catalog 'catalog'"):
