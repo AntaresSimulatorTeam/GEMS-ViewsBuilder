@@ -35,7 +35,7 @@ def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
     )
 
 
-def test_catalogs_view_config_validator_passes_for_test_dataset(test_dataset_dir: Path) -> None:
+def test_passes_for_test_dataset(test_dataset_dir: Path) -> None:
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     validator = CatalogsViewConfigValidator({catalog.id: catalog}, view_config)
@@ -46,14 +46,14 @@ def test_catalogs_view_config_validator_passes_for_test_dataset(test_dataset_dir
     assert catalog.location_taxonomy_category == view_config.location_taxonomy_category
 
 
-def test_catalogs_view_config_validator_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
+def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     catalogs = load_catalogs(test_dataset_dir / "catalogs", view_config.catalog_ids)
 
     CatalogsViewConfigValidator(catalogs, view_config).validate()
 
 
-def test_catalogs_view_config_validator_raises_on_taxonomy_id_mismatch(test_dataset_dir: Path) -> None:
+def test_raises_on_taxonomy_id_mismatch(test_dataset_dir: Path) -> None:
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     catalog.taxonomy = "wrong_taxonomy"
@@ -63,7 +63,7 @@ def test_catalogs_view_config_validator_raises_on_taxonomy_id_mismatch(test_data
         validator.validate()
 
 
-def test_catalogs_view_config_validator_raises_on_location_category_mismatch(test_dataset_dir: Path) -> None:
+def test_raises_on_location_category_mismatch(test_dataset_dir: Path) -> None:
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     catalog.location_taxonomy_category = "wrong_category"
@@ -73,21 +73,7 @@ def test_catalogs_view_config_validator_raises_on_location_category_mismatch(tes
         validator.validate()
 
 
-def test_catalogs_view_config_validator_raises_on_duplicate_metric_ids(test_dataset_dir: Path) -> None:
-    view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    view_config.catalog_ids = {"catalog_a", "catalog_b"}
-    view_config.metric_ids = ["catalog_a.LOAD", "catalog_b.BALANCE"]
-    catalogs = {
-        "catalog_a": make_catalog("catalog_a", ["LOAD", "PROD"]),
-        "catalog_b": make_catalog("catalog_b", ["BALANCE", "LOAD"]),
-    }
-    validator = CatalogsViewConfigValidator(catalogs, view_config)
-
-    with pytest.raises(ValueError, match=r"Same metric id 'LOAD' is defined in multiple catalogs"):
-        validator.validate()
-
-
-def test_catalogs_view_config_validator_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
+def test_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     view_config.catalog_ids = {"catalog_a", "catalog_b"}
     view_config.metric_ids = ["catalog_a.LOAD", "catalog_a.PROD", "catalog_b.BALANCE", "catalog_b.FLOW"]
@@ -107,7 +93,7 @@ def test_catalogs_view_config_validator_passes_when_metric_ids_are_unique(test_d
     }
 
 
-def test_catalogs_view_config_validator_raises_when_metric_missing_from_catalog(test_dataset_dir: Path) -> None:
+def test_raises_when_metric_missing_from_catalog(test_dataset_dir: Path) -> None:
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     view_config.catalog_ids = {"catalog"}
     view_config.metric_ids = ["catalog.MISSING_METRIC"]

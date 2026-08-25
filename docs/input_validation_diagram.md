@@ -18,7 +18,7 @@ graph LR
 
     catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --- taxonomy
     view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --- taxonomy
-    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches<br/>• selected metrics exist in catalogs<br/>• unique metric ids across catalogs" --- catalog
+    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches<br/>• selected metrics exist in catalogs" --- catalog
 
     library_1 -.- library_join
     library_dots -.- library_join
@@ -67,7 +67,6 @@ Per catalog, checks run in this order:
 | Taxonomy id match | `catalog.taxonomy == view_config.taxonomy_id` |
 | Location taxonomy category match | `catalog.location_taxonomy_category == view_config.location_taxonomy_category` |
 | Selected metrics exist | every `view_config` metric ref `<catalog_id>.<metric_id>` for that catalog is defined in it |
-| Unique metric ids across catalogs | every metric `id` defined in any loaded catalog appears in at most one catalog (prefixes are dropped at runtime) |
 
 ## Orchestration
 

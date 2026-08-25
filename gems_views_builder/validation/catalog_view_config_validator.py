@@ -17,12 +17,9 @@ class CatalogsViewConfigValidator:
 
     def validate(self) -> None:
         logging.info(f"Validating {len(self.catalogs)} catalog(s) against view config {self.view_config.id!r}")
-        metric_ids_by_catalog = self.view_config.group_metrics_by_catalog()
-        already_defined_metric_ids: set[str] = set()
-        for catalog_id, catalog in self.catalogs.items():
-            self._validate_catalog_against_view_config(
-                catalog_id, catalog, already_defined_metric_ids, metric_ids_by_catalog.get(catalog_id, set())
-            )
+        view_config_metric_ids_by_catalog = self.view_config.group_metrics_by_catalog()
+        for catalog_id in self.catalogs.keys():
+            self._validate_catalog_against_view_config(catalog_id, view_config_metric_ids_by_catalog)
         logging.info(f"All catalogs are consistent with view config {self.view_config.id!r}")
 
     def _match_taxonomy(self, catalog: Catalog) -> None:
@@ -43,20 +40,17 @@ class CatalogsViewConfigValidator:
             )
 
     def _validate_catalog_against_view_config(
-        self, catalog_id: str, catalog: Catalog, already_defined_metric_ids: set[str], expected_metric_ids: set[str]
+        self, catalog_id: str, view_config_metric_ids_by_catalog: dict[str, set[str]]
     ) -> None:
         logging.info(f"Validating catalog {catalog_id!r} against view config {self.view_config.id!r}")
-        self._match_taxonomy(catalog)
-        self._match_location_taxonomy_category(catalog)
+        self._match_taxonomy(self.catalogs[catalog_id])
+        self._match_location_taxonomy_category(self.catalogs[catalog_id])
 
-        for metric_id in expected_metric_ids:
-            if metric_id not in catalog.metrics:
+        used_metric_ids_by_catalog = view_config_metric_ids_by_catalog.get(catalog_id, set())
+
+        for metric_id in used_metric_ids_by_catalog:
+            if metric_id not in self.catalogs[catalog_id].metrics:
                 raise ValueError(
                     f"View config {self.view_config.id!r} metric "
                     f"{f'{catalog_id}.{metric_id}'!r} is not defined in catalog {catalog_id!r}"
                 )
-
-        for metric_id in catalog.metrics:
-            if metric_id in already_defined_metric_ids:
-                raise ValueError(f"Same metric id {metric_id!r} is defined in multiple catalogs!")
-            already_defined_metric_ids.add(metric_id)
