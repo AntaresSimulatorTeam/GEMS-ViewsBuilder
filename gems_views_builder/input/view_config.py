@@ -38,7 +38,7 @@ class Scope(ViewBuilderBasedModel):
     extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
-class Pattern(ViewBuilderBasedModel):
+class AggregationPattern(ViewBuilderBasedModel):
     id: str
     time_granularity: TimeGranularity
     scenario: bool
@@ -55,7 +55,7 @@ class MetricId(ViewBuilderBasedModel, frozen=True):
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: Scope
-    aggregations_patterns: tuple[Pattern, ...] = Field(min_length=1)
+    aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
     catalogs: list[CatalogId]
     metrics: list[MetricId]
 
@@ -65,7 +65,7 @@ class ViewConfig:
     id: str
     calendar_id: str
     location_taxonomy_category: str
-    aggregation_patterns: tuple[Pattern, ...]
+    aggregation_patterns: tuple[AggregationPattern, ...]
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)

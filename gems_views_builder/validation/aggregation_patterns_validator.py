@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from gems_views_builder.input.view_config import Pattern
+    from gems_views_builder.input.view_config import AggregationPattern
 
 # Basic combinatorial formula 5 * 2 = 10 at maximum
 # 5 time granularities
@@ -17,14 +17,14 @@ ALLOWED_PATTERN_COUNT = 10
 
 @dataclass
 class AggregationPatternsValidator:
-    patterns: tuple[Pattern, ...]
+    aggregation_patterns: tuple[AggregationPattern, ...]
 
     def validate(self) -> None:
-        if len(self.patterns) > ALLOWED_PATTERN_COUNT:
+        if len(self.aggregation_patterns) > ALLOWED_PATTERN_COUNT:
             raise ValueError(f"At most {ALLOWED_PATTERN_COUNT} patterns are allowed")
 
         pattern_combinations = set()
-        for pattern in self.patterns:
+        for pattern in self.aggregation_patterns:
             if (pattern.time_granularity, pattern.scenario) in pattern_combinations:
                 raise ValueError(f"Pattern ({pattern.time_granularity}, {pattern.scenario}) is already defined")
             pattern_combinations.add((pattern.time_granularity, pattern.scenario))
