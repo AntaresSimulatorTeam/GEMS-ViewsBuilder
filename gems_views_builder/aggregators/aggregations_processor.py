@@ -25,5 +25,6 @@ class AgggregationProcessor:
         time_aggregated_metric_views = perform_time_aggregations(metric, metric_view, self.time_granularities)
 
         for aggregation in self.aggregations:
-            metric_views.append(aggregation.run(time_aggregated_metric_views))
+            metric_view = aggregation.run(time_aggregated_metric_views)
+            metric_views.append(metric_view)
         return metric_views
