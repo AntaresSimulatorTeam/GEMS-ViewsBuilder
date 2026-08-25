@@ -13,7 +13,6 @@ from gems_views_builder.metric_view import MetricView
 @dataclass
 class View:
     dataframe: pl.LazyFrame
-    # # Here we could store ViewConfig in future versions
 
 
 from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
@@ -26,10 +25,10 @@ def group_by_time_granularity(metric_views: list[MetricView]) -> dict[TimeGranul
     return views_by_time_granularity
 
 
-def merge_same_granularity(views_by_specific_granularity: list[MetricView]) -> pl.LazyFrame:
-    return pl.scan_parquet([v.persistence_path for v in views_by_specific_granularity])
+def accumulate_views(views: list[MetricView]) -> pl.LazyFrame:
+    return pl.scan_parquet([v.persistence_path for v in views])
 
 
 def accumulate_on_disk(metric_views: list[MetricView], sinker: ViewSinker) -> None:
     for time_granularity, views in group_by_time_granularity(metric_views).items():
-        sinker.sink(merge_same_granularity(views), time_granularity)
+        sinker.sink(accumulate_views(views), time_granularity)
