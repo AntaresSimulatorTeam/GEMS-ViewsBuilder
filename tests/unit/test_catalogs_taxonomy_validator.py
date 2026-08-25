@@ -33,9 +33,7 @@ def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
         ("output_id", "unknown_output", "uses output-id"),
     ],
 )
-def test_rejects_invalid_references(
-    test_dataset_dir: Path, attribute: str, value: str, match: str
-) -> None:
+def test_rejects_invalid_references(test_dataset_dir: Path, attribute: str, value: str, match: str) -> None:
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
     catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
     target = catalog if attribute == "taxonomy" else next(iter(catalog.metrics.values())).terms[0]

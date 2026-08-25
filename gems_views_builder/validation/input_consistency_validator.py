@@ -6,8 +6,8 @@
 from dataclasses import dataclass
 
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.validation.catalog_view_config_validator import CatalogsViewConfigValidator
 from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTaxonomyValidator
+from gems_views_builder.validation.catalogs_view_config_validator import CatalogsViewConfigValidator
 from gems_views_builder.validation.view_config_taxonomy import ViewConfigTaxonomyValidator
 
 

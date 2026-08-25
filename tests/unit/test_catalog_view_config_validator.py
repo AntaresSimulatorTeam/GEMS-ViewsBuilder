@@ -14,7 +14,7 @@ from gems_views_builder.input.catalog import (
     load_catalogs,
 )
 from gems_views_builder.input.view_config import load_view_config
-from gems_views_builder.validation.catalog_view_config_validator import CatalogsViewConfigValidator
+from gems_views_builder.validation.catalogs_view_config_validator import CatalogsViewConfigValidator
 
 
 def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
