@@ -38,15 +38,11 @@ class Scope(ViewBuilderBasedModel):
     extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
-class Pattern(ViewBuilderBasedModel):
+class AggregationPattern(ViewBuilderBasedModel):
     id: str
-    time: TimeGranularity
+    time_granularity: TimeGranularity
     scenario: bool
     spatial_filter: list[str] | None = Field(default=None)
-
-
-class Aggregations(ViewBuilderBasedModel):
-    patterns: tuple[Pattern, ...] = Field(min_length=1)
 
 
 class CatalogId(ViewBuilderBasedModel):
@@ -60,7 +56,7 @@ class MetricId(ViewBuilderBasedModel, frozen=True):
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: Scope
-    aggregations: Aggregations
+    aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
     catalogs: list[CatalogId]
     metrics: list[MetricId]
 
@@ -70,14 +66,14 @@ class ViewConfig:
     id: str
     calendar_id: str
     location_taxonomy_category: str
-    aggregation_patterns: tuple[Pattern, ...]
+    aggregation_patterns: tuple[AggregationPattern, ...]
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
     def get_time_granularities(self) -> set[TimeGranularity]:
-        return {pattern.time for pattern in self.aggregation_patterns}
+        return {pattern.time_granularity for pattern in self.aggregation_patterns}
 
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
@@ -105,14 +101,14 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
 
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
-    AggregationPatternsValidator(raw_view_config.aggregations.patterns).validate()
+    AggregationPatternsValidator(raw_view_config.aggregations_patterns).validate()
 
     view_config = ViewConfig(
         id=raw_view_config.id,
         calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalogs},
-        aggregation_patterns=raw_view_config.aggregations.patterns,
+        aggregation_patterns=raw_view_config.aggregations_patterns,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )

@@ -1,3 +1,6 @@
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
+# SPDX-License-Identifier: MPL-2.0
+
 from dataclasses import dataclass
 
 from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator, make_scenario_operator
@@ -18,7 +21,7 @@ class PatternAggregator:
 def aggregations_factory(view_config: ViewConfig) -> list[PatternAggregator]:
     return [
         PatternAggregator(
-            time_granularity=pattern.time,
+            time_granularity=pattern.time_granularity,
             scenario_aggregator=ScenarioAggregator(
                 make_scenario_operator(pattern.scenario), SpatialFilter(pattern.spatial_filter)
             ),

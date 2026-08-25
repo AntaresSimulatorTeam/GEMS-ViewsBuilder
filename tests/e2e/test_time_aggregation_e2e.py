@@ -13,7 +13,7 @@ from gems_views_builder.view import ParquetViewSinker
 from tests.conftest import paths_from_dataset
 from tests.e2e.utils import create_results_dir, fetch_view
 
-AGGREGATION_BLOCK = "  aggregations:\n    patterns:\n      - id: hourly\n        time: hour\n        scenario: false\n"
+AGGREGATION_BLOCK = "  aggregations-patterns:\n    - id: hourly\n      time_granularity: hour\n      scenario: false\n"
 
 
 # test_3/calendar_file.csv spans 2025-01-01 00:00 .. 2025-01-01 23:00 (24 granular hours).
@@ -31,11 +31,10 @@ EXPECTED_DATES_BY_AGGREGATION = {
 def replace_aggregation(view_config_path: Path, aggregation_time: TimeGranularity) -> None:
     text = view_config_path.read_text()
     replacement = (
-        "  aggregations:\n"
-        "    patterns:\n"
-        f"      - id: {aggregation_time.value}\n"
-        f"        time: {aggregation_time.value}\n"
-        "        scenario: false\n"
+        "  aggregations-patterns:\n"
+        f"    - id: {aggregation_time.value}\n"
+        f"      time_granularity: {aggregation_time.value}\n"
+        "      scenario: false\n"
     )
     view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
 
