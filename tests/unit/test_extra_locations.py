@@ -54,11 +54,10 @@ view:
       - id: country
       - id: district
       - id: city_part
-  aggregations:
-    patterns:
-      - id: hourly
-        time: hour
-        scenario: false
+  aggregations-patterns:
+    - id: hourly
+      time: hour
+      scenario: false
   catalogs:
     - id: catalog
   metrics:
@@ -84,11 +83,10 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregations:
-    patterns:
-      - id: hourly
-        time: hour
-        scenario: false
+  aggregations-patterns:
+    - id: hourly
+      time: hour
+      scenario: false
   catalogs:
     - id: catalog
   metrics:

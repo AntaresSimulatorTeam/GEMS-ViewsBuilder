@@ -44,10 +44,6 @@ class Pattern(ViewBuilderBasedModel):
     scenario: bool
 
 
-class Aggregations(ViewBuilderBasedModel):
-    patterns: tuple[Pattern, ...] = Field(min_length=1)
-
-
 class CatalogId(ViewBuilderBasedModel):
     id: str
 
@@ -59,7 +55,7 @@ class MetricId(ViewBuilderBasedModel, frozen=True):
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: Scope
-    aggregations: Aggregations
+    aggregations_patterns: tuple[Pattern, ...] = Field(min_length=1)
     catalogs: list[CatalogId]
     metrics: list[MetricId]
 
@@ -101,14 +97,14 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
 
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
-    AggregationPatternsValidator(raw_view_config.aggregations.patterns).validate()
+    AggregationPatternsValidator(raw_view_config.aggregations_patterns).validate()
 
     view_config = ViewConfig(
         id=raw_view_config.id,
         calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         catalog_ids={c.id for c in raw_view_config.catalogs},
-        aggregation_patterns=raw_view_config.aggregations.patterns,
+        aggregation_patterns=raw_view_config.aggregations_patterns,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )

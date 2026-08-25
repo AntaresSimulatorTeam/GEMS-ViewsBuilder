@@ -72,11 +72,10 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregations:
-    patterns:
-      - id: hourly
-        time: hour
-        scenario: false
+  aggregations-patterns:
+    - id: hourly
+      time: hour
+      scenario: false
   catalogs:
     - id: catalog_1
   metrics:
@@ -107,7 +106,7 @@ view:
 """.strip()
     )
 
-    with pytest.raises(ValueError, match="aggregations"):
+    with pytest.raises(ValueError, match="aggregations.patterns"):
         load_view_config(config_path)
 
 
@@ -121,10 +120,9 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregations:
-    patterns:
-      - id: hourly
-        scenario: false
+  aggregations-patterns:
+    - id: hourly
+      scenario: false
   catalogs:
     - id: catalog
   metrics:
@@ -146,10 +144,9 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregations:
-    patterns:
-      - id: hourly
-        time: hour
+  aggregations-patterns:
+    - id: hourly
+      time: hour
   catalogs:
     - id: catalog
   metrics:
@@ -171,14 +168,13 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregations:
-    patterns:
-      - id: hourly
-        time: hour
-        scenario: false
-      - id: hourly_again
-        time: hour
-        scenario: false
+  aggregations-patterns:
+    - id: hourly
+      time: hour
+      scenario: false
+    - id: hourly_again
+      time: hour
+      scenario: false
   catalogs:
     - id: catalog
   metrics:
