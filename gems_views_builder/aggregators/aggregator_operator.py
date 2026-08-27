@@ -16,13 +16,7 @@ class AggregationOperation(ABC):
         self,
     ) -> None:
         self._root_dir = Path(mkdtemp())
-        self.persistence_file = self._make_persistence_file()
         atexit.register(rmtree, self._root_dir, True)
-
     @abstractmethod
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView: ...
 
-    @abstractmethod
-    def _make_persistence_file(self) -> Path:
-        # # Persistence file will be in root directory
-        ...

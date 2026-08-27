@@ -2,27 +2,24 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-import tempfile
 from pathlib import Path
-from shutil import rmtree
 
 import polars as pl
 
+from gems_views_builder.aggregators.aggregator_operator import AggregationOperation
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.metric_view import MetricView, sink
 
 
-class TermsAggregator:
+class TermsAggregator(AggregationOperation):
     def __init__(self) -> None:
-        self._root_dir = Path(tempfile.mkdtemp())
-        self._metric_view_dir = self._root_dir / "views" / "metric_view"
-        self._metric_view_dir.mkdir(parents=True, exist_ok=True)
+        super().__init__()
 
     def run(self, structured_simulation_table: pl.LazyFrame, metric: Metric) -> MetricView:
         # # 2B group by
         logging.info(f"[{metric.id}] Aggregating terms with operator {metric.terms_operator.value}")
         value_agg = pl.col("value").sum() if metric.terms_operator == AggregOperatorType.SUM else pl.col("value").mean()
-        metric_view = (
+        view = (
             structured_simulation_table.with_columns(pl.col("scenario_index").alias("scenario_id"))
             .group_by(
                 [
@@ -52,10 +49,11 @@ class TermsAggregator:
                 ]
             )
         )
-        out_path = self._metric_view_dir / f"{metric.id}.parquet"
-        sink(metric_view, out_path)
-        logging.info(f"[{metric.id}] Terms aggregation written to {out_path}")
+        out_path = self._root_dir / f"{metric.id}.parquet"
+        sink(view, out_path)
+        logg_write(metric, out_path)
         return MetricView(out_path)
 
-    def __del__(self) -> None:
-        rmtree(self._root_dir, ignore_errors=True)
+
+def logg_write(metric: Metric, file_path: Path) -> None:
+    logging.info(f"[{metric.id}] Terms aggregation written to {file_path}")
