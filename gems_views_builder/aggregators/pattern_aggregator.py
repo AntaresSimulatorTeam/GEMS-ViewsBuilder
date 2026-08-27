@@ -19,7 +19,7 @@ class PatternAggregator:
         return self.scenario_aggregator.run(time_aggregated_metric_views[self.time_granularity])
 
 
-def aggregations_factory(view_config: ViewConfig) -> list[PatternAggregator]:
+def aggregation_patterns_factory(view_config: ViewConfig) -> list[PatternAggregator]:
     pattern_aggregators = []
     for pattern in view_config.aggregation_patterns:
         pattern_aggregators.append(PatternAggregator(pattern))
