@@ -7,6 +7,7 @@ from statistics import mean
 from statistics import pstdev as std_deviation
 
 import polars as pl
+import pytest
 from pytest import approx
 
 from gems_views_builder.aggregators.scenario_aggregator import (
@@ -20,17 +21,30 @@ from gems_views_builder.input.view_config import AggregationPattern, TimeGranula
 from gems_views_builder.metric_view import TemporalMetricView
 
 
-def temporal_metric_view(tmp_path: Path, values: list[float]) -> TemporalMetricView:
-    """Temporal aggregation-shaped parquet (input to scenario step)."""
-    n = len(values)
+def make_metric() -> Metric:
+    return Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM)
+
+
+def make_pattern(scenario: bool = False, spatial_filter: list[str] | None = None) -> AggregationPattern:
+    return AggregationPattern(
+        id="p",
+        time_granularity=TimeGranularity.HOUR,
+        scenario=scenario,
+        spatial_filter=spatial_filter,
+    )
+
+
+def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -> TemporalMetricView:
+    """Minimal parquet for the scenario step: metric_id, metric_location, breakdown_properties, view_date."""
+    n = len(location_values)
     dataframe = pl.DataFrame(
         {
             "metric_id": ["M"] * n,
-            "metric_location": ["L"] * n,
+            "metric_location": [location for location, _ in location_values],
             "breakdown_properties": [""] * n,
             "view_date": [datetime(2026, 1, 1)] * n,
             "scenario_id": list(range(n)),
-            "metric_value": values,
+            "metric_value": [value for _, value in location_values],
         },
         schema={
             "metric_id": pl.Utf8,
@@ -46,6 +60,10 @@ def temporal_metric_view(tmp_path: Path, values: list[float]) -> TemporalMetricV
     return TemporalMetricView(path, TimeGranularity.HOUR)
 
 
+def temporal_metric_view(tmp_path: Path, values: list[float]) -> TemporalMetricView:
+    return make_metric_view(tmp_path, [("L", value) for value in values])
+
+
 def test_make_scenario_operator_returns_columns_addition_when_disabled() -> None:
     assert isinstance(make_scenario_operator(False), ScenarioColumnsAddition)
 
@@ -59,13 +77,10 @@ def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
     original_path = metric_view.persistence_path
-    aggregator = ScenarioAggregator(AggregationPattern(id="p", time_granularity=TimeGranularity.HOUR, scenario=False))
+    aggregator = ScenarioAggregator(make_pattern(scenario=False))
 
     # Act
-    aggregator.run(
-        metric_view,
-        Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
-    )
+    aggregator.run(metric_view, make_metric())
 
     # Assert
     df = pl.read_parquet(metric_view.persistence_path).sort("scenario_id")
@@ -83,13 +98,10 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
     original_path = metric_view.persistence_path
-    aggregator = ScenarioAggregator(AggregationPattern(id="p", time_granularity=TimeGranularity.HOUR, scenario=True))
+    aggregator = ScenarioAggregator(make_pattern(scenario=True))
 
     # Act
-    aggregator.run(
-        metric_view,
-        Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
-    )
+    aggregator.run(metric_view, make_metric())
 
     # Assert
     df = pl.read_parquet(metric_view.persistence_path)
@@ -104,3 +116,24 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
     assert stats_to_values["std"] == approx(std_deviation(values))
     assert stats_to_values["min"] == approx(min(values))
     assert stats_to_values["max"] == approx(max(values))
+
+
+@pytest.mark.parametrize(
+    ("spatial_filter", "expected_locations"),
+    [
+        (["busA"], ["busA"]),
+        (["busA", "busC"], ["busA", "busC"]),
+        (None, ["busA", "busB", "busC"]),
+    ],
+)
+def test_spatial_filter(tmp_path: Path, spatial_filter: list[str] | None, expected_locations: list[str]) -> None:
+    # Arrange
+    metric_view = make_metric_view(tmp_path, [("busA", 100.0), ("busB", 50.0), ("busC", 999.0)])
+    aggregator = ScenarioAggregator(make_pattern(spatial_filter=spatial_filter))
+
+    # Act
+    aggregator.run(metric_view, make_metric())
+
+    # Assert
+    df = pl.read_parquet(metric_view.persistence_path)
+    assert df["metric_location"].to_list() == expected_locations
