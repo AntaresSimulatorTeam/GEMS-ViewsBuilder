@@ -119,21 +119,26 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
 
 
 @pytest.mark.parametrize(
-    ("spatial_filter", "expected_locations"),
+    ("scenario", "locations", "expected_locations"),
     [
-        (["busA"], ["busA"]),
-        (["busA", "busC"], ["busA", "busC"]),
-        (None, ["busA", "busB", "busC"]),
+        (True, ["busA"], {"busA"}),
+        (False, ["busA"], {"busA"}),
+        (True, ["busA", "busC"], {"busA", "busC"}),
+        (False, ["busA", "busC"], {"busA", "busC"}),
+        (True, None, {"busA", "busB", "busC"}),
+        (False, None, {"busA", "busB", "busC"}),
     ],
 )
-def test_spatial_filter(tmp_path: Path, spatial_filter: list[str] | None, expected_locations: list[str]) -> None:
+def test_spatial_filter(
+    tmp_path: Path, scenario: bool, locations: list[str] | None, expected_locations: set[str]
+) -> None:
     # Arrange
     metric_view = make_metric_view(tmp_path, [("busA", 100.0), ("busB", 50.0), ("busC", 999.0)])
-    aggregator = ScenarioAggregator(make_pattern(spatial_filter=spatial_filter))
+    scenario_aggregator = ScenarioAggregator(make_pattern(scenario=scenario, spatial_filter=locations))
 
     # Act
-    aggregator.run(metric_view, make_metric())
+    scenario_aggregator.run(metric_view, make_metric())
 
     # Assert
     df = pl.read_parquet(metric_view.persistence_path)
-    assert df["metric_location"].to_list() == expected_locations
+    assert set(df["metric_location"].to_list()) == expected_locations
