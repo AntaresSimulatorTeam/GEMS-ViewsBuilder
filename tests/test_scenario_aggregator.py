@@ -16,9 +16,8 @@ from gems_views_builder.aggregators.scenario_aggregator import (
     make_scenario_operator,
 )
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
-from gems_views_builder.input.view_config import TimeGranularity
+from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity
 from gems_views_builder.metric_view import TemporalMetricView
-from gems_views_builder.spatial_filter import SpatialFilter
 
 
 def temporal_metric_view(tmp_path: Path, values: list[float]) -> TemporalMetricView:
@@ -60,7 +59,7 @@ def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
     original_path = metric_view.persistence_path
-    aggregator = ScenarioAggregator(make_scenario_operator(False), SpatialFilter(None))
+    aggregator = ScenarioAggregator(AggregationPattern(id="p", time_granularity=TimeGranularity.HOUR, scenario=False))
 
     # Act
     aggregator.run(
@@ -84,7 +83,7 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
     values = [10.0, 20.0, 30.0]
     metric_view = temporal_metric_view(tmp_path, values)
     original_path = metric_view.persistence_path
-    aggregator = ScenarioAggregator(make_scenario_operator(True), SpatialFilter(None))
+    aggregator = ScenarioAggregator(AggregationPattern(id="p", time_granularity=TimeGranularity.HOUR, scenario=True))
 
     # Act
     aggregator.run(
