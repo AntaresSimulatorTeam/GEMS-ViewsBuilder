@@ -8,7 +8,7 @@ from gems_views_builder.aggregators.pattern_aggregator import AggregationPattern
 from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.aggregators.time_aggregator import perform_time_aggregations
 from gems_views_builder.input.catalog import Metric
-from gems_views_builder.input.view_config import ViewConfig, TimeGranularity
+from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_view import MetricView
 
 
