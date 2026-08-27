@@ -7,7 +7,6 @@ from gems_views_builder.input.view_config import AggregationPattern, TimeGranula
 from gems_views_builder.metric_view import MetricView
 from gems_views_builder.spatial_filter import SpatialFilter
 
-
 class PatternAggregator:
     def __init__(self, pattern: AggregationPattern):
         self.time_granularity = pattern.time_granularity
@@ -19,8 +18,13 @@ class PatternAggregator:
         return self.scenario_aggregator.run(time_aggregated_metric_views[self.time_granularity])
 
 
-def aggregation_patterns_factory(view_config: ViewConfig) -> list[PatternAggregator]:
-    pattern_aggregators = []
-    for pattern in view_config.aggregation_patterns:
-        pattern_aggregators.append(PatternAggregator(pattern))
-    return pattern_aggregators
+class AggregationPatternList:
+    aggregation_patterns = list(PatternAggregator)
+    time_aggregated_metric_views = dict[TimeGranularity, MetricView]
+
+    def __init__(self, view_config: ViewConfig) -> None:
+        for pattern in view_config.aggregation_patterns:
+            self.pattern_aggregators.append(PatternAggregator(pattern))
+
+    def __iter__(self):
+        return iter(self.aggregation_patterns)
