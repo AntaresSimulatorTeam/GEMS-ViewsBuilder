@@ -13,7 +13,7 @@ import polars as pl
 
 from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 from gems_views_builder.input.catalog import Metric
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import TemporalMetricView
 
 
 class Operator(Enum):
@@ -35,12 +35,12 @@ AGGREGATION_OPERATORS = [
 @dataclass
 class ScenarioOperator(ABC):
     @abstractmethod
-    def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
+    def run(self, temporal_metric_view: TemporalMetricView, tmp_path: Path) -> None:
         pass
 
 
 class ScenarioAggregation(ScenarioOperator):
-    def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
+    def run(self, temporal_metric_view: TemporalMetricView, tmp_path: Path) -> None:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
         view = (
@@ -69,7 +69,7 @@ class ScenarioAggregation(ScenarioOperator):
 
 
 class ScenarioColumnsAddition(ScenarioOperator):
-    def run(self, temporal_metric_view: MetricView, tmp_path: Path) -> None:
+    def run(self, temporal_metric_view: TemporalMetricView, tmp_path: Path) -> None:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
         view = pl.scan_parquet(temporal_metric_view.persistence_path).with_columns(
             [
@@ -93,7 +93,7 @@ def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
 class ScenarioAggregator:
     scenario_operator: ScenarioOperator
 
-    def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
+    def run(self, metric_view: TemporalMetricView, metric: Metric) -> TemporalMetricView:
         try:
             file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
             os.close(file_descriptor)

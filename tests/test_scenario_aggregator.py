@@ -17,10 +17,10 @@ from gems_views_builder.aggregators.scenario_aggregator import (
 )
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import TemporalMetricView
 
 
-def temporal_metric_view(tmp_path: Path, values: list[float]) -> MetricView:
+def temporal_metric_view(tmp_path: Path, values: list[float]) -> TemporalMetricView:
     """Temporal aggregation-shaped parquet (input to scenario step)."""
     n = len(values)
     dataframe = pl.DataFrame(
@@ -43,7 +43,7 @@ def temporal_metric_view(tmp_path: Path, values: list[float]) -> MetricView:
     )
     path = tmp_path / "temporal.parquet"
     dataframe.write_parquet(path)
-    return MetricView(path, TimeGranularity.HOUR)
+    return TemporalMetricView(path, TimeGranularity.HOUR)
 
 
 def test_make_scenario_operator_returns_columns_addition_when_disabled() -> None:

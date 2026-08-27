@@ -10,7 +10,7 @@ class PatternAggregator:
         self.time_aggregator = TimeAggregator(pattern.time_granularity)
         self.scenario_aggregator = ScenarioAggregator(make_scenario_operator(pattern.scenario))
 
-    def run(self, metric_view: TemporalMetricView, metric: Metric) -> MetricView:
+    def run(self, metric_view: MetricView, metric: Metric) -> TemporalMetricView:
         temporal_metric_view = self.time_aggregator.run(metric_view, metric)
         return self.scenario_aggregator.run(temporal_metric_view, metric)
 

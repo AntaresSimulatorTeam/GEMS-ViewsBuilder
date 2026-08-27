@@ -9,7 +9,7 @@ from gems_views_builder.input.view_config import TimeGranularity
 
 
 @dataclass
-class TemporalMetricView:
+class MetricView:
     """View for a single computed metric, stored as a parquet file."""
 
     persistence_path: Path
@@ -20,5 +20,5 @@ class TemporalMetricView:
 
 
 @dataclass
-class MetricView(TemporalMetricView):
+class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity
