@@ -19,12 +19,9 @@ class PatternAggregator:
 
 
 class AggregationPatternList:
-    aggregation_patterns: list[PatternAggregator] = []
-    time_aggregated_metric_views: dict[TimeGranularity, MetricView]
-
     def __init__(self, view_config: ViewConfig) -> None:
-        # self.aggregation_patterns: list[PatternAggregator] = []
-        # self.time_aggregated_metric_views: dict[TimeGranularity, MetricView] = {}
+        self.aggregation_patterns: list[PatternAggregator] = []
+        self.time_aggregated_metric_views: dict[TimeGranularity, MetricView] = {}
         for pattern in view_config.aggregation_patterns:
             self.aggregation_patterns.append(PatternAggregator(pattern))
 
