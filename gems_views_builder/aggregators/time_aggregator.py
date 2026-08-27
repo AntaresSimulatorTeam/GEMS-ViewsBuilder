@@ -38,7 +38,7 @@ class TimeAggregator:
         # # the whole temp tree until interpreter exit instead.
         atexit.register(rmtree, self._root_dir, True)
 
-    def run(self, metric_view: TemporalMetricView, metric: Metric) -> MetricView:
+    def run(self, metric_view: MetricView, metric: Metric) -> TemporalMetricView:
         """
         Step 2.C from POC[temporal aggregation]: Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
         """
@@ -83,7 +83,7 @@ class TimeAggregator:
             row_group_size=PARQUET_ROW_GROUP_SIZE,
         )
         logg_write(metric, file_path)
-        return MetricView(file_path, self._time_granularity)
+        return TemporalMetricView(file_path, self._time_granularity)
 
 
 def logg_write(metric: Metric, file_path: Path) -> None:

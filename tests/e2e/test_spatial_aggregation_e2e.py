@@ -27,7 +27,7 @@ from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import SimulationTable
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import TemporalMetricView
 from tests.e2e.utils import (
     build_raw_input_data,
     make_raw_component,
@@ -126,7 +126,7 @@ def build_input(tmp_path: Path) -> RawInputData:
     )
 
 
-def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], float]:
+def extract_values_from_view(view: TemporalMetricView) -> dict[tuple[str, datetime], float]:
     df = pl.read_parquet(view.persistence_path)
     return dict(
         zip(
@@ -136,8 +136,8 @@ def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], flo
     )
 
 
-def views_by_metric_id(metric_views: list[MetricView]) -> dict[str, MetricView]:
-    by_metric_id: dict[str, MetricView] = {}
+def views_by_metric_id(metric_views: list[TemporalMetricView]) -> dict[str, TemporalMetricView]:
+    by_metric_id: dict[str, TemporalMetricView] = {}
     for view in metric_views:
         metric_id = pl.read_parquet(view.persistence_path, columns=["metric_id"])["metric_id"][0]
         by_metric_id[str(metric_id)] = view

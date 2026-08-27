@@ -17,12 +17,12 @@ class PatternAggregator:
             SpatialFilter(pattern.spatial_filter),
         )
 
-    def run(self, metric_view: TemporalMetricView, metric: Metric) -> MetricView:
+    def run(self, metric_view: MetricView, metric: Metric) -> TemporalMetricView:
         temporal_metric_view = self.time_aggregator.run(metric_view, metric)
         return self.scenario_aggregator.run(temporal_metric_view, metric)
 
 
-def aggregations_factory(view_config: ViewConfig) -> list[PatternAggregator]:
+def aggregation_patterns_factory(view_config: ViewConfig) -> list[PatternAggregator]:
     pattern_aggregators = []
     for pattern in view_config.aggregation_patterns:
         pattern_aggregators.append(PatternAggregator(pattern))
