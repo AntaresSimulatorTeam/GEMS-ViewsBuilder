@@ -13,7 +13,7 @@ import polars as pl
 
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import AggregationPattern
-from gems_views_builder.metric_view import TemporalMetricView, sink
+from gems_views_builder.metric_view import TemporalMetricView, sink_to_parquet
 from gems_views_builder.spatial_filter import SpatialFilter, apply_spatial_filter
 
 
@@ -98,7 +98,7 @@ class ScenarioAggregator:
 
             view = self.scenario_operator.run(metric_view)
             view = apply_spatial_filter(view, self.spatial_filter)
-            sink(view, Path(tmp_path))
+            sink_to_parquet(view, Path(tmp_path))
             os.replace(src=tmp_path, dst=metric_view.persistence_path)
         except Exception:
             os.remove(tmp_path)

@@ -27,9 +27,9 @@ class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity
 
 
-def sink(view: pl.LazyFrame, tmp_path: Path) -> None:
+def sink_to_parquet(view: pl.LazyFrame, path: Path) -> None:
     view.sink_parquet(
-        tmp_path,
+        path,
         compression=PARQUET_COMPRESSION,
         compression_level=PARQUET_COMPRESSION_LEVEL,
         row_group_size=PARQUET_ROW_GROUP_SIZE,
