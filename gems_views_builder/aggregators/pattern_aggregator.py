@@ -3,7 +3,6 @@
 
 
 from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator, make_scenario_operator
-from gems_views_builder.aggregators.time_aggregator import perform_time_aggregations
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.aggregators.time_aggregator import TimeAggregator
