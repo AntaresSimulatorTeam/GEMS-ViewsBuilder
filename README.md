@@ -17,10 +17,6 @@ The main inputs are
 The main outputs are Views.
 
 ## Input validation diagram
-
-Nodes are input files loaded by the pipeline. Edges are the cross-file
-checks performed between them, labeled with the checks themselves.
-
 ```mermaid
 graph LR
     catalog(("catalog.yml<br/>(one or more)"))
@@ -49,13 +45,5 @@ graph LR
     class library_1,library_n,system,simulation_table,calendar unvalidated;
     class library_dots,library_join plain;
 ```
+[Input validation](docs/input_validation_diagram.md) for the detailed rules behind each check.
 
-Solid edges = content is cross-validated. Dashed edges = files are read
-together / referenced by the study layout, but have no dedicated
-cross-file validator yet. See
-[docs/input_validation_diagram.md](docs/input_validation_diagram.md) for
-the detailed rules behind each check.
-
-## Diagrams
-
-- [Input validation diagram](docs/input_validation_diagram.md) — cross-file checks performed between input files.
