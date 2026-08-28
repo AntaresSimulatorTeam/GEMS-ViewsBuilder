@@ -1,37 +1,29 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-"""ViewBuilder."""
-
-from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
-from gems_views_builder.aggregators.time_aggregator import TimeAggregator
+from gems_views_builder.aggregators.aggregations_processor import AgggregationProcessor
+from gems_views_builder.input.simulation_table import join
 from gems_views_builder.input.view_building_input_data import ViewBuildingInputData
-from gems_views_builder.into_scenario_view import make_scenario_operator, to_scenario_view
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
 class ViewBuilder:
     def __init__(
         self,
-        view_building_input: ViewBuildingInputData,
+        input_data: ViewBuildingInputData,
         metric_structure_table_builder: MetricStructureTableBuilder,
+        aggregation_processor: AgggregationProcessor,
     ) -> None:
-        self.view_building_input = view_building_input
+        self.input_data = input_data
         self.metric_structure_table_builder = metric_structure_table_builder
-        # Aggregator for step 2B
-        self.terms_aggregator = TermsAggregator(self.view_building_input.filtered_st)
-        # Aggregator for step 2C
-        self.time_aggregator = TimeAggregator(self.view_building_input.view_config.time_aggr_granularity)
-        self.scenario_operator = make_scenario_operator(self.view_building_input.view_config.scenario_aggregation)
+        self.aggregation_processor = aggregation_processor
 
-    def build(self) -> list[MetricView]:
-        metric_views: list[MetricView] = []
-        for metric in self.view_building_input.view_config.metrics:
+    def build(self) -> list[TemporalMetricView]:
+        metric_views: list[TemporalMetricView] = []
+        for metric in self.input_data.view_config.metrics:
             metric_structure_table = self.metric_structure_table_builder.build(metric)
-            metric_view = self.terms_aggregator.run(metric_structure_table, metric)
-            temporal_metric_view = self.time_aggregator.run(metric_view, metric)
-            to_scenario_view(temporal_metric_view, self.scenario_operator)
-            metric_views.append(temporal_metric_view)
-
+            structured_simulation_table = join(metric_structure_table, self.input_data.filtered_st)
+            metric_view = self.aggregation_processor.run(structured_simulation_table, metric)
+            metric_views.extend(metric_view)
         return metric_views

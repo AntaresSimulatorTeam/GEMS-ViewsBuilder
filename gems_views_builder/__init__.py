@@ -40,7 +40,7 @@ from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, Taxono
 from gems_views_builder.input.view_building_input_data import ViewBuildingInputData, create_view_building_input
 from gems_views_builder.input.view_config import TimeGranularity, ViewConfig, load_view_config
 from gems_views_builder.metric_structure_table import MetricStructureTable
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import MetricView, TemporalMetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.view import ViewBuilder
 
@@ -83,6 +83,7 @@ __all__ = [
     "MetricStructureTable",
     "MetricStructureTableBuilder",
     "MetricView",
+    "TemporalMetricView",
     "ViewBuilder",
     "System",
 ]

@@ -11,4 +11,5 @@ class ViewBuilderBasedModel(BaseModel):
         alias_generator=lambda snake: snake.replace("_", "-"),
         validate_by_name=True,
         validate_by_alias=True,
+        extra="forbid",
     )
