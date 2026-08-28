@@ -16,10 +16,10 @@ from gems_views_builder.aggregators.time_aggregator import (
 )
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
-from gems_views_builder.metric_view import TemporalMetricView
+from gems_views_builder.metric_view import MetricView
 
 
-def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> TemporalMetricView:
+def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> MetricView:
     """Granular metric-view parquet (output of the terms aggregation step)."""
     n = len(rows)
     dataframe = pl.DataFrame(
@@ -36,7 +36,7 @@ def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> Temp
     )
     path = tmp_path / "granular.parquet"
     dataframe.write_parquet(path)
-    return TemporalMetricView(path)
+    return MetricView(path)
 
 
 def make_metric(time_operator: AggregOperatorType) -> Metric:

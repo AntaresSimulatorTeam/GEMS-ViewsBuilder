@@ -18,7 +18,7 @@ from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input_data import create_view_building_input
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
@@ -31,7 +31,7 @@ def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     return raw_input_data
 
 
-def build_metric_views(raw_input_data: RawInputData) -> list[MetricView]:
+def build_metric_views(raw_input_data: RawInputData) -> list[TemporalMetricView]:
     components = create_components(raw_input_data.system.components)
     enrich_components(components, raw_input_data)
     components_by_taxon = group_components_by_taxon(components)
