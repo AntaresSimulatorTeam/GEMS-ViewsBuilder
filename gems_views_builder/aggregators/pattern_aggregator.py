@@ -32,6 +32,7 @@ class PatternAggregator:
         self.time_aggregator = TimeAggregatorDecorator(time_aggregated_metric_views, pattern.time_granularity)
         self.scenario_aggregator = ScenarioAggregator(make_scenario_operator(pattern.scenario),
                                                       SpatialFilter(pattern.spatial_filter))
+        self.id = pattern.id # For debug only (useless otherwise)
 
     def run(self, metric_view: TemporalMetricView, metric: Metric) -> MetricView:
         temporal_metric_view = self.time_aggregator.run(metric_view, metric)
@@ -46,9 +47,13 @@ class AggregationPatternList:
         for pattern in view_config.aggregation_patterns:
             self.aggregation_patterns.append(PatternAggregator(pattern, self.time_aggregated_metric_views))
 
+    def reset_time_views_storage(self):
+        self.time_aggregated_metric_views = {}
+
     def run(self, metric_view: TemporalMetricView, metric: Metric) -> list[MetricView]:
         metric_views: list[MetricView] = []
+        self.reset_time_views_storage()
         for pattern in self.aggregation_patterns:
-            metric_view = pattern.run(metric_view, metric)
-            metric_views.append(metric_view)
+            view = pattern.run(metric_view, metric)
+            metric_views.append(view)
         return metric_views
