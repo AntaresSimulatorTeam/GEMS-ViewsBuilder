@@ -38,17 +38,13 @@ def make_raw_connection(component1: str, port1: str, component2: str, port2: str
     return SimpleNamespace(component1=component1, port1=port1, component2=component2, port2=port2)
 
 
-def make_simulation_table_and_calendar(
-    rows: list[tuple[str, str, int, datetime, float]], tmp_path: Path
-) -> tuple[SimulationTable, Calendar]:
-    """Build a raw SimulationTable and matching Calendar for e2e arrange steps."""
+def make_simulation_table(rows: list[tuple[str, str, int, datetime, float]]) -> SimulationTable:
     n = len(rows)
     absolute_time_index = list(range(1, n + 1))
-    block = ["b1"] * n
-    simulation_table = SimulationTable(
+    return SimulationTable(
         pl.DataFrame(
             {
-                "block": block,
+                "block": ["b1"] * n,
                 "component": [r[0] for r in rows],
                 "output": [r[1] for r in rows],
                 "absolute_time_index": absolute_time_index,
@@ -59,18 +55,21 @@ def make_simulation_table_and_calendar(
             }
         ).lazy()
     )
-    calendar = Calendar(
+
+
+def make_calendar(rows: list[tuple[str, str, int, datetime, float]]) -> Calendar:
+    n = len(rows)
+    return Calendar(
         id="calendar",
         dataframe=pl.DataFrame(
             {
-                "absolute_time_index": absolute_time_index,
-                "block": block,
+                "absolute_time_index": list(range(1, n + 1)),
+                "block": ["b1"] * n,
                 "granular_date": [r[3] for r in rows],
             },
             schema_overrides={"granular_date": pl.Datetime},
         ).lazy(),
     )
-    return simulation_table, calendar
 
 
 def build_raw_input_data(
