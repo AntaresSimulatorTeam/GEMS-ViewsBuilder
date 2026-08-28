@@ -15,3 +15,7 @@ The main inputs are
 ## Outputs
 
 The main outputs are Views.
+
+## Diagrams
+
+- [Input validation diagram](docs/input_validation_diagram.md) — cross-file checks performed between input files.
