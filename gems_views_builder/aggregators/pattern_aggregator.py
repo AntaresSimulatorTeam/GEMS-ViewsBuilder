@@ -47,12 +47,9 @@ class AggregationPatternList:
         for pattern in view_config.aggregation_patterns:
             self.aggregation_patterns.append(PatternAggregator(pattern, self.time_aggregated_metric_views))
 
-    def reset_time_views_storage(self):
-        self.time_aggregated_metric_views = {}
-
     def run(self, metric_view: TemporalMetricView, metric: Metric) -> list[MetricView]:
         metric_views: list[MetricView] = []
-        self.reset_time_views_storage()
+        self.time_aggregated_metric_views.clear()
         for pattern in self.aggregation_patterns:
             view = pattern.run(metric_view, metric)
             metric_views.append(view)
