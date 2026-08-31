@@ -41,6 +41,7 @@ class AggregationPattern(ViewBuilderBasedModel):
     id: str
     time_granularity: TimeGranularity
     scenario: bool
+    spatial_filter: list[str] | None = Field(default=None)
 
 
 class CatalogId(ViewBuilderBasedModel):
