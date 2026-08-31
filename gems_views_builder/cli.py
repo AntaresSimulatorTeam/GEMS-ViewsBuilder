@@ -13,13 +13,24 @@ from pathlib import Path
 class SystemType(Enum):
     DIRECTORY = "directory"
     FILE = "file"
+    GLOB = "glob"
 
 
 @dataclass
 class PathOption:
     name: str
     system_type: SystemType
-    system_check: Callable[[Path], bool]
+    system_check: Callable[[Path], bool] | None = None
+    args_attribute: str = ""
+
+    def __post_init__(self) -> None:
+        self.args_attribute = self.name.replace("-", "_")
+
+
+@dataclass
+class RegularExpressionOption:
+    name: str
+    system_type: SystemType
     args_attribute: str = ""
 
     def __post_init__(self) -> None:
@@ -32,8 +43,11 @@ REQUIRED_PATHS_OPTIONS: list[PathOption] = [
     PathOption("system", SystemType.FILE, Path.is_file),
     PathOption("calendar", SystemType.FILE, Path.is_file),
     PathOption("taxonomy", SystemType.FILE, Path.is_file),
-    PathOption("simulation-table", SystemType.FILE, Path.is_file),
     PathOption("view-config", SystemType.FILE, Path.is_file),
+]
+
+REGULAR_EXPRESSION_OPTIONS: list[RegularExpressionOption] = [
+    RegularExpressionOption("simulation-tables", SystemType.GLOB),
 ]
 
 
@@ -44,6 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     add_path_options(parser, REQUIRED_PATHS_OPTIONS)
+    add_regular_expression_options(parser, REGULAR_EXPRESSION_OPTIONS)
 
     parser.add_argument(
         "-o",
@@ -85,8 +100,22 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
         )
 
 
+def add_regular_expression_options(
+    parser: argparse.ArgumentParser, regular_expression_options: list[RegularExpressionOption]
+) -> None:
+    for option in regular_expression_options:
+        parser.add_argument(
+            f"--{option.name}",
+            type=str,
+            required=True,
+            help=f"Glob pattern for {option.name} (e.g. path/st-x-mc-*.parquet).",
+        )
+
+
 def check_paths_options(args: argparse.Namespace) -> None:
     for option in REQUIRED_PATHS_OPTIONS:
+        if option.system_check is None:
+            continue
         option_value = getattr(args, option.args_attribute)
         if not option.system_check(option_value):
             raise OSError(f"--{option.name} is not a {option.system_type.value}: {option_value}")

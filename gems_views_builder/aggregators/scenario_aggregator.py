@@ -11,7 +11,7 @@ from pathlib import Path
 
 import polars as pl
 
-from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
+from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.metric_view import TemporalMetricView
 
@@ -60,12 +60,7 @@ class ScenarioAggregation(ScenarioOperator):
                 ]
             )
         )
-        view.sink_parquet(
-            tmp_path,
-            compression=PARQUET_COMPRESSION,
-            compression_level=PARQUET_COMPRESSION_LEVEL,
-            row_group_size=PARQUET_ROW_GROUP_SIZE,
-        )
+        sink_to_parquet(view, tmp_path)
 
 
 class ScenarioColumnsAddition(ScenarioOperator):
@@ -77,12 +72,7 @@ class ScenarioColumnsAddition(ScenarioOperator):
                 pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
             ]
         )
-        view.sink_parquet(
-            tmp_path,
-            compression=PARQUET_COMPRESSION,
-            compression_level=PARQUET_COMPRESSION_LEVEL,
-            row_group_size=PARQUET_ROW_GROUP_SIZE,
-        )
+        sink_to_parquet(view, tmp_path)
 
 
 def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:

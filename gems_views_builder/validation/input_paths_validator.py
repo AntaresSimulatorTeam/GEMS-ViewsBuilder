@@ -57,9 +57,9 @@ class InputPathsValidator:
     def _check_view_config_file(self) -> None:
         require_suffix(self.input_paths.view_config, {YAML_SUFFIX}, "View config file")
 
-    def _check_simulation_table_file(self) -> None:
-        require_suffix(
-            self.input_paths.simulation_table,
+    def _check_simulation_table_files(self) -> None:
+        require_suffixes(
+            self.input_paths.simulation_tables,
             SIMULATION_TABLE_SUFFIXES,
             "Simulation table",
         )
@@ -72,7 +72,7 @@ class InputPathsValidator:
         self._check_taxonomy_file()
         self._check_calendar_file()
         self._check_view_config_file()
-        self._check_simulation_table_file()
+        self._check_simulation_table_files()
         logging.info("Input paths validation completed successfully")
 
 
@@ -80,3 +80,8 @@ def require_suffix(path: Path, allowed: set[str], label: str) -> None:
     if path.suffix.lower() not in allowed:
         expected = ", ".join(sorted(allowed))
         raise ValueError(f"{label} must have extension {expected}, got: {path}")
+
+
+def require_suffixes(paths: list[Path], allowed: set[str], label: str) -> None:
+    for path in paths:
+        require_suffix(path, allowed, label)

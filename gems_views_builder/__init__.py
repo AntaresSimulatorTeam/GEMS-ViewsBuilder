@@ -32,7 +32,7 @@ from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import (
     FilteredSimulationTable,
     SimulationTable,
-    filter_simulation_table,
+    filter_simulation_tables,
     load_simulation_table,
 )
 from gems_views_builder.input.system import System
@@ -50,7 +50,7 @@ __all__ = [
     "FilteredSimulationTable",
     "SimulationTable",
     "load_simulation_table",
-    "filter_simulation_table",
+    "filter_simulation_tables",
     "Catalog",
     "load_catalog",
     "load_catalogs",

@@ -8,7 +8,7 @@ from shutil import rmtree
 
 import polars as pl
 
-from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
+from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.metric_view import MetricView
 
@@ -37,7 +37,7 @@ class TermsAggregator:
             .agg(
                 [
                     value_agg.alias("granular_metric_value"),
-                    # take first non-null value of group
+                    # Drop nulls if we have mixed groups
                     pl.col("granular_date").drop_nulls().first(),
                 ]
             )
@@ -54,12 +54,7 @@ class TermsAggregator:
             )
         )
         out_path = self._metric_view_dir / f"{metric.id}.parquet"
-        metric_view.sink_parquet(
-            out_path,
-            compression=PARQUET_COMPRESSION,
-            compression_level=PARQUET_COMPRESSION_LEVEL,
-            row_group_size=PARQUET_ROW_GROUP_SIZE,
-        )
+        sink_to_parquet(metric_view, out_path)
         logging.info(f"[{metric.id}] Terms aggregation written to {out_path}")
         return MetricView(out_path)
 

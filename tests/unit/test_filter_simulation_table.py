@@ -7,7 +7,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder import FilteredSimulationTable, load_calendar
-from gems_views_builder.input.simulation_table import filter_simulation_table, load_simulation_table
+from gems_views_builder.input.simulation_table import filter_simulation_tables, load_simulation_table
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 
@@ -18,7 +18,7 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     calendar = load_calendar(test_dataset_dir / "calendar_file.csv")
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = filter_simulation_table(simulation_table, calendar)
+    filtered_table = filter_simulation_tables([simulation_table], calendar)
     assert isinstance(filtered_table, FilteredSimulationTable)
     filtered = pl.read_parquet(filtered_table.file_path)
 
@@ -59,7 +59,7 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     duplicated.write_parquet(sim_path_block2)
     simulation_table = load_simulation_table(sim_path_block2)
 
-    filtered_table = filter_simulation_table(simulation_table, calendar)
+    filtered_table = filter_simulation_tables([simulation_table], calendar)
     assert isinstance(filtered_table, FilteredSimulationTable)
     filtered = pl.read_parquet(filtered_table.file_path)
     # Time-dependent rows with block=2 are all dropped; only non-time-dependent
@@ -77,7 +77,7 @@ def test_filter_simulation_table_writes_parquet(
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = filter_simulation_table(simulation_table, calendar)
+    filtered_table = filter_simulation_tables([simulation_table], calendar)
     assert isinstance(filtered_table, FilteredSimulationTable)
 
     assert filtered_table.file_path.exists(), "Output parquet should be created"
