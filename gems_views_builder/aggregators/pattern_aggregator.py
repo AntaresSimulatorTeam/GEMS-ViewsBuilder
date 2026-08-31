@@ -16,7 +16,6 @@ class PatternAggregator:
         self.scenario_aggregator = ScenarioAggregator(
             make_scenario_operator(pattern.scenario), SpatialFilter(pattern.spatial_filter)
         )
-        self.id = pattern.id  # For debug only (useless otherwise)
 
     def run(self, metric_view: TemporalMetricView, metric: Metric) -> MetricView:
         temporal_metric_view = self.time_aggregator.run(metric_view, metric)
