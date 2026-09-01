@@ -40,7 +40,6 @@ def test_load_simulation_tables_returns_one_table_per_path_in_order(tmp_path: Pa
 
     # Assert
     assert len(simulation_tables) == 2
-    assert type(simulation_tables) == list[SimulationTable]
     assert all(isinstance(table, SimulationTable) for table in simulation_tables)
     assert [table.dataframe.collect().item(0, "value") for table in simulation_tables] == [1.0, 1.0]
 
@@ -74,4 +73,4 @@ def test_concat_simulation_tables_combines_rows_from_every_table() -> None:
     # Assert
     result = concatenated.collect()
     assert result.height == 2
-    assert result["component"].to_list() == ["comp","comp"]
+    assert result["component"].to_list() == ["comp", "comp"]

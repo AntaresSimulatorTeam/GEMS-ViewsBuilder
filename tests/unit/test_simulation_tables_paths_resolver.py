@@ -10,8 +10,9 @@ import pytest
 
 from gems_views_builder.input_paths import SimulationTablesPathsResolver
 
+
 @pytest.mark.parametrize("pattern", ["simulation_table-*.parquet", "s*.parquet"])
-def test_resolve_returns_all_files_matching_the_glob_pattern(tmp_path: Path,pattern: str) -> None:
+def test_resolve_returns_all_files_matching_the_glob_pattern(tmp_path: Path, pattern: str) -> None:
     # Arrange
     dataset_dir = tmp_path / "dataset"
     dataset_dir.mkdir()
