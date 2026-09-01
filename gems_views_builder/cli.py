@@ -13,41 +13,39 @@ from pathlib import Path
 class SystemType(Enum):
     DIRECTORY = "directory"
     FILE = "file"
-    GLOB = "glob"
+    FILES = "files"
 
 
 @dataclass
-class PathOption:
+class Option:
     name: str
     system_type: SystemType
+    args_attribute: str = ""
+
+    def __post_init__(self) -> None:
+        self.args_attribute = self.name.replace("-", "_")
+
+
+@dataclass
+class PathOption(Option):
     system_check: Callable[[Path], bool] | None = None
-    args_attribute: str = ""
-
-    def __post_init__(self) -> None:
-        self.args_attribute = self.name.replace("-", "_")
 
 
 @dataclass
-class RegularExpressionOption:
-    name: str
-    system_type: SystemType
-    args_attribute: str = ""
-
-    def __post_init__(self) -> None:
-        self.args_attribute = self.name.replace("-", "_")
+class GlobalPatternMatchingOption(Option): ...
 
 
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
-    PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
-    PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir),
-    PathOption("system", SystemType.FILE, Path.is_file),
-    PathOption("calendar", SystemType.FILE, Path.is_file),
-    PathOption("taxonomy", SystemType.FILE, Path.is_file),
-    PathOption("view-config", SystemType.FILE, Path.is_file),
+    PathOption("catalogs-dir", SystemType.DIRECTORY, system_check=Path.is_dir),
+    PathOption("libraries-dir", SystemType.DIRECTORY, system_check=Path.is_dir),
+    PathOption("system", SystemType.FILE, system_check=Path.is_file),
+    PathOption("calendar", SystemType.FILE, system_check=Path.is_file),
+    PathOption("taxonomy", SystemType.FILE, system_check=Path.is_file),
+    PathOption("view-config", SystemType.FILE, system_check=Path.is_file),
 ]
 
-REGULAR_EXPRESSION_OPTIONS: list[RegularExpressionOption] = [
-    RegularExpressionOption("simulation-tables", SystemType.GLOB),
+GLOBAL_PATTERN_MATCHING_OPTIONS: list[GlobalPatternMatchingOption] = [
+    GlobalPatternMatchingOption("simulation-tables", SystemType.FILES),
 ]
 
 
@@ -58,7 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     add_path_options(parser, REQUIRED_PATHS_OPTIONS)
-    add_regular_expression_options(parser, REGULAR_EXPRESSION_OPTIONS)
+    add_global_pattern_matching_options(parser, GLOBAL_PATTERN_MATCHING_OPTIONS)
 
     parser.add_argument(
         "-o",
@@ -100,15 +98,15 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
         )
 
 
-def add_regular_expression_options(
-    parser: argparse.ArgumentParser, regular_expression_options: list[RegularExpressionOption]
+def add_global_pattern_matching_options(
+    parser: argparse.ArgumentParser, global_pattern_matching_options: list[GlobalPatternMatchingOption]
 ) -> None:
-    for option in regular_expression_options:
+    for option in global_pattern_matching_options:
         parser.add_argument(
             f"--{option.name}",
             type=str,
             required=True,
-            help=f"Glob pattern for {option.name} (e.g. path/st-x-mc-*.parquet).",
+            help=f"Global pattern matching for {option.name} (e.g. path/st-x-mc-*.parquet).",
         )
 
 

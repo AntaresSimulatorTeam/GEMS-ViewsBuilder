@@ -100,7 +100,7 @@ def filter_simulation_tables(simulation_tables: list[SimulationTable], calendar:
         .filter(pl.col("block") == pl.col("block_right"))
         .drop("block_right")
     )
-    # Non-time-dependent rows are not tied to a timestep; keep them with a null date.
+    # Non-time-dependent rows are not tied to a timestep, keep them with a null date.
     granular_date_dtype = calendar.dataframe.collect_schema()["granular_date"]
     non_time_dep = simulation_table.filter(pl.col("absolute_time_index").is_null()).with_columns(
         pl.lit(None).cast(granular_date_dtype).alias("granular_date")
