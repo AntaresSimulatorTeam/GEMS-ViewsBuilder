@@ -1,13 +1,18 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
+from datetime import datetime
 from pathlib import Path
 
 import polars as pl
 import pytest
 
-from gems_views_builder import FilteredSimulationTable, load_calendar
-from gems_views_builder.input.simulation_table import filter_simulation_tables, load_simulation_table
+from gems_views_builder import Calendar, FilteredSimulationTable, load_calendar
+from gems_views_builder.input.simulation_table import (
+    SimulationTable,
+    filter_simulation_tables,
+    load_simulation_table,
+)
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 
@@ -109,3 +114,64 @@ def test_filter_simulation_table_invalid_file_format(test_dataset_dir: Path) -> 
         match=r"Simulation table file '.*simulation_table--invalid\.txt' is not a parquet or csv file",
     ):
         load_simulation_table(simulation_table_file)
+
+
+def make_single_row_simulation_table_(**overrides: object) -> dict[str, object]:
+    row: dict[str, object] = {
+        "block": "b1",
+        "component": "comp",
+        "output": "out",
+        "absolute_time_index": 1,
+        "block_time_index": 1,
+        "scenario_index": 1,
+        "value": 1.0,
+        "basis_status": "ok",
+    }
+    row.update(overrides)
+    return row
+
+
+def make_single_row_calendar(absolute_time_index: int, block: str, granular_date: datetime) -> Calendar:
+    return Calendar(
+        id="calendar",
+        dataframe=pl.DataFrame(
+            {"absolute_time_index": [absolute_time_index], "block": [block], "granular_date": [granular_date]},
+            schema_overrides={"granular_date": pl.Datetime},
+        ).lazy(),
+    )
+
+
+def test_filter_simulation_tables_raises_when_list_is_empty() -> None:
+    # Arrange
+    calendar = make_single_row_calendar(absolute_time_index=1, block="b1", granular_date=datetime(2026, 1, 1))
+
+    # Act & Assert
+    with pytest.raises(ValueError, match="No simulation tables to concat"):
+        filter_simulation_tables([], calendar)
+
+
+@pytest.mark.parametrize(
+    ("block_a", "block_b", "expected_components"),
+    [
+        ("b1", "b1", {"comp-a", "comp-b"}),
+        ("b1", "b2", {"comp-a"}),
+        ("b2", "b1", {"comp-b"}),
+    ],
+)
+def test_filter_simulation_tables_keeps_calendar_matching_rows_from_every_table(
+    block_a: str,
+    block_b: str,
+    expected_components: set[str],
+) -> None:
+    # Arrange
+    granular_date = datetime(2026, 1, 1)
+    calendar = make_single_row_calendar(absolute_time_index=1, block="b1", granular_date=granular_date)
+    st_a = SimulationTable(pl.DataFrame([make_single_row_simulation_table_(component="comp-a", block=block_a)]).lazy())
+    st_b = SimulationTable(pl.DataFrame([make_single_row_simulation_table_(component="comp-b", block=block_b)]).lazy())
+
+    # Act
+    filtered_table = filter_simulation_tables([st_a, st_b], calendar)
+
+    # Assert
+    filtered = pl.read_parquet(filtered_table.file_path)
+    assert set(filtered["component"].to_list()) == expected_components
