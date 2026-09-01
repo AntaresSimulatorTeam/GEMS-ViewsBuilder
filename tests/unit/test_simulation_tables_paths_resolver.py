@@ -1,9 +1,5 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-
-"""Tests for ``SimulationTablesPathsResolver.resolve()``, which turns the ``--simulation-tables``
-glob pattern into the concrete list of files that will be loaded."""
-
 from pathlib import Path
 
 import pytest
