@@ -31,10 +31,6 @@ class PathOption(Option):
     system_check: Callable[[Path], bool]
 
 
-@dataclass
-class GlobalPatternMatchingOption(Option): ...
-
-
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
     PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
     PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir),
@@ -44,8 +40,8 @@ REQUIRED_PATHS_OPTIONS: list[PathOption] = [
     PathOption("view-config", SystemType.FILE, Path.is_file),
 ]
 
-GLOBAL_PATTERN_MATCHING_OPTIONS: list[GlobalPatternMatchingOption] = [
-    GlobalPatternMatchingOption("simulation-tables", SystemType.FILES),
+GLOBAL_PATTERN_MATCHING_OPTIONS: list[Option] = [
+    Option("simulation-tables", SystemType.FILES),
 ]
 
 
@@ -99,7 +95,7 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
 
 
 def add_global_pattern_matching_options(
-    parser: argparse.ArgumentParser, global_pattern_matching_options: list[GlobalPatternMatchingOption]
+    parser: argparse.ArgumentParser, global_pattern_matching_options: list[Option]
 ) -> None:
     for option in global_pattern_matching_options:
         parser.add_argument(
