@@ -5,7 +5,7 @@
 
 import argparse
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
@@ -20,7 +20,7 @@ class SystemType(Enum):
 class Option:
     name: str
     system_type: SystemType
-    args_attribute: str = ""
+    args_attribute: str = field(init=False)
 
     def __post_init__(self) -> None:
         self.args_attribute = self.name.replace("-", "_")
@@ -28,7 +28,7 @@ class Option:
 
 @dataclass
 class PathOption(Option):
-    system_check: Callable[[Path], bool] | None = None
+    system_check: Callable[[Path], bool]
 
 
 @dataclass
@@ -36,12 +36,12 @@ class GlobalPatternMatchingOption(Option): ...
 
 
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
-    PathOption("catalogs-dir", SystemType.DIRECTORY, system_check=Path.is_dir),
-    PathOption("libraries-dir", SystemType.DIRECTORY, system_check=Path.is_dir),
-    PathOption("system", SystemType.FILE, system_check=Path.is_file),
-    PathOption("calendar", SystemType.FILE, system_check=Path.is_file),
-    PathOption("taxonomy", SystemType.FILE, system_check=Path.is_file),
-    PathOption("view-config", SystemType.FILE, system_check=Path.is_file),
+    PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
+    PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir),
+    PathOption("system", SystemType.FILE, Path.is_file),
+    PathOption("calendar", SystemType.FILE, Path.is_file),
+    PathOption("taxonomy", SystemType.FILE, Path.is_file),
+    PathOption("view-config", SystemType.FILE, Path.is_file),
 ]
 
 GLOBAL_PATTERN_MATCHING_OPTIONS: list[GlobalPatternMatchingOption] = [
@@ -112,8 +112,6 @@ def add_global_pattern_matching_options(
 
 def check_paths_options(args: argparse.Namespace) -> None:
     for option in REQUIRED_PATHS_OPTIONS:
-        if option.system_check is None:
-            continue
         option_value = getattr(args, option.args_attribute)
         if not option.system_check(option_value):
             raise OSError(f"--{option.name} is not a {option.system_type.value}: {option_value}")
