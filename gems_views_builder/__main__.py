@@ -3,6 +3,7 @@
 
 import logging
 
+from gems_views_builder.aggregators.aggregations_processor import AgggregationProcessor
 from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import (
     configure_logging,
@@ -17,7 +18,7 @@ from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input_data import create_view_building_input
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.input_consistency_validator import InputConsistencyValidator
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
@@ -30,7 +31,7 @@ def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     return raw_input_data
 
 
-def build_metric_views(raw_input_data: RawInputData) -> list[MetricView]:
+def build_metric_views(raw_input_data: RawInputData) -> list[TemporalMetricView]:
     components = create_components(raw_input_data.system.components)
     enrich_components(components, raw_input_data)
     components_by_taxon = group_components_by_taxon(components)
@@ -46,7 +47,9 @@ def build_metric_views(raw_input_data: RawInputData) -> list[MetricView]:
         view_building_input.view_config,
         components_by_taxon,
     )
-    return ViewBuilder(view_building_input, metric_structure_table_builder).build()
+
+    aggregation_processor = AgggregationProcessor(view_building_input.view_config)
+    return ViewBuilder(view_building_input, metric_structure_table_builder, aggregation_processor).build()
 
 
 def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) -> None:

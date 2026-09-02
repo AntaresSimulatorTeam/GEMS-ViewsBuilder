@@ -12,11 +12,12 @@ view:
       taxonomy-category: balance # category of the taxonomy, the components of which serves as locational objects. Main case is 'area'.
     calendar: calendar_file # calendar_file.csv
 
-  aggregation:
-    time: hour
-    scenario: false
+  aggregations-patterns:
+    - id: hourly
+      time_granularity: hour
+      scenario: false
 
-  catalog: #Pointer to "catalogs" = "Business Metrics definitions files".
+  catalogs: #Pointer to "catalogs" = "Business Metrics definitions files".
       - id: catalog
 
   metrics:  #reference to the selected metric among the catalog

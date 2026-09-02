@@ -10,6 +10,7 @@ from shutil import rmtree
 import polars as pl
 
 from gems_views_builder.input.calendar import Calendar
+from gems_views_builder.metric_structure_table import MetricStructureTable
 
 # Columns of the SIMULATION_TABLE:
 # block               (str)   – identifies the timeblock in the simulation
@@ -122,3 +123,11 @@ def validate_columns(dataframe: pl.LazyFrame, table_id: str, expected: frozenset
         errors.append(f"Unexpected columns: {extra}")
     if errors:
         raise ValueError(f"{label} '{table_id}' has invalid columns: {'; '.join(errors)}")
+
+
+def join(
+    metric_structure_table: MetricStructureTable, filtered_simulation_table: FilteredSimulationTable
+) -> pl.LazyFrame:
+    return filtered_simulation_table.dataframe.join(
+        metric_structure_table.dataframe, on=["component", "output"], how="right"
+    )

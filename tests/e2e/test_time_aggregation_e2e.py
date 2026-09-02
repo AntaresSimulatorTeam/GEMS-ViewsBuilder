@@ -11,9 +11,9 @@ from gems_views_builder.__main__ import run_view_building_process
 from gems_views_builder.input.view_config import TimeGranularity, load_view_config
 from gems_views_builder.view import ParquetViewSinker
 from tests.conftest import paths_from_dataset
-from tests.e2e.utils import fetch_view, make_results_dir
+from tests.e2e.utils import create_results_dir, fetch_view
 
-AGGREGATION_BLOCK = "  aggregation:\n    time: hour\n    scenario: false\n"
+AGGREGATION_BLOCK = "  aggregations-patterns:\n    - id: hourly\n      time_granularity: hour\n      scenario: false\n"
 
 
 # test_3/calendar_file.csv spans 2025-01-01 00:00 .. 2025-01-01 23:00 (24 granular hours).
@@ -30,9 +30,12 @@ EXPECTED_DATES_BY_AGGREGATION = {
 
 def replace_aggregation(view_config_path: Path, aggregation_time: TimeGranularity) -> None:
     text = view_config_path.read_text()
-    replacement = f"  aggregation:\n    time: {aggregation_time.value}\n    scenario: false\n"
-    if AGGREGATION_BLOCK not in text:
-        raise AssertionError(f"Expected aggregation block not found in {view_config_path}")
+    replacement = (
+        "  aggregations-patterns:\n"
+        f"    - id: {aggregation_time.value}\n"
+        f"      time_granularity: {aggregation_time.value}\n"
+        "      scenario: false\n"
+    )
     view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
 
 
@@ -49,7 +52,7 @@ def test_yaml_time_aggregation_drives_full_pipeline(
     dataset_dir = tmp_path / "test_3"
     shutil.copytree(test_files_root / "test_3", dataset_dir)
     replace_aggregation(dataset_dir / "view_config.yml", aggregation_time)
-    results_dir = make_results_dir(tmp_path)
+    results_dir = create_results_dir(tmp_path)
 
     # Act
     run_view_building_process(paths_from_dataset(dataset_dir), ParquetViewSinker(results_dir))
@@ -66,5 +69,19 @@ def test_yaml_missing_aggregation_key_fails_to_parse(test_files_root: Path, tmp_
     config_path = dataset_dir / "view_config.yml"
     config_path.write_text(config_path.read_text().replace(AGGREGATION_BLOCK, ""))
 
-    with pytest.raises(ValueError, match="aggregation"):
+    with pytest.raises(ValueError, match="aggregations"):
+        load_view_config(config_path)
+
+
+def test_yaml_missing_scenario_aggregation_completely_fails_to_parse(test_files_root: Path, tmp_path: Path) -> None:
+    # Arrange
+    dataset_dir = tmp_path / "test_3"
+    shutil.copytree(test_files_root / "test_3", dataset_dir)
+    config_path = dataset_dir / "view_config.yml"
+
+    # Act
+    config_path.write_text(config_path.read_text().replace(AGGREGATION_BLOCK, ""))
+
+    # Assert
+    with pytest.raises(ValueError, match="aggregations"):
         load_view_config(config_path)

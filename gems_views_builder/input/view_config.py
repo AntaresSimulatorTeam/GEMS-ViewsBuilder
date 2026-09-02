@@ -35,19 +35,20 @@ class Location(ViewBuilderBasedModel):
 class Scope(ViewBuilderBasedModel):
     location: Location
     calendar: str
+    extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
-class Aggregation(ViewBuilderBasedModel):
-    time: TimeGranularity
+class AggregationPattern(ViewBuilderBasedModel):
+    id: str
+    time_granularity: TimeGranularity
     scenario: bool
-    extra_locations: list[ExtraLocation] | None = None
 
 
 class CatalogId(ViewBuilderBasedModel):
     id: str
 
 
-class MetricId(ViewBuilderBasedModel):
+class MetricId(ViewBuilderBasedModel, frozen=True):
     id: str
 
 
@@ -55,9 +56,9 @@ class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: Scope
     taxonomy: str
-    aggregation: Aggregation
-    catalog: list[CatalogId] = Field(min_length=1)  # We need minimum one catalog and metric
-    metrics: list[MetricId] = Field(min_length=1)  # If we don't have it call of GVB is useless
+    aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
+    catalogs: list[CatalogId] = Field(min_length=1)
+    metrics: list[MetricId] = Field(min_length=1)
 
 
 @dataclass
@@ -66,8 +67,7 @@ class ViewConfig:
     calendar_id: str
     location_taxonomy_category: str
     taxonomy_id: str
-    time_aggr_granularity: TimeGranularity
-    scenario_aggregation: bool
+    aggregation_patterns: tuple[AggregationPattern, ...]
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
@@ -82,7 +82,6 @@ class ViewConfig:
         return metric_ids_by_catalog
 
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
-        """Resolve metric refs in view-config order into ``self.metrics``."""
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
         for metric_ref in self.metric_ids:
             if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
@@ -91,9 +90,12 @@ class ViewConfig:
                     f"Expected format '<catalog_id>.<metric_id>' for catalog {self.catalog_ids}"
                 )
             catalog_id, metric_id = metric_ref.split(".", 1)
+
             if catalog_id not in self.catalog_ids:
                 raise ValueError(f"Catalog {catalog_id!r} not found in view config")
+
             logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
+
             self.metrics.append(catalogs[catalog_id].get_metric(metric_id))
 
     def get_metrics(self) -> list[Metric]:
@@ -101,25 +103,31 @@ class ViewConfig:
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
+    from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
+
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
+    AggregationPatternsValidator(raw_view_config.aggregations_patterns).validate()
 
     view_config = ViewConfig(
         id=raw_view_config.id,
         calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         taxonomy_id=raw_view_config.taxonomy,
-        catalog_ids={c.id for c in raw_view_config.catalog},
-        time_aggr_granularity=raw_view_config.aggregation.time,
-        scenario_aggregation=raw_view_config.aggregation.scenario,
+        catalog_ids={c.id for c in raw_view_config.catalogs},
+        aggregation_patterns=raw_view_config.aggregations_patterns,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
-        extra_locations=[loc.id for loc in (raw_view_config.aggregation.extra_locations or [])],
+        extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )
+    logg_loaded_view_config(view_config)
+    return view_config
+
+
+def logg_loaded_view_config(view_config: ViewConfig) -> None:
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
-        f"catalogs={len(view_config.catalog_ids)}, metrics={len(view_config.metric_ids)}"
+        f"catalogs={len(view_config.catalog_ids)}, metrics={len(view_config.metrics)}"
     )
-    return view_config
 
 
 def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:

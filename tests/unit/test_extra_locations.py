@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
 from gems_views_builder.input.component import Component
-from gems_views_builder.input.view_config import TimeGranularity, ViewConfig, load_view_config
+from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig, load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
@@ -35,8 +35,7 @@ def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
         calendar_id="calendar_file",
         location_taxonomy_category="balance",
         taxonomy_id="my_taxonomy",
-        time_aggr_granularity=TimeGranularity.HOUR,
-        scenario_aggregation=False,
+        aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
         extra_locations=extra_locations or [],
     )
 
@@ -53,14 +52,15 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregation:
-    time: hour
-    scenario: false
     extra-locations:
       - id: country
       - id: district
       - id: city_part
-  catalog:
+  aggregations-patterns:
+    - id: hourly
+      time_granularity: hour
+      scenario: false
+  catalogs:
     - id: catalog
   metrics:
     - id: catalog.LOAD
@@ -86,10 +86,11 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregation:
-    time: hour
-    scenario: false
-  catalog:
+  aggregations-patterns:
+    - id: hourly
+      time_granularity: hour
+      scenario: false
+  catalogs:
     - id: catalog
   metrics:
     - id: catalog.LOAD

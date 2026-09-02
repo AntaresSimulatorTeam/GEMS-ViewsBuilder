@@ -14,7 +14,6 @@
 """
 
 from datetime import datetime
-from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -22,19 +21,16 @@ import polars as pl
 from pytest import approx
 
 from gems_views_builder.__main__ import build_metric_views
-from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.simulation_table import SimulationTable
-from gems_views_builder.input.view_config import TimeGranularity, ViewConfig
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
+from gems_views_builder.metric_view import TemporalMetricView
 from tests.e2e.utils import (
     build_raw_input_data,
+    make_calendar,
     make_raw_component,
     make_raw_connection,
-)
-from tests.e2e.utils import (
-    make_simulation_table_and_calendar as build_simulation_table_and_calendar,
+    make_simulation_table,
 )
 
 TAXONOMY_CATEGORY_BY_MODEL = {"bus": "balance", "load": "load"}
@@ -79,8 +75,7 @@ def make_view_config() -> ViewConfig:
         location_taxonomy_category="balance",
         taxonomy_id="taxonomy",
         catalog_ids={"catalog"},
-        time_aggr_granularity=TimeGranularity.HOUR,
-        scenario_aggregation=False,
+        aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
         extra_locations=["country", "region"],
         metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
@@ -98,37 +93,34 @@ def make_catalogs(metrics: list[Metric]) -> dict[str, Catalog]:
     }
 
 
-def make_simulation_table_and_calendar(tmp_path: Path) -> tuple[SimulationTable, Calendar]:
-    rows = [
-        ("loadX", "active_load", 0, T1, 10.0),
-        ("loadX", "active_load", 0, T2, 20.0),
-        ("busA", "active_power", 0, T1, 100.0),
-        ("busA", "active_power", 0, T2, 200.0),
-        ("busB", "active_power", 0, T1, 50.0),
-        ("busB", "active_power", 0, T2, 150.0),
-        ("busC", "active_power", 0, T1, 999.0),  # filtering out by country=France
-        ("busC", "active_power", 0, T2, 999.0),
-    ]
-    return build_simulation_table_and_calendar(rows, tmp_path)
+SIMULATION_ROWS = [
+    ("loadX", "active_load", 0, T1, 10.0),
+    ("loadX", "active_load", 0, T2, 20.0),
+    ("busA", "active_power", 0, T1, 100.0),
+    ("busA", "active_power", 0, T2, 200.0),
+    ("busB", "active_power", 0, T1, 50.0),
+    ("busB", "active_power", 0, T2, 150.0),
+    ("busC", "active_power", 0, T1, 999.0),  # filtering out by country=France
+    ("busC", "active_power", 0, T2, 999.0),
+]
 
 
-def build_input(tmp_path: Path) -> RawInputData:
+def build_input() -> RawInputData:
     system = make_system()
     metrics = make_metrics()
     view_config = make_view_config()
     catalogs = make_catalogs(metrics)
-    simulation_table, calendar = make_simulation_table_and_calendar(tmp_path)
     return build_raw_input_data(
         system,
         TAXONOMY_CATEGORY_BY_MODEL,
         view_config,
-        simulation_table,
-        calendar,
+        make_simulation_table(SIMULATION_ROWS),
+        make_calendar(SIMULATION_ROWS),
         catalogs=catalogs,
     )
 
 
-def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], float]:
+def extract_values_from_view(view: TemporalMetricView) -> dict[tuple[str, datetime], float]:
     df = pl.read_parquet(view.persistence_path)
     return dict(
         zip(
@@ -136,6 +128,14 @@ def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], flo
             df["metric_value"].to_list(),
         )
     )
+
+
+def views_by_metric_id(metric_views: list[TemporalMetricView]) -> dict[str, TemporalMetricView]:
+    by_metric_id: dict[str, TemporalMetricView] = {}
+    for view in metric_views:
+        metric_id = pl.read_parquet(view.persistence_path, columns=["metric_id"])["metric_id"][0]
+        by_metric_id[str(metric_id)] = view
+    return by_metric_id
 
 
 # loadX's location is resolved through its port connection to busA, so LOAD is reported under
@@ -170,13 +170,13 @@ EXPECTED_PROD = {
 }
 
 
-def test_extra_locations_values_in_final_metric_views(tmp_path: Path) -> None:
+def test_extra_locations_values_in_final_metric_views() -> None:
     # Arrange
-    input_data = build_input(tmp_path)
+    input_data = build_input()
 
     # Act
-    load_view, prod_view = build_metric_views(input_data)
+    views = views_by_metric_id(build_metric_views(input_data))
 
     # Assert
-    assert extract_values_from_view(load_view) == approx(EXPECTED_LOAD)
-    assert extract_values_from_view(prod_view) == approx(EXPECTED_PROD)
+    assert extract_values_from_view(views["LOAD"]) == approx(EXPECTED_LOAD)
+    assert extract_values_from_view(views["PROD"]) == approx(EXPECTED_PROD)
