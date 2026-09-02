@@ -8,7 +8,7 @@ from gems_views_builder.aggregators.pattern_aggregator import AggregationPattern
 from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import ViewConfig
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import TemporalMetricView
 
 
 class AgggregationProcessor:
@@ -16,7 +16,7 @@ class AgggregationProcessor:
         self.terms_aggregator = TermsAggregator()
         self.aggregation_patterns = AggregationPatternList(view_config)
 
-    def run(self, structured_simulation_table: pl.LazyFrame, metric: Metric) -> list[MetricView]:
+    def run(self, structured_simulation_table: pl.LazyFrame, metric: Metric) -> list[TemporalMetricView]:
         metric_view = self.terms_aggregator.run(structured_simulation_table, metric)
         metric_views = self.aggregation_patterns.run(metric_view, metric)
         return metric_views
