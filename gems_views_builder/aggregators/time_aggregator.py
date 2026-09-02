@@ -80,6 +80,15 @@ class TimeAggregator:
         return TemporalMetricView(file_path, self._time_granularity)
 
 
+def perform_time_aggregations(
+    metric: Metric, metric_view: MetricView, time_granularities: set[TimeGranularity]
+) -> dict[TimeGranularity, TemporalMetricView]:
+    time_metric_views: dict[TimeGranularity, TemporalMetricView] = {}
+    for time_granularity in time_granularities:
+        time_metric_views[time_granularity] = TimeAggregator(time_granularity).run(metric_view, metric)
+    return time_metric_views
+
+
 def logg_write(metric: Metric, file_path: Path) -> None:
     logging.info(f"[{metric.id}] Temporal aggregation written to {file_path}")
 

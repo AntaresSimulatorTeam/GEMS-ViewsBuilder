@@ -2,20 +2,17 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator
-from gems_views_builder.aggregators.time_aggregator import TimeAggregator
-from gems_views_builder.input.catalog import Metric
-from gems_views_builder.input.view_config import AggregationPattern, ViewConfig
-from gems_views_builder.metric_view import MetricView, TemporalMetricView
+from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
+from gems_views_builder.metric_view import TemporalMetricView
 
 
 class PatternAggregator:
     def __init__(self, pattern: AggregationPattern):
-        self.time_aggregator = TimeAggregator(pattern.time_granularity)
+        self.time_granularity = pattern.time_granularity
         self.scenario_aggregator = ScenarioAggregator(pattern)
 
-    def run(self, metric_view: MetricView, metric: Metric) -> TemporalMetricView:
-        temporal_metric_view = self.time_aggregator.run(metric_view, metric)
-        return self.scenario_aggregator.run(temporal_metric_view, metric)
+    def run(self, time_aggregated_metric_views: dict[TimeGranularity, TemporalMetricView]) -> TemporalMetricView:
+        return self.scenario_aggregator.run(time_aggregated_metric_views[self.time_granularity])
 
 
 def aggregation_patterns_factory(view_config: ViewConfig) -> list[PatternAggregator]:
