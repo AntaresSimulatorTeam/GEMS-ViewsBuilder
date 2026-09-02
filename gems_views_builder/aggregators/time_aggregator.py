@@ -82,7 +82,7 @@ class TimeAggregator:
 
 def perform_time_aggregations(
     metric: Metric, metric_view: MetricView, time_granularities: set[TimeGranularity]
-) -> dict[TimeGranularity, MetricView]:
+) -> dict[TimeGranularity, TemporalMetricView]:
     time_metric_views: dict[TimeGranularity, TemporalMetricView] = {}
     for time_granularity in time_granularities:
         time_metric_views[time_granularity] = TimeAggregator(time_granularity).run(metric_view, metric)
