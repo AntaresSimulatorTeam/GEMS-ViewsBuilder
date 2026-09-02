@@ -88,7 +88,7 @@ view:
     config = load_view_config(invalid_config)
 
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        config.fetch_metrics({})
+        config.fetch_metrics([])
 
 
 def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:

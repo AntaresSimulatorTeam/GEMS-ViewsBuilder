@@ -18,7 +18,7 @@ def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
     catalogs = load_catalogs(test_dataset_dir / "catalogs", view_config.catalog_ids)
 
     # Act & Assert
-    CatalogsTaxonomyValidator(list(catalogs.values()), taxonomy).validate()
+    CatalogsTaxonomyValidator(catalogs, taxonomy).validate()
 
 
 @pytest.mark.parametrize(

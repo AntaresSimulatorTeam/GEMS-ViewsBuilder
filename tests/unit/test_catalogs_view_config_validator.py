@@ -40,7 +40,7 @@ def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
     catalogs = load_catalogs(test_dataset_dir / "catalogs", view_config.catalog_ids)
 
     # Act & Assert
-    CatalogsViewConfigValidator(list(catalogs.values()), view_config).validate()
+    CatalogsViewConfigValidator(catalogs, view_config).validate()
 
 
 def test_raises_on_taxonomy_id_mismatch(test_dataset_dir: Path) -> None:

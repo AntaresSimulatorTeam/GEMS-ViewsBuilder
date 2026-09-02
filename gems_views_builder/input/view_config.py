@@ -81,8 +81,9 @@ class ViewConfig:
             metric_ids_by_catalog[catalog_id].add(metric_id)
         return metric_ids_by_catalog
 
-    def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
+    def fetch_metrics(self, catalogs: list[Catalog]) -> None:
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
+        catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for metric_ref in self.metric_ids:
             if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
                 raise ValueError(
@@ -96,7 +97,7 @@ class ViewConfig:
 
             logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
 
-            self.metrics.append(catalogs[catalog_id].get_metric(metric_id))
+            self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics

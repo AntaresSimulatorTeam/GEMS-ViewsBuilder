@@ -17,7 +17,5 @@ class InputConsistencyValidator:
 
     def validate(self) -> None:
         ViewConfigTaxonomyValidator(self.raw_input_data.taxonomy, self.raw_input_data.view_config).validate()
-        CatalogsTaxonomyValidator(list(self.raw_input_data.catalogs.values()), self.raw_input_data.taxonomy).validate()
-        CatalogsViewConfigValidator(
-            list(self.raw_input_data.catalogs.values()), self.raw_input_data.view_config
-        ).validate()
+        CatalogsTaxonomyValidator(self.raw_input_data.catalogs, self.raw_input_data.taxonomy).validate()
+        CatalogsViewConfigValidator(self.raw_input_data.catalogs, self.raw_input_data.view_config).validate()
