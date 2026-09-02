@@ -4,7 +4,7 @@
 from gems_views_builder.aggregators.aggregations_processor import AggregationProcessor
 from gems_views_builder.input.simulation_table import join
 from gems_views_builder.input.view_building_input_data import ViewBuildingInputData
-from gems_views_builder.metric_view import TemporalMetricView
+from gems_views_builder.metric_view import TemporalMetricView, persist_metric_view
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
@@ -23,7 +23,6 @@ class ViewBuilder:
         metric_views: list[TemporalMetricView] = []
         for metric in self.input_data.view_config.metrics:
             metric_structure_table = self.metric_structure_table_builder.build(metric)
-            structured_simulation_table = join(metric_structure_table, self.input_data.filtered_st)
-            metric_view = self.aggregation_processor.run(structured_simulation_table, metric)
-            metric_views.extend(metric_view)
+            structured_simulation_table = persist_metric_view(join(metric_structure_table, self.input_data.filtered_st))
+            metric_views.extend(self.aggregation_processor.run(structured_simulation_table, metric))
         return metric_views

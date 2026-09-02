@@ -10,6 +10,7 @@ from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.simulation_table import FilteredSimulationTable, join
 from gems_views_builder.metric_structure_table import MetricStructureTable
+from gems_views_builder.metric_view import persist_metric_view
 
 
 def create_filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationTable:
@@ -51,7 +52,7 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
     aggregator = TermsAggregator()
 
     # Act
-    structured_simulation_table = join(metric_structure_table, filtered_st)
+    structured_simulation_table = persist_metric_view(join(metric_structure_table, filtered_st))
     metric_view = aggregator.run(
         structured_simulation_table,
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
@@ -70,7 +71,7 @@ def test_terms_aggregation_avg(tmp_path: Path) -> None:
     aggregator = TermsAggregator()
 
     # Act
-    structured_simulation_table = join(metric_structure_table, filtered_st)
+    structured_simulation_table = persist_metric_view(join(metric_structure_table, filtered_st))
     metric_view = aggregator.run(
         structured_simulation_table,
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.AVG, time_operator=AggregOperatorType.SUM),
