@@ -120,6 +120,13 @@ def test_validate_raises_when_simulation_tables_are_missing(tmp_path: Path) -> N
         InputPathsValidator(paths).validate()
 
 
+def test_validate_raises_when_simulation_tables_have_different_extensions(tmp_path: Path) -> None:
+    paths = write_minimal_input_data_set(tmp_path)
+    paths.simulation_tables = [tmp_path / "simulation_table.csv", tmp_path / "simulation_table.parquet"]
+    with pytest.raises(ValueError, match="Simulation table files must have the same extension"):
+        InputPathsValidator(paths).validate()
+
+
 def test_validate_passes_when_simulation_table_is_csv(tmp_path: Path) -> None:
     paths = write_minimal_input_data_set(tmp_path)
     csv_table = tmp_path / "simulation_table.csv"
