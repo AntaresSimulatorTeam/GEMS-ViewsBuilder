@@ -29,7 +29,6 @@ class TimeGranularity(Enum):
 
 class Location(ViewBuilderBasedModel):
     taxonomy_category: str
-    # Here will be filter in next PR
 
 
 class Scope(ViewBuilderBasedModel):
