@@ -69,10 +69,16 @@ def test_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
     view_config.catalog_ids = {"catalog_a", "catalog_b"}
-    view_config.metric_ids = ["catalog_a.LOAD", "catalog_a.PROD", "catalog_b.BALANCE", "catalog_b.FLOW"]
+    view_config.metric_ids = [
+        "catalog_a.LOAD",
+        "catalog_a.PROD",
+        "catalog_b.BALANCE",
+        "catalog_b.FLOW",
+        "catalog_b.PROD",
+    ]
     catalogs = [
         make_catalog("catalog_a", ["LOAD", "PROD"]),
-        make_catalog("catalog_b", ["BALANCE", "FLOW"]),
+        make_catalog("catalog_b", ["BALANCE", "FLOW", "PROD"]),
     ]
 
     # Act & Assert
