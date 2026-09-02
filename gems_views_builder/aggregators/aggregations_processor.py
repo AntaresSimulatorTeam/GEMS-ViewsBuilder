@@ -19,12 +19,12 @@ class AgggregationProcessor:
         self.time_granularities = view_config.get_time_granularities()
 
     def run(self, structured_simulation_table: pl.LazyFrame, metric: Metric) -> list[TemporalMetricView]:
-        metric_views: list[TemporalMetricView] = []
+        time_metric_views: list[TemporalMetricView] = []
         metric_view = self.terms_aggregator.run(structured_simulation_table, metric)
 
         time_aggregated_metric_views = perform_time_aggregations(metric, metric_view, self.time_granularities)
 
         for aggregation in self.aggregation_patterns:
-            metric_view = aggregation.run(time_aggregated_metric_views)
-            metric_views.append(metric_view)
-        return metric_views
+            view = aggregation.run(time_aggregated_metric_views)
+            time_metric_views.append(metric_view)
+        return time_metric_views

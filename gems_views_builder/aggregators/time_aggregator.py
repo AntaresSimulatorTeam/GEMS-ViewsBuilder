@@ -81,12 +81,12 @@ class TimeAggregator:
 
 
 def perform_time_aggregations(
-    metric: Metric, metric_view: TemporalMetricView, time_granularities: set[TimeGranularity]
+    metric: Metric, metric_view: MetricView, time_granularities: set[TimeGranularity]
 ) -> dict[TimeGranularity, MetricView]:
-    metric_views: dict[TimeGranularity, MetricView] = {}
+    time_metric_views: dict[TimeGranularity, TemporalMetricView] = {}
     for time_granularity in time_granularities:
-        metric_views[time_granularity] = TimeAggregator(time_granularity).run(metric_view, metric)
-    return metric_views
+        time_metric_views[time_granularity] = TimeAggregator(time_granularity).run(metric_view, metric)
+    return time_metric_views
 
 
 def logg_write(metric: Metric, file_path: Path) -> None:
