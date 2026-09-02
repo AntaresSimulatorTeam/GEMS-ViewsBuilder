@@ -61,8 +61,13 @@ class InputPathsValidator:
         if not self.input_paths.simulation_tables:
             raise ValueError("Simulation table files are required")
 
+        files_extensions = set()
         for path in self.input_paths.simulation_tables:
             require_suffix(path, SIMULATION_TABLE_SUFFIXES, "Simulation table")
+            files_extensions.add(path.suffix.lower())
+
+        if len(files_extensions) > 1:
+            raise ValueError(f"Simulation table files must have the same extension, got: {', '.join(files_extensions)}")
 
     def validate(self) -> None:
         logging.info("Starting input paths validation")
