@@ -3,6 +3,7 @@
 
 from pathlib import Path
 
+import yaml
 from gems_craft.study.parsing import SystemSchema, parse_yaml_system  # type: ignore
 
 from gems_views_builder.input.library import load_yml_libs
@@ -23,3 +24,27 @@ def test_system_exposes_components_and_connections(test_dataset_dir: Path) -> No
     system = load_system(test_dataset_dir / "system.yml", load_yml_libs(library_dir))
     assert len(system.components) > 0
     assert isinstance(system.connections, list)
+
+
+def make_system_with_no_param(src: Path, dest: Path) -> Path:
+    yml_system = yaml.safe_load(src.read_text(encoding="utf-8"))
+    for component in yml_system["system"]["components"]:
+        component.pop("parameters", None)
+    dest.write_text(yaml.safe_dump(yml_system), encoding="utf-8")
+    return dest
+
+
+def test_load_system_tolerates_missing_component_parameters(test_dataset_dir: Path, tmp_path: Path) -> None:
+    yml_libs = load_yml_libs(test_dataset_dir / "libraries")
+    system = load_system(test_dataset_dir / "system.yml", yml_libs)
+
+    system_no_params_file = make_system_with_no_param(
+        test_dataset_dir / "system.yml", tmp_path / "system_no_params.yml"
+    )
+    system_no_params = load_system(
+        system_no_params_file,
+        yml_libs,
+    )
+
+    assert {c.id for c in system_no_params.components} == {c.id for c in system.components}
+    assert len(system_no_params.connections) == len(system.connections)

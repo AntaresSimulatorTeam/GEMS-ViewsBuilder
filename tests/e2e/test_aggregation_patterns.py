@@ -24,9 +24,10 @@ from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
 from tests.e2e.utils import (
     build_raw_input_data,
     create_results_dir,
+    make_calendar,
     make_raw_component,
     make_raw_connection,
-    make_simulation_table_and_calendar,
+    make_simulation_table,
 )
 
 TAXONOMY_CATEGORY_BY_MODEL = {"bus": "balance", "load": "load"}
@@ -92,26 +93,23 @@ def make_catalogs(metrics: list[Metric]) -> dict[str, Catalog]:
     }
 
 
-def build_input(tmp_path: Path) -> RawInputData:
+def build_input() -> RawInputData:
     system = make_system()
     metrics = make_metrics()
     view_config = make_view_config()
     catalogs = make_catalogs(metrics)
-    simulation_table, calendar = make_simulation_table_and_calendar(
-        [
-            ("loadX", "active_load", 0, T1, 10.0),
-            ("loadX", "active_load", 0, T2, 20.0),
-            ("busA", "active_power", 0, T1, 100.0),
-            ("busA", "active_power", 0, T2, 200.0),
-        ],
-        tmp_path,
-    )
+    rows = [
+        ("loadX", "active_load", 0, T1, 10.0),
+        ("loadX", "active_load", 0, T2, 20.0),
+        ("busA", "active_power", 0, T1, 100.0),
+        ("busA", "active_power", 0, T2, 200.0),
+    ]
     return build_raw_input_data(
         system,
         TAXONOMY_CATEGORY_BY_MODEL,
         view_config,
-        simulation_table,
-        calendar,
+        make_simulation_table(rows),
+        make_calendar(rows),
         catalogs=catalogs,
     )
 
@@ -127,7 +125,7 @@ def sort_by_time_granularity(result_files: list[Path]) -> dict[str, Path]:
 
 def test_one_output_file_per_time_granularity_merges_all_scenarios(tmp_path: Path) -> None:
     # Arrange
-    input_data = build_input(tmp_path)
+    input_data = build_input()
     results_dir = create_results_dir(tmp_path)
 
     # Act
