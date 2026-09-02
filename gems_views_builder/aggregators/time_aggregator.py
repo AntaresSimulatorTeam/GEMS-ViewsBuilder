@@ -10,7 +10,7 @@ from shutil import rmtree
 
 import polars as pl
 
-from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
+from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView, TemporalMetricView
@@ -76,12 +76,7 @@ class TimeAggregator:
         file_path = (
             self._temporal_aggregation_dir / f"{self._time_granularity.value}_{metric.id}_{uuid.uuid4()}.parquet"
         )
-        view.sink_parquet(
-            path=file_path,
-            compression=PARQUET_COMPRESSION,
-            compression_level=PARQUET_COMPRESSION_LEVEL,
-            row_group_size=PARQUET_ROW_GROUP_SIZE,
-        )
+        sink_to_parquet(view, file_path)
         logg_write(metric, file_path)
         return TemporalMetricView(file_path, self._time_granularity)
 

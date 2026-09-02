@@ -9,6 +9,7 @@ from shutil import rmtree
 
 import polars as pl
 
+from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
@@ -60,6 +61,10 @@ class FilteredSimulationTable:
         rmtree(self.file_path.parent, ignore_errors=True)
 
 
+def load_simulation_tables(simulation_tables: list[Path]) -> list[SimulationTable]:
+    return [load_simulation_table(simulation_table) for simulation_table in simulation_tables]
+
+
 def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
     """Load and validate a simulation table from a parquet or csv file."""
     suffix = simulation_table_file.suffix.lower()
@@ -75,41 +80,35 @@ def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
     return SimulationTable(dataframe)
 
 
-def filter_simulation_table(simulation_table: SimulationTable, calendar: Calendar) -> FilteredSimulationTable:
-    """Filter simulation_table by calendar, persist result to a private tempdir, and return it."""
+def concat_simulation_tables(simulation_tables: list[SimulationTable]) -> pl.LazyFrame:
+    if not simulation_tables:
+        raise ValueError("No simulation tables to concat")
+    return pl.concat([table.dataframe for table in simulation_tables])
+
+
+def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) -> FilteredSimulationTable:
+    """Filter simulation tables by calendar, persist result to a private tempdir, and return it."""
     logging.info("Filtering simulation table by calendar")
     intermediates_dir = Path(tempfile.mkdtemp())
     output_path = intermediates_dir / "simulation_table_filtered.parquet"
-
     # Time-dependent rows: keep only timesteps present in the calendar.
-    time_dep_path = output_path.with_suffix(".time_dep.parquet")
-    (
-        simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
+    time_dep = (
+        simulation_table.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
         .drop("block_right")
-    ).sink_parquet(time_dep_path, compression="zstd", compression_level=3)
-
-    # Non-time-dependent rows (absolute_time_index IS NULL) are not tied
-    # to any timestep; pass them through with a null granular_date so
-    # their constant values are preserved in the view.
-    non_time_dep_path = output_path.with_suffix(".non_time_dep.parquet")
-    granular_date_dtype = pl.read_parquet_schema(time_dep_path)["granular_date"]
-    (
-        simulation_table.dataframe.filter(pl.col("absolute_time_index").is_null()).with_columns(
-            pl.lit(None).cast(granular_date_dtype).alias("granular_date")
-        )
-    ).sink_parquet(non_time_dep_path, compression="zstd", compression_level=3)
-
-    pl.scan_parquet([time_dep_path, non_time_dep_path]).sink_parquet(
-        output_path, compression="zstd", compression_level=3, row_group_size=64_000
     )
-    time_dep_path.unlink()
-    non_time_dep_path.unlink()
+    # Non-time-dependent rows are not tied to a timestep, keep them with a null date.
+    granular_date_dtype = calendar.dataframe.collect_schema()["granular_date"]
+    non_time_dep = simulation_table.filter(pl.col("absolute_time_index").is_null()).with_columns(
+        pl.lit(None).cast(granular_date_dtype).alias("granular_date")
+    )
+    columns = time_dep.collect_schema().names()
+    sink_to_parquet(pl.concat([time_dep.select(columns), non_time_dep.select(columns)]), output_path)
     logging.info(f"Filtered simulation table written to {output_path}")
 
-    dataframe = pl.scan_parquet(output_path)
-    validate_columns(dataframe, output_path.stem, FILTERED_SIMULATION_TABLE_COLUMNS, "FilteredSimulationTable")
-    return FilteredSimulationTable(output_path, dataframe)
+    filtered = pl.scan_parquet(output_path)
+    validate_columns(filtered, output_path.stem, FILTERED_SIMULATION_TABLE_COLUMNS, "FilteredSimulationTable")
+    return FilteredSimulationTable(output_path, filtered)
 
 
 def validate_columns(dataframe: pl.LazyFrame, table_id: str, expected: frozenset[str], label: str) -> None:

@@ -20,6 +20,6 @@ class RawInputData:
     view_config: ViewConfig
     libraries: dict[str, Library]
     system: System
-    simulation_table: SimulationTable
+    simulation_tables: list[SimulationTable]
     calendar: Calendar
     catalogs: dict[str, Catalog] = field(default_factory=dict)

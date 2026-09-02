@@ -36,7 +36,7 @@ def write_minimal_input_data_set(root: Path) -> InputPaths:
             calendar=calendar,
             taxonomy=taxonomy,
             view_config=view_config,
-            simulation_table=simulation_table,
+            simulation_tables=str(simulation_table),
         )
     )
 
@@ -108,8 +108,22 @@ def test_validate_raises_when_view_config_has_wrong_extension(tmp_path: Path) ->
 
 def test_validate_raises_when_simulation_table_has_wrong_extension(tmp_path: Path) -> None:
     paths = write_minimal_input_data_set(tmp_path)
-    paths.simulation_table = tmp_path / "simulation_table.xls"
+    paths.simulation_tables = [tmp_path / "simulation_table.xls"]
     with pytest.raises(ValueError, match="Simulation table"):
+        InputPathsValidator(paths).validate()
+
+
+def test_validate_raises_when_simulation_tables_are_missing(tmp_path: Path) -> None:
+    paths = write_minimal_input_data_set(tmp_path)
+    paths.simulation_tables = []
+    with pytest.raises(ValueError, match="Simulation table files are required"):
+        InputPathsValidator(paths).validate()
+
+
+def test_validate_raises_when_simulation_tables_have_different_extensions(tmp_path: Path) -> None:
+    paths = write_minimal_input_data_set(tmp_path)
+    paths.simulation_tables = [tmp_path / "simulation_table.csv", tmp_path / "simulation_table.parquet"]
+    with pytest.raises(ValueError, match="Simulation table files must have the same extension"):
         InputPathsValidator(paths).validate()
 
 
@@ -117,5 +131,5 @@ def test_validate_passes_when_simulation_table_is_csv(tmp_path: Path) -> None:
     paths = write_minimal_input_data_set(tmp_path)
     csv_table = tmp_path / "simulation_table.csv"
     csv_table.touch()
-    paths.simulation_table = csv_table
+    paths.simulation_tables = [csv_table]
     InputPathsValidator(paths).validate()
