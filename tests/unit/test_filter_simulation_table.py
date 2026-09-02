@@ -10,7 +10,8 @@ import pytest
 from gems_views_builder import Calendar, FilteredSimulationTable, load_calendar
 from gems_views_builder.input.simulation_table import (
     SimulationTable,
-    filter_simulation_tables,
+    concat_simulation_tables,
+    filter_simulation_table,
     load_simulation_table,
 )
 
@@ -23,7 +24,7 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     calendar = load_calendar(test_dataset_dir / "calendar_file.csv")
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = filter_simulation_tables([simulation_table], calendar)
+    filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
     assert isinstance(filtered_table, FilteredSimulationTable)
     filtered = pl.read_parquet(filtered_table.file_path)
 
@@ -64,7 +65,7 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     duplicated.write_parquet(sim_path_block2)
     simulation_table = load_simulation_table(sim_path_block2)
 
-    filtered_table = filter_simulation_tables([simulation_table], calendar)
+    filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
     assert isinstance(filtered_table, FilteredSimulationTable)
     filtered = pl.read_parquet(filtered_table.file_path)
     # Time-dependent rows with block=2 are all dropped; only non-time-dependent
@@ -82,7 +83,7 @@ def test_filter_simulation_table_writes_parquet(
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = filter_simulation_tables([simulation_table], calendar)
+    filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
     assert isinstance(filtered_table, FilteredSimulationTable)
 
     assert filtered_table.file_path.exists(), "Output parquet should be created"
@@ -141,15 +142,6 @@ def make_single_row_calendar(absolute_time_index: int, block: str, granular_date
     )
 
 
-def test_filter_simulation_tables_raises_when_list_is_empty() -> None:
-    # Arrange
-    calendar = make_single_row_calendar(absolute_time_index=1, block="b1", granular_date=datetime(2026, 1, 1))
-
-    # Act & Assert
-    with pytest.raises(ValueError, match="No simulation tables to concat"):
-        filter_simulation_tables([], calendar)
-
-
 @pytest.mark.parametrize(
     ("block_a", "block_b", "expected_components"),
     [
@@ -158,7 +150,7 @@ def test_filter_simulation_tables_raises_when_list_is_empty() -> None:
         ("b2", "b1", {"comp-b"}),
     ],
 )
-def test_filter_simulation_tables_keeps_calendar_matching_rows_from_every_table(
+def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
     block_a: str,
     block_b: str,
     expected_components: set[str],
@@ -170,7 +162,7 @@ def test_filter_simulation_tables_keeps_calendar_matching_rows_from_every_table(
     st_b = SimulationTable(pl.DataFrame([make_single_row_simulation_table_(component="comp-b", block=block_b)]).lazy())
 
     # Act
-    filtered_table = filter_simulation_tables([st_a, st_b], calendar)
+    filtered_table = filter_simulation_table(concat_simulation_tables([st_a, st_b]), calendar)
 
     # Assert
     filtered = pl.read_parquet(filtered_table.file_path)

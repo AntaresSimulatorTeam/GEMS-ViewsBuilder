@@ -113,6 +113,13 @@ def test_validate_raises_when_simulation_table_has_wrong_extension(tmp_path: Pat
         InputPathsValidator(paths).validate()
 
 
+def test_validate_raises_when_simulation_tables_are_missing(tmp_path: Path) -> None:
+    paths = write_minimal_input_data_set(tmp_path)
+    paths.simulation_tables = []
+    with pytest.raises(ValueError, match="Simulation table files are required"):
+        InputPathsValidator(paths).validate()
+
+
 def test_validate_passes_when_simulation_table_is_csv(tmp_path: Path) -> None:
     paths = write_minimal_input_data_set(tmp_path)
     csv_table = tmp_path / "simulation_table.csv"

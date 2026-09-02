@@ -86,14 +86,11 @@ def concat_simulation_tables(simulation_tables: list[SimulationTable]) -> pl.Laz
     return pl.concat([table.dataframe for table in simulation_tables])
 
 
-def filter_simulation_tables(simulation_tables: list[SimulationTable], calendar: Calendar) -> FilteredSimulationTable:
+def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) -> FilteredSimulationTable:
     """Filter simulation tables by calendar, persist result to a private tempdir, and return it."""
     logging.info("Filtering simulation table by calendar")
-    simulation_table = concat_simulation_tables(simulation_tables)
-
     intermediates_dir = Path(tempfile.mkdtemp())
     output_path = intermediates_dir / "simulation_table_filtered.parquet"
-
     # Time-dependent rows: keep only timesteps present in the calendar.
     time_dep = (
         simulation_table.join(calendar.dataframe, on="absolute_time_index", how="inner")
