@@ -6,6 +6,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
+
 from polars import LazyFrame
 
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"

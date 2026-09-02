@@ -4,6 +4,7 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+
 from gems_views_builder.input.view_config import TimeGranularity
 
 
@@ -21,4 +22,3 @@ class MetricView:
 @dataclass
 class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity
-
