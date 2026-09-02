@@ -45,12 +45,12 @@ class Taxonomy:
     categories: dict[str, TaxonomyCategory] = field(default_factory=dict)
 
 
-def group_categories_ports_by_id(taxon: Taxonomy) -> dict[str, set[str]]:
-    return {category_id: {port.id for port in category.ports} for category_id, category in taxon.categories.items()}
+def group_categories_ports_by_id(tax: Taxonomy) -> dict[str, set[str]]:
+    return {category_id: {port.id for port in category.ports} for category_id, category in tax.categories.items()}
 
 
-def allowed_output_ids(category: TaxonomyCategory) -> set[str]:
-    return {item.id for item in category.variables} | {item.id for item in category.extra_outputs}
+def allowed_output_ids(taxon: TaxonomyCategory) -> set[str]:
+    return {var.id for var in taxon.variables} | {extra_output.id for extra_output in taxon.extra_outputs}
 
 
 def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
