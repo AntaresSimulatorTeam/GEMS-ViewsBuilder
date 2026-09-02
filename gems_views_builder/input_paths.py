@@ -22,16 +22,8 @@ class InputPaths:
 @dataclass
 class SimulationTablesPathsResolver:
     """
-    Simulation tables pattern will look like:
-
-    Directory explicitly listed, match only files in this directory
-    fake_path/output-xxx/st-x-mc-*.parquet
-    fake_path/output-xxx/st-x-mc-*
-    fake_path/output-xxx/st*
-    fake_path/output-xxx/*
-
+    Recommended pattern: fake_path/output-xxx/st-x-mc-*.parquet
     """
-
     simulation_tables_pattern: str
 
     def resolve(self) -> list[Path]:
