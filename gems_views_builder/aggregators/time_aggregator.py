@@ -1,21 +1,17 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-import atexit
 import logging
-import tempfile
-import uuid
 from pathlib import Path
-from shutil import rmtree
 
 import polars as pl
 
-from gems_views_builder.common import sink_to_parquet
+from gems_views_builder.aggregators.aggregation_operator import AggregationOperator
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView, TemporalMetricView
 
-# # Polars truncate windows are strings like "1h", "1d", "1w", "1mo", "1y".
+# Polars truncate windows are strings like "1h", "1d", "1w", "1mo", "1y".
 TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
     TimeGranularity.HOUR: "1h",
     TimeGranularity.DAY: "1d",
@@ -25,31 +21,20 @@ TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
 }
 
 
-class TimeAggregator:
+class TimeAggregator(AggregationOperator):
     def __init__(self, time_granularity: TimeGranularity) -> None:
+        super().__init__()
         self._time_granularity = time_granularity
-        self._root_dir = Path(tempfile.mkdtemp())
-        self._temporal_aggregation_dir = self._root_dir / "views" / "temporal_aggregation"
-        self._temporal_aggregation_dir.mkdir(parents=True, exist_ok=True)
-        # # The temporal aggregation files are the pipeline's final output: they must
-        # # outlive this aggregator because accumulate_on_disk() reads them after build() returns and
-        # # the ViewBuilder (and this aggregator) has already been garbage collected.
-        # # Cleaning up in __del__ would delete them too early, so we defer removal of
-        # # the whole temp tree until interpreter exit instead.
-        atexit.register(rmtree, self._root_dir, True)
 
-    def run(self, metric_view: MetricView, metric: Metric) -> TemporalMetricView:
+    def _aggregate(self, frame: pl.LazyFrame, metric: Metric) -> pl.LazyFrame:
         """
         Step 2.C from POC[temporal aggregation]: Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
         """
         logging.info(f"[{metric.id}] Aggregating temporally with operator {metric.time_operator.value}")
-        lazy_metric_view = pl.scan_parquet(metric_view.persistence_path)
-
         aggreg_op = aggregate_into_column(metric.time_operator, "granular_metric_value")
         date_column = date_column_into_time_granularity(self._time_granularity)
-
-        view = (
-            lazy_metric_view.with_columns(date_column)
+        return (
+            frame.with_columns(date_column)
             .group_by(
                 [
                     "metric_id",
@@ -71,27 +56,12 @@ class TimeAggregator:
                 ]
             )
         )
-        # # Safest and most elegant option to remove part counter
-        # # https://www.researchgate.net/publication/215758035_A_Universally_Unique_IDentifier_UUID_URN_Namespace
-        file_path = (
-            self._temporal_aggregation_dir / f"{self._time_granularity.value}_{metric.id}_{uuid.uuid4()}.parquet"
-        )
-        sink_to_parquet(view, file_path)
-        logg_write(metric, file_path)
-        return TemporalMetricView(file_path, self._time_granularity)
 
+    def _to_metric_view(self, path: Path, source: MetricView) -> MetricView:
+        return TemporalMetricView(path, self._time_granularity)
 
-def perform_time_aggregations(
-    metric: Metric, metric_view: MetricView, time_granularities: set[TimeGranularity]
-) -> dict[TimeGranularity, TemporalMetricView]:
-    time_metric_views: dict[TimeGranularity, TemporalMetricView] = {}
-    for time_granularity in time_granularities:
-        time_metric_views[time_granularity] = TimeAggregator(time_granularity).run(metric_view, metric)
-    return time_metric_views
-
-
-def logg_write(metric: Metric, file_path: Path) -> None:
-    logging.info(f"[{metric.id}] Temporal aggregation written to {file_path}")
+    def _log_write(self, metric: Metric, path: Path) -> None:
+        logging.info(f"[{metric.id}] Temporal aggregation written to {path}")
 
 
 def date_column_into_time_granularity(time_granularity: TimeGranularity) -> pl.Expr:
