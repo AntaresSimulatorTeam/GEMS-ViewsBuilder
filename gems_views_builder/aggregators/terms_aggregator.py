@@ -8,8 +8,9 @@ from shutil import rmtree
 
 import polars as pl
 
+from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
-from gems_views_builder.metric_view import MetricView, sink_to_parquet
+from gems_views_builder.metric_view import MetricView
 
 
 class TermsAggregator:

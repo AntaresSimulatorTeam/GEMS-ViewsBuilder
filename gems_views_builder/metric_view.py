@@ -4,10 +4,6 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-
-import polars as pl
-
-from gems_views_builder.common import PARQUET_COMPRESSION, PARQUET_COMPRESSION_LEVEL, PARQUET_ROW_GROUP_SIZE
 from gems_views_builder.input.view_config import TimeGranularity
 
 
@@ -26,11 +22,3 @@ class MetricView:
 class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity
 
-
-def sink_to_parquet(view: pl.LazyFrame, path: Path) -> None:
-    view.sink_parquet(
-        path,
-        compression=PARQUET_COMPRESSION,
-        compression_level=PARQUET_COMPRESSION_LEVEL,
-        row_group_size=PARQUET_ROW_GROUP_SIZE,
-    )
