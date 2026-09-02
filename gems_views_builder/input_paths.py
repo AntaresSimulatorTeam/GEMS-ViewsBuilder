@@ -24,6 +24,7 @@ class SimulationTablesPathsResolver:
     """
     Recommended pattern: fake_path/output-xxx/st-x-mc-*.parquet
     """
+
     simulation_tables_pattern: str
 
     def resolve(self) -> list[Path]:
