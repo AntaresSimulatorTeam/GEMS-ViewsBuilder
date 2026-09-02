@@ -93,7 +93,7 @@ class TimeAggregatorDecorator:  # Should inherit from base common class
     def run(self, metric_view: TemporalMetricView, metric: Metric) -> MetricView:
         if self.time_granularity not in self.views_storage:
             view = self.time_aggregator.run(metric_view, metric)
-            self.views_storage[self.time_granularity] = view # Registering the view
+            self.views_storage[self.time_granularity] = view  # Registering the view
             return view
         return self.views_storage[self.time_granularity]
 
