@@ -26,5 +26,5 @@ class AgggregationProcessor:
 
         for aggregation in self.aggregation_patterns:
             view = aggregation.run(time_aggregated_metric_views)
-            time_metric_views.append(metric_view)
+            time_metric_views.append(view)
         return time_metric_views
