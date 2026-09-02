@@ -18,11 +18,13 @@ class View:
 from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
 
 
-def group_by_time_granularity(metric_views: list[TemporalMetricView]) -> list[list[TemporalMetricView]]:
+def group_by_time_granularity(
+    metric_views: list[TemporalMetricView],
+) -> dict[TimeGranularity, list[TemporalMetricView]]:
     views_by_time_granularity: dict[TimeGranularity, list[TemporalMetricView]] = defaultdict(list)
     for view in metric_views:
         views_by_time_granularity[view.time_granularity].append(view)
-    return list(views_by_time_granularity.values())
+    return views_by_time_granularity
 
 
 def accumulate_views(views: list[TemporalMetricView]) -> pl.LazyFrame:
@@ -30,5 +32,5 @@ def accumulate_views(views: list[TemporalMetricView]) -> pl.LazyFrame:
 
 
 def accumulate_on_disk(metric_views: list[TemporalMetricView], sinker: ViewSinker) -> None:
-    for views in group_by_time_granularity(metric_views):
-        sinker.sink(accumulate_views(views), views[0].time_granularity)
+    for time_granularity, views in group_by_time_granularity(metric_views).items():
+        sinker.sink(accumulate_views(views), time_granularity)

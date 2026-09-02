@@ -14,7 +14,6 @@
 """
 
 from datetime import datetime
-from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -22,19 +21,16 @@ import polars as pl
 from pytest import approx
 
 from gems_views_builder.__main__ import build_metric_views
-from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.simulation_table import SimulationTable
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.metric_view import TemporalMetricView
 from tests.e2e.utils import (
     build_raw_input_data,
+    make_calendar,
     make_raw_component,
     make_raw_connection,
-)
-from tests.e2e.utils import (
-    make_simulation_table_and_calendar as build_simulation_table_and_calendar,
+    make_simulation_table,
 )
 
 TAXONOMY_CATEGORY_BY_MODEL = {"bus": "balance", "load": "load"}
@@ -96,32 +92,29 @@ def make_catalogs(metrics: list[Metric]) -> dict[str, Catalog]:
     }
 
 
-def make_simulation_table_and_calendar(tmp_path: Path) -> tuple[SimulationTable, Calendar]:
-    rows = [
-        ("loadX", "active_load", 0, T1, 10.0),
-        ("loadX", "active_load", 0, T2, 20.0),
-        ("busA", "active_power", 0, T1, 100.0),
-        ("busA", "active_power", 0, T2, 200.0),
-        ("busB", "active_power", 0, T1, 50.0),
-        ("busB", "active_power", 0, T2, 150.0),
-        ("busC", "active_power", 0, T1, 999.0),  # filtering out by country=France
-        ("busC", "active_power", 0, T2, 999.0),
-    ]
-    return build_simulation_table_and_calendar(rows, tmp_path)
+SIMULATION_ROWS = [
+    ("loadX", "active_load", 0, T1, 10.0),
+    ("loadX", "active_load", 0, T2, 20.0),
+    ("busA", "active_power", 0, T1, 100.0),
+    ("busA", "active_power", 0, T2, 200.0),
+    ("busB", "active_power", 0, T1, 50.0),
+    ("busB", "active_power", 0, T2, 150.0),
+    ("busC", "active_power", 0, T1, 999.0),  # filtering out by country=France
+    ("busC", "active_power", 0, T2, 999.0),
+]
 
 
-def build_input(tmp_path: Path) -> RawInputData:
+def build_input() -> RawInputData:
     system = make_system()
     metrics = make_metrics()
     view_config = make_view_config()
     catalogs = make_catalogs(metrics)
-    simulation_table, calendar = make_simulation_table_and_calendar(tmp_path)
     return build_raw_input_data(
         system,
         TAXONOMY_CATEGORY_BY_MODEL,
         view_config,
-        simulation_table,
-        calendar,
+        make_simulation_table(SIMULATION_ROWS),
+        make_calendar(SIMULATION_ROWS),
         catalogs=catalogs,
     )
 
@@ -176,9 +169,9 @@ EXPECTED_PROD = {
 }
 
 
-def test_extra_locations_values_in_final_metric_views(tmp_path: Path) -> None:
+def test_extra_locations_values_in_final_metric_views() -> None:
     # Arrange
-    input_data = build_input(tmp_path)
+    input_data = build_input()
 
     # Act
     views = views_by_metric_id(build_metric_views(input_data))
