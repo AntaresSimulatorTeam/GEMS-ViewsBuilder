@@ -12,7 +12,7 @@ from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_view import TemporalMetricView
 
 
-class AgggregationProcessor:
+class AggregationProcessor:
     def __init__(self, view_config: ViewConfig) -> None:
         self.terms_aggregator = TermsAggregator()
         self.aggregation_patterns = aggregation_patterns_factory(view_config)
