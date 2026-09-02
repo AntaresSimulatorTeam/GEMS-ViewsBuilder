@@ -75,12 +75,6 @@ def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
     return ScenarioAggregation() if scenario_aggregation else ScenarioColumnsAddition()
 
 
-"""
-Indeed spatial filter is part of the pattern
-Funtional design, why we're merging this 2 operations == We want to avoid multiple read/write operations
-"""
-
-
 class ScenarioAggregator:
     def __init__(self, aggregation_pattern: AggregationPattern):
         self.scenario_operator = make_scenario_operator(aggregation_pattern.scenario)
