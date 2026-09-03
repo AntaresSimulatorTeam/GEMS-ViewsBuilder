@@ -27,6 +27,10 @@ class TaxonomyCategory(ViewBuilderBasedModel):
     extra_outputs: list[TaxonomyItem] = Field(default_factory=list)
     properties: list[TaxonomyItem] = Field(default_factory=list)
 
+    @property
+    def port_ids(self) -> set[str]:
+        return {port.id for port in self.ports}
+
 
 class TaxonomyData(ViewBuilderBasedModel):
     id: str
@@ -45,11 +49,7 @@ class Taxonomy:
     categories: dict[str, TaxonomyCategory] = field(default_factory=dict)
 
 
-def group_categories_ports_by_id(tax: Taxonomy) -> dict[str, set[str]]:
-    return {category_id: {port.id for port in category.ports} for category_id, category in tax.categories.items()}
-
-
-def allowed_output_ids(taxon: TaxonomyCategory) -> set[str]:
+def allowed_output(taxon: TaxonomyCategory) -> set[str]:
     return {var.id for var in taxon.variables} | {extra_output.id for extra_output in taxon.extra_outputs}
 
 
