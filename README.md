@@ -32,7 +32,8 @@ graph LR
 
     catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --- taxonomy
     view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --- taxonomy
-    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches<br/>• selected metrics exist in catalogs" --- catalog
+    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches" --- catalog
+    view_config -- "• selected metrics exist in catalogs" --- catalog
 
     library_1 -.- library_join
     library_dots -.- library_join

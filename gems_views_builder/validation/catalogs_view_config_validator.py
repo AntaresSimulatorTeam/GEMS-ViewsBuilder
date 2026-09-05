@@ -14,9 +14,9 @@ class ViewConfigCatalogsValidator:
 
     def validate(self) -> None:
         logging.info(f"Validating {len(self.catalogs)} catalog(s) against view config {self.view_config.id!r}")
-        view_config_metric_ids_by_catalog = self.view_config.group_metrics_by_catalog()
         for catalog in self.catalogs:
-            self._validate_catalog_against_view_config(catalog, view_config_metric_ids_by_catalog)
+            self._match_taxonomy(catalog)
+            self._match_location_taxonomy_category(catalog)
         logging.info(f"All catalogs are consistent with view config {self.view_config.id!r}")
 
     def _match_taxonomy(self, catalog: Catalog) -> None:
@@ -34,24 +34,4 @@ class ViewConfigCatalogsValidator:
                 f"{catalog.location_taxonomy_category!r} does not match view config "
                 f"{self.view_config.id!r} location taxonomy category "
                 f"{self.view_config.location_taxonomy_category!r}"
-            )
-
-    def _validate_catalog_against_view_config(
-        self, catalog: Catalog, view_config_metric_ids_by_catalog: dict[str, set[str]]
-    ) -> None:
-        logging.info(f"Validating catalog {catalog.id!r} against view config {self.view_config.id!r}")
-        self._match_taxonomy(catalog)
-        self._match_location_taxonomy_category(catalog)
-        validate_used_metric_ids(catalog, view_config_metric_ids_by_catalog, self.view_config.id)
-
-
-def validate_used_metric_ids(
-    catalog: Catalog, view_config_metric_ids_by_catalog: dict[str, set[str]], view_config_id: str
-) -> None:
-    used_metric_ids_by_catalog = view_config_metric_ids_by_catalog.get(catalog.id, set())
-    for metric_id in used_metric_ids_by_catalog:
-        if metric_id not in catalog.metrics:
-            raise ValueError(
-                f"View config {view_config_id!r} metric "
-                f"{f'{catalog.id}.{metric_id}'!r} is not defined in catalog {catalog.id!r}"
             )

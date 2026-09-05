@@ -4,7 +4,6 @@
 """ViewConfig models and lazy loaders for view_config.yml."""
 
 import logging
-from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -72,14 +71,6 @@ class ViewConfig:
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
-
-    def group_metrics_by_catalog(self) -> dict[str, set[str]]:
-        """Group configured metric refs (``<catalog_id>.<metric_id>``) by catalog id."""
-        metric_ids_by_catalog: dict[str, set[str]] = defaultdict(set)
-        for metric_ref in self.metric_ids:
-            catalog_id, metric_id = metric_ref.split(".", 1)
-            metric_ids_by_catalog[catalog_id].add(metric_id)
-        return metric_ids_by_catalog
 
     def fetch_metrics(self, catalogs: list[Catalog]) -> None:
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
