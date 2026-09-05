@@ -22,4 +22,4 @@ class RawInputData:
     system: System
     simulation_table: SimulationTable
     calendar: Calendar
-    catalogs: dict[str, Catalog] = field(default_factory=dict)
+    catalogs: list[Catalog] = field(default_factory=list)

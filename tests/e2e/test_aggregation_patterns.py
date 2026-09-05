@@ -75,22 +75,23 @@ def make_view_config() -> ViewConfig:
         id="view_area",
         calendar_id="calendar",
         location_taxonomy_category="balance",
+        taxonomy_id="taxonomy",
         catalog_ids={"catalog"},
         aggregation_patterns=PATTERNS,
         metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
 
 
-def make_catalogs(metrics: list[Metric]) -> dict[str, Catalog]:
+def make_catalogs(metrics: list[Metric]) -> list[Catalog]:
     load_metric, prod_metric = metrics
-    return {
-        "catalog": Catalog(
+    return [
+        Catalog(
             id="catalog",
             taxonomy="taxonomy",
             location_taxonomy_category="balance",
             metrics={"LOAD": load_metric, "PROD": prod_metric},
         )
-    }
+    ]
 
 
 def build_input() -> RawInputData:
