@@ -8,7 +8,7 @@ from gems_views_builder.input.view_config import ViewConfig
 
 
 @dataclass
-class CatalogsViewConfigValidator:
+class ViewConfigCatalogsValidator:
     catalogs: list[Catalog]
     view_config: ViewConfig
 

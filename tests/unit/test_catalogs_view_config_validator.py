@@ -14,7 +14,7 @@ from gems_views_builder.input.catalog import (
     load_catalogs,
 )
 from gems_views_builder.input.view_config import load_view_config
-from gems_views_builder.validation.catalogs_view_config_validator import CatalogsViewConfigValidator
+from gems_views_builder.validation.catalogs_view_config_validator import ViewConfigCatalogsValidator
 
 
 def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
@@ -40,7 +40,7 @@ def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
     catalogs = load_catalogs(test_dataset_dir / "catalogs", view_config.catalog_ids)
 
     # Act & Assert
-    CatalogsViewConfigValidator(catalogs, view_config).validate()
+    ViewConfigCatalogsValidator(catalogs, view_config).validate()
 
 
 def test_raises_on_taxonomy_id_mismatch(test_dataset_dir: Path) -> None:
@@ -51,7 +51,7 @@ def test_raises_on_taxonomy_id_mismatch(test_dataset_dir: Path) -> None:
 
     # Act & Assert
     with pytest.raises(ValueError, match="references taxonomy"):
-        CatalogsViewConfigValidator([catalog], view_config).validate()
+        ViewConfigCatalogsValidator([catalog], view_config).validate()
 
 
 def test_raises_on_location_category_mismatch(test_dataset_dir: Path) -> None:
@@ -62,7 +62,7 @@ def test_raises_on_location_category_mismatch(test_dataset_dir: Path) -> None:
 
     # Act & Assert
     with pytest.raises(ValueError, match="location taxonomy category"):
-        CatalogsViewConfigValidator([catalog], view_config).validate()
+        ViewConfigCatalogsValidator([catalog], view_config).validate()
 
 
 def test_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
@@ -82,7 +82,7 @@ def test_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
     ]
 
     # Act & Assert
-    CatalogsViewConfigValidator(catalogs, view_config).validate()
+    ViewConfigCatalogsValidator(catalogs, view_config).validate()
 
 
 def test_raises_when_metric_missing_from_catalog(test_dataset_dir: Path) -> None:
@@ -94,4 +94,4 @@ def test_raises_when_metric_missing_from_catalog(test_dataset_dir: Path) -> None
 
     # Act & Assert
     with pytest.raises(ValueError, match=r"metric 'catalog.MISSING_METRIC' is not defined in catalog 'catalog'"):
-        CatalogsViewConfigValidator(catalogs, view_config).validate()
+        ViewConfigCatalogsValidator(catalogs, view_config).validate()

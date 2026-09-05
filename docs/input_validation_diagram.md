@@ -58,7 +58,7 @@ which only checks that these files are *present*, not their contents).
 | Location taxonomy category exists | `view_config.location_taxonomy_category` is a category defined in `taxonomy.yml` |
 
 ### `catalog.yml` ↔ `view_config.yml`
-[`CatalogsViewConfigValidator`](../gems_views_builder/validation/catalogs_view_config_validator.py)
+[`ViewConfigCatalogsValidator`](../gems_views_builder/validation/catalogs_view_config_validator.py)
 
 Per catalog, checks run in this order:
 
@@ -75,4 +75,4 @@ runs all three edges above, in this order:
 
 1. `ViewConfigTaxonomyValidator` (view_config ↔ taxonomy)
 2. `CatalogsTaxonomyValidator` (catalog ↔ taxonomy)
-3. `CatalogsViewConfigValidator` (catalog ↔ view_config)
+3. `ViewConfigCatalogsValidator` (catalog ↔ view_config)
