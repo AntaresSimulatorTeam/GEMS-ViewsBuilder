@@ -31,16 +31,16 @@ AGGREGATION_OPERATORS = [
 @dataclass
 class ScenarioOperator(ABC):
     @abstractmethod
-    def run(self, frame: pl.LazyFrame) -> pl.LazyFrame:
+    def run(self, dataframe: pl.LazyFrame) -> pl.LazyFrame:
         pass
 
 
 class ScenarioAggregation(ScenarioOperator):
-    def run(self, frame: pl.LazyFrame) -> pl.LazyFrame:
+    def run(self, dataframe: pl.LazyFrame) -> pl.LazyFrame:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
         return (
-            frame.group_by(index_columns)
+            dataframe.group_by(index_columns)
             .agg(AGGREGATION_OPERATORS)
             .unpivot(
                 on=[op.value for op in Operator],
@@ -58,9 +58,9 @@ class ScenarioAggregation(ScenarioOperator):
 
 
 class ScenarioColumnsAddition(ScenarioOperator):
-    def run(self, frame: pl.LazyFrame) -> pl.LazyFrame:
+    def run(self, dataframe: pl.LazyFrame) -> pl.LazyFrame:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
-        return frame.with_columns(
+        return dataframe.with_columns(
             [
                 pl.lit(False, dtype=pl.Boolean).alias("scenario_aggregation"),
                 pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
