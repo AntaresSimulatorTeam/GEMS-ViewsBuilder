@@ -41,13 +41,13 @@ class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity
 
 
-def persist_metric_view(dataframe: pl.LazyFrame) -> MetricView:
+def sink_metric_view(dataframe: pl.LazyFrame) -> MetricView:
     path = _PERSIST_DIR / f"{uuid4()}.parquet"
     sink_to_parquet(dataframe, path)
     return MetricView(path)
 
 
-def persist_temporal_metric_view(dataframe: pl.LazyFrame, time_granularity: TimeGranularity) -> TemporalMetricView:
+def sink_temporal_metric_view(dataframe: pl.LazyFrame, time_granularity: TimeGranularity) -> TemporalMetricView:
     path = _PERSIST_DIR / f"{uuid4()}.parquet"
     sink_to_parquet(dataframe, path)
     return TemporalMetricView(path, time_granularity)

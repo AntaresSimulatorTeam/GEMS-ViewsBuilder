@@ -5,7 +5,7 @@ from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.aggregators.transformation_pattern_aggregator import transformation_patterns_factory
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import ViewConfig
-from gems_views_builder.metric_view import MetricView, TemporalMetricView, persist_metric_view
+from gems_views_builder.metric_view import MetricView, TemporalMetricView, sink_metric_view
 
 
 class TransformationPatternsProcessor:
@@ -14,5 +14,5 @@ class TransformationPatternsProcessor:
         self.transformation_patterns = transformation_patterns_factory(view_config)
 
     def run(self, metric_view: MetricView, metric: Metric) -> list[TemporalMetricView]:
-        metric_view = persist_metric_view(self.terms_aggregator.run(metric_view.get_lazy_frame(), metric))
+        metric_view = sink_metric_view(self.terms_aggregator.run(metric_view.get_lazy_frame(), metric))
         return [pattern.run(metric_view, metric) for pattern in self.transformation_patterns]
