@@ -17,13 +17,12 @@ from datetime import datetime
 from types import SimpleNamespace
 from typing import Any
 
-import polars as pl
 from pytest import approx
 
 from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
+from gems_views_builder.input.view_config import TimeGranularity, TransformationPattern, ViewConfig
 from gems_views_builder.metric_view import TemporalMetricView
 from tests.e2e.utils import (
     build_raw_input_data,
@@ -74,7 +73,9 @@ def make_view_config() -> ViewConfig:
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids={"catalog"},
-        aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
+        transformations_patterns=(
+            TransformationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),
+        ),
         extra_locations=["country", "region"],
         metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
@@ -120,7 +121,7 @@ def build_input() -> RawInputData:
 
 
 def extract_values_from_view(view: TemporalMetricView) -> dict[tuple[str, datetime], float]:
-    df = pl.read_parquet(view.persistence_path)
+    df = view.get_lazy_frame().collect()
     return dict(
         zip(
             zip(df["metric_location"].to_list(), df["view_date"].to_list()),
@@ -132,7 +133,7 @@ def extract_values_from_view(view: TemporalMetricView) -> dict[tuple[str, dateti
 def views_by_metric_id(metric_views: list[TemporalMetricView]) -> dict[str, TemporalMetricView]:
     by_metric_id: dict[str, TemporalMetricView] = {}
     for view in metric_views:
-        metric_id = pl.read_parquet(view.persistence_path, columns=["metric_id"])["metric_id"][0]
+        metric_id = view.get_lazy_frame().select("metric_id").collect()["metric_id"][0]
         by_metric_id[str(metric_id)] = view
     return by_metric_id
 

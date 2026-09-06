@@ -19,7 +19,7 @@ import polars as pl
 from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
+from gems_views_builder.input.view_config import TimeGranularity, TransformationPattern, ViewConfig
 from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
 from tests.e2e.utils import (
     build_raw_input_data,
@@ -36,11 +36,11 @@ T1 = datetime(2026, 1, 1, 3, 0)
 T2 = datetime(2026, 1, 1, 20, 0)
 
 PATTERNS = (
-    AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),
-    AggregationPattern(id="hourly2", time_granularity=TimeGranularity.HOUR, scenario=True),
-    AggregationPattern(id="daily", time_granularity=TimeGranularity.DAY, scenario=False),
-    AggregationPattern(id="daily2", time_granularity=TimeGranularity.DAY, scenario=True),
-    AggregationPattern(id="monthly", time_granularity=TimeGranularity.MONTH, scenario=False),
+    TransformationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),
+    TransformationPattern(id="hourly2", time_granularity=TimeGranularity.HOUR, scenario=True),
+    TransformationPattern(id="daily", time_granularity=TimeGranularity.DAY, scenario=False),
+    TransformationPattern(id="daily2", time_granularity=TimeGranularity.DAY, scenario=True),
+    TransformationPattern(id="monthly", time_granularity=TimeGranularity.MONTH, scenario=False),
 )
 
 
@@ -76,7 +76,7 @@ def make_view_config() -> ViewConfig:
         calendar_id="calendar",
         location_taxonomy_category="balance",
         catalog_ids={"catalog"},
-        aggregation_patterns=PATTERNS,
+        transformations_patterns=PATTERNS,
         metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
 

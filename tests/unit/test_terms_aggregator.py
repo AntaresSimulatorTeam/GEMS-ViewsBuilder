@@ -10,6 +10,7 @@ from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.simulation_table import FilteredSimulationTable, join
 from gems_views_builder.metric_structure_table import MetricStructureTable
+from gems_views_builder.metric_view import sink_metric_view
 
 
 def create_filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationTable:
@@ -51,14 +52,14 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
     aggregator = TermsAggregator()
 
     # Act
-    structured_simulation_table = join(metric_structure_table, filtered_st)
-    metric_view = aggregator.run(
-        structured_simulation_table,
+    structured_simulation_table = sink_metric_view(join(metric_structure_table, filtered_st))
+    result = aggregator.run(
+        structured_simulation_table.get_lazy_frame(),
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
     )
 
     # Assert
-    df = pl.read_parquet(metric_view.persistence_path)
+    df = result.collect()
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(5.0)
 
@@ -70,13 +71,13 @@ def test_terms_aggregation_avg(tmp_path: Path) -> None:
     aggregator = TermsAggregator()
 
     # Act
-    structured_simulation_table = join(metric_structure_table, filtered_st)
-    metric_view = aggregator.run(
-        structured_simulation_table,
+    structured_simulation_table = sink_metric_view(join(metric_structure_table, filtered_st))
+    result = aggregator.run(
+        structured_simulation_table.get_lazy_frame(),
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.AVG, time_operator=AggregOperatorType.SUM),
     )
 
     # Assert
-    df = pl.read_parquet(metric_view.persistence_path)
+    df = result.collect()
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(2.5)

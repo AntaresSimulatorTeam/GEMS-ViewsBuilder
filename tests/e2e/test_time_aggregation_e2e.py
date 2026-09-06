@@ -13,13 +13,15 @@ from gems_views_builder.view import ParquetViewSinker
 from tests.conftest import paths_from_dataset
 from tests.e2e.utils import create_results_dir, fetch_view
 
-AGGREGATION_BLOCK = "  aggregations-patterns:\n    - id: hourly\n      time_granularity: hour\n      scenario: false\n"
+TRANSFORMATION_BLOCK = (
+    "  transformations-patterns:\n    - id: hourly\n      time_granularity: hour\n      scenario: false\n"
+)
 
 
 # test_3/calendar_file.csv spans 2025-01-01 00:00 .. 2025-01-01 23:00 (24 granular hours).
 HOURLY_DATES = [datetime(2025, 1, 1, h) for h in range(24)]
 
-EXPECTED_DATES_BY_AGGREGATION = {
+EXPECTED_DATES_BY_TRANSFORMATION = {
     TimeGranularity.HOUR: HOURLY_DATES,
     TimeGranularity.DAY: [datetime(2025, 1, 1)],
     TimeGranularity.WEEK: [datetime(2024, 12, 30)],
@@ -28,15 +30,15 @@ EXPECTED_DATES_BY_AGGREGATION = {
 }
 
 
-def replace_aggregation(view_config_path: Path, aggregation_time: TimeGranularity) -> None:
+def replace_transformation(view_config_path: Path, transformation_time: TimeGranularity) -> None:
     text = view_config_path.read_text()
     replacement = (
-        "  aggregations-patterns:\n"
-        f"    - id: {aggregation_time.value}\n"
-        f"      time_granularity: {aggregation_time.value}\n"
+        "  transformations-patterns:\n"
+        f"    - id: {transformation_time.value}\n"
+        f"      time_granularity: {transformation_time.value}\n"
         "      scenario: false\n"
     )
-    view_config_path.write_text(text.replace(AGGREGATION_BLOCK, replacement))
+    view_config_path.write_text(text.replace(TRANSFORMATION_BLOCK, replacement))
 
 
 def extract_filtered_rows_from_view(view: pl.DataFrame) -> list[datetime]:
@@ -44,14 +46,14 @@ def extract_filtered_rows_from_view(view: pl.DataFrame) -> list[datetime]:
     return rows["view_date"].to_list()
 
 
-@pytest.mark.parametrize("aggregation_time", list(TimeGranularity))
+@pytest.mark.parametrize("transformation_time", list(TimeGranularity))
 def test_yaml_time_aggregation_drives_full_pipeline(
-    test_files_root: Path, tmp_path: Path, aggregation_time: TimeGranularity
+    test_files_root: Path, tmp_path: Path, transformation_time: TimeGranularity
 ) -> None:
     # Arrange
     dataset_dir = tmp_path / "test_3"
     shutil.copytree(test_files_root / "test_3", dataset_dir)
-    replace_aggregation(dataset_dir / "view_config.yml", aggregation_time)
+    replace_transformation(dataset_dir / "view_config.yml", transformation_time)
     results_dir = create_results_dir(tmp_path)
 
     # Act
@@ -60,28 +62,28 @@ def test_yaml_time_aggregation_drives_full_pipeline(
     # Assert
     view = fetch_view(results_dir)
     dates = extract_filtered_rows_from_view(view)
-    assert dates == EXPECTED_DATES_BY_AGGREGATION[aggregation_time]
+    assert dates == EXPECTED_DATES_BY_TRANSFORMATION[transformation_time]
 
 
-def test_yaml_missing_aggregation_key_fails_to_parse(test_files_root: Path, tmp_path: Path) -> None:
+def test_yaml_missing_transformation_key_fails_to_parse(test_files_root: Path, tmp_path: Path) -> None:
     dataset_dir = tmp_path / "test_3"
     shutil.copytree(test_files_root / "test_3", dataset_dir)
     config_path = dataset_dir / "view_config.yml"
-    config_path.write_text(config_path.read_text().replace(AGGREGATION_BLOCK, ""))
+    config_path.write_text(config_path.read_text().replace(TRANSFORMATION_BLOCK, ""))
 
-    with pytest.raises(ValueError, match="aggregations"):
+    with pytest.raises(ValueError, match="transformations"):
         load_view_config(config_path)
 
 
-def test_yaml_missing_scenario_aggregation_completely_fails_to_parse(test_files_root: Path, tmp_path: Path) -> None:
+def test_yaml_missing_scenario_transformation_completely_fails_to_parse(test_files_root: Path, tmp_path: Path) -> None:
     # Arrange
     dataset_dir = tmp_path / "test_3"
     shutil.copytree(test_files_root / "test_3", dataset_dir)
     config_path = dataset_dir / "view_config.yml"
 
     # Act
-    config_path.write_text(config_path.read_text().replace(AGGREGATION_BLOCK, ""))
+    config_path.write_text(config_path.read_text().replace(TRANSFORMATION_BLOCK, ""))
 
     # Assert
-    with pytest.raises(ValueError, match="aggregations"):
+    with pytest.raises(ValueError, match="transformations"):
         load_view_config(config_path)
