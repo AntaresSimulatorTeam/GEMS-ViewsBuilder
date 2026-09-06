@@ -4,7 +4,7 @@
 import atexit
 import logging
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from shutil import rmtree
 from uuid import uuid4
@@ -23,9 +23,10 @@ class MetricView:
     """View for a single computed metric, stored as a parquet file."""
 
     persistence_path: Path
+    dataframe: pl.LazyFrame = field(init=False)
 
-    def scan(self) -> pl.LazyFrame:
-        return pl.scan_parquet(self.persistence_path)
+    def __post_init__(self) -> None:
+        self.dataframe = pl.scan_parquet(self.persistence_path)
 
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric view {self.persistence_path}")
@@ -37,7 +38,13 @@ class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity
 
 
-def persist_metric_view(frame: pl.LazyFrame) -> MetricView:
+def persist_metric_view(dataframe: pl.LazyFrame) -> MetricView:
     path = _PERSIST_DIR / f"{uuid4()}.parquet"
-    sink_to_parquet(frame, path)
+    sink_to_parquet(dataframe, path)
     return MetricView(path)
+
+
+def persist_temporal_metric_view(dataframe: pl.LazyFrame, time_granularity: TimeGranularity) -> TemporalMetricView:
+    path = _PERSIST_DIR / f"{uuid4()}.parquet"
+    sink_to_parquet(dataframe, path)
+    return TemporalMetricView(path, time_granularity)

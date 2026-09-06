@@ -7,7 +7,6 @@ from statistics import mean
 from statistics import pstdev as std_deviation
 
 import polars as pl
-import pytest
 from pytest import approx
 
 from gems_views_builder.aggregators.scenario_aggregator import (
@@ -71,11 +70,10 @@ def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -
     aggregator = ScenarioAggregator(scenario=False)
 
     # Act
-    result = aggregator.run(metric_view, make_metric())
+    result = aggregator.run(metric_view.dataframe, make_metric())
 
     # Assert
-    df = pl.read_parquet(result.persistence_path).sort("scenario_id")
-    assert result.persistence_path != original_path
+    df = result.collect().sort("scenario_id")
     assert metric_view.persistence_path == original_path
     assert "scenario_aggregation" in df.columns and "scenario_stat" in df.columns
     assert df.height == 3
@@ -93,11 +91,10 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
     aggregator = ScenarioAggregator(scenario=True)
 
     # Act
-    result = aggregator.run(metric_view, make_metric())
+    result = aggregator.run(metric_view.dataframe, make_metric())
 
     # Assert
-    df = pl.read_parquet(result.persistence_path)
-    assert result.persistence_path != original_path
+    df = result.collect()
     assert metric_view.persistence_path == original_path
     assert df.height == 4
     assert set(df["scenario_stat"].to_list()) == {"exp", "std", "min", "max"}
@@ -109,29 +106,3 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
     assert stats_to_values["std"] == approx(std_deviation(values))
     assert stats_to_values["min"] == approx(min(values))
     assert stats_to_values["max"] == approx(max(values))
-
-
-@pytest.mark.parametrize(
-    ("scenario", "locations", "expected_locations"),
-    [
-        (True, ["busA"], {"busA"}),
-        (False, ["busA"], {"busA"}),
-        (True, ["busA", "busC"], {"busA", "busC"}),
-        (False, ["busA", "busC"], {"busA", "busC"}),
-        (True, None, {"busA", "busB", "busC"}),
-        (False, None, {"busA", "busB", "busC"}),
-    ],
-)
-def test_spatial_filter(
-    tmp_path: Path, scenario: bool, locations: list[str] | None, expected_locations: set[str]
-) -> None:
-    # Arrange
-    metric_view = make_metric_view(tmp_path, [("busA", 100.0), ("busB", 50.0), ("busC", 999.0)])
-    scenario_aggregator = ScenarioAggregator(scenario=scenario, spatial_filter=locations)
-
-    # Act
-    result = scenario_aggregator.run(metric_view, make_metric())
-
-    # Assert
-    df = pl.read_parquet(result.persistence_path)
-    assert set(df["metric_location"].to_list()) == expected_locations

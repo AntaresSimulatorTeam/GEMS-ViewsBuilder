@@ -10,8 +10,7 @@ import polars as pl
 class SpatialFilter:
     locations: list[str] | None
 
-
-def apply_spatial_filter(metric_view: pl.LazyFrame, spatial_filter: SpatialFilter) -> pl.LazyFrame:
-    if spatial_filter.locations:
-        return metric_view.filter(pl.col("metric_location").is_in(spatial_filter.locations))
-    return metric_view
+    def apply_spatial_filter(self, dataframe: pl.LazyFrame) -> pl.LazyFrame:
+        if self.locations:
+            return dataframe.filter(pl.col("metric_location").is_in(self.locations))
+        return dataframe

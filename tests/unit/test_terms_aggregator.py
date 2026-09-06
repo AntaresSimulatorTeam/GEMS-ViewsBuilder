@@ -53,13 +53,13 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
 
     # Act
     structured_simulation_table = persist_metric_view(join(metric_structure_table, filtered_st))
-    metric_view = aggregator.run(
-        structured_simulation_table,
+    result = aggregator.run(
+        structured_simulation_table.dataframe,
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
     )
 
     # Assert
-    df = pl.read_parquet(metric_view.persistence_path)
+    df = result.collect()
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(5.0)
 
@@ -72,12 +72,12 @@ def test_terms_aggregation_avg(tmp_path: Path) -> None:
 
     # Act
     structured_simulation_table = persist_metric_view(join(metric_structure_table, filtered_st))
-    metric_view = aggregator.run(
-        structured_simulation_table,
+    result = aggregator.run(
+        structured_simulation_table.dataframe,
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.AVG, time_operator=AggregOperatorType.SUM),
     )
 
     # Assert
-    df = pl.read_parquet(metric_view.persistence_path)
+    df = result.collect()
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(2.5)

@@ -5,14 +5,11 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
 
 import polars as pl
 
 from gems_views_builder.aggregators.aggregation_operator import AggregationOperator
 from gems_views_builder.input.catalog import Metric
-from gems_views_builder.metric_view import MetricView, TemporalMetricView
-from gems_views_builder.spatial_filter import SpatialFilter, apply_spatial_filter
 
 
 class Operator(Enum):
@@ -76,18 +73,8 @@ def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
 
 
 class ScenarioAggregator(AggregationOperator):
-    def __init__(self, scenario: bool, spatial_filter: list[str] | None = None) -> None:
-        super().__init__()
+    def __init__(self, scenario: bool) -> None:
         self.scenario_operator = make_scenario_operator(scenario)
-        self.spatial_filter = SpatialFilter(spatial_filter)
 
-    def _aggregate(self, frame: pl.LazyFrame, metric: Metric) -> pl.LazyFrame:
-        return apply_spatial_filter(self.scenario_operator.run(frame), self.spatial_filter)
-
-    def _to_metric_view(self, path: Path, source: MetricView) -> MetricView:
-        if isinstance(source, TemporalMetricView):
-            return TemporalMetricView(path, source.time_granularity)
-        return MetricView(path)
-
-    def _log_write(self, metric: Metric, path: Path) -> None:
-        logging.info(f"Scenario view written to {path}")
+    def run(self, dataframe: pl.LazyFrame, metric: Metric) -> pl.LazyFrame:
+        return self.scenario_operator.run(dataframe)
