@@ -14,6 +14,5 @@ class TransformationPatternsProcessor:
         self.transformation_patterns = transformation_patterns_factory(view_config)
 
     def run(self, metric_view: MetricView, metric: Metric) -> list[TemporalMetricView]:
-        # Reusable term aggregated dataframe
-        metric_view = persist_metric_view(self.terms_aggregator.run(metric_view.dataframe, metric))
+        metric_view = persist_metric_view(self.terms_aggregator.run(metric_view.get_lazy_frame(), metric))
         return [pattern.run(metric_view, metric) for pattern in self.transformation_patterns]

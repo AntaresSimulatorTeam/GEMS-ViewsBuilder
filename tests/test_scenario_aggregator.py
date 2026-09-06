@@ -70,7 +70,7 @@ def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -
     aggregator = ScenarioAggregator(scenario=False)
 
     # Act
-    result = aggregator.run(metric_view.dataframe, make_metric())
+    result = aggregator.run(metric_view.get_lazy_frame(), make_metric())
 
     # Assert
     df = result.collect().sort("scenario_id")
@@ -91,7 +91,7 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
     aggregator = ScenarioAggregator(scenario=True)
 
     # Act
-    result = aggregator.run(metric_view.dataframe, make_metric())
+    result = aggregator.run(metric_view.get_lazy_frame(), make_metric())
 
     # Assert
     df = result.collect()

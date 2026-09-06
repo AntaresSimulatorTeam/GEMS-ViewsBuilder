@@ -93,7 +93,7 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
     metric = make_metric(AggregOperatorType.SUM)
 
     # Act
-    result = aggregator.run(metric_view.dataframe, metric)
+    result = aggregator.run(metric_view.get_lazy_frame(), metric)
 
     # Assert
     df = result.collect()
@@ -111,7 +111,7 @@ def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     metric = make_metric(AggregOperatorType.AVG)
 
     # Act
-    result = aggregator.run(metric_view.dataframe, metric)
+    result = aggregator.run(metric_view.get_lazy_frame(), metric)
 
     # Assert
     df = result.collect()

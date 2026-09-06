@@ -64,5 +64,5 @@ def test_spatial_filter(
 
     result = TransformationPatternOperator(make_pattern(scenario, spatial_filter)).run(metric_view, make_metric())
 
-    df = pl.read_parquet(result.persistence_path)
+    df = result.get_lazy_frame().collect()
     assert set(df["metric_location"].to_list()) == expected_locations

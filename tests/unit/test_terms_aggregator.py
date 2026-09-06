@@ -54,7 +54,7 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
     # Act
     structured_simulation_table = persist_metric_view(join(metric_structure_table, filtered_st))
     result = aggregator.run(
-        structured_simulation_table.dataframe,
+        structured_simulation_table.get_lazy_frame(),
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
     )
 
@@ -73,7 +73,7 @@ def test_terms_aggregation_avg(tmp_path: Path) -> None:
     # Act
     structured_simulation_table = persist_metric_view(join(metric_structure_table, filtered_st))
     result = aggregator.run(
-        structured_simulation_table.dataframe,
+        structured_simulation_table.get_lazy_frame(),
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.AVG, time_operator=AggregOperatorType.SUM),
     )
 

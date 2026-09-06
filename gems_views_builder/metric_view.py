@@ -28,6 +28,9 @@ class MetricView:
     def __post_init__(self) -> None:
         self.dataframe = pl.scan_parquet(self.persistence_path)
 
+    def get_lazy_frame(self) -> pl.LazyFrame:
+        return self.dataframe
+
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric view {self.persistence_path}")
         self.persistence_path.unlink(missing_ok=True)

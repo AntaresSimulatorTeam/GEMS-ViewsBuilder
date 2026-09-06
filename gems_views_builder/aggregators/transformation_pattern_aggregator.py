@@ -20,7 +20,7 @@ class TransformationPatternOperator:
         ]
 
     def run(self, metric_view: MetricView, metric: Metric) -> TemporalMetricView:
-        dataframe = self.spatial_filter.apply_spatial_filter(metric_view.dataframe)
+        dataframe = self.spatial_filter.apply_spatial_filter(metric_view.get_lazy_frame())
         for aggregator in self.transformation_aggregators:
             dataframe = aggregator.run(dataframe, metric)
         return persist_temporal_metric_view(dataframe, self.time_granularity)
