@@ -36,9 +36,12 @@ class InputPathsValidator:
             )
 
     def _check_catalogs(self) -> None:
-        catalogs = self.input_paths.catalogs
-        logging.info(f"Validating {len(catalogs)} catalog file(s)")
-        unexpected = [str(path) for path in catalogs if path.suffix.lower() != YAML_SUFFIX]
+        logging.info(f"Validating {len(self.input_paths.catalogs)} catalog file(s)")
+        unexpected = [
+            str(catalog_path)
+            for catalog_path in self.input_paths.catalogs
+            if catalog_path.suffix.lower() != YAML_SUFFIX
+        ]
         if unexpected:
             raise ValueError(f"Catalog files must have extension {YAML_SUFFIX}, got: {', '.join(unexpected)}")
 
