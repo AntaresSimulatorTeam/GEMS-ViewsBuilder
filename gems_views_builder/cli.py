@@ -37,11 +37,11 @@ REQUIRED_PATHS_OPTIONS: list[PathOption] = [
     PathOption("system", SystemType.FILE, Path.is_file),
     PathOption("calendar", SystemType.FILE, Path.is_file),
     PathOption("taxonomy", SystemType.FILE, Path.is_file),
-    PathOption("view-config", SystemType.FILE, Path.is_file),
 ]
 
 GLOBAL_PATTERN_MATCHING_OPTIONS: list[Option] = [
     Option("simulation-tables", SystemType.FILES),
+    Option("view-configs", SystemType.FILES),
 ]
 
 
@@ -102,7 +102,7 @@ def add_global_pattern_matching_options(
             f"--{option.name}",
             type=str,
             required=True,
-            help=f"Global pattern matching for {option.name} (e.g. path/st-x-mc-*.parquet).",
+            help=f"Global pattern matching for {option.name} (e.g. path/st-x-mc-*.parquet or path/view-config-*.yml/).",
         )
 
 

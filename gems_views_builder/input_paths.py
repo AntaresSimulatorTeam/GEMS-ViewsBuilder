@@ -4,8 +4,9 @@
 """Explicit on-disk paths consumed by GEMS-ViewsBuilder (provided directly via CLI)."""
 
 from argparse import Namespace
-from dataclasses import dataclass
 from pathlib import Path
+
+from gems_views_builder.paths_resolver import PathsResolver
 
 
 class InputPaths:
@@ -15,22 +16,5 @@ class InputPaths:
         self.system: Path = Path(args.system)
         self.calendar: Path = Path(args.calendar)
         self.taxonomy: Path = Path(args.taxonomy)
-        self.view_config: Path = Path(args.view_config)
-        self.simulation_tables: list[Path] = SimulationTablesPathsResolver(args.simulation_tables).resolve()
-
-
-@dataclass
-class SimulationTablesPathsResolver:
-    """
-    Recommended pattern: fake_path/output-xxx/st-x-mc-*.parquet
-    """
-
-    simulation_tables_pattern: str
-
-    def resolve(self) -> list[Path]:
-        glob_path = Path(self.simulation_tables_pattern)
-        directory = glob_path.parent
-        if not directory.is_dir():
-            raise NotADirectoryError(f"Simulation tables directory does not exist: {directory}")
-
-        return list(path for path in directory.glob(glob_path.name) if path.is_file())
+        self.view_configs: list[Path] = PathsResolver(args.view_configs).resolve()
+        self.simulation_tables: list[Path] = PathsResolver(args.simulation_tables).resolve()

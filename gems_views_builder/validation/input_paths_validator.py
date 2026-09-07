@@ -54,8 +54,11 @@ class InputPathsValidator:
     def _check_calendar_file(self) -> None:
         require_suffix(self.input_paths.calendar, {CSV_SUFFIX}, "Calendar file")
 
-    def _check_view_config_file(self) -> None:
-        require_suffix(self.input_paths.view_config, {YAML_SUFFIX}, "View config file")
+    def _check_view_configs_files(self) -> None:
+        if not self.input_paths.view_configs:
+            raise ValueError("View config files are required")
+        for view_config in self.input_paths.view_configs:
+            require_suffix(view_config, {YAML_SUFFIX}, "View config file")
 
     def _check_simulation_table_files(self) -> None:
         if not self.input_paths.simulation_tables:
@@ -76,7 +79,7 @@ class InputPathsValidator:
         self._check_system_file()
         self._check_taxonomy_file()
         self._check_calendar_file()
-        self._check_view_config_file()
+        self._check_view_configs_files()
         self._check_simulation_table_files()
         logging.info("Input paths validation completed successfully")
 

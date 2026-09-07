@@ -98,7 +98,7 @@ def build_raw_input_data(
             )
         },
         system=system,
-        view_config=view_config,
+        view_configs=[view_config],
         simulation_tables=simulation_tables,
         calendar=calendar,
         catalogs=catalogs or {},

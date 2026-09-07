@@ -1,0 +1,23 @@
+# Copyright 2007-2026, RTE (https://www.rte-france.com)
+# SPDX-License-Identifier: MPL-2.0
+
+from dataclasses import dataclass
+from pathlib import Path
+
+
+@dataclass
+class PathsResolver:
+    """
+    Recommended pattern simulation tables: fake_path/output-xxx/st-x-mc-*.parquet
+    Recommended pattern view configs: fake_path/view-config-*.yml
+    """
+
+    path_pattern: str
+
+    def resolve(self) -> list[Path]:
+        glob_path = Path(self.path_pattern)
+        directory = glob_path.parent
+        if not directory.is_dir():
+            raise NotADirectoryError(f"Directory does not exist: {directory}")
+
+        return list(path for path in directory.glob(glob_path.name) if path.is_file())

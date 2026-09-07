@@ -31,6 +31,7 @@ def accumulate_views(views: list[TemporalMetricView]) -> pl.LazyFrame:
     return pl.scan_parquet([v.persistence_path for v in views])
 
 
-def accumulate_on_disk(metric_views: list[TemporalMetricView], sinker: ViewSinker) -> None:
-    for time_granularity, views in group_by_time_granularity(metric_views).items():
-        sinker.sink(accumulate_views(views), time_granularity)
+def accumulate_on_disk(metric_views_by_view_config: dict[str, list[TemporalMetricView]], sinker: ViewSinker) -> None:
+    for view_config_id, metric_views in metric_views_by_view_config.items():
+        for time_granularity, views in group_by_time_granularity(metric_views).items():
+            sinker.sink(accumulate_views(views), time_granularity, view_config_id)
