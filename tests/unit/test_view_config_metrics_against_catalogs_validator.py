@@ -58,3 +58,34 @@ def test_raises_when_metric_missing_from_catalog(test_dataset_dir: Path) -> None
     # Act & Assert
     with pytest.raises(ValueError, match="MISSING_METRIC.*doesn't exist in catalog 'catalog'"):
         ViewConfigMetricsAgainstCatalogsValidator(catalogs, view_config).validate()
+
+
+def test_raises_when_metric_id_is_invalid(test_dataset_dir: Path) -> None:
+    # Arrange
+    view_config = load_view_config(test_dataset_dir / "view_config.yml")
+    view_config.metric_ids = ["catalog.INVALID_METRIC"]
+    catalogs = [make_catalog("catalog", ["LOAD", "PROD"])]
+
+    # Act & Assert
+    with pytest.raises(ValueError, match="INVALID_METRIC.*doesn't exist in catalog 'catalog'"):
+        ViewConfigMetricsAgainstCatalogsValidator(catalogs, view_config).validate()
+
+
+@pytest.mark.parametrize(
+    "metric_ref",
+    [
+        "catalog.INVALID.METRIC",
+        "catalog..INVALID_METRIC",
+        "catalog.INVALID_METRIC.",
+        ".catalogINVALID_METRIC",
+    ],
+)
+def test_raises_when_metric_ref_format_is_invalid(test_dataset_dir: Path, metric_ref: str) -> None:
+    # Arrange
+    view_config = load_view_config(test_dataset_dir / "view_config.yml")
+    view_config.metric_ids = [metric_ref]
+    catalogs = [make_catalog("catalog", ["LOAD", "PROD"])]
+
+    # Act & Assert
+    with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
+        ViewConfigMetricsAgainstCatalogsValidator(catalogs, view_config).validate()
