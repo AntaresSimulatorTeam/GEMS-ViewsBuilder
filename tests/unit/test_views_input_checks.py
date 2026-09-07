@@ -106,24 +106,10 @@ def test_validate_raises_when_view_config_has_wrong_extension(tmp_path: Path) ->
         InputPathsValidator(paths).validate()
 
 
-def test_validate_raises_when_view_configs_are_missing(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    paths.view_configs = []
-    with pytest.raises(ValueError, match="View config files are required"):
-        InputPathsValidator(paths).validate()
-
-
 def test_validate_raises_when_simulation_table_has_wrong_extension(tmp_path: Path) -> None:
     paths = write_minimal_input_data_set(tmp_path)
     paths.simulation_tables = [tmp_path / "simulation_table.xls"]
     with pytest.raises(ValueError, match="Simulation table"):
-        InputPathsValidator(paths).validate()
-
-
-def test_validate_raises_when_simulation_tables_are_missing(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    paths.simulation_tables = []
-    with pytest.raises(ValueError, match="Simulation table files are required"):
         InputPathsValidator(paths).validate()
 
 

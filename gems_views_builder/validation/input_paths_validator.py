@@ -55,15 +55,10 @@ class InputPathsValidator:
         require_suffix(self.input_paths.calendar, {CSV_SUFFIX}, "Calendar file")
 
     def _check_view_configs_files(self) -> None:
-        if not self.input_paths.view_configs:
-            raise ValueError("View config files are required")
         for view_config in self.input_paths.view_configs:
             require_suffix(view_config, {YAML_SUFFIX}, "View config file")
 
     def _check_simulation_table_files(self) -> None:
-        if not self.input_paths.simulation_tables:
-            raise ValueError("Simulation table files are required")
-
         files_extensions = set()
         for path in self.input_paths.simulation_tables:
             require_suffix(path, SIMULATION_TABLE_SUFFIXES, "Simulation table")
