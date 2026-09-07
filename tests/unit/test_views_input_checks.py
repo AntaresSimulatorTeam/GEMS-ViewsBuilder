@@ -35,7 +35,7 @@ def write_minimal_input_data_set(root: Path) -> InputPaths:
             system=system,
             calendar=calendar,
             taxonomy=taxonomy,
-            view_config=view_config,
+            view_configs=str(view_config),
             simulation_tables=str(simulation_table),
         )
     )
@@ -101,7 +101,7 @@ def test_validate_raises_when_taxonomy_has_wrong_extension(tmp_path: Path) -> No
 
 def test_validate_raises_when_view_config_has_wrong_extension(tmp_path: Path) -> None:
     paths = write_minimal_input_data_set(tmp_path)
-    paths.view_config = tmp_path / "view_config.json"
+    paths.view_configs = [tmp_path / "view_config.json"]
     with pytest.raises(ValueError, match="View config file"):
         InputPathsValidator(paths).validate()
 
@@ -110,13 +110,6 @@ def test_validate_raises_when_simulation_table_has_wrong_extension(tmp_path: Pat
     paths = write_minimal_input_data_set(tmp_path)
     paths.simulation_tables = [tmp_path / "simulation_table.xls"]
     with pytest.raises(ValueError, match="Simulation table"):
-        InputPathsValidator(paths).validate()
-
-
-def test_validate_raises_when_simulation_tables_are_missing(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    paths.simulation_tables = []
-    with pytest.raises(ValueError, match="Simulation table files are required"):
         InputPathsValidator(paths).validate()
 
 

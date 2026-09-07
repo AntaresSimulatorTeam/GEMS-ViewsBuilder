@@ -21,9 +21,11 @@ def test_loader_init_has_no_io(tmp_path: Path) -> None:
     """
     Constructor should not touch the filesystem (no glob/yaml/parquet reads).
     """
-    missing = Path("/this/path/should/not/exist")
+    missing = Path("/this/path/should-not-exist")
     simulation_table = tmp_path / "simulation_table.parquet"
     simulation_table.touch()
+    view_config = tmp_path / "view_config.yml"
+    view_config.touch()
     paths = InputPaths(
         Namespace(
             libraries_dir=missing / "libraries",
@@ -31,7 +33,7 @@ def test_loader_init_has_no_io(tmp_path: Path) -> None:
             system=missing / "system.yml",
             calendar=missing / "calendar.csv",
             taxonomy=missing / "taxonomy.yml",
-            view_config=missing / "view_config.yml",
+            view_configs=str(view_config),
             simulation_tables=str(simulation_table),
         )
     )
@@ -45,7 +47,9 @@ def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
 
     assert isinstance(raw_input_data, RawInputData)
     assert isinstance(raw_input_data.taxonomy, Taxonomy)
-    assert isinstance(raw_input_data.view_config, ViewConfig)
+    assert isinstance(raw_input_data.view_configs, list)
+    assert raw_input_data.view_configs
+    assert all(isinstance(view_config, ViewConfig) for view_config in raw_input_data.view_configs)
     assert isinstance(raw_input_data.libraries, dict)
     assert raw_input_data.libraries
     assert all(isinstance(library, Library) for library in raw_input_data.libraries.values())
@@ -56,7 +60,7 @@ def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
     assert isinstance(raw_input_data.calendar, Calendar)
     assert raw_input_data.catalogs
     assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs.values())
-    assert raw_input_data.view_config.metrics == []
+    assert all(view_config.metrics == [] for view_config in raw_input_data.view_configs)
 
 
 def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
@@ -65,7 +69,9 @@ def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path
 
     assert isinstance(raw_input_data, RawInputData)
     assert isinstance(raw_input_data.taxonomy, Taxonomy)
-    assert isinstance(raw_input_data.view_config, ViewConfig)
+    assert isinstance(raw_input_data.view_configs, list)
+    assert raw_input_data.view_configs
+    assert all(isinstance(view_config, ViewConfig) for view_config in raw_input_data.view_configs)
     assert isinstance(raw_input_data.libraries, dict)
     assert raw_input_data.libraries
     assert all(isinstance(library, Library) for library in raw_input_data.libraries.values())
@@ -76,4 +82,4 @@ def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path
     assert isinstance(raw_input_data.calendar, Calendar)
     assert raw_input_data.catalogs
     assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs.values())
-    assert raw_input_data.view_config.metrics == []
+    assert all(view_config.metrics == [] for view_config in raw_input_data.view_configs)

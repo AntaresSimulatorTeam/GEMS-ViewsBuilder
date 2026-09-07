@@ -174,7 +174,7 @@ def test_extra_locations_values_in_final_metric_views() -> None:
     input_data = build_input()
 
     # Act
-    views = views_by_metric_id(build_metric_views(input_data))
+    views = views_by_metric_id(next(iter(build_metric_views(input_data).values())))
 
     # Assert
     assert extract_values_from_view(views["LOAD"]) == approx(EXPECTED_LOAD)

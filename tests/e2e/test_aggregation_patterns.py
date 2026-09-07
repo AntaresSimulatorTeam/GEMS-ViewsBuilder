@@ -115,12 +115,12 @@ def build_input() -> RawInputData:
 
 
 def fetch_result_files(results_dir: Path) -> list[Path]:
-    return [path for path in results_dir.glob("view_*.parquet")]
+    return list(results_dir.glob("*.parquet"))
 
 
 def sort_by_time_granularity(result_files: list[Path]) -> dict[str, Path]:
-    # Output files are named view_{time}_{timestamp}.parquet
-    return {path.stem.split("_")[1]: path for path in result_files}
+    # Output files are named {view_config_id}_{time}_{timestamp}.parquet
+    return {path.stem.rsplit("_", 2)[1]: path for path in result_files}
 
 
 def test_one_output_file_per_time_granularity_merges_all_scenarios(tmp_path: Path) -> None:

@@ -91,6 +91,16 @@ class ViewConfig:
     def get_metrics(self) -> list[Metric]:
         return self.metrics
 
+    def get_catalog_ids(self) -> set[str]:
+        return self.catalog_ids
+
+
+def get_catalogs_ids(view_configs: list[ViewConfig]) -> set[str]:
+    catalog_ids: set[str] = set()
+    for view_config in view_configs:
+        catalog_ids.update(view_config.catalog_ids)
+    return catalog_ids
+
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
     from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
@@ -127,3 +137,7 @@ def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
         raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
     logging.info(f"View config YAML parsed successfully from {view_file_path}")
     return RawViewConfig.model_validate(raw["view"])
+
+
+def load_view_configs(view_configs_paths: list[Path]) -> list[ViewConfig]:
+    return [load_view_config(path) for path in view_configs_paths]

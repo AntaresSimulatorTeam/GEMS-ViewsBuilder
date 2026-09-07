@@ -37,7 +37,7 @@ from gems_views_builder.input.simulation_table import (
 )
 from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
-from gems_views_builder.input.view_building_input_data import ViewBuildingInputData, create_view_building_input
+from gems_views_builder.input.view_building_input_data import ViewBuildingInputData, create_view_building_inputs
 from gems_views_builder.input.view_config import TimeGranularity, ViewConfig, load_view_config
 from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.metric_view import MetricView, TemporalMetricView
@@ -56,7 +56,7 @@ __all__ = [
     "load_catalogs",
     "RawInputData",
     "ViewBuildingInputData",
-    "create_view_building_input",
+    "create_view_building_inputs",
     "Metric",
     "PropertySchema",
     "Term",
