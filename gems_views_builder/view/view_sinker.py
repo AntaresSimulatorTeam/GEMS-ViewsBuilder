@@ -21,10 +21,13 @@ class ViewSinker(ABC):
     def sink(self, merged: pl.LazyFrame, time_granularity: TimeGranularity, view_config_id: str) -> View:
         pass
 
+    def get_result_path(self, view_config_id: str, time_granularity: TimeGranularity, file_type: str) -> Path:
+        return self.output_path / f"{view_config_id}_{time_granularity.value}_{self.timestamp}.{file_type}"
+
 
 class ParquetViewSinker(ViewSinker):
     def sink(self, merged: pl.LazyFrame, time_granularity: TimeGranularity, view_config_id: str) -> View:
-        result_path = self.output_path / f"view_{time_granularity.value}_{self.timestamp}_{view_config_id}.parquet"
+        result_path = self.get_result_path(view_config_id, time_granularity, "parquet")
         sink_to_parquet(merged, result_path)
         logging.info("Results merged into parquet file")
         return View(dataframe=pl.scan_parquet(result_path))
@@ -32,7 +35,7 @@ class ParquetViewSinker(ViewSinker):
 
 class CsvViewSinker(ViewSinker):
     def sink(self, merged: pl.LazyFrame, time_granularity: TimeGranularity, view_config_id: str) -> View:
-        result_path = self.output_path / f"view_{time_granularity.value}_{self.timestamp}_{view_config_id}.csv"
+        result_path = self.get_result_path(view_config_id, time_granularity, "csv")
         merged.sink_csv(result_path)
         logging.info("Results merged into csv file")
         return View(dataframe=pl.scan_csv(result_path))
