@@ -76,7 +76,7 @@ def build_raw_input_data(
     system: Any,
     taxon_by_model: dict[str, str],
     view_config: ViewConfig,
-    simulation_table: SimulationTable,
+    simulation_tables: list[SimulationTable],
     calendar: Calendar,
     catalogs: dict[str, Catalog] | None = None,
 ) -> RawInputData:
@@ -99,7 +99,7 @@ def build_raw_input_data(
         },
         system=system,
         view_config=view_config,
-        simulation_table=simulation_table,
+        simulation_tables=simulation_tables,
         calendar=calendar,
         catalogs=catalogs or {},
     )

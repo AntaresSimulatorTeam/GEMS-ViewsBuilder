@@ -57,12 +57,17 @@ class InputPathsValidator:
     def _check_view_config_file(self) -> None:
         require_suffix(self.input_paths.view_config, {YAML_SUFFIX}, "View config file")
 
-    def _check_simulation_table_file(self) -> None:
-        require_suffix(
-            self.input_paths.simulation_table,
-            SIMULATION_TABLE_SUFFIXES,
-            "Simulation table",
-        )
+    def _check_simulation_table_files(self) -> None:
+        if not self.input_paths.simulation_tables:
+            raise ValueError("Simulation table files are required")
+
+        files_extensions = set()
+        for path in self.input_paths.simulation_tables:
+            require_suffix(path, SIMULATION_TABLE_SUFFIXES, "Simulation table")
+            files_extensions.add(path.suffix.lower())
+
+        if len(files_extensions) > 1:
+            raise ValueError(f"Simulation table files must have the same extension, got: {', '.join(files_extensions)}")
 
     def validate(self) -> None:
         logging.info("Starting input paths validation")
@@ -72,7 +77,7 @@ class InputPathsValidator:
         self._check_taxonomy_file()
         self._check_calendar_file()
         self._check_view_config_file()
-        self._check_simulation_table_file()
+        self._check_simulation_table_files()
         logging.info("Input paths validation completed successfully")
 
 

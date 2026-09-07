@@ -5,7 +5,7 @@
 
 import argparse
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
@@ -13,17 +13,22 @@ from pathlib import Path
 class SystemType(Enum):
     DIRECTORY = "directory"
     FILE = "file"
+    FILES = "files"
 
 
 @dataclass
-class PathOption:
+class Option:
     name: str
     system_type: SystemType
-    system_check: Callable[[Path], bool]
-    args_attribute: str = ""
+    args_attribute: str = field(init=False)
 
     def __post_init__(self) -> None:
         self.args_attribute = self.name.replace("-", "_")
+
+
+@dataclass
+class PathOption(Option):
+    system_check: Callable[[Path], bool]
 
 
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
@@ -32,8 +37,11 @@ REQUIRED_PATHS_OPTIONS: list[PathOption] = [
     PathOption("system", SystemType.FILE, Path.is_file),
     PathOption("calendar", SystemType.FILE, Path.is_file),
     PathOption("taxonomy", SystemType.FILE, Path.is_file),
-    PathOption("simulation-table", SystemType.FILE, Path.is_file),
     PathOption("view-config", SystemType.FILE, Path.is_file),
+]
+
+GLOBAL_PATTERN_MATCHING_OPTIONS: list[Option] = [
+    Option("simulation-tables", SystemType.FILES),
 ]
 
 
@@ -44,6 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     add_path_options(parser, REQUIRED_PATHS_OPTIONS)
+    add_global_pattern_matching_options(parser, GLOBAL_PATTERN_MATCHING_OPTIONS)
 
     parser.add_argument(
         "-o",
@@ -82,6 +91,18 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
             type=Path,
             required=True,
             help=f"{option.system_type.value} for {option.name}.",
+        )
+
+
+def add_global_pattern_matching_options(
+    parser: argparse.ArgumentParser, global_pattern_matching_options: list[Option]
+) -> None:
+    for option in global_pattern_matching_options:
+        parser.add_argument(
+            f"--{option.name}",
+            type=str,
+            required=True,
+            help=f"Global pattern matching for {option.name} (e.g. path/st-x-mc-*.parquet).",
         )
 
 

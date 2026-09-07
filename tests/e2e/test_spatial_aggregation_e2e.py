@@ -113,7 +113,7 @@ def build_input() -> RawInputData:
         system,
         TAXONOMY_CATEGORY_BY_MODEL,
         view_config,
-        make_simulation_table(SIMULATION_ROWS),
+        [make_simulation_table(SIMULATION_ROWS)],
         make_calendar(SIMULATION_ROWS),
         catalogs=catalogs,
     )

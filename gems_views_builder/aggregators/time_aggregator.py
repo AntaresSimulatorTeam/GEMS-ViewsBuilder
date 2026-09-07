@@ -10,9 +10,10 @@ from shutil import rmtree
 
 import polars as pl
 
+from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
-from gems_views_builder.metric_view import MetricView, TemporalMetricView, sink_to_parquet
+from gems_views_builder.metric_view import MetricView, TemporalMetricView
 
 # # Polars truncate windows are strings like "1h", "1d", "1w", "1mo", "1y".
 TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
