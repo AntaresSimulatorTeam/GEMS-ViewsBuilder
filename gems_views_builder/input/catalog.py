@@ -127,8 +127,6 @@ def to_metric(metric_data: MetricData) -> Metric:
 
 
 def load_catalogs(catalogs: list[Path]) -> list[Catalog]:
-    if not catalogs:
-        raise ValueError("No catalogs provided")
     return [load_catalog(catalog) for catalog in catalogs]
 
 
