@@ -44,10 +44,6 @@ class AggregationPattern(ViewBuilderBasedModel):
     spatial_filter: list[str] | None = Field(default=None)
 
 
-class CatalogId(ViewBuilderBasedModel):
-    id: str
-
-
 class MetricId(ViewBuilderBasedModel, frozen=True):
     id: str
 
@@ -56,7 +52,6 @@ class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: Scope
     aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
-    catalogs: list[CatalogId]
     metrics: list[MetricId]
 
 
@@ -74,22 +69,19 @@ class ViewConfig:
     def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
         for metric_ref in self.metric_ids:
-            if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
-                raise ValueError(
-                    f"Invalid metric id '{metric_ref}'. "
-                    f"Expected format '<catalog_id>.<metric_id>' for catalog {self.catalog_ids}"
-                )
-            catalog_id, metric_id = metric_ref.split(".", 1)
-
-            if catalog_id not in self.catalog_ids:
-                raise ValueError(f"Catalog {catalog_id!r} not found in view config")
-
+            catalog_id, metric_id = parse_metric_ref(metric_ref)
             logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
-
             self.metrics.append(catalogs[catalog_id].get_metric(metric_id))
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
+
+
+def parse_metric_ref(metric_ref: str) -> tuple[str, str]:
+    if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
+        raise ValueError(f"Invalid metric id '{metric_ref}'. Expected format '<catalog_id>.<metric_id>'")
+    catalog_id, metric_id = metric_ref.split(".", 1)
+    return catalog_id, metric_id
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
@@ -99,13 +91,14 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
     raw_view_config = load_raw_view_config_file(config_file_path)
     AggregationPatternsValidator(raw_view_config.aggregations_patterns).validate()
 
+    metric_ids = [metric.id for metric in raw_view_config.metrics]
     view_config = ViewConfig(
         id=raw_view_config.id,
         calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
-        catalog_ids={c.id for c in raw_view_config.catalogs},
+        catalog_ids={parse_metric_ref(metric_ref)[0] for metric_ref in metric_ids},
         aggregation_patterns=raw_view_config.aggregations_patterns,
-        metric_ids=[metric.id for metric in raw_view_config.metrics],
+        metric_ids=metric_ids,
         extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )
     logg_loaded_view_config(view_config)

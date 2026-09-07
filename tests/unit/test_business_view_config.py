@@ -76,17 +76,13 @@ view:
     - id: hourly
       time_granularity: hour
       scenario: false
-  catalogs:
-    - id: catalog_1
   metrics:
     - id: invalid_metric_id
 """.strip()
     )
 
-    config = load_view_config(invalid_config)
-
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        config.fetch_metrics({})
+        load_view_config(invalid_config)
 
 
 def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
@@ -99,8 +95,6 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()
@@ -123,8 +117,6 @@ view:
   aggregations-patterns:
     - id: hourly
       scenario: false
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()
@@ -147,8 +139,6 @@ view:
   aggregations-patterns:
     - id: hourly
       time_granularity: hour
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()
@@ -175,8 +165,6 @@ view:
     - id: hourly_again
       time_granularity: hour
       scenario: false
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()

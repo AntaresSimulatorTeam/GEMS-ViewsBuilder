@@ -15,9 +15,6 @@ view:
       time_granularity: hour
       scenario: false
 
-  catalogs: #Pointer to "catalogs" = "Business Metrics definitions files".
-      - id: catalog
-
   metrics:  #reference to the selected metric among the catalog
       - id: catalog.PROD
       - id: catalog.LOAD
