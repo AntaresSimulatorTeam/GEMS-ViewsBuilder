@@ -40,6 +40,8 @@ def build_metric_views(raw_input_data: RawInputData) -> dict[str, list[TemporalM
 
     view_building_inputs = create_view_building_inputs(raw_input_data)
     temporal_metric_views_by_view_config: dict[str, list[TemporalMetricView]] = defaultdict(list)
+
+    # Here parallelize the computation of the metric views for each view config
     for view_building_input in view_building_inputs:
         temporal_metric_views = build_metric_views_for_view_config(view_building_input, components_by_taxon)
         temporal_metric_views_by_view_config[view_building_input.view_config.id].extend(temporal_metric_views)
