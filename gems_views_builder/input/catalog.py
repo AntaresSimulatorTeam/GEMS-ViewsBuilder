@@ -126,8 +126,10 @@ def to_metric(metric_data: MetricData) -> Metric:
     )
 
 
-def load_catalogs(catalogs_dir: Path, catalog_ids: set[str]) -> list[Catalog]:
-    return [load_catalog(catalogs_dir / f"{catalog_id}.yml") for catalog_id in catalog_ids]
+def load_catalogs(catalogs: list[Path]) -> list[Catalog]:
+    if not catalogs:
+        raise ValueError("No catalogs provided")
+    return [load_catalog(catalog) for catalog in catalogs]
 
 
 def load_catalog(catalog_file_path: Path) -> Catalog:

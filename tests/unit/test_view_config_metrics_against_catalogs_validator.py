@@ -33,7 +33,6 @@ def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
 def test_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    view_config.catalog_ids = {"catalog_a", "catalog_b"}
     view_config.metric_ids = [
         "catalog_a.LOAD",
         "catalog_a.PROD",
@@ -53,7 +52,6 @@ def test_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
 def test_raises_when_metric_missing_from_catalog(test_dataset_dir: Path) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    view_config.catalog_ids = {"catalog"}
     view_config.metric_ids = ["catalog.MISSING_METRIC"]
     catalogs = [make_catalog("catalog", ["LOAD", "PROD"])]
 

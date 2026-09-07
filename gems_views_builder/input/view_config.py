@@ -43,10 +43,6 @@ class AggregationPattern(ViewBuilderBasedModel):
     scenario: bool
 
 
-class CatalogId(ViewBuilderBasedModel):
-    id: str
-
-
 class MetricId(ViewBuilderBasedModel, frozen=True):
     id: str
 
@@ -56,7 +52,6 @@ class RawViewConfig(ViewBuilderBasedModel):
     scope: Scope
     taxonomy: str
     aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
-    catalogs: list[CatalogId] = Field(min_length=1)
     metrics: list[MetricId] = Field(min_length=1)
 
 
@@ -67,7 +62,6 @@ class ViewConfig:
     location_taxonomy_category: str
     taxonomy_id: str
     aggregation_patterns: tuple[AggregationPattern, ...]
-    catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
@@ -76,18 +70,7 @@ class ViewConfig:
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
         catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for metric_ref in self.metric_ids:
-            if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
-                raise ValueError(
-                    f"Invalid metric id '{metric_ref}'. "
-                    f"Expected format '<catalog_id>.<metric_id>' for catalog {self.catalog_ids}"
-                )
-            catalog_id, metric_id = metric_ref.split(".", 1)
-
-            if catalog_id not in self.catalog_ids:
-                raise ValueError(f"Catalog {catalog_id!r} not found in view config")
-
-            logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
-
+            catalog_id, metric_id = metric_ref.split(".")
             self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
 
     def get_metrics(self) -> list[Metric]:
@@ -106,7 +89,6 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         taxonomy_id=raw_view_config.taxonomy,
-        catalog_ids={c.id for c in raw_view_config.catalogs},
         aggregation_patterns=raw_view_config.aggregations_patterns,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
@@ -118,7 +100,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
 def logg_loaded_view_config(view_config: ViewConfig) -> None:
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
-        f"catalogs={len(view_config.catalog_ids)}, metrics={len(view_config.metrics)}"
+        f"metrics={len(view_config.metric_ids)}"
     )
 
 
