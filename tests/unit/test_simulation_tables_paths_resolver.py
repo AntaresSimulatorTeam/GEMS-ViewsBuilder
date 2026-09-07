@@ -17,7 +17,6 @@ UNRELATED_FILE = "unrelated.txt"
         ("st-x-mc-*", set(TABLE_FILES)),
         ("st*", set(TABLE_FILES)),
         ("*", set(TABLE_FILES) | {UNRELATED_FILE}),
-        ("lib*", set()),
     ],
 )
 def test_resolve_returns_all_files_matching_the_glob_pattern(
@@ -43,3 +42,13 @@ def test_resolve_raises_not_a_directory_error_when_directory_is_missing(tmp_path
     # Act & Assert
     with pytest.raises(NotADirectoryError, match="Directory does not exist"):
         PathsResolver(str(missing_dir / "simulation_table*.parquet")).resolve()
+
+
+def test_resolve_raises_file_not_found_error_when_no_files_match(tmp_path: Path) -> None:
+    # Arrange
+    dataset_dir = tmp_path / "dataset"
+    dataset_dir.mkdir()
+
+    # Act & Assert
+    with pytest.raises(FileNotFoundError, match="No files matched pattern"):
+        PathsResolver(str(dataset_dir / "simulation_table*.parquet")).resolve()
