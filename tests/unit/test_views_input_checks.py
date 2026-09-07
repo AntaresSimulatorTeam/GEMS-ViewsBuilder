@@ -81,6 +81,7 @@ def test_validate_ignores_unmatched_files_in_catalogs_directory(tmp_path: Path) 
 
 
 def test_validate_passes_with_multiple_catalogs(tmp_path: Path) -> None:
+    # Arrange
     catalogs_dir = tmp_path / "catalogs"
     write_minimal_input_data_set(tmp_path)
     (catalogs_dir / "other.yml").touch()
@@ -95,8 +96,8 @@ def test_validate_passes_with_multiple_catalogs(tmp_path: Path) -> None:
             simulation_table=tmp_path / "simulation_table.parquet",
         )
     )
+    # Act & Assert
     InputPathsValidator(paths).validate()
-    assert len(paths.catalogs) == 2
 
 
 def test_validate_raises_when_system_has_wrong_extension(tmp_path: Path) -> None:

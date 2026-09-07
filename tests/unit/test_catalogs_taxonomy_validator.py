@@ -13,7 +13,7 @@ from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTa
 def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
     # Arrange
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
-    catalogs = load_catalogs(sorted((test_dataset_dir / "catalogs").glob("*.yml")))
+    catalogs = load_catalogs(list((test_dataset_dir / "catalogs").glob("*.yml")))
 
     # Act & Assert
     CatalogsTaxonomyValidator(catalogs, taxonomy).validate()
