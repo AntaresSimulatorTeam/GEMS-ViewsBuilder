@@ -19,7 +19,7 @@ class PathsResolver:
         if not directory.is_dir():
             raise NotADirectoryError(f"Directory does not exist: {directory}")
 
-        resolved = list(path for path in directory.glob(glob_path.name) if path.is_file())
-        if not resolved:
+        resolved_paths = list(path for path in directory.glob(glob_path.name) if path.is_file())
+        if not resolved_paths:
             raise FileNotFoundError(f"No files matched pattern: {glob_path}")
-        return resolved
+        return resolved_paths
