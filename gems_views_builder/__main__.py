@@ -3,6 +3,7 @@
 
 import logging
 from collections import defaultdict
+from copy import deepcopy
 
 from gems_views_builder.aggregators.aggregations_processor import AgggregationProcessor
 from gems_views_builder.cli import build_parser, check_options
@@ -39,18 +40,19 @@ def build_metric_views(raw_input_data: RawInputData) -> dict[str, list[TemporalM
     components_by_taxon = group_components_by_taxon(components)
 
     view_building_inputs = create_view_building_inputs(raw_input_data)
-    temporal_metric_views_by_view_config: dict[str, list[TemporalMetricView]] = defaultdict(list)
+    metric_views_by_view_config: dict[str, list[TemporalMetricView]] = defaultdict(list)
 
     # Here parallelize the computation of the metric views for each view config
     for view_building_input in view_building_inputs:
-        temporal_metric_views = build_metric_views_for_view_config(view_building_input, components_by_taxon)
-        temporal_metric_views_by_view_config[view_building_input.view_config.id].extend(temporal_metric_views)
-    return temporal_metric_views_by_view_config
+        metric_views = build_metric_views_for_view_config(view_building_input, components_by_taxon)
+        metric_views_by_view_config[view_building_input.view_config.id].extend(metric_views)
+    return metric_views_by_view_config
 
 
 def build_metric_views_for_view_config(
     view_building_input: ViewBuildingInputData, components_by_taxon: dict[str, list[Component]]
 ) -> list[TemporalMetricView]:
+    components_by_taxon = deepcopy(components_by_taxon)
     supply_components_with_locations(
         components_by_taxon,
         view_building_input.view_config.get_metrics(),
