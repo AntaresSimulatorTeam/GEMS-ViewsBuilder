@@ -3,6 +3,7 @@
 
 import logging
 from collections import defaultdict
+from copy import deepcopy
 
 from gems_views_builder.aggregators.aggregations_processor import AgggregationProcessor
 from gems_views_builder.cli import build_parser, check_options
@@ -49,6 +50,7 @@ def build_metric_views(raw_input_data: RawInputData) -> dict[str, list[TemporalM
 def build_metric_views_for_view_config(
     view_building_input: ViewBuildingInputData, components_by_taxon: dict[str, list[Component]]
 ) -> list[TemporalMetricView]:
+    components_by_taxon = deepcopy(components_by_taxon)
     supply_components_with_locations(
         components_by_taxon,
         view_building_input.view_config.get_metrics(),
