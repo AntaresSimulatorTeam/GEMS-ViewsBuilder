@@ -140,4 +140,15 @@ def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
 
 
 def load_view_configs(view_configs_paths: list[Path]) -> list[ViewConfig]:
-    return [load_view_config(path) for path in view_configs_paths]
+    """
+    This function will be refactored once consistency check PR is merged.
+    """
+    view_config_ids = set()
+    view_configs = []
+    for path in view_configs_paths:
+        view_config = load_view_config(path)
+        if view_config.id in view_config_ids:
+            raise ValueError(f"View config {view_config.id!r} is defined multiple times")
+        view_config_ids.add(view_config.id)
+        view_configs.append(view_config)
+    return view_configs 
