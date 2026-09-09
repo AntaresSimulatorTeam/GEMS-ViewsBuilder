@@ -9,6 +9,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder.__main__ import run_view_building_process
+from gems_views_builder.cli import DEFAULT_PARALLEL_MODE
 from gems_views_builder.view import ParquetViewSinker
 from tests.conftest import paths_from_dataset
 
@@ -27,7 +28,7 @@ def test_3_study(test_files_root: Path, tmp_path: Path) -> Path:
 @pytest.fixture()
 def view_result(test_3_study: Path) -> pl.DataFrame:
     sinker = ParquetViewSinker(test_3_study)
-    run_view_building_process(paths_from_dataset(test_3_study), sinker)
+    run_view_building_process(paths_from_dataset(test_3_study), sinker, DEFAULT_PARALLEL_MODE)
     result_files = list(test_3_study.glob("view*.parquet"))
     assert result_files, "No result parquet file written"
     return pl.read_parquet(result_files[0])
@@ -105,7 +106,7 @@ def test_log_messages_emitted_to_stdout(
 
     # Act
     with caplog.at_level(logging.INFO):
-        run_view_building_process(paths_from_dataset(dst), sinker)
+        run_view_building_process(paths_from_dataset(dst), sinker, DEFAULT_PARALLEL_MODE)
 
     # Assert — logging writes under Path.cwd()/logs (see configure_logging / LOG_DIR)
     log_directory = Path.cwd() / "logs"
@@ -127,7 +128,7 @@ def test_logs_dir_and_file_created(test_files_root: Path, tmp_path: Path) -> Non
     shutil.copytree(src, dst)
     results_dir.mkdir()
 
-    run_view_building_process(paths_from_dataset(dst), ParquetViewSinker(results_dir))
+    run_view_building_process(paths_from_dataset(dst), ParquetViewSinker(results_dir), DEFAULT_PARALLEL_MODE)
 
     logs_dir = Path.cwd() / "logs"
     assert logs_dir.is_dir(), "logs/ directory was not created"
