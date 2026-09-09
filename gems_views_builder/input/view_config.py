@@ -151,4 +151,4 @@ def load_view_configs(view_configs_paths: list[Path]) -> list[ViewConfig]:
             raise ValueError(f"View config {view_config.id!r} is defined multiple times")
         view_config_ids.add(view_config.id)
         view_configs.append(view_config)
-    return view_configs 
+    return view_configs
