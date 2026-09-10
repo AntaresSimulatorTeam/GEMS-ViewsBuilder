@@ -40,6 +40,7 @@ def test_known_values(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
+    assert config.taxonomy_id == "my_taxonomy"
     assert config.catalog_ids == {"catalog"}
     metric_names = {metric_id.split(".", 1)[1] for metric_id in config.metric_ids}
     assert "LOAD" in metric_names
@@ -68,6 +69,7 @@ def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
         """
 view:
   id: invalid_metric_format
+  taxonomy: my_taxonomy
   scope:
     location:
       taxonomy-category: balance
@@ -86,7 +88,7 @@ view:
     config = load_view_config(invalid_config)
 
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        config.fetch_metrics({})
+        config.fetch_metrics([])
 
 
 def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
@@ -95,6 +97,7 @@ def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
         """
 view:
   id: missing_aggregation
+  taxonomy: my_taxonomy
   scope:
     location:
       taxonomy-category: balance
@@ -116,6 +119,7 @@ def test_raises_when_aggregation_time_is_missing(tmp_path: Path) -> None:
         """
 view:
   id: missing_time
+  taxonomy: my_taxonomy
   scope:
     location:
       taxonomy-category: balance
@@ -140,6 +144,7 @@ def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path) -> None:
         """
 view:
   id: missing_scenario
+  taxonomy: my_taxonomy
   scope:
     location:
       taxonomy-category: balance
@@ -164,6 +169,7 @@ def test_raises_when_time_and_scenario_pair_is_duplicated(tmp_path: Path) -> Non
         """
 view:
   id: duplicate_pattern
+  taxonomy: my_taxonomy
   scope:
     location:
       taxonomy-category: balance
