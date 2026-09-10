@@ -16,8 +16,9 @@ from typing import Any
 
 import polars as pl
 
-from gems_views_builder.__main__ import build_metric_views
+from gems_views_builder.__main__ import build_metric_views, create_view_building_inputs
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
+from gems_views_builder.input.component import create_components, enrich_components, group_components_by_taxon
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
@@ -127,9 +128,16 @@ def test_one_output_file_per_time_granularity_merges_all_scenarios(tmp_path: Pat
     # Arrange
     input_data = build_input()
     results_dir = create_results_dir(tmp_path)
+    view_building_inputs = create_view_building_inputs(input_data)
+
+    components = create_components(input_data.system.components)
+    enrich_components(components, input_data)
+    components_by_taxon = group_components_by_taxon(components)
 
     # Act
-    accumulate_on_disk(build_metric_views(input_data), ParquetViewSinker(results_dir))
+    accumulate_on_disk(
+        build_metric_views(view_building_inputs, components_by_taxon), ParquetViewSinker(results_dir)
+    )
 
     # Assert
     result = sort_by_time_granularity(fetch_result_files(results_dir))
