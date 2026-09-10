@@ -34,12 +34,10 @@ def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     return raw_input_data
 
 
-def build_metric_views(raw_input_data: RawInputData) -> dict[str, list[TemporalMetricView]]:
-    components = create_components(raw_input_data.system.components)
-    enrich_components(components, raw_input_data)
-    components_by_taxon = group_components_by_taxon(components)
-
-    view_building_inputs = create_view_building_inputs(raw_input_data)
+def build_metric_views(
+    view_building_inputs: list[ViewBuildingInputData],
+    components_by_taxon: dict[str, list[Component]],
+) -> dict[str, list[TemporalMetricView]]:
     metric_views_by_view_config: dict[str, list[TemporalMetricView]] = defaultdict(list)
     for view_building_input in view_building_inputs:
         metric_views = build_metric_views_for_view_config(view_building_input, components_by_taxon)
@@ -67,7 +65,15 @@ def build_metric_views_for_view_config(
 
 def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) -> None:
     raw_input_data = load_and_validate_input_data(input_paths)
-    metric_views_by_view_config = build_metric_views(raw_input_data)
+    view_building_inputs = create_view_building_inputs(raw_input_data)
+
+    # Components : create, enrich and group by taxon
+    components = create_components(raw_input_data.system.components)
+    enrich_components(components, raw_input_data)
+    components_by_taxon = group_components_by_taxon(components)
+
+    metric_views_by_view_config = build_metric_views(view_building_inputs, components_by_taxon)
+
     accumulate_on_disk(metric_views_by_view_config, view_sinker)
 
 
