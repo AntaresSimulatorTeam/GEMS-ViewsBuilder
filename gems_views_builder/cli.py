@@ -13,7 +13,6 @@ from pathlib import Path
 class SystemType(Enum):
     DIRECTORY = "directory"
     FILE = "file"
-    FILES = "files"
 
 
 @dataclass
@@ -28,7 +27,8 @@ class PathOption:
 
 
 def parent_is_dir(path: Path) -> bool:
-    return path.parent.is_dir()
+    parent_dir = path.parent
+    return parent_dir != Path(".") and parent_dir.is_dir()
 
 
 PATHS_OPTIONS: list[PathOption] = [
@@ -41,7 +41,7 @@ PATHS_OPTIONS: list[PathOption] = [
 ]
 
 MULTIPLE_FILE_PATH_OPTIONS: list[PathOption] = [
-    PathOption("simulation-tables", SystemType.FILES, parent_is_dir),
+    PathOption("simulation-tables", SystemType.DIRECTORY, parent_is_dir),
 ]
 
 
@@ -84,8 +84,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOption]) -> None:
-    for option in path_options:
+def add_path_options(parser: argparse.ArgumentParser, options: list[PathOption]) -> None:
+    for option in options:
         parser.add_argument(
             f"--{option.name}",
             type=Path,
@@ -94,10 +94,8 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
         )
 
 
-def add_multiple_file_path_options(
-    parser: argparse.ArgumentParser, multiple_file_path_options: list[PathOption]
-) -> None:
-    for option in multiple_file_path_options:
+def add_multiple_file_path_options(parser: argparse.ArgumentParser, options: list[PathOption]) -> None:
+    for option in options:
         parser.add_argument(
             f"--{option.name}",
             type=str,
@@ -111,7 +109,7 @@ def check_paths_options(args: argparse.Namespace) -> None:
         # Fetching the value of the option from the parsed args
         option_value = getattr(args, option.args_attribute)
         if not option.system_check(option_value):
-            raise OSError(f"--{option.name} is not a {option.system_type.value}: {option_value}")
+            raise OSError(f"--{option.name} : {option_value} is not a {option.system_type.value}")
 
 
 def check_multiple_file_path_options(args: argparse.Namespace) -> None:
@@ -119,7 +117,7 @@ def check_multiple_file_path_options(args: argparse.Namespace) -> None:
         # Fetching the value of the option from the parsed args
         option_value = Path(getattr(args, option.args_attribute))
         if not option.system_check(option_value):
-            raise NotADirectoryError(f"--{option.name} directory does not exist: {option_value.parent}")
+            raise OSError(f"--{option.name} : {option_value.parent} is not a {option.system_type.value}")
 
 
 def check_options(args: argparse.Namespace) -> None:
