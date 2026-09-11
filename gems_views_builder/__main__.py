@@ -88,7 +88,8 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         check_options(args)
-    except Exception:
+    except Exception as e:
+        logging.exception(f"Command lines options : {str(e)}")
         return 2
 
     try:

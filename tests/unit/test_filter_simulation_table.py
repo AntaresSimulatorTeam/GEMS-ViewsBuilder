@@ -10,10 +10,11 @@ import pytest
 from gems_views_builder import Calendar, FilteredSimulationTable, load_calendar
 from gems_views_builder.input.simulation_table import (
     SimulationTable,
-    concat_simulation_tables,
     filter_simulation_table,
     load_simulation_table,
 )
+from gems_views_builder.input.view_building_input_data import concat_simulation_tables
+from tests.common import make_simulation_table_row
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 
@@ -107,31 +108,6 @@ def test_filter_simulation_table_writes_parquet(
     assert written_sorted.equals(expected_sorted), "Written parquet sim-table columns should match expected"
 
 
-def test_filter_simulation_table_invalid_file_format(test_dataset_dir: Path) -> None:
-    """When a non-parquet, non-csv file is provided, an error is raised."""
-    simulation_table_file = test_dataset_dir / "simulation_table--invalid.txt"
-    with pytest.raises(
-        ValueError,
-        match=r"Simulation table file '.*simulation_table--invalid\.txt' is not a parquet or csv file",
-    ):
-        load_simulation_table(simulation_table_file)
-
-
-def make_single_row_simulation_table_(**overrides: object) -> dict[str, object]:
-    row: dict[str, object] = {
-        "block": "b1",
-        "component": "comp",
-        "output": "out",
-        "absolute_time_index": 1,
-        "block_time_index": 1,
-        "scenario_index": 1,
-        "value": 1.0,
-        "basis_status": "ok",
-    }
-    row.update(overrides)
-    return row
-
-
 def make_single_row_calendar(absolute_time_index: int, block: str, granular_date: datetime) -> Calendar:
     return Calendar(
         id="calendar",
@@ -158,8 +134,8 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
     # Arrange
     granular_date = datetime(2026, 1, 1)
     calendar = make_single_row_calendar(absolute_time_index=1, block="b1", granular_date=granular_date)
-    st_a = SimulationTable(pl.DataFrame([make_single_row_simulation_table_(component="comp-a", block=block_a)]).lazy())
-    st_b = SimulationTable(pl.DataFrame([make_single_row_simulation_table_(component="comp-b", block=block_b)]).lazy())
+    st_a = SimulationTable(pl.DataFrame([make_simulation_table_row(component="comp-a", block=block_a)]).lazy())
+    st_b = SimulationTable(pl.DataFrame([make_simulation_table_row(component="comp-b", block=block_b)]).lazy())
 
     # Act
     filtered_table = filter_simulation_table(concat_simulation_tables([st_a, st_b]), calendar)

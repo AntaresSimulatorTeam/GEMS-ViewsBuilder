@@ -6,7 +6,7 @@
 from argparse import Namespace
 from pathlib import Path
 
-from gems_views_builder.paths_resolver import PathsResolver
+from gems_views_builder.multiple_files_collector import MultipleFilesCollector
 
 
 class InputPaths:
@@ -16,5 +16,5 @@ class InputPaths:
         self.system: Path = Path(args.system)
         self.calendar: Path = Path(args.calendar)
         self.taxonomy: Path = Path(args.taxonomy)
-        self.view_configs: list[Path] = PathsResolver(args.view_configs).resolve()
-        self.simulation_tables: list[Path] = PathsResolver(args.simulation_tables).resolve()
+        self.view_configs: list[Path] = MultipleFilesCollector(args.view_configs).collect()
+        self.simulation_tables: list[Path] = MultipleFilesCollector(args.simulation_tables).collect()
