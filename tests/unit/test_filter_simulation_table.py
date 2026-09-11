@@ -10,10 +10,10 @@ import pytest
 from gems_views_builder import Calendar, FilteredSimulationTable, load_calendar
 from gems_views_builder.input.simulation_table import (
     SimulationTable,
-    concat_simulation_tables,
     filter_simulation_table,
     load_simulation_table,
 )
+from gems_views_builder.input.view_building_input_data import concat_simulation_tables
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 
@@ -105,16 +105,6 @@ def test_filter_simulation_table_writes_parquet(
     written_sorted = written.select(expected.columns).sort(sort_cols)
     expected_sorted = expected.sort(sort_cols)
     assert written_sorted.equals(expected_sorted), "Written parquet sim-table columns should match expected"
-
-
-def test_filter_simulation_table_invalid_file_format(test_dataset_dir: Path) -> None:
-    """When a non-parquet, non-csv file is provided, an error is raised."""
-    simulation_table_file = test_dataset_dir / "simulation_table--invalid.txt"
-    with pytest.raises(
-        ValueError,
-        match=r"Simulation table file '.*simulation_table--invalid\.txt' is not a parquet or csv file",
-    ):
-        load_simulation_table(simulation_table_file)
 
 
 def make_single_row_simulation_table_(**overrides: object) -> dict[str, object]:

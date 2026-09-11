@@ -3,10 +3,12 @@
 
 from dataclasses import dataclass
 
+import polars as pl
+
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import (
     FilteredSimulationTable,
-    concat_simulation_tables,
+    SimulationTable,
     filter_simulation_table,
 )
 from gems_views_builder.input.view_config import ViewConfig
@@ -30,3 +32,7 @@ def create_view_building_input(raw_input_data: RawInputData) -> ViewBuildingInpu
         filtered_st=filtered_st,
         view_config=raw_input_data.view_config,
     )
+
+
+def concat_simulation_tables(simulation_tables: list[SimulationTable]) -> pl.LazyFrame:
+    return pl.concat([table.dataframe for table in simulation_tables])
