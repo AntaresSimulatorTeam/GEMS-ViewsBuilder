@@ -20,13 +20,13 @@ from typing import Any
 import polars as pl
 from pytest import approx
 
-from gems_views_builder.__main__ import build_metric_views, create_view_building_inputs
+from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
+from gems_views_builder.input.component import create_components, enrich_components, group_components_by_taxon
 from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.view_building_input_data import create_view_building_inputs
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.metric_view import TemporalMetricView
-from gems_views_builder.input.component import create_components, enrich_components, group_components_by_taxon
-
 from tests.e2e.utils import (
     build_raw_input_data,
     make_calendar,
