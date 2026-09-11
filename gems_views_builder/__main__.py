@@ -38,6 +38,7 @@ def build_metric_views(
     view_building_inputs: list[ViewBuildingInputData],
     components_by_taxon: dict[str, list[Component]],
 ) -> dict[str, list[TemporalMetricView]]:
+
     metric_views_by_view_config: dict[str, list[TemporalMetricView]] = defaultdict(list)
     for view_building_input in view_building_inputs:
         metric_views = build_metric_views_for_view_config(view_building_input, components_by_taxon)
