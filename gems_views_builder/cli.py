@@ -19,8 +19,8 @@ class SystemType(Enum):
 @dataclass
 class PathOption:
     name: str
-    system_type: SystemType
     args_attribute: str = field(init=False)
+    system_type: SystemType
     system_check: Callable[[Path], bool]
 
     def __post_init__(self) -> None:
@@ -108,6 +108,7 @@ def add_multiple_file_path_options(
 
 def check_paths_options(args: argparse.Namespace) -> None:
     for option in PATHS_OPTIONS:
+        # Fetching the value of the option from the parsed args
         option_value = getattr(args, option.args_attribute)
         if not option.system_check(option_value):
             raise OSError(f"--{option.name} is not a {option.system_type.value}: {option_value}")
@@ -115,6 +116,7 @@ def check_paths_options(args: argparse.Namespace) -> None:
 
 def check_multiple_file_path_options(args: argparse.Namespace) -> None:
     for option in MULTIPLE_FILE_PATH_OPTIONS:
+        # Fetching the value of the option from the parsed args
         option_value = Path(getattr(args, option.args_attribute))
         if not option.system_check(option_value):
             raise NotADirectoryError(f"--{option.name} directory does not exist: {option_value.parent}")
