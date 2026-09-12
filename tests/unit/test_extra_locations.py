@@ -6,7 +6,8 @@ from types import SimpleNamespace
 
 from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
 from gems_views_builder.input.component import Component
-from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig, load_view_config
+from gems_views_builder.input.load import load_view_config
+from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 

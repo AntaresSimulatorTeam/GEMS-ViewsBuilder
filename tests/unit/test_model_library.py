@@ -12,7 +12,8 @@ from gems_views_builder import (
     ParameterSchema,
     VariableSchema,
 )
-from gems_views_builder.input.library import create_lib_from_yml, load_lib_file
+from gems_views_builder.input.library import create_lib_from_yml
+from gems_views_builder.input.load import load_lib_file
 
 
 def _library_path(test_dataset_dir: Path) -> Path:
