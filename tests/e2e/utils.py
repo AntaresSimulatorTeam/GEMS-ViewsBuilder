@@ -78,7 +78,7 @@ def build_raw_input_data(
     view_config: ViewConfig,
     simulation_table: SimulationTable,
     calendar: Calendar,
-    catalogs: dict[str, Catalog] | None = None,
+    catalogs: list[Catalog] | None = None,
 ) -> RawInputData:
     """
     Build a real RawInputData, skipping only the disk-reading Loader.load() step:
@@ -101,5 +101,5 @@ def build_raw_input_data(
         view_config=view_config,
         simulation_table=simulation_table,
         calendar=calendar,
-        catalogs=catalogs or {},
+        catalogs=catalogs or [],
     )

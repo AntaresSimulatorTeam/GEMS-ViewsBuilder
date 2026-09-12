@@ -15,10 +15,15 @@ taxonomy:
       ports:
         - id: p_balance_port
         - id: q_balance_port
+      extra-outputs:
+        - id: active_load
 
     - id: production
       ports:
         - id: p_balance_port
+      variables:
+        - id: p
+        - id: pnom
 
     - id: storage
       ports:
@@ -28,6 +33,9 @@ taxonomy:
       ports:
         - id: p0_port
         - id: p1_port
+      variables:
+        - id: p0_port.flow
+        - id: p1_port.flow
 
     - id: coupling
       ports:

@@ -13,7 +13,7 @@
 
 catalog:
   
-  id: test_example_pypsa
+  id: catalog
 
   taxonomy: my_taxonomy
 
