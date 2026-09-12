@@ -17,15 +17,19 @@ from gems_views_builder.loader import Loader
 from tests.conftest import paths_from_dataset
 
 
-def test_loader_init_has_no_io() -> None:
+def test_loader_init_has_no_io(tmp_path: Path) -> None:
     """
-    Constructor should not touch the filesystem (no glob/yaml/parquet reads).
+    Constructor should not touch the filesystem (no yaml/parquet reads).
+    Catalogs are resolved from a glob when InputPaths is built.
     """
+    catalogs_dir = tmp_path / "catalogs"
+    catalogs_dir.mkdir()
+    (catalogs_dir / "catalog.yml").touch()
     missing = Path("/this/path/should/not/exist")
     paths = InputPaths(
         Namespace(
             libraries_dir=missing / "libraries",
-            catalogs_dir=missing / "catalogs",
+            catalogs=str(catalogs_dir / "*.yml"),
             system=missing / "system.yml",
             calendar=missing / "calendar.csv",
             taxonomy=missing / "taxonomy.yml",
@@ -36,6 +40,7 @@ def test_loader_init_has_no_io() -> None:
     loader = Loader(paths)
     assert loader.input_paths is paths
     assert loader.input_paths.libraries_dir == missing / "libraries"
+    assert loader.input_paths.catalogs == [catalogs_dir / "catalog.yml"]
 
 
 def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
