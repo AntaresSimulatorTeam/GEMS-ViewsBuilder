@@ -3,12 +3,10 @@
 
 """Model library YAML with explicit local models"""
 
-import logging
 from dataclasses import dataclass
-from pathlib import Path
 from typing import cast
 
-from gems_craft.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema, parse_yaml_library  # type: ignore
+from gems_craft.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema  # type: ignore
 
 
 @dataclass
@@ -55,38 +53,9 @@ def create_lib_from_yml(yml_lib: LibrarySchema) -> Library:
     )
 
 
-def load_yml_libs(library_dir: Path) -> list[LibrarySchema]:
-    logging.info(f"Loading model libraries from {library_dir}")
-    yml_libs: list[LibrarySchema] = []
-    already_loaded_libs: set[str] = set()
-    for library_file_path in collect_lib_files(library_dir):
-        yml_lib = load_lib_file(library_file_path)
-        if yml_lib.id in already_loaded_libs:
-            raise ValueError(
-                f"Library id {yml_lib.id!r} defined more than once in {library_dir} (also found in a different file)"
-            )
-        already_loaded_libs.add(yml_lib.id)
-        yml_libs.append(yml_lib)
-    return yml_libs
-
-
-def collect_lib_files(library_dir: Path) -> list[Path]:
-    return list(library_dir.glob("*.yml"))
-
-
 def associate_models_with_a_taxon(libraries: dict[str, Library]) -> dict[str, str]:
     taxon_by_model: dict[str, str] = {}
     for library_id, library in libraries.items():
         for model_id, taxon in library.taxon_by_model.items():
             taxon_by_model[f"{library_id}.{model_id}"] = taxon
     return taxon_by_model
-
-
-def load_lib_file(library_file_path: Path) -> LibrarySchema:
-    # # GEMS Craft future library could have option to load library model from path
-    # # Current blueprint of method inside gemspy is typing.TextIO idk why ?
-    logging.debug(f"Loading library YAML from {library_file_path}")
-    with open(library_file_path, encoding="utf-8") as f:
-        yml_lib = parse_yaml_library(f)
-    logging.debug("Library YAML parsed successfully")
-    return yml_lib

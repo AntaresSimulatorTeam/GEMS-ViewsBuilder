@@ -5,9 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder.input.catalog import load_catalog, load_catalogs
-from gems_views_builder.input.taxonomy import load_taxonomy
-from gems_views_builder.input.view_config import load_view_config
+from gems_views_builder.input.load import load_catalog, load_catalogs, load_taxonomy, load_view_config
 from gems_views_builder.validation.catalog_taxonomy_validator import (
     validate_catalog_against_taxonomy,
     validate_catalogs_against_taxonomy,

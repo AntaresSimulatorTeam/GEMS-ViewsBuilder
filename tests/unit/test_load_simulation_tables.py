@@ -6,11 +6,8 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.input.simulation_table import (
-    SimulationTable,
-    load_simulation_table,
-    load_simulation_tables,
-)
+from gems_views_builder.input.load import load_simulation_table, load_simulation_tables
+from gems_views_builder.input.simulation_table import SimulationTable
 from tests.common import SIMULATION_TABLE_ROW
 
 
