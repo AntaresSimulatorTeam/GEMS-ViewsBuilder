@@ -9,6 +9,7 @@ from shutil import rmtree
 
 import polars as pl
 
+from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
@@ -83,26 +84,26 @@ def filter_simulation_table(simulation_table: SimulationTable, calendar: Calenda
 
     # Time-dependent rows: keep only timesteps present in the calendar.
     time_dep_path = output_path.with_suffix(".time_dep.parquet")
-    (
+    sink_to_parquet(
         simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
-        .drop("block_right")
-    ).sink_parquet(time_dep_path, compression="zstd", compression_level=3)
+        .drop("block_right"),
+        time_dep_path,
+    )
 
     # Non-time-dependent rows (absolute_time_index IS NULL) are not tied
     # to any timestep; pass them through with a null granular_date so
     # their constant values are preserved in the view.
     non_time_dep_path = output_path.with_suffix(".non_time_dep.parquet")
     granular_date_dtype = pl.read_parquet_schema(time_dep_path)["granular_date"]
-    (
+    sink_to_parquet(
         simulation_table.dataframe.filter(pl.col("absolute_time_index").is_null()).with_columns(
             pl.lit(None).cast(granular_date_dtype).alias("granular_date")
-        )
-    ).sink_parquet(non_time_dep_path, compression="zstd", compression_level=3)
-
-    pl.scan_parquet([time_dep_path, non_time_dep_path]).sink_parquet(
-        output_path, compression="zstd", compression_level=3, row_group_size=64_000
+        ),
+        non_time_dep_path,
     )
+
+    sink_to_parquet(pl.scan_parquet([time_dep_path, non_time_dep_path]), output_path)
     time_dep_path.unlink()
     non_time_dep_path.unlink()
     logging.info(f"Filtered simulation table written to {output_path}")

@@ -1,7 +1,7 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-from gems_views_builder.aggregators.aggregations_processor import AgggregationProcessor
+from gems_views_builder.aggregators.aggregations_processor import AggregationProcessor
 from gems_views_builder.input.simulation_table import join
 from gems_views_builder.input.view_building_input_data import ViewBuildingInputData
 from gems_views_builder.metric_view import TemporalMetricView
@@ -13,7 +13,7 @@ class ViewBuilder:
         self,
         input_data: ViewBuildingInputData,
         metric_structure_table_builder: MetricStructureTableBuilder,
-        aggregation_processor: AgggregationProcessor,
+        aggregation_processor: AggregationProcessor,
     ) -> None:
         self.input_data = input_data
         self.metric_structure_table_builder = metric_structure_table_builder
