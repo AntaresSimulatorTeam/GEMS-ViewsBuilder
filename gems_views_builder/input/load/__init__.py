@@ -1,11 +1,5 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
-
-"""Disk loaders for input business entities.
-
-Entity types live in ``gems_views_builder.input``; this package reads them from YAML, CSV, and Parquet.
-"""
-
 from gems_views_builder.input.load.calendar import load_calendar
 from gems_views_builder.input.load.catalog import load_catalog, load_catalogs
 from gems_views_builder.input.load.library import load_lib_file, load_yml_libs
