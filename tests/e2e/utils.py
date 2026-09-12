@@ -85,6 +85,8 @@ def build_raw_input_data(
     system/libraries/taxonomy are minimal but real objects, populated with just
     enough to drive the pipeline steps under test.
     """
+    catalogs = catalogs or {}
+    view_config.populate_with_metrics(catalogs)
     return RawInputData(
         taxonomy=Taxonomy(id="taxonomy"),
         libraries={
@@ -101,5 +103,5 @@ def build_raw_input_data(
         view_configs=[view_config],
         simulation_tables=simulation_tables,
         calendar=calendar,
-        catalogs=catalogs or {},
+        catalogs=catalogs,
     )
