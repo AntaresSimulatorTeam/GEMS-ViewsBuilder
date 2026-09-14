@@ -2,20 +2,12 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from collections import defaultdict
-from dataclasses import dataclass
 
 import polars as pl
 
 from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import TemporalMetricView
-
-
-@dataclass
-class View:
-    dataframe: pl.LazyFrame
-
-
-from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
+from gems_views_builder.view.view_sinker import ViewSinker
 
 
 def group_by_time_granularity(
@@ -34,4 +26,6 @@ def accumulate_views(views: list[TemporalMetricView]) -> pl.LazyFrame:
 def accumulate_on_disk(metric_views_by_view_config: dict[str, list[TemporalMetricView]], sinker: ViewSinker) -> None:
     for view_config_id, metric_views in metric_views_by_view_config.items():
         for time_granularity, views in group_by_time_granularity(metric_views).items():
-            sinker.sink(accumulate_views(views), time_granularity, view_config_id)
+            accumulated_views = accumulate_views(views)
+            save_file_name = f"{view_config_id}_{time_granularity.value}"
+            sinker.sink(accumulated_views, save_file_name)
