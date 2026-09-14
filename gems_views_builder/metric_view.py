@@ -18,8 +18,6 @@ class MetricView:
         logging.debug(f"Cleaning metric view {self.persistence_path}")
         self.persistence_path.unlink(missing_ok=True)
 
-
-@dataclass
 class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity
-    # view_config_id: str
+    view_config_id: str
