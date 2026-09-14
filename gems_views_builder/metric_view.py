@@ -22,4 +22,4 @@ class MetricView:
 @dataclass
 class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity
-    view_config_id: str
+    # view_config_id: str
