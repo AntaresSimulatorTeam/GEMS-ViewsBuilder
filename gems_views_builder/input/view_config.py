@@ -92,13 +92,6 @@ class ViewConfig:
         return self.metrics
 
 
-def get_catalogs_ids(view_configs: list[ViewConfig]) -> set[str]:
-    catalog_ids: set[str] = set()
-    for view_config in view_configs:
-        catalog_ids.update(view_config.catalog_ids)
-    return catalog_ids
-
-
 def load_view_config(config_file_path: Path) -> ViewConfig:
     from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
 

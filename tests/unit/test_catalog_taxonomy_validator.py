@@ -23,7 +23,7 @@ def test_validate_catalog_against_taxonomy_passes_for_test_dataset(test_dataset_
 def test_validate_catalogs_against_taxonomy_passes_for_test_dataset(test_dataset_dir: Path) -> None:
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    catalogs = load_catalogs(test_dataset_dir / "catalogs", view_config.catalog_ids)
+    catalogs = load_catalogs(test_dataset_dir / "catalogs", [view_config])
     validate_catalogs_against_taxonomy(catalogs, taxonomy)
 
 

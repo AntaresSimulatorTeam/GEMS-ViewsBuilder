@@ -11,7 +11,7 @@ from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import load_simulation_tables
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.taxonomy import load_taxonomy
-from gems_views_builder.input.view_config import ViewConfig, get_catalogs_ids, load_view_configs
+from gems_views_builder.input.view_config import ViewConfig, load_view_configs
 from gems_views_builder.input_paths import InputPaths
 
 
@@ -26,7 +26,7 @@ class Loader:
         view_configs: list[ViewConfig] = load_view_configs(self.input_paths.view_configs)
         yml_libs = load_yml_libs(self.input_paths.libraries_dir)
 
-        catalogs = load_catalogs(self.input_paths.catalogs_dir, get_catalogs_ids(view_configs))
+        catalogs = load_catalogs(self.input_paths.catalogs_dir, view_configs)
         populate_view_configs_with_metrics(view_configs, catalogs)
         raw_input_data = RawInputData(
             taxonomy=load_taxonomy(self.input_paths.taxonomy),
