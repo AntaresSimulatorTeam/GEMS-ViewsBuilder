@@ -5,7 +5,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from gems_views_builder.input.view_config import TimeGranularity, ViewConfig
+from gems_views_builder.input.view_config import TimeGranularity
 
 
 @dataclass
@@ -17,6 +17,7 @@ class MetricView:
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric view {self.persistence_path}")
         self.persistence_path.unlink(missing_ok=True)
+
 
 class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity

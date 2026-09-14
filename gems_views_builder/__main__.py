@@ -33,6 +33,7 @@ def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     validate_catalogs_against_taxonomy(raw_input_data.catalogs, raw_input_data.taxonomy)
     return raw_input_data
 
+
 def create_view_builders(
     view_building_inputs: list[ViewBuildingInputData],
     components_by_taxon: dict[str, list[Component]],
@@ -54,12 +55,14 @@ def create_view_builders(
         view_builders.append(view_builder)
     return view_builders
 
+
 def build_views(view_builders: list[ViewBuilder]) -> dict[str, list[TemporalMetricView]]:
     metric_views_by_view_config: dict[str, list[TemporalMetricView]] = defaultdict(list)
     for view_builder in view_builders:
         metric_views = view_builder.build()
         metric_views_by_view_config[view_builder.input_data.view_config.id].extend(metric_views)
     return metric_views_by_view_config
+
 
 def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) -> None:
     raw_input_data = load_and_validate_input_data(input_paths)
