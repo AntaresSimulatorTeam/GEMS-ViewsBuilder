@@ -183,8 +183,8 @@ def test_extra_locations_values_in_final_metric_views() -> None:
     # Act
     view_builders = create_view_builders(view_building_inputs, components_by_taxon)
     views = build_views(view_builders)
-    views = views_by_metric_id(next(iter(views.values())))
+    views_by_metric = views_by_metric_id(next(iter(views.values())))
 
     # Assert
-    assert extract_values_from_view(views["LOAD"]) == approx(EXPECTED_LOAD)
-    assert extract_values_from_view(views["PROD"]) == approx(EXPECTED_PROD)
+    assert extract_values_from_view(views_by_metric["LOAD"]) == approx(EXPECTED_LOAD)
+    assert extract_values_from_view(views_by_metric["PROD"]) == approx(EXPECTED_PROD)
