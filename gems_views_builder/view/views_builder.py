@@ -8,6 +8,10 @@ from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
+def give_views_a_config(metric_views: list[TemporalMetricView], view_config: ViewBuildingInputData) -> None:
+    for view in metric_views:
+        view.view_config = view_config.id
+
 class ViewBuilder:
     def __init__(
         self,
@@ -24,6 +28,7 @@ class ViewBuilder:
         for metric in self.input_data.view_config.metrics:
             metric_structure_table = self.metric_structure_table_builder.build(metric)
             structured_simulation_table = join(metric_structure_table, self.input_data.filtered_st)
-            metric_view = self.aggregation_processor.run(structured_simulation_table, metric)
-            metric_views.extend(metric_view)
+            views = self.aggregation_processor.run(structured_simulation_table, metric)
+            metric_views.extend(views)
+        give_views_a_config(metric_views, self.input_data.view_config)
         return metric_views
