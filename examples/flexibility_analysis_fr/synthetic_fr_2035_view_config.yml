@@ -1,0 +1,18 @@
+view:
+  id: view_flexibility_fr
+  scope:
+  - location: null
+    taxonomy-category: balance
+  - calendar: calendar_file
+  aggregation:
+  - time: hour
+  catalog:
+  - id: catalog
+  metrics:
+  - id: catalog.NUCLEAR
+  - id: catalog.HYDRO
+  - id: catalog.GAS
+  - id: catalog.PSH
+  - id: catalog.INTERCO
+  - id: catalog.DEMAND_RESP
+  - id: catalog.RESIDUAL_LOAD
