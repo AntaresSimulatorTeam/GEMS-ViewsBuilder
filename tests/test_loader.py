@@ -60,7 +60,8 @@ def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
     assert isinstance(raw_input_data.calendar, Calendar)
     assert raw_input_data.catalogs
     assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs.values())
-    assert all(view_config.metrics == [] for view_config in raw_input_data.view_configs)
+    assert all(view_config.metrics for view_config in raw_input_data.view_configs)
+    assert all(len(view_config.metrics) == len(view_config.metric_ids) for view_config in raw_input_data.view_configs)
 
 
 def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
@@ -82,4 +83,5 @@ def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path
     assert isinstance(raw_input_data.calendar, Calendar)
     assert raw_input_data.catalogs
     assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs.values())
-    assert all(view_config.metrics == [] for view_config in raw_input_data.view_configs)
+    assert all(view_config.metrics for view_config in raw_input_data.view_configs)
+    assert all(len(view_config.metrics) == len(view_config.metric_ids) for view_config in raw_input_data.view_configs)
