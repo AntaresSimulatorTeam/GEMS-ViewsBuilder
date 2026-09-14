@@ -131,7 +131,7 @@ def extract_values_from_view(view: TemporalMetricView) -> dict[tuple[str, dateti
     )
 
 
-def views_by_metric_id(metric_views: list[TemporalMetricView]) -> dict[str, TemporalMetricView]:
+def views_grouped_by_metric_id(metric_views: list[TemporalMetricView]) -> dict[str, TemporalMetricView]:
     by_metric_id: dict[str, TemporalMetricView] = {}
     for view in metric_views:
         metric_id = pl.read_parquet(view.persistence_path, columns=["metric_id"])["metric_id"][0]
@@ -183,7 +183,7 @@ def test_extra_locations_values_in_final_metric_views() -> None:
     # Act
     view_builders = create_view_builders(view_building_inputs, components_by_taxon)
     views = build_views(view_builders)
-    views_by_metric = views_by_metric_id(next(iter(views.values())))
+    views_by_metric = views_grouped_by_metric_id(views)
 
     # Assert
     assert extract_values_from_view(views_by_metric["LOAD"]) == approx(EXPECTED_LOAD)

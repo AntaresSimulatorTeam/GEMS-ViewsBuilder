@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-from collections import defaultdict
 from copy import deepcopy
 
 from gems_views_builder.aggregators.aggregations_processor import AgggregationProcessor
@@ -56,12 +55,12 @@ def create_view_builders(
     return view_builders
 
 
-def build_views(view_builders: list[ViewBuilder]) -> dict[str, list[TemporalMetricView]]:
-    metric_views_by_view_config: dict[str, list[TemporalMetricView]] = defaultdict(list)
+def build_views(view_builders: list[ViewBuilder]) -> list[TemporalMetricView]:
+    metric_views = []
     for view_builder in view_builders:
-        metric_views = view_builder.build()
-        metric_views_by_view_config[view_builder.input_data.view_config.id].extend(metric_views)
-    return metric_views_by_view_config
+        views = view_builder.build()
+        metric_views.extend(views)
+    return metric_views
 
 
 def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) -> None:
@@ -74,9 +73,9 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     components_by_taxon = group_components_by_taxon(components)
 
     view_builders = create_view_builders(view_building_inputs, components_by_taxon)
-    metric_views_by_view_config = build_views(view_builders)
+    metric_views = build_views(view_builders)
 
-    accumulate_on_disk(metric_views_by_view_config, view_sinker)
+    accumulate_on_disk(metric_views, view_sinker)
 
 
 def main(argv: list[str] | None = None) -> int:
