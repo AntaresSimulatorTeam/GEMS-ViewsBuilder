@@ -22,6 +22,7 @@ from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
+from gems_views_builder.parallel_views_builder_executor import ParallelViewsBuilderExecutor
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
@@ -55,12 +56,8 @@ def create_view_builders(
     return view_builders
 
 
-def build_views(view_builders: list[ViewBuilder]) -> list[TemporalMetricView]:
-    metric_views = []
-    for view_builder in view_builders:
-        views = view_builder.build()
-        metric_views.extend(views)
-    return metric_views
+def build_views(view_builders: list[ViewBuilder], parallel_mode: str) -> list[TemporalMetricView]:
+    return ParallelViewsBuilderExecutor(view_builders, parallel_mode).build()
 
 
 def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker, parallel_mode: str) -> None:
@@ -73,7 +70,7 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker, 
     components_by_taxon = group_components_by_taxon(components)
 
     view_builders = create_view_builders(view_building_inputs, components_by_taxon)
-    metric_views = build_views(view_builders)
+    metric_views = build_views(view_builders, parallel_mode)
 
     accumulate_on_disk(metric_views, view_sinker)
 

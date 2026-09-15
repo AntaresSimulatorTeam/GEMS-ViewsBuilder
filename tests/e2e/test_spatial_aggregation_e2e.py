@@ -21,6 +21,7 @@ import polars as pl
 from pytest import approx
 
 from gems_views_builder.__main__ import build_views, create_view_builders
+from gems_views_builder.cli import DEFAULT_PARALLEL_MODE
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
 from gems_views_builder.input.component import create_components, enrich_components, group_components_by_taxon
 from gems_views_builder.input.raw_input_data import RawInputData
@@ -182,7 +183,7 @@ def test_extra_locations_values_in_final_metric_views() -> None:
 
     # Act
     view_builders = create_view_builders(view_building_inputs, components_by_taxon)
-    views = build_views(view_builders)
+    views = build_views(view_builders, DEFAULT_PARALLEL_MODE)
     views_by_metric = views_grouped_by_metric_id(views)
 
     # Assert

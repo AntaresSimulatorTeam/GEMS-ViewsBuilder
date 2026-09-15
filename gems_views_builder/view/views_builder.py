@@ -13,6 +13,7 @@ def give_views_a_config_id(metric_views: list[TemporalMetricView], view_config: 
     for view in metric_views:
         view.view_config_id = view_config.id
 
+
 class ViewBuilder:
     def __init__(
         self,
