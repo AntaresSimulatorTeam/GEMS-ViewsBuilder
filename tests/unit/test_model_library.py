@@ -97,7 +97,6 @@ def test_model_library_port_types_loaded(test_dataset_dir: Path) -> None:
     """Port types at library level are loaded."""
     for path in collect_lib_files(test_dataset_dir / "libraries"):
         library = create_lib_from_yml(load_lib_file(path))
-        assert len(library.port_types) > 0
         flow_port = next((p for p in library.port_types if p.id == "flow"), None)
-    assert flow_port is not None
-    assert len(flow_port.fields) > 0
+        assert flow_port is not None
+        assert len(flow_port.fields) > 0
