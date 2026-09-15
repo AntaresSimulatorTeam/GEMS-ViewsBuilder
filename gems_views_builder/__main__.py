@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-from collections import defaultdict
 from copy import deepcopy
 
 from gems_views_builder.aggregators.aggregations_processor import AgggregationProcessor
@@ -34,33 +33,34 @@ def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     return raw_input_data
 
 
-def build_metric_views(
+def create_view_builders(
     view_building_inputs: list[ViewBuildingInputData],
     components_by_taxon: dict[str, list[Component]],
-) -> dict[str, list[TemporalMetricView]]:
-    metric_views_by_view_config: dict[str, list[TemporalMetricView]] = defaultdict(list)
+) -> list[ViewBuilder]:
+    view_builders = []
     for view_building_input in view_building_inputs:
-        metric_views = build_metric_views_for_view_config(view_building_input, components_by_taxon)
-        metric_views_by_view_config[view_building_input.view_config.id].extend(metric_views)
-    return metric_views_by_view_config
+        components_by_taxon_copy = deepcopy(components_by_taxon)
+        supply_components_with_locations(
+            components_by_taxon_copy,
+            view_building_input.view_config.get_metrics(),
+            view_building_input.view_config.location_taxonomy_category,
+        )
+        metric_structure_table_builder = MetricStructureTableBuilder(
+            view_building_input.view_config,
+            components_by_taxon_copy,
+        )
+        aggregation_processor = AgggregationProcessor(view_building_input.view_config)
+        view_builder = ViewBuilder(view_building_input, metric_structure_table_builder, aggregation_processor)
+        view_builders.append(view_builder)
+    return view_builders
 
 
-def build_metric_views_for_view_config(
-    view_building_input: ViewBuildingInputData, components_by_taxon: dict[str, list[Component]]
-) -> list[TemporalMetricView]:
-    components_by_taxon = deepcopy(components_by_taxon)
-    supply_components_with_locations(
-        components_by_taxon,
-        view_building_input.view_config.get_metrics(),
-        view_building_input.view_config.location_taxonomy_category,
-    )
-
-    metric_structure_table_builder = MetricStructureTableBuilder(
-        view_building_input.view_config,
-        components_by_taxon,
-    )
-    aggregation_processor = AgggregationProcessor(view_building_input.view_config)
-    return ViewBuilder(view_building_input, metric_structure_table_builder, aggregation_processor).build()
+def build_views(view_builders: list[ViewBuilder]) -> list[TemporalMetricView]:
+    metric_views = []
+    for view_builder in view_builders:
+        views = view_builder.build()
+        metric_views.extend(views)
+    return metric_views
 
 
 def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) -> None:
@@ -72,9 +72,10 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     enrich_components(components, raw_input_data)
     components_by_taxon = group_components_by_taxon(components)
 
-    metric_views_by_view_config = build_metric_views(view_building_inputs, components_by_taxon)
+    view_builders = create_view_builders(view_building_inputs, components_by_taxon)
+    metric_views = build_views(view_builders)
 
-    accumulate_on_disk(metric_views_by_view_config, view_sinker)
+    accumulate_on_disk(metric_views, view_sinker)
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -2,36 +2,32 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from collections import defaultdict
-from dataclasses import dataclass
 
 import polars as pl
 
 from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import TemporalMetricView
+from gems_views_builder.view.view_sinker import ViewSinker
 
 
-@dataclass
-class View:
-    dataframe: pl.LazyFrame
-
-
-from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
-
-
-def group_by_time_granularity(
+def group_views(
     metric_views: list[TemporalMetricView],
-) -> dict[TimeGranularity, list[TemporalMetricView]]:
-    views_by_time_granularity: dict[TimeGranularity, list[TemporalMetricView]] = defaultdict(list)
+) -> dict[tuple[str, TimeGranularity], list[TemporalMetricView]]:
+    '''
+    Groups a list of TemporalMetricView objects by their view_config_id and time_granularity.
+    '''
+    grouped_views: dict[tuple[str, TimeGranularity], list[TemporalMetricView]] = defaultdict(list)
     for view in metric_views:
-        views_by_time_granularity[view.time_granularity].append(view)
-    return views_by_time_granularity
+        key = (view.view_config_id, view.time_granularity)
+        grouped_views[key].append(view)
+    return grouped_views
 
 
 def accumulate_views(views: list[TemporalMetricView]) -> pl.LazyFrame:
     return pl.scan_parquet([v.persistence_path for v in views])
 
-
-def accumulate_on_disk(metric_views_by_view_config: dict[str, list[TemporalMetricView]], sinker: ViewSinker) -> None:
-    for view_config_id, metric_views in metric_views_by_view_config.items():
-        for time_granularity, views in group_by_time_granularity(metric_views).items():
-            sinker.sink(accumulate_views(views), time_granularity, view_config_id)
+def accumulate_on_disk(metric_views: list[TemporalMetricView], sinker: ViewSinker) -> None:
+        for (view_config_id, time_granularity), views in group_views(metric_views).items():
+            accumulated_views = accumulate_views(views)
+            save_file_name = f"{view_config_id}_{time_granularity.value}"
+            sinker.sink(accumulated_views, save_file_name)
