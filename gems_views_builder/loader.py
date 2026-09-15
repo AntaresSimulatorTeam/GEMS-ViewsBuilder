@@ -5,13 +5,13 @@ import logging
 from dataclasses import dataclass
 
 from gems_views_builder.input.calendar import load_calendar
-from gems_views_builder.input.catalog import load_catalogs
+from gems_views_builder.input.catalog import Catalog, load_catalogs
 from gems_views_builder.input.library import create_lib_from_yml, load_yml_libs
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import load_simulation_tables
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.taxonomy import load_taxonomy
-from gems_views_builder.input.view_config import ViewConfig, get_catalogs_ids, load_view_configs
+from gems_views_builder.input.view_config import ViewConfig, load_view_configs
 from gems_views_builder.input_paths import InputPaths
 
 
@@ -25,6 +25,9 @@ class Loader:
         logging.info("Loading inputs from explicit input paths")
         view_configs: list[ViewConfig] = load_view_configs(self.input_paths.view_configs)
         yml_libs = load_yml_libs(self.input_paths.libraries_dir)
+
+        catalogs = load_catalogs(self.input_paths.catalogs_dir, view_configs)
+        populate_view_configs_with_metrics(view_configs, catalogs)
         raw_input_data = RawInputData(
             taxonomy=load_taxonomy(self.input_paths.taxonomy),
             view_configs=view_configs,
@@ -32,8 +35,13 @@ class Loader:
             system=load_system(self.input_paths.system, yml_libs),
             simulation_tables=load_simulation_tables(self.input_paths.simulation_tables),
             calendar=load_calendar(self.input_paths.calendar),
-            catalogs=load_catalogs(self.input_paths.catalogs_dir, get_catalogs_ids(view_configs)),
+            catalogs=catalogs,
         )
 
         logging.info("All inputs loaded successfully")
         return raw_input_data
+
+
+def populate_view_configs_with_metrics(view_configs: list[ViewConfig], catalogs: dict[str, Catalog]) -> None:
+    for view_config in view_configs:
+        view_config.populate_with_metrics(catalogs)

@@ -22,7 +22,6 @@ from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
-from gems_views_builder.parallel_views_builder_executor import ParallelViewsBuilderExecutor
 from gems_views_builder.validation.catalog_taxonomy_validator import validate_catalogs_against_taxonomy
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
@@ -34,40 +33,49 @@ def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     return raw_input_data
 
 
-def build_metric_views(raw_input_data: RawInputData, parallel_mode: str) -> dict[str, list[TemporalMetricView]]:
-    components = create_components(raw_input_data.system.components)
-    enrich_components(components, raw_input_data)
-    components_by_taxon = group_components_by_taxon(components)
+def create_view_builders(
+    view_building_inputs: list[ViewBuildingInputData],
+    components_by_taxon: dict[str, list[Component]],
+) -> list[ViewBuilder]:
+    view_builders = []
+    for view_building_input in view_building_inputs:
+        components_by_taxon_copy = deepcopy(components_by_taxon)
+        supply_components_with_locations(
+            components_by_taxon_copy,
+            view_building_input.view_config.get_metrics(),
+            view_building_input.view_config.location_taxonomy_category,
+        )
+        metric_structure_table_builder = MetricStructureTableBuilder(
+            view_building_input.view_config,
+            components_by_taxon_copy,
+        )
+        aggregation_processor = AgggregationProcessor(view_building_input.view_config)
+        view_builder = ViewBuilder(view_building_input, metric_structure_table_builder, aggregation_processor)
+        view_builders.append(view_builder)
+    return view_builders
 
-    view_building_inputs = create_view_building_inputs(raw_input_data)
 
-    return ParallelViewsBuilderExecutor(
-        view_building_inputs, components_by_taxon, parallel_mode, build_metric_views_for_view_config
-    ).build()
-
-
-def build_metric_views_for_view_config(
-    view_building_input: ViewBuildingInputData, components_by_taxon: dict[str, list[Component]]
-) -> list[TemporalMetricView]:
-    components_by_taxon = deepcopy(components_by_taxon)
-    supply_components_with_locations(
-        components_by_taxon,
-        view_building_input.view_config.get_metrics(),
-        view_building_input.view_config.location_taxonomy_category,
-    )
-
-    metric_structure_table_builder = MetricStructureTableBuilder(
-        view_building_input.view_config,
-        components_by_taxon,
-    )
-    aggregation_processor = AgggregationProcessor(view_building_input.view_config)
-    return ViewBuilder(view_building_input, metric_structure_table_builder, aggregation_processor).build()
+def build_views(view_builders: list[ViewBuilder]) -> list[TemporalMetricView]:
+    metric_views = []
+    for view_builder in view_builders:
+        views = view_builder.build()
+        metric_views.extend(views)
+    return metric_views
 
 
 def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker, parallel_mode: str) -> None:
     raw_input_data = load_and_validate_input_data(input_paths)
-    metric_views_by_view_config = build_metric_views(raw_input_data, parallel_mode)
-    accumulate_on_disk(metric_views_by_view_config, view_sinker)
+    view_building_inputs = create_view_building_inputs(raw_input_data)
+
+    # Components : create, enrich and group by taxon
+    components = create_components(raw_input_data.system.components)
+    enrich_components(components, raw_input_data)
+    components_by_taxon = group_components_by_taxon(components)
+
+    view_builders = create_view_builders(view_building_inputs, components_by_taxon)
+    metric_views = build_views(view_builders)
+
+    accumulate_on_disk(metric_views, view_sinker)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -81,7 +89,8 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         check_options(args)
-    except Exception:
+    except Exception as e:
+        logging.exception(f"Command lines options : {str(e)}")
         return 2
 
     try:

@@ -80,12 +80,6 @@ def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
     return SimulationTable(dataframe)
 
 
-def concat_simulation_tables(simulation_tables: list[SimulationTable]) -> pl.LazyFrame:
-    if not simulation_tables:
-        raise ValueError("No simulation tables to concat")
-    return pl.concat([table.dataframe for table in simulation_tables])
-
-
 def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) -> FilteredSimulationTable:
     """Filter simulation tables by calendar, persist result to a private tempdir, and return it."""
     logging.info("Filtering simulation table by calendar")
