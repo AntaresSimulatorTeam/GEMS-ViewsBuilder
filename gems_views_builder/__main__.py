@@ -57,7 +57,9 @@ def create_view_builders(
 
 
 def build_views(view_builders: list[ViewBuilder], parallel_mode: str) -> list[TemporalMetricView]:
-    return ParallelViewsBuilderExecutor(view_builders, parallel_mode).build()
+    parallel_views_builder_executor = ParallelViewsBuilderExecutor(view_builders, parallel_mode)
+    views = parallel_views_builder_executor.build()
+    return views
 
 
 def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker, parallel_mode: str) -> None:
