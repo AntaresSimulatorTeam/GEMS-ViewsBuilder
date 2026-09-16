@@ -4,7 +4,7 @@
 from pathlib import Path
 
 import pytest
-from gems_craft.model.parsing import FieldSchema, write_yaml_library
+from gems_craft.model.parsing import FieldSchema, write_yaml_library  # type: ignore
 
 from gems_views_builder import (
     ConstraintSchema,
