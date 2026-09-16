@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from gems_views_builder.input.library import collect_lib_files, create_lib_from_yml, load_yml_libs
+from gems_craft.model.parsing import ModelSchema
 
 LIBRARY_YAML_1 = """\
 library:
@@ -60,7 +61,7 @@ def test_library_fully_loaded(tmp_path: Path) -> None:
 
     # Assert
     assert lib.id == yml_lib.id
-    assert lib.port_types == yml_lib.port_types
-    assert lib.models["generator"] == yml_lib.models[0]
+    assert lib.port_types == []
+    assert lib.models["generator"] == ModelSchema(id="generator", taxonomy_category="production")
     assert lib.models_by_taxonomy_category == {"production": ["generator"]}
     assert lib.taxon_by_model == {"generator": "production"}
