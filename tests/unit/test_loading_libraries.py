@@ -4,9 +4,9 @@
 from pathlib import Path
 
 import pytest
+from gems_craft.model.parsing import ModelSchema
 
 from gems_views_builder.input.library import collect_lib_files, create_lib_from_yml, load_yml_libs
-from gems_craft.model.parsing import ModelSchema
 
 LIBRARY_YAML_1 = """\
 library:
