@@ -7,39 +7,21 @@ import pytest
 
 from gems_views_builder.input.library import collect_lib_files, create_lib_from_yml, load_yml_libs
 
-LIBRARY_YAML = """\
+LIBRARY_YAML_1 = """\
 library:
-  id: library_one
-  port-types:
-    - id: flow
-      description: A port which transfers power flow
-      fields:
-        - id: flow
+  id: library_1
   models:
     - id: generator
       taxonomy-category: production
-      parameters:
-        - id: p_max
-        - id: cost
-      variables:
-        - id: generation
-          lower-bound: 0
-          upper-bound: p_max
-      ports:
-        - id: balance_port
-          type: flow
-      port-field-definitions:
-        - port: balance_port
-          field: flow
-          definition: generation
-      constraints:
-        - id: generation_bound
-          expression: generation <= p_max
-      objective-contributions:
-        - id: operational_objective
-          expression: expec(sum(cost * generation))
 """
 
+LIBRARY_YAML_2 = """\
+library:
+  id: library_2
+  models:
+    - id: generator
+      taxonomy-category: production
+"""
 
 def test_collect_lib_files_raises_when_no_yml_files(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="No model libraries found"):
@@ -47,17 +29,17 @@ def test_collect_lib_files_raises_when_no_yml_files(tmp_path: Path) -> None:
 
 
 def test_collect_libraries(tmp_path: Path) -> None:
-    (tmp_path / "library_one.yml").write_text(LIBRARY_YAML)
-    (tmp_path / "library_two.yml").write_text(LIBRARY_YAML.replace("id: library_one", "id: library_two"))
+    (tmp_path / "library_1.yml").write_text(LIBRARY_YAML_1)
+    (tmp_path / "library_2.yml").write_text(LIBRARY_YAML_2)
     lib_files = collect_lib_files(tmp_path)
     assert len(lib_files) == 2
-    assert {path.name for path in lib_files} == {"library_one.yml", "library_two.yml"}
+    assert {path.name for path in lib_files} == {"library_1.yml", "library_2.yml"}
 
 
 def test_load_multiple_libs(tmp_path: Path) -> None:
     # Arrange
-    (tmp_path / "library_one.yml").write_text(LIBRARY_YAML)
-    (tmp_path / "library_two.yml").write_text(LIBRARY_YAML.replace("id: library_one", "id: library_two"))
+    (tmp_path / "library_1.yml").write_text(LIBRARY_YAML_1)
+    (tmp_path / "library_2.yml").write_text(LIBRARY_YAML_2)
 
     # Act
     yml_libs = load_yml_libs(tmp_path)
@@ -65,12 +47,12 @@ def test_load_multiple_libs(tmp_path: Path) -> None:
 
     # Assert
     assert len(libs) == 2
-    assert {lib.id for lib in libs} == {"library_one", "library_two"}
+    assert {lib.id for lib in libs} == {"library_1", "library_2"}
 
 
 def test_library_fully_loaded(tmp_path: Path) -> None:
     # Arrange
-    (tmp_path / "test.yml").write_text(LIBRARY_YAML)
+    (tmp_path / "test.yml").write_text(LIBRARY_YAML_1)
 
     # Act
     yml_lib = load_yml_libs(tmp_path)[0]
