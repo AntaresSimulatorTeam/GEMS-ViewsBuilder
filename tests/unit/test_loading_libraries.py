@@ -60,7 +60,7 @@ def test_library_fully_loaded(tmp_path: Path) -> None:
     lib = create_lib_from_yml(yml_lib)
 
     # Assert
-    assert lib.id == yml_lib.id
+    assert lib.id == "library_1"
     assert lib.port_types == []
     assert lib.models["generator"] == ModelSchema(id="generator", taxonomy_category="production")
     assert lib.models_by_taxonomy_category == {"production": ["generator"]}
