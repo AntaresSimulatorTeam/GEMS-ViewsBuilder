@@ -15,6 +15,7 @@ from gems_views_builder.input.component import (
     supply_components_with_locations,
 )
 from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.taxonomy.taxonomy_tree import TaxonomyTree, make_taxonomy_tree
 from gems_views_builder.input.view_building_input_data import create_view_building_input
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
@@ -23,7 +24,7 @@ from gems_views_builder.metrics_structure_builder import MetricStructureTableBui
 from gems_views_builder.validation.input_consistency_validator import InputConsistencyValidator
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
-from gems_views_builder.input.taxonomy.taxonomy_tree import TaxonomyTree,make_taxonomy_tree
+
 
 def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     raw_input_data = Loader(input_paths).load()
@@ -33,16 +34,13 @@ def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
 
 def build_metric_views(raw_input_data: RawInputData) -> list[TemporalMetricView]:
     components = create_components(raw_input_data.system.components)
-    
+
     # Here also some adaptation
     taxon_tree = TaxonomyTree()
     make_taxonomy_tree(raw_input_data.taxonomy, taxon_tree)
 
-
-
     # No needs for adaptation
     enrich_components(components, raw_input_data)
-
 
     # # Here we will need to call taxonomy tree to get the components by taxon
     components_by_taxon = group_components_by_taxon(components)

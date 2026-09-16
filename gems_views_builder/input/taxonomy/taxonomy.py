@@ -63,13 +63,13 @@ def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
     logging.info(f"Taxonomy {taxonomy.id!r} loaded with {len(taxonomy.categories)} categor(ies)")
     return taxonomy
 
-def check_taxon_ids(taxon_categories: list[TaxonomyCategory]) -> None: 
+
+def check_taxon_ids(taxon_categories: list[TaxonomyCategory]) -> None:
     categories = set()
     for category in taxon_categories:
         if category.id in categories:
             raise ValueError(f"Category ID={category.id} is not unique")
         categories.add(category.id)
-
 
 
 def load_taxonomy_file(taxonomy_file_path: Path) -> TaxonomyData:
