@@ -12,36 +12,31 @@ class ParallelViewsBuilderExecutor:
     def __init__(self, view_builders: list[ViewBuilder], parallel_mode: str):
         self.view_builders = list(view_builders)
         self.num_of_available_cores = get_num_of_cores_per_mode(parallel_mode)
+        self.metric_views: list[TemporalMetricView] = []
+        self.currently_building: set[Future[list[TemporalMetricView]]] = set()
 
     def build(self) -> list[TemporalMetricView]:
-        currently_building: set[Future[list[TemporalMetricView]]] = set()
-        metric_views: list[TemporalMetricView] = []
+        with ThreadPoolExecutor(max_workers=self.num_of_available_cores) as job_executor:
+            while self.view_builders or self.currently_building:
+                self._schedule_new_jobs(job_executor)
+                finished_jobs, _ = wait(self.currently_building, return_when=FIRST_COMPLETED)
+                self._collect_finished_jobs(finished_jobs)
+        return self.metric_views
 
-        with ThreadPoolExecutor(max_workers=self.num_of_available_cores) as executor:
-            while self.view_builders or currently_building:
-                self._schedule_new_jobs(executor, currently_building)
-                finished_jobs, _ = wait(currently_building, return_when=FIRST_COMPLETED)
-                self._collect_finished_jobs(finished_jobs, currently_building, metric_views)
-        return metric_views
-
-    def _schedule_new_jobs(
-        self, executor: ThreadPoolExecutor, currently_building: set[Future[list[TemporalMetricView]]]
-    ) -> None:
+    def _schedule_new_jobs(self, job_executor: ThreadPoolExecutor) -> None:
         while self.view_builders and self.num_of_available_cores > 0:
             view_builder = self.view_builders.pop()
-            job = executor.submit(view_builder.build)
+            job = job_executor.submit(view_builder.build)
             self.num_of_available_cores -= 1
-            currently_building.add(job)
+            self.currently_building.add(job)
 
     def _collect_finished_jobs(
         self,
         finished_jobs: set[Future[list[TemporalMetricView]]],
-        currently_building: set[Future[list[TemporalMetricView]]],
-        metric_views: list[TemporalMetricView],
     ) -> None:
         for job in finished_jobs:
-            currently_building.remove(job)
-            metric_views.extend(job.result())
+            self.currently_building.remove(job)
+            self.metric_views.extend(job.result())
             self.num_of_available_cores += 1
 
 
