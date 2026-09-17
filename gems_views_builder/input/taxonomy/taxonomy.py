@@ -65,11 +65,11 @@ def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
 
 
 def check_taxon_ids(taxon_categories: list[TaxonomyCategory]) -> None:
-    categories = set()
-    for category in taxon_categories:
-        if category.id in categories:
-            raise ValueError(f"Category ID={category.id} is not unique")
-        categories.add(category.id)
+    cats = set()
+    for cat in taxon_categories:
+        if cat.id in cats:
+            raise ValueError(f"Category ID={cat.id} is not unique")
+        cats.add(cat.id)
 
 
 def load_taxonomy_file(taxonomy_file_path: Path) -> TaxonomyData:

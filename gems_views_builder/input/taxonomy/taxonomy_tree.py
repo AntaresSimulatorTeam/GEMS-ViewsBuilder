@@ -8,28 +8,46 @@ from dataclasses import dataclass, field
 from gems_views_builder.input.taxonomy.taxonomy import Taxonomy, TaxonomyCategory
 
 
-@dataclass
-class TaxonomyTreeNode:
+@dataclass(kw_only=True)
+class DummyNode:
     id: str
-    category: TaxonomyCategory | None = None
+    children: dict[str, DummyNode] = field(default_factory=dict)
+
+
+@dataclass(kw_only=True)
+class TaxonomyTreeNode(DummyNode):
+    category: TaxonomyCategory
     has_parent: bool = False
     ancestors: set[str] = field(default_factory=set)
-    children: dict[str, TaxonomyTreeNode] = field(default_factory=dict)
 
 
 @dataclass
 class TaxonomyTree:
-    root: TaxonomyTreeNode = field(default_factory=lambda: TaxonomyTreeNode(id="root"))
+    root: DummyNode = field(default_factory=lambda: DummyNode(id="root"))
 
 
 def make_taxonomy_tree(taxonomy: Taxonomy, taxon_tree: TaxonomyTree) -> None:
     neighbors = make_neighbors(taxonomy)  # O(n)
-    root_cat = get_root_categories(neighbors)  # O(1)
-    for cat in root_cat:
-        taxon_tree.root.children[cat] = TaxonomyTreeNode(id=cat, category=taxonomy.categories[cat])
-        # TODO: implement recursive function to build the tree
+    for cat in get_root_categories(neighbors):  # O(1)
+        node = TaxonomyTreeNode(id=cat, category=taxonomy.categories[cat])
+        taxon_tree.root.children[cat] = node
+        insert_children(neighbors, node, taxonomy)
 
-    # Bottom up BFS to fill ancestors
+
+def insert_children(
+    neighbors: dict[str | None, set[str]],
+    taxon_tree_node: TaxonomyTreeNode,
+    taxonomy: Taxonomy,
+) -> None:
+    # Base case: if the node has no children, return
+    if not neighbors[taxon_tree_node.id]:
+        return
+
+    # Recursive case: insert children
+    for child in neighbors[taxon_tree_node.id]:
+        child_node = TaxonomyTreeNode(id=child, category=taxonomy.categories[child])
+        taxon_tree_node.children[child] = child_node
+        insert_children(neighbors, child_node, taxonomy)
 
 
 def make_neighbors(taxonomy: Taxonomy) -> dict[str | None, set[str]]:
@@ -47,4 +65,9 @@ def check_self_loop(cat_id: str, parent_cat_id: str | None) -> None:
 
 
 def get_root_categories(neighbors: dict[str | None, set[str]]) -> set[str]:
+    """
+    Everything labeled as None is considered as a root category.
+    Suppose we have cat1,cat2,cat3 as root categories.
+    None : {cat1, cat2, cat3} -> cat1, cat2, cat3 are root categories.
+    """
     return neighbors[None]
