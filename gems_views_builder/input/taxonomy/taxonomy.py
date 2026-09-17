@@ -54,7 +54,7 @@ def allowed_output(taxon: TaxonomyCategory) -> set[str]:
 def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
     logging.info(f"Loading taxonomy from {taxonomy_file_path}")
     parsed = load_taxonomy_file(taxonomy_file_path)
-    check_taxon_ids(parsed.categories)
+    check_taxon_categories(parsed.categories)
     taxonomy = Taxonomy(
         id=parsed.id,
         description=parsed.description,
@@ -64,7 +64,7 @@ def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
     return taxonomy
 
 
-def check_taxon_ids(taxon_categories: list[TaxonomyCategory]) -> None:
+def check_taxon_categories(taxon_categories: list[TaxonomyCategory]) -> None:
     cats = set()
     for cat in taxon_categories:
         if cat.id in cats:
