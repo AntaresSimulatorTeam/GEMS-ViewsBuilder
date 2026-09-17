@@ -8,7 +8,6 @@ import pytest
 
 from gems_views_builder.input.taxonomy.taxonomy import load_taxonomy
 from gems_views_builder.input.taxonomy.taxonomy_tree import (
-    TaxonomyTree,
     TaxonomyTreeNode,
     enrich_tree,
     make_neighbors,
@@ -77,9 +76,7 @@ def test_make_taxonomy_tree(tmp_path: Path) -> None:
     # Arrange
     (tmp_path / "taxonomy.yml").write_text(TAXONOMY)
     taxonomy = load_taxonomy(tmp_path / "taxonomy.yml")
-    taxonomy_tree = TaxonomyTree()
-    # Act
-    make_taxonomy_tree(taxonomy, taxonomy_tree)
+    taxonomy_tree = make_taxonomy_tree(taxonomy)
 
     # Assert
     assert taxonomy_tree.root.id == "root"
@@ -91,6 +88,7 @@ def test_make_taxonomy_tree(tmp_path: Path) -> None:
                 "production": TaxonomyTreeNode(id="production", category=taxonomy.categories["production"]),
                 "consumption": TaxonomyTreeNode(id="consumption", category=taxonomy.categories["consumption"]),
             },
+            descendants={"production", "consumption"},
         ),
         "balance": TaxonomyTreeNode(id="balance", category=taxonomy.categories["balance"]),
     }
@@ -103,8 +101,7 @@ def test_enrich_tree(tmp_path: Path) -> None:
     # Arrange
     (tmp_path / "taxonomy.yml").write_text(TAXONOMY)
     taxonomy = load_taxonomy(tmp_path / "taxonomy.yml")
-    taxonomy_tree = TaxonomyTree()
-    make_taxonomy_tree(taxonomy, taxonomy_tree)
+    taxonomy_tree = make_taxonomy_tree(taxonomy)
     # Act
     enrich_tree(taxonomy_tree.root)
     # Assert

@@ -15,7 +15,6 @@ from gems_views_builder.input.component import (
     supply_components_with_locations,
 )
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.taxonomy.taxonomy_tree import TaxonomyTree, make_taxonomy_tree
 from gems_views_builder.input.view_building_input_data import create_view_building_input
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
@@ -36,8 +35,7 @@ def build_metric_views(raw_input_data: RawInputData) -> list[TemporalMetricView]
     components = create_components(raw_input_data.system.components)
 
     # Here also some adaptation
-    taxon_tree = TaxonomyTree()
-    make_taxonomy_tree(raw_input_data.taxonomy, taxon_tree)
+    # taxon_tree = make_taxonomy_tree(raw_input_data.taxonomy)
 
     # No needs for adaptation
     enrich_components(components, raw_input_data)

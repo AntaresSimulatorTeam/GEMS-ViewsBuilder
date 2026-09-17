@@ -21,7 +21,18 @@ class TaxonomyTree:
     root: TaxonomyTreeNode = field(default_factory=lambda: TaxonomyTreeNode(id="root"))
 
 
-def make_taxonomy_tree(taxonomy: Taxonomy, taxon_tree: TaxonomyTree) -> None:
+def make_taxonomy_tree(taxonomy: Taxonomy) -> TaxonomyTree:
+    taxon_tree = TaxonomyTree()
+    # Step 1: insert nodes into the tree
+    insert_nodes(taxonomy, taxon_tree)
+    # Step 2: detect cycles
+    detect_cycles(taxon_tree.root, set())
+    # Step 3: enrich tree
+    enrich_tree(taxon_tree.root)  # O(n)
+    return taxon_tree
+
+
+def insert_nodes(taxonomy: Taxonomy, taxon_tree: TaxonomyTree) -> None:
     neighbors = make_neighbors(taxonomy)  # O(n)
     for cat in get_root_categories(neighbors):  # O(1)
         node = TaxonomyTreeNode(id=cat, category=taxonomy.categories[cat])
