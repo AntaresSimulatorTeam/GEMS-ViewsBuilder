@@ -10,6 +10,7 @@ from gems_views_builder.input.taxonomy.taxonomy import load_taxonomy
 from gems_views_builder.input.taxonomy.taxonomy_tree import (
     TaxonomyTree,
     TaxonomyTreeNode,
+    enrich_tree,
     make_neighbors,
     make_taxonomy_tree,
 )
@@ -96,3 +97,19 @@ def test_make_taxonomy_tree(tmp_path: Path) -> None:
     assert taxonomy_tree.root.children["energy"].children["production"].children == {}
     assert taxonomy_tree.root.children["energy"].children["consumption"].children == {}
     assert taxonomy_tree.root.children["balance"].children == {}
+
+
+def test_enrich_tree(tmp_path: Path) -> None:
+    # Arrange
+    (tmp_path / "taxonomy.yml").write_text(TAXONOMY)
+    taxonomy = load_taxonomy(tmp_path / "taxonomy.yml")
+    taxonomy_tree = TaxonomyTree()
+    make_taxonomy_tree(taxonomy, taxonomy_tree)
+    # Act
+    enrich_tree(taxonomy_tree.root)
+    # Assert
+    assert taxonomy_tree.root.descendants == {"energy", "production", "consumption", "balance"}
+    assert taxonomy_tree.root.children["energy"].descendants == {"production", "consumption"}
+    assert taxonomy_tree.root.children["energy"].children["production"].descendants == set()
+    assert taxonomy_tree.root.children["energy"].children["consumption"].descendants == set()
+    assert taxonomy_tree.root.children["balance"].descendants == set()

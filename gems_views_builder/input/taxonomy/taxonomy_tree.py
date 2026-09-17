@@ -9,21 +9,16 @@ from gems_views_builder.input.taxonomy.taxonomy import Taxonomy, TaxonomyCategor
 
 
 @dataclass(kw_only=True)
-class DummyNode:
+class TaxonomyTreeNode:
     id: str
-    children: dict[str, DummyNode] = field(default_factory=dict)
-
-
-@dataclass(kw_only=True)
-class TaxonomyTreeNode(DummyNode):
-    category: TaxonomyCategory
-    has_parent: bool = False
-    ancestors: set[str] = field(default_factory=set)
+    children: dict[str, TaxonomyTreeNode] = field(default_factory=dict)
+    category: TaxonomyCategory | None = None
+    descendants: set[str] = field(default_factory=set)
 
 
 @dataclass
 class TaxonomyTree:
-    root: DummyNode = field(default_factory=lambda: DummyNode(id="root"))
+    root: TaxonomyTreeNode = field(default_factory=lambda: TaxonomyTreeNode(id="root"))
 
 
 def make_taxonomy_tree(taxonomy: Taxonomy, taxon_tree: TaxonomyTree) -> None:
@@ -71,3 +66,26 @@ def get_root_categories(neighbors: dict[str | None, set[str]]) -> set[str]:
     None : {cat1, cat2, cat3} -> cat1, cat2, cat3 are root categories.
     """
     return neighbors[None]
+
+
+def detect_cycles(root: TaxonomyTreeNode, current_path: set[str]) -> None:
+    """
+    Time complexity: O(n) where n is number of categories
+    Space complexity: O(log n) avg case, worst case O(n) if we skewed tree
+    """
+    # Base case: if the node is already in the current path, we have a cycle
+    if root.id in current_path:
+        raise ValueError(f"Cycle detected: {current_path}")
+
+    current_path.add(root.id)
+    for child in root.children.values():
+        detect_cycles(child, current_path)
+    current_path.remove(root.id)
+
+
+def enrich_tree(node: TaxonomyTreeNode) -> set[str]:
+    descendants: set[str] = set()
+    for child in node.children.values():
+        descendants.update(enrich_tree(child))
+    node.descendants = descendants
+    return {node.id} | descendants
