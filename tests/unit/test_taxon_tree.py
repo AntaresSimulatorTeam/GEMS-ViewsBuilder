@@ -76,6 +76,8 @@ def test_make_taxonomy_tree(tmp_path: Path) -> None:
     # Arrange
     (tmp_path / "taxonomy.yml").write_text(TAXONOMY)
     taxonomy = load_taxonomy(tmp_path / "taxonomy.yml")
+
+    # Act
     taxonomy_tree = make_taxonomy_tree(taxonomy)
 
     # Assert
@@ -102,8 +104,10 @@ def test_enrich_tree(tmp_path: Path) -> None:
     (tmp_path / "taxonomy.yml").write_text(TAXONOMY)
     taxonomy = load_taxonomy(tmp_path / "taxonomy.yml")
     taxonomy_tree = make_taxonomy_tree(taxonomy)
+
     # Act
     enrich_tree(taxonomy_tree.root)
+
     # Assert
     assert taxonomy_tree.root.descendants == {"energy", "production", "consumption", "balance"}
     assert taxonomy_tree.root.children["energy"].descendants == {"production", "consumption"}
