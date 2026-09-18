@@ -5,7 +5,7 @@
 
 import argparse
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
@@ -13,27 +13,35 @@ from pathlib import Path
 class SystemType(Enum):
     DIRECTORY = "directory"
     FILE = "file"
+    FILES = "files"
 
 
 @dataclass
-class PathOption:
+class Option:
     name: str
     system_type: SystemType
-    system_check: Callable[[Path], bool]
-    args_attribute: str = ""
+    args_attribute: str = field(init=False)
 
     def __post_init__(self) -> None:
         self.args_attribute = self.name.replace("-", "_")
 
 
+@dataclass
+class PathOption(Option):
+    system_check: Callable[[Path], bool]
+
+
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
-    PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
     PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir),
     PathOption("system", SystemType.FILE, Path.is_file),
     PathOption("calendar", SystemType.FILE, Path.is_file),
     PathOption("taxonomy", SystemType.FILE, Path.is_file),
     PathOption("simulation-table", SystemType.FILE, Path.is_file),
     PathOption("view-config", SystemType.FILE, Path.is_file),
+]
+
+GLOB_PATTERN_OPTIONS: list[Option] = [
+    Option("catalogs", SystemType.FILES),
 ]
 
 
@@ -44,6 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     add_path_options(parser, REQUIRED_PATHS_OPTIONS)
+    add_glob_pattern_options(parser, GLOB_PATTERN_OPTIONS)
 
     parser.add_argument(
         "-o",
@@ -85,6 +94,16 @@ def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOpt
         )
 
 
+def add_glob_pattern_options(parser: argparse.ArgumentParser, glob_pattern_options: list[Option]) -> None:
+    for option in glob_pattern_options:
+        parser.add_argument(
+            f"--{option.name}",
+            type=str,
+            required=True,
+            help=f"Glob pattern matching {option.name} files (e.g. path/catalog-*.yml).",
+        )
+
+
 def check_paths_options(args: argparse.Namespace) -> None:
     for option in REQUIRED_PATHS_OPTIONS:
         option_value = getattr(args, option.args_attribute)
@@ -92,8 +111,16 @@ def check_paths_options(args: argparse.Namespace) -> None:
             raise OSError(f"--{option.name} is not a {option.system_type.value}: {option_value}")
 
 
+def check_glob_options(args: argparse.Namespace) -> None:
+    for option in GLOB_PATTERN_OPTIONS:
+        pattern = Path(getattr(args, option.args_attribute))
+        if not pattern.parent.is_dir():
+            raise NotADirectoryError(f"--{option.name} directory does not exist: {pattern.parent}")
+
+
 def check_options(args: argparse.Namespace) -> None:
     check_paths_options(args)
+    check_glob_options(args)
 
     if not args.output.is_dir():
         raise NotADirectoryError(f"--output is not a directory: {args.output}")

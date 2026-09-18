@@ -32,7 +32,7 @@ class Loader:
             system=load_system(self.input_paths.system, yml_libs),
             simulation_table=load_simulation_table(self.input_paths.simulation_table),
             calendar=load_calendar(self.input_paths.calendar),
-            catalogs=load_catalogs(self.input_paths.catalogs_dir, view_config.catalog_ids),
+            catalogs=load_catalogs(self.input_paths.catalogs),
         )
 
         logging.info("All inputs loaded successfully")

@@ -31,7 +31,7 @@ def write_minimal_input_data_set(root: Path) -> InputPaths:
     return InputPaths(
         Namespace(
             libraries_dir=libraries_dir,
-            catalogs_dir=catalogs_dir,
+            catalogs=str(catalogs_dir / "*.yml"),
             system=system,
             calendar=calendar,
             taxonomy=taxonomy,
@@ -65,16 +65,38 @@ def test_validate_passes_with_arbitrarily_named_model_library_file(tmp_path: Pat
     InputPathsValidator(paths).validate()
 
 
-def test_validate_raises_when_catalogs_contain_non_yml(tmp_path: Path) -> None:
+def test_validate_raises_when_catalog_is_not_yml(tmp_path: Path) -> None:
     paths = write_minimal_input_data_set(tmp_path)
-    (paths.catalogs_dir / "notes.txt").touch()
-    with pytest.raises(ValueError, match="non-.yml"):
+    notes = tmp_path / "notes.txt"
+    notes.touch()
+    paths.catalogs.append(notes)
+    with pytest.raises(ValueError, match="Catalog files must have extension"):
         InputPathsValidator(paths).validate()
 
 
-def test_validate_passes_with_multiple_catalogs(tmp_path: Path) -> None:
+def test_validate_ignores_unmatched_files_in_catalogs_directory(tmp_path: Path) -> None:
     paths = write_minimal_input_data_set(tmp_path)
-    (paths.catalogs_dir / "other.yml").touch()
+    (tmp_path / "catalogs" / "notes.txt").touch()
+    InputPathsValidator(paths).validate()
+
+
+def test_validate_passes_with_multiple_catalogs(tmp_path: Path) -> None:
+    # Arrange
+    catalogs_dir = tmp_path / "catalogs"
+    write_minimal_input_data_set(tmp_path)
+    (catalogs_dir / "other.yml").touch()
+    paths = InputPaths(
+        Namespace(
+            libraries_dir=tmp_path / "libraries",
+            catalogs=str(catalogs_dir / "*.yml"),
+            system=tmp_path / "system.yml",
+            calendar=tmp_path / "calendar.csv",
+            taxonomy=tmp_path / "taxonomy.yml",
+            view_config=tmp_path / "view_config.yml",
+            simulation_table=tmp_path / "simulation_table.parquet",
+        )
+    )
+    # Act & Assert
     InputPathsValidator(paths).validate()
 
 

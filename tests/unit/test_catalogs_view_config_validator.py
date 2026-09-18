@@ -12,7 +12,7 @@ from gems_views_builder.validation.catalogs_view_config_validator import ViewCon
 
 def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    catalogs = load_catalogs(test_dataset_dir / "catalogs", view_config.catalog_ids)
+    catalogs = load_catalogs(list((test_dataset_dir / "catalogs").glob("*.yml")))
 
     # Act & Assert
     ViewConfigCatalogsValidator(catalogs, view_config).validate()
