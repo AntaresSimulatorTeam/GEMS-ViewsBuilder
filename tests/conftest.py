@@ -38,7 +38,7 @@ def paths_from_dataset(dataset_dir: Path) -> InputPaths:
             calendar=dataset_dir / "calendar_file.csv",
             taxonomy=dataset_dir / "taxonomy.yml",
             view_config=dataset_dir / "view_config.yml",
-            simulation_table=next(dataset_dir.glob("simulation_table*")),
+            simulation_tables=str(dataset_dir / "simulation_table*.parquet"),
         )
     )
 
