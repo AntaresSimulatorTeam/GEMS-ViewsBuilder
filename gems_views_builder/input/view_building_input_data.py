@@ -22,16 +22,14 @@ class ViewBuildingInputData:
     view_config: ViewConfig
 
 
-def create_view_building_input(raw_input_data: RawInputData) -> ViewBuildingInputData:
+def create_view_building_inputs(raw_input_data: RawInputData) -> list[ViewBuildingInputData]:
     """Resolve catalog metrics, filter the simulation table, and assemble view-building inputs."""
-    raw_input_data.view_config.fetch_metrics(raw_input_data.catalogs)
     concatenated_st = concat_simulation_tables(raw_input_data.simulation_tables)
     filtered_st = filter_simulation_table(concatenated_st, raw_input_data.calendar)
-
-    return ViewBuildingInputData(
-        filtered_st=filtered_st,
-        view_config=raw_input_data.view_config,
-    )
+    return [
+        ViewBuildingInputData(filtered_st=filtered_st, view_config=view_config)
+        for view_config in raw_input_data.view_configs
+    ]
 
 
 def concat_simulation_tables(simulation_tables: list[SimulationTable]) -> pl.LazyFrame:

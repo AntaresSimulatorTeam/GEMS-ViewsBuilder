@@ -19,6 +19,6 @@ class MetricView:
         self.persistence_path.unlink(missing_ok=True)
 
 
-@dataclass
 class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity
+    view_config_id: str

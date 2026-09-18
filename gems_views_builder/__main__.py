@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
+from copy import deepcopy
 
 from gems_views_builder.aggregators.aggregations_processor import AgggregationProcessor
 from gems_views_builder.cli import build_parser, check_options
@@ -9,13 +10,14 @@ from gems_views_builder.common import (
     configure_logging,
 )
 from gems_views_builder.input.component import (
+    Component,
     create_components,
     enrich_components,
     group_components_by_taxon,
     supply_components_with_locations,
 )
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.view_building_input_data import create_view_building_input
+from gems_views_builder.input.view_building_input_data import ViewBuildingInputData, create_view_building_inputs
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import TemporalMetricView
@@ -31,30 +33,48 @@ def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     return raw_input_data
 
 
-def build_metric_views(raw_input_data: RawInputData) -> list[TemporalMetricView]:
-    components = create_components(raw_input_data.system.components)
-    enrich_components(components, raw_input_data)
-    components_by_taxon = group_components_by_taxon(components)
+def create_view_builders(
+    view_building_inputs: list[ViewBuildingInputData],
+    components_by_taxon: dict[str, list[Component]],
+) -> list[ViewBuilder]:
+    view_builders = []
+    for view_building_input in view_building_inputs:
+        components_by_taxon_copy = deepcopy(components_by_taxon)
+        supply_components_with_locations(
+            components_by_taxon_copy,
+            view_building_input.view_config.get_metrics(),
+            view_building_input.view_config.location_taxonomy_category,
+        )
+        metric_structure_table_builder = MetricStructureTableBuilder(
+            view_building_input.view_config,
+            components_by_taxon_copy,
+        )
+        aggregation_processor = AgggregationProcessor(view_building_input.view_config)
+        view_builder = ViewBuilder(view_building_input, metric_structure_table_builder, aggregation_processor)
+        view_builders.append(view_builder)
+    return view_builders
 
-    view_building_input = create_view_building_input(raw_input_data)
-    supply_components_with_locations(
-        components_by_taxon,
-        view_building_input.view_config.get_metrics(),
-        view_building_input.view_config.location_taxonomy_category,
-    )
 
-    metric_structure_table_builder = MetricStructureTableBuilder(
-        view_building_input.view_config,
-        components_by_taxon,
-    )
-
-    aggregation_processor = AgggregationProcessor(view_building_input.view_config)
-    return ViewBuilder(view_building_input, metric_structure_table_builder, aggregation_processor).build()
+def build_views(view_builders: list[ViewBuilder]) -> list[TemporalMetricView]:
+    metric_views = []
+    for view_builder in view_builders:
+        views = view_builder.build()
+        metric_views.extend(views)
+    return metric_views
 
 
 def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) -> None:
     raw_input_data = load_and_validate_input_data(input_paths)
-    metric_views = build_metric_views(raw_input_data)
+    view_building_inputs = create_view_building_inputs(raw_input_data)
+
+    # Components : create, enrich and group by taxon
+    components = create_components(raw_input_data.system.components)
+    enrich_components(components, raw_input_data)
+    components_by_taxon = group_components_by_taxon(components)
+
+    view_builders = create_view_builders(view_building_inputs, components_by_taxon)
+    metric_views = build_views(view_builders)
+
     accumulate_on_disk(metric_views, view_sinker)
 
 
