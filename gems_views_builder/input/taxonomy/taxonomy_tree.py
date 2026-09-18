@@ -23,17 +23,18 @@ class TaxonomyTree:
 
 def make_taxonomy_tree(taxonomy: Taxonomy) -> TaxonomyTree:
     taxon_tree = TaxonomyTree()
-    # Step 1: insert nodes into the tree
-    insert_nodes(taxonomy, taxon_tree)
-    # Step 2: detect cycles
+    # Step 1: make neighbors
+    neighbors = make_neighbors(taxonomy)  # O(n)
+    # Step 2: insert nodes into the tree
+    insert_nodes(taxonomy, taxon_tree, neighbors)
+    # Step 3: detect cycles
     detect_cycles(taxon_tree.root, set())
-    # Step 3: enrich tree
+    # Step 4: enrich tree
     enrich_tree(taxon_tree.root)  # O(n)
     return taxon_tree
 
 
-def insert_nodes(taxonomy: Taxonomy, taxon_tree: TaxonomyTree) -> None:
-    neighbors = make_neighbors(taxonomy)  # O(n)
+def insert_nodes(taxonomy: Taxonomy, taxon_tree: TaxonomyTree, neighbors: dict[str | None, list[str]]) -> None:
     for cat in get_root_categories(neighbors):  # O(1)
         node = TaxonomyTreeNode(id=cat, category=taxonomy.categories[cat])
         taxon_tree.root.children[cat] = node
@@ -41,7 +42,7 @@ def insert_nodes(taxonomy: Taxonomy, taxon_tree: TaxonomyTree) -> None:
 
 
 def insert_children(
-    neighbors: dict[str | None, set[str]],
+    neighbors: dict[str | None, list[str]],
     taxon_tree_node: TaxonomyTreeNode,
     taxonomy: Taxonomy,
 ) -> None:
@@ -56,12 +57,12 @@ def insert_children(
         insert_children(neighbors, child_node, taxonomy)
 
 
-def make_neighbors(taxonomy: Taxonomy) -> dict[str | None, set[str]]:
-    neighbors: dict[str | None, set[str]] = defaultdict(set)
+def make_neighbors(taxonomy: Taxonomy) -> dict[str | None, list[str]]:
+    neighbors: dict[str | None, list[str]] = defaultdict(list)
     for cat in taxonomy.categories.values():
         check_self_loop(cat.id, cat.parent_category)
-        neighbors[cat.parent_category].add(cat.id)
-        neighbors.setdefault(cat.id, set())
+        neighbors[cat.parent_category].append(cat.id)
+        neighbors.setdefault(cat.id, [])
     return neighbors
 
 
@@ -70,7 +71,7 @@ def check_self_loop(cat_id: str, parent_cat_id: str | None) -> None:
         raise ValueError(f"Category ID={cat_id} is its own parent")
 
 
-def get_root_categories(neighbors: dict[str | None, set[str]]) -> set[str]:
+def get_root_categories(neighbors: dict[str | None, list[str]]) -> list[str]:
     """
     Everything labeled as None is considered as a root category.
     Suppose we have cat1,cat2,cat3 as root categories.

@@ -42,11 +42,11 @@ taxonomy:
 """
 
 EXPECTED_NEIGHBORS = {
-    "energy": {"production", "consumption"},
-    "balance": set(),
-    "production": set(),
-    "consumption": set(),
-    None: {"energy", "balance"},
+    "energy": ["production", "consumption"],
+    "balance": [],
+    "production": [],
+    "consumption": [],
+    None: ["energy", "balance"],
 }
 
 
