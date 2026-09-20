@@ -28,7 +28,7 @@ from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, 
 
 def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     raw_input_data = Loader(input_paths).load()
-    validate_simulation_tables_consistency(raw_input_data)
+    validate_simulation_tables_consistency(raw_input_data.simulation_tables)
     InputConsistencyValidator(raw_input_data).validate()
     return raw_input_data
 

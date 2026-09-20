@@ -3,12 +3,11 @@
 
 from polars import LazyFrame
 
-from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.simulation_table import SIMULATION_TABLE_COLUMNS
+from gems_views_builder.input.simulation_table import SIMULATION_TABLE_COLUMNS, SimulationTable
 
 
-def validate_simulation_tables_consistency(raw_input_data: RawInputData) -> None:
-    for simulation_table in raw_input_data.simulation_tables:
+def validate_simulation_tables_consistency(simulation_tables: list[SimulationTable]) -> None:
+    for simulation_table in simulation_tables:
         validate_columns(simulation_table.dataframe, SIMULATION_TABLE_COLUMNS, "SimulationTable")
 
 
