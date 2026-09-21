@@ -1,0 +1,28 @@
+flexibility_analysis:
+  view: synthetic_fr_2035_view.parquet
+  view_config: synthetic_fr_2035_view_config.yml
+  residual_load: RESIDUAL_LOAD
+  flexibility_solutions:
+  - id: NUCLEAR
+    label: Nuclear
+    color: '#DAA520'
+  - id: HYDRO
+    label: Conventional hydro
+    color: '#1E90FF'
+  - id: GAS
+    label: Gas
+    color: '#B22222'
+  - id: PSH
+    label: Pumped storage hydro
+    color: '#104E8B'
+  - id: INTERCO
+    label: Interconnectors
+    color: '#838B8B'
+  - id: DEMAND_RESP
+    label: Demand response
+    color: '#66CDAA'
+  frequency_cutoffs:
+    annual_weekly: 20
+    weekly_daily: 180
+  fscd_threshold: 0.2
+  output_dir: results/flexibility_analysis
