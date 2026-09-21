@@ -22,6 +22,7 @@ from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
+from gems_views_builder.parallel_views_builder_executor import ParallelViewsBuilderExecutor
 from gems_views_builder.validation.input_consistency_validator import InputConsistencyValidator
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.validation.view_config import validate_view_configs
@@ -57,15 +58,13 @@ def create_view_builders(
     return view_builders
 
 
-def build_views(view_builders: list[ViewBuilder]) -> list[TemporalMetricView]:
-    metric_views = []
-    for view_builder in view_builders:
-        views = view_builder.build()
-        metric_views.extend(views)
-    return metric_views
+def build_views(view_builders: list[ViewBuilder], parallel_mode: str) -> list[TemporalMetricView]:
+    parallel_views_builder_executor = ParallelViewsBuilderExecutor(view_builders, parallel_mode)
+    views = parallel_views_builder_executor.build()
+    return views
 
 
-def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) -> None:
+def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker, parallel_mode: str) -> None:
     raw_input_data = load_and_validate_input_data(input_paths)
     view_building_inputs = create_view_building_inputs(raw_input_data)
 
@@ -75,7 +74,7 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     components_by_taxon = group_components_by_taxon(components)
 
     view_builders = create_view_builders(view_building_inputs, components_by_taxon)
-    metric_views = build_views(view_builders)
+    metric_views = build_views(view_builders, parallel_mode)
 
     accumulate_on_disk(metric_views, view_sinker)
 
@@ -99,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
         input_paths = InputPaths(args)
         InputPathsValidator(input_paths).validate()
         view_sinker = ViewSinkerFactory(args.output, args.output_format).make()
-        run_view_building_process(input_paths, view_sinker)
+        run_view_building_process(input_paths, view_sinker, args.parallel_mode)
     except Exception:
         logging.exception("View building failed")
         return 1

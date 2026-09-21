@@ -8,6 +8,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder.__main__ import run_view_building_process
+from gems_views_builder.cli import DEFAULT_PARALLEL_MODE
 from gems_views_builder.input.view_config import TimeGranularity, load_view_config
 from gems_views_builder.view import ParquetViewSinker
 from tests.conftest import paths_from_dataset
@@ -55,7 +56,7 @@ def test_yaml_time_aggregation_drives_full_pipeline(
     results_dir = create_results_dir(tmp_path)
 
     # Act
-    run_view_building_process(paths_from_dataset(dataset_dir), ParquetViewSinker(results_dir))
+    run_view_building_process(paths_from_dataset(dataset_dir), ParquetViewSinker(results_dir), DEFAULT_PARALLEL_MODE)
 
     # Assert
     view = fetch_view(results_dir)

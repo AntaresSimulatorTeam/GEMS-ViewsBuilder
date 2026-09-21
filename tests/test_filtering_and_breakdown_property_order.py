@@ -17,6 +17,7 @@ from gems_views_builder import (
     load_catalog,
 )
 from gems_views_builder.__main__ import run_view_building_process
+from gems_views_builder.cli import DEFAULT_PARALLEL_MODE
 from gems_views_builder.input.component import (
     Component,
     build_component_port_connections,
@@ -49,7 +50,7 @@ def property_order_workspace(test_files_root: Path, tmp_path: Path) -> tuple[Pat
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     shutil.copytree(src, dst)
-    run_view_building_process(paths_from_dataset(dst), ParquetViewSinker(results_dir))
+    run_view_building_process(paths_from_dataset(dst), ParquetViewSinker(results_dir), DEFAULT_PARALLEL_MODE)
     view = pl.read_parquet(next(results_dir.glob("view*.parquet")))
     return dst, view
 
