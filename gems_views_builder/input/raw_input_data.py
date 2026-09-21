@@ -17,7 +17,7 @@ class RawInputData:
     """Study inputs as loaded from disk, before view-building transformations."""
 
     taxonomy: Taxonomy
-    view_config: ViewConfig
+    view_configs: list[ViewConfig]
     libraries: dict[str, Library]
     system: System
     simulation_tables: list[SimulationTable]
