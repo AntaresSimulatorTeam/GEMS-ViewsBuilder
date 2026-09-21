@@ -66,7 +66,7 @@ def load_simulation_tables(simulation_tables: list[Path]) -> list[SimulationTabl
 
 
 def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
-    """Load and validate a simulation table from a parquet or csv file."""
+    """Load a simulation table from a parquet or csv file."""
     suffix = simulation_table_file.suffix.lower()
     logging.info(f"Loading simulation table from {simulation_table_file}")
     if suffix == ".parquet":
@@ -75,7 +75,6 @@ def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
         dataframe = pl.scan_csv(simulation_table_file)
     else:
         raise ValueError(f"Simulation table file '{simulation_table_file}' is not a parquet or csv file")
-    validate_columns(dataframe, simulation_table_file.stem, SIMULATION_TABLE_COLUMNS, "SimulationTable")
     logging.info(f"Simulation table {simulation_table_file.stem!r} successfully loaded from {simulation_table_file}")
     return SimulationTable(dataframe)
 
@@ -101,21 +100,7 @@ def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) 
     logging.info(f"Filtered simulation table written to {output_path}")
 
     filtered = pl.scan_parquet(output_path)
-    validate_columns(filtered, output_path.stem, FILTERED_SIMULATION_TABLE_COLUMNS, "FilteredSimulationTable")
     return FilteredSimulationTable(output_path, filtered)
-
-
-def validate_columns(dataframe: pl.LazyFrame, table_id: str, expected: frozenset[str], label: str) -> None:
-    actual = frozenset(dataframe.collect_schema().names())
-    missing = expected - actual
-    extra = actual - expected
-    errors: list[str] = []
-    if missing:
-        errors.append(f"Missing columns: {missing}")
-    if extra:
-        errors.append(f"Unexpected columns: {extra}")
-    if errors:
-        raise ValueError(f"{label} '{table_id}' has invalid columns: {'; '.join(errors)}")
 
 
 def join(

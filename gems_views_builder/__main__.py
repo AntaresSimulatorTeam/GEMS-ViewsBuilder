@@ -22,11 +22,13 @@ from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 from gems_views_builder.validation.input_consistency_validator import InputConsistencyValidator
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
+from gems_views_builder.validation.simulation_tables import validate_simulation_tables_consistency
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
 def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     raw_input_data = Loader(input_paths).load()
+    validate_simulation_tables_consistency(raw_input_data.simulation_tables)
     InputConsistencyValidator(raw_input_data).validate()
     return raw_input_data
 
