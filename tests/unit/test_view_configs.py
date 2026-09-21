@@ -1,9 +1,8 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-from copy import deepcopy
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 import yaml
@@ -12,23 +11,26 @@ from gems_views_builder import load_view_config
 from gems_views_builder.validation.aggregation_patterns_validator import ViewConfigsAggregationPatternsValidator
 from gems_views_builder.validation.view_config import validate_unique_ids
 
-VIEW_CONFIG: dict[str, Any] = {
-    "id": "view",
-    "taxonomy": "my_taxonomy",
-    "scope": {
-        "location": {"taxonomy-category": "balance"},
-        "calendar": "calendar_file",
-    },
-    "aggregations-patterns": [
-        {"id": "hourly", "time_granularity": "hour", "scenario": False},
-    ],
-    "catalogs": [{"id": "catalog"}],
-    "metrics": [{"id": "catalog.LOAD"}],
-}
+VIEW_CONFIG_YAML = """
+id: view
+taxonomy: my_taxonomy
+scope:
+  location:
+    taxonomy-category: balance
+  calendar: calendar_file
+aggregations-patterns:
+  - id: hourly
+    time_granularity: hour
+    scenario: false
+catalogs:
+  - id: catalog
+metrics:
+  - id: catalog.LOAD
+"""
 
 
 def make_view_config() -> dict[str, Any]:
-    return deepcopy(VIEW_CONFIG)
+    return cast(dict[str, Any], yaml.safe_load(VIEW_CONFIG_YAML))
 
 
 def write_view_config(tmp_path: Path, view: dict[str, Any]) -> Path:
