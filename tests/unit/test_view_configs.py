@@ -3,6 +3,7 @@
 
 from copy import deepcopy
 from pathlib import Path
+from typing import Any
 
 import pytest
 import yaml
@@ -11,7 +12,7 @@ from gems_views_builder import load_view_config
 from gems_views_builder.validation.aggregation_patterns_validator import ViewConfigsAggregationPatternsValidator
 from gems_views_builder.validation.view_config import validate_unique_ids
 
-VIEW_CONFIG: dict[str, object] = {
+VIEW_CONFIG: dict[str, Any] = {
     "id": "view",
     "taxonomy": "my_taxonomy",
     "scope": {
@@ -26,11 +27,11 @@ VIEW_CONFIG: dict[str, object] = {
 }
 
 
-def make_view_config() -> dict[str, object]:
+def make_view_config() -> dict[str, Any]:
     return deepcopy(VIEW_CONFIG)
 
 
-def write_view_config(tmp_path: Path, view: dict[str, object]) -> Path:
+def write_view_config(tmp_path: Path, view: dict[str, Any]) -> Path:
     path = tmp_path / "view_config.yml"
     path.write_text(yaml.dump({"view": view}))
     return path
