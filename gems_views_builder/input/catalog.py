@@ -132,11 +132,8 @@ def to_metric(metric_data: MetricData) -> Metric:
     )
 
 
-def load_catalogs(catalogs_dir: Path, view_configs: list[ViewConfig]) -> dict[str, Catalog]:
-    catalogs: dict[str, Catalog] = {}
-    for catalog_id in catalogs_referenced_in_view_configs(view_configs):
-        catalogs[catalog_id] = load_catalog(catalogs_dir / f"{catalog_id}.yml")
-    return catalogs
+def load_catalogs(catalogs_dir: Path, catalog_ids: set[str]) -> list[Catalog]:
+    return [load_catalog(catalogs_dir / f"{catalog_id}.yml") for catalog_id in catalog_ids]
 
 
 def catalogs_referenced_in_view_configs(view_configs: list[ViewConfig]) -> set[str]:

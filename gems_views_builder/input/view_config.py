@@ -55,9 +55,10 @@ class MetricId(ViewBuilderBasedModel, frozen=True):
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: Scope
+    taxonomy: str
     aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
-    catalogs: list[CatalogId]
-    metrics: list[MetricId]
+    catalogs: list[CatalogId] = Field(min_length=1)
+    metrics: list[MetricId] = Field(min_length=1)
 
 
 @dataclass
@@ -65,14 +66,16 @@ class ViewConfig:
     id: str
     calendar_id: str
     location_taxonomy_category: str
+    taxonomy_id: str
     aggregation_patterns: tuple[AggregationPattern, ...]
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
-    def populate_with_metrics(self, catalogs: dict[str, Catalog]) -> None:
+    def populate_with_metrics(self, catalogs: list[Catalog]) -> None:
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
+        catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for metric_ref in self.metric_ids:
             if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
                 raise ValueError(
@@ -86,23 +89,21 @@ class ViewConfig:
 
             logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
 
-            self.metrics.append(catalogs[catalog_id].get_metric(metric_id))
+            self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
-    from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
-
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_view_config_from_yaml(config_file_path)
-    AggregationPatternsValidator(raw_view_config.aggregations_patterns).validate()
 
     view_config = ViewConfig(
         id=raw_view_config.id,
         calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
+        taxonomy_id=raw_view_config.taxonomy,
         catalog_ids={c.id for c in raw_view_config.catalogs},
         aggregation_patterns=raw_view_config.aggregations_patterns,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
@@ -130,15 +131,7 @@ def load_view_config_from_yaml(view_file_path: Path) -> RawViewConfig:
 
 
 def load_view_configs(view_configs_paths: list[Path]) -> list[ViewConfig]:
-    """
-    This function will be refactored once consistency check PR is merged.
-    """
-    view_config_ids = set()
-    view_configs = []
+    view_configs: list[ViewConfig] = []
     for path in view_configs_paths:
-        view_config = load_view_config(path)
-        if view_config.id in view_config_ids:
-            raise ValueError(f"View config {view_config.id!r} is defined multiple times")
-        view_config_ids.add(view_config.id)
-        view_configs.append(view_config)
+        view_configs.append(load_view_config(path))
     return view_configs

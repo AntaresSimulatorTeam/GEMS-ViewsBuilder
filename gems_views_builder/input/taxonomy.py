@@ -24,8 +24,12 @@ class TaxonomyCategory(ViewBuilderBasedModel):
     parameters: list[TaxonomyItem] = Field(default_factory=list)
     ports: list[TaxonomyItem] = Field(default_factory=list)
     constraints: list[TaxonomyItem] = Field(default_factory=list)
-    extra_outputs: list[TaxonomyItem] = Field(default_factory=list, alias="extra-outputs")
+    extra_outputs: list[TaxonomyItem] = Field(default_factory=list)
     properties: list[TaxonomyItem] = Field(default_factory=list)
+
+    @property
+    def port_ids(self) -> set[str]:
+        return {port.id for port in self.ports}
 
 
 class TaxonomyData(ViewBuilderBasedModel):
@@ -42,7 +46,11 @@ class Taxonomy:
 
     id: str
     description: str = ""
-    categories: list[TaxonomyCategory] = field(default_factory=list)
+    categories: dict[str, TaxonomyCategory] = field(default_factory=dict)
+
+
+def allowed_output(taxon: TaxonomyCategory) -> set[str]:
+    return {var.id for var in taxon.variables} | {extra_output.id for extra_output in taxon.extra_outputs}
 
 
 def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
@@ -51,7 +59,7 @@ def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
     taxonomy = Taxonomy(
         id=parsed.id,
         description=parsed.description,
-        categories=parsed.categories,
+        categories={category.id: category for category in parsed.categories},
     )
     logging.info(f"Taxonomy {taxonomy.id!r} loaded with {len(taxonomy.categories)} categor(ies)")
     return taxonomy

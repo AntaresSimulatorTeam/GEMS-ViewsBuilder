@@ -78,14 +78,14 @@ def build_raw_input_data(
     view_config: ViewConfig,
     simulation_tables: list[SimulationTable],
     calendar: Calendar,
-    catalogs: dict[str, Catalog] | None = None,
+    catalogs: list[Catalog] | None = None,
 ) -> RawInputData:
     """
     Build a real RawInputData, skipping only the disk-reading Loader.load() step:
     system/libraries/taxonomy are minimal but real objects, populated with just
     enough to drive the pipeline steps under test.
     """
-    catalogs = catalogs or {}
+    catalogs = catalogs or []
     view_config.populate_with_metrics(catalogs)
     return RawInputData(
         taxonomy=Taxonomy(id="taxonomy"),
