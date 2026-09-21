@@ -96,11 +96,8 @@ class ViewConfig:
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
-    from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
-
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_view_config_from_yaml(config_file_path)
-    AggregationPatternsValidator(raw_view_config.aggregations_patterns).validate()
 
     view_config = ViewConfig(
         id=raw_view_config.id,
@@ -134,15 +131,7 @@ def load_view_config_from_yaml(view_file_path: Path) -> RawViewConfig:
 
 
 def load_view_configs(view_configs_paths: list[Path]) -> list[ViewConfig]:
-    """
-    This function will be refactored once consistency check PR is merged.
-    """
-    view_config_ids = set()
-    view_configs = []
+    view_configs: list[ViewConfig] = []
     for path in view_configs_paths:
-        view_config = load_view_config(path)
-        if view_config.id in view_config_ids:
-            raise ValueError(f"View config {view_config.id!r} is defined multiple times")
-        view_config_ids.add(view_config.id)
-        view_configs.append(view_config)
+        view_configs.append(load_view_config(path))
     return view_configs
