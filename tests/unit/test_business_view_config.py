@@ -54,13 +54,13 @@ def test_known_values(test_dataset_dir: Path) -> None:
 
 def test_time_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.aggregation_patterns[0].time_granularity == TimeGranularity.HOUR
+    assert config.transformations_patterns[0].time_granularity == TimeGranularity.HOUR
 
 
 def test_scenario_aggregation(test_dataset_dir: Path) -> None:
     config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.aggregation_patterns[0].id == "hourly"
-    assert config.aggregation_patterns[0].scenario is False
+    assert config.transformations_patterns[0].id == "hourly"
+    assert config.transformations_patterns[0].scenario is False
 
 
 def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
@@ -74,7 +74,7 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregations-patterns:
+  transformations-patterns:
     - id: hourly
       time_granularity: hour
       scenario: false
@@ -109,7 +109,7 @@ view:
 """.strip()
     )
 
-    with pytest.raises(ValueError, match="aggregations"):
+    with pytest.raises(ValueError, match="transformations"):
         load_view_config(config_path)
 
 
@@ -124,7 +124,7 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregations-patterns:
+  transformations-patterns:
     - id: hourly
       scenario: false
   catalogs:
@@ -149,7 +149,7 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregations-patterns:
+  transformations-patterns:
     - id: hourly
       time_granularity: hour
   catalogs:
@@ -174,7 +174,7 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregations-patterns:
+  transformations-patterns:
     - id: hourly
       time_granularity: hour
       scenario: false

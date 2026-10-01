@@ -37,7 +37,7 @@ class Scope(ViewBuilderBasedModel):
     extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
-class AggregationPattern(ViewBuilderBasedModel):
+class TransformationPattern(ViewBuilderBasedModel):
     id: str
     time_granularity: TimeGranularity
     scenario: bool
@@ -56,7 +56,7 @@ class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: Scope
     taxonomy: str
-    aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
+    transformations_patterns: tuple[TransformationPattern, ...] = Field(min_length=1)
     catalogs: list[CatalogId] = Field(min_length=1)
     metrics: list[MetricId] = Field(min_length=1)
 
@@ -67,11 +67,14 @@ class ViewConfig:
     calendar_id: str
     location_taxonomy_category: str
     taxonomy_id: str
-    aggregation_patterns: tuple[AggregationPattern, ...]
+    transformations_patterns: tuple[TransformationPattern, ...]
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
     metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
+
+    def get_time_granularities(self) -> set[TimeGranularity]:
+        return {pattern.time_granularity for pattern in self.transformations_patterns}
 
     def fetch_metrics(self, catalogs: list[Catalog]) -> None:
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
@@ -96,11 +99,11 @@ class ViewConfig:
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
-    from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
+    from gems_views_builder.validation.aggregation_patterns_validator import TransformationPatternsValidator
 
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
-    AggregationPatternsValidator(raw_view_config.aggregations_patterns).validate()
+    TransformationPatternsValidator(raw_view_config.transformations_patterns).validate()
 
     view_config = ViewConfig(
         id=raw_view_config.id,
@@ -108,7 +111,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         taxonomy_id=raw_view_config.taxonomy,
         catalog_ids={c.id for c in raw_view_config.catalogs},
-        aggregation_patterns=raw_view_config.aggregations_patterns,
+        transformations_patterns=raw_view_config.transformations_patterns,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )

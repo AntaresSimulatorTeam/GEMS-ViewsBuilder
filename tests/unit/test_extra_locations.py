@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
 from gems_views_builder.input.component import Component
-from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig, load_view_config
+from gems_views_builder.input.view_config import TimeGranularity, TransformationPattern, ViewConfig, load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
@@ -35,7 +35,9 @@ def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
         calendar_id="calendar_file",
         location_taxonomy_category="balance",
         taxonomy_id="my_taxonomy",
-        aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
+        transformations_patterns=(
+            TransformationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),
+        ),
         extra_locations=extra_locations or [],
     )
 
@@ -56,7 +58,7 @@ view:
       - id: country
       - id: district
       - id: city_part
-  aggregations-patterns:
+  transformations-patterns:
     - id: hourly
       time_granularity: hour
       scenario: false
@@ -86,7 +88,7 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  aggregations-patterns:
+  transformations-patterns:
     - id: hourly
       time_granularity: hour
       scenario: false
