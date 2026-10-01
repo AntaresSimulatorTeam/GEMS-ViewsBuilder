@@ -93,7 +93,7 @@ def test_validate_passes_with_multiple_catalogs(tmp_path: Path) -> None:
             calendar=tmp_path / "calendar.csv",
             taxonomy=tmp_path / "taxonomy.yml",
             view_config=tmp_path / "view_config.yml",
-            simulation_table=tmp_path / "simulation_table.parquet",
+            simulation_tables=str(tmp_path / "simulation_table.parquet"),
         )
     )
     # Act & Assert
