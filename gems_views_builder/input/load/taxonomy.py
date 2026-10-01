@@ -15,7 +15,7 @@ def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
     taxonomy = Taxonomy(
         id=parsed.id,
         description=parsed.description,
-        categories=parsed.categories,
+        categories={category.id: category for category in parsed.categories},
     )
     logging.info(f"Taxonomy {taxonomy.id!r} loaded with {len(taxonomy.categories)} categor(ies)")
     return taxonomy

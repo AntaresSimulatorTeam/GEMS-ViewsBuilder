@@ -20,6 +20,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         id=raw_view_config.id,
         calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
+        taxonomy_id=raw_view_config.taxonomy,
         catalog_ids={c.id for c in raw_view_config.catalogs},
         aggregation_patterns=raw_view_config.aggregations_patterns,
         metric_ids=[metric.id for metric in raw_view_config.metrics],
