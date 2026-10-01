@@ -60,8 +60,6 @@ view:
     - id: hourly
       time_granularity: hour
       scenario: false
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()
@@ -90,8 +88,6 @@ view:
     - id: hourly
       time_granularity: hour
       scenario: false
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()

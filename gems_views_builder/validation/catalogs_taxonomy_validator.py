@@ -29,7 +29,7 @@ class CatalogsTaxonomyValidator:
 
     def _validate_catalog_metrics_taxon(self, catalog: Catalog) -> None:
         for metric in catalog.metrics.values():
-            self._validate_metric_terms(catalog, metric)
+            self._validate_metric_terms(metric, catalog.id)
 
     def _match_catalog_taxonomy(self, catalog: Catalog) -> None:
         if catalog.taxonomy != self.taxonomy.id:
@@ -39,34 +39,35 @@ class CatalogsTaxonomyValidator:
 
     def _validate_metric_terms(
         self,
-        catalog: Catalog,
         metric: Metric,
+        catalog_id: str,
     ) -> None:
         for term in metric.terms:
             category = self.taxonomy.categories.get(term.taxonomy_category)
             if category is None:
                 raise ValueError(
-                    f"uses taxonomy-category {term.taxonomy_category!r}, which is not defined in taxonomy "
-                    f"{self.taxonomy.id!r}"
+                    f"Catalog {catalog_id!r} metric {metric.id!r} uses taxonomy-category "
+                    f"{term.taxonomy_category!r}, which is not defined in taxonomy {self.taxonomy.id!r}"
                 )
-            try:
-                self._validate_term_output(term, category)
-                self._validate_term_location_port(term, category)
-            except Exception as e:
-                raise ValueError(f"Catalog {catalog.id!r} metric {metric.id!r} : " + str(e))
+            self._validate_term_output(catalog_id, metric.id, term, category)
+            self._validate_term_location_port(catalog_id, metric.id, term, category)
 
-    def _validate_term_output(self, term: Term, category: TaxonomyCategory) -> None:
+    def _validate_term_output(self, catalog_id: str, metric_id: str, term: Term, category: TaxonomyCategory) -> None:
         if term.output_id in allowed_output(category):
             return
         raise ValueError(
-            f"uses output-id {term.output_id!r}, which is not declared as a variable or extra-output on "
-            f"taxonomy category {term.taxonomy_category!r} in taxonomy {self.taxonomy.id!r}"
+            f"Catalog {catalog_id!r} metric {metric_id!r} uses output-id {term.output_id!r}, "
+            f"which is not declared as a variable or extra-output on taxonomy category "
+            f"{term.taxonomy_category!r} in taxonomy {self.taxonomy.id!r}"
         )
 
-    def _validate_term_location_port(self, term: Term, category: TaxonomyCategory) -> None:
+    def _validate_term_location_port(
+        self, catalog_id: str, metric_id: str, term: Term, category: TaxonomyCategory
+    ) -> None:
         if term.location_port is not None:
             if term.location_port not in category.port_ids:
                 raise ValueError(
-                    f"uses location-port {term.location_port!r}, which is not defined on taxonomy category "
+                    f"Catalog {catalog_id!r} metric {metric_id!r} uses location-port "
+                    f"{term.location_port!r}, which is not defined on taxonomy category "
                     f"{term.taxonomy_category!r} in taxonomy {self.taxonomy.id!r}"
                 )
