@@ -26,6 +26,8 @@ def test_loader_init_has_no_io(tmp_path: Path) -> None:
     catalogs_dir.mkdir()
     (catalogs_dir / "catalog.yml").touch()
     missing = Path("/this/path/should/not/exist")
+    simulation_table = tmp_path / "simulation_table.parquet"
+    simulation_table.touch()
     paths = InputPaths(
         Namespace(
             libraries_dir=missing / "libraries",
@@ -34,7 +36,7 @@ def test_loader_init_has_no_io(tmp_path: Path) -> None:
             calendar=missing / "calendar.csv",
             taxonomy=missing / "taxonomy.yml",
             view_config=missing / "view_config.yml",
-            simulation_table=missing / "simulation_table.parquet",
+            simulation_tables=str(simulation_table),
         )
     )
     loader = Loader(paths)
@@ -53,7 +55,9 @@ def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
     assert raw_input_data.libraries
     assert all(isinstance(library, Library) for library in raw_input_data.libraries.values())
     assert isinstance(raw_input_data.system, System)
-    assert isinstance(raw_input_data.simulation_table, SimulationTable)
+    assert isinstance(raw_input_data.simulation_tables, list)
+    assert raw_input_data.simulation_tables
+    assert all(isinstance(table, SimulationTable) for table in raw_input_data.simulation_tables)
     assert isinstance(raw_input_data.calendar, Calendar)
     assert raw_input_data.catalogs
     assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs)
@@ -71,7 +75,9 @@ def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path
     assert raw_input_data.libraries
     assert all(isinstance(library, Library) for library in raw_input_data.libraries.values())
     assert isinstance(raw_input_data.system, System)
-    assert isinstance(raw_input_data.simulation_table, SimulationTable)
+    assert isinstance(raw_input_data.simulation_tables, list)
+    assert raw_input_data.simulation_tables
+    assert all(isinstance(table, SimulationTable) for table in raw_input_data.simulation_tables)
     assert isinstance(raw_input_data.calendar, Calendar)
     assert raw_input_data.catalogs
     assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs)
