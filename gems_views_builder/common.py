@@ -46,12 +46,3 @@ def configure_logging(verbose: bool = False, log_dir: Path | None = None) -> Non
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
-
-def sink_to_parquet(dataframe: LazyFrame, path: Path) -> None:
-    dataframe.sink_parquet(
-        path,
-        compression=PARQUET_COMPRESSION,
-        compression_level=PARQUET_COMPRESSION_LEVEL,
-        row_group_size=PARQUET_ROW_GROUP_SIZE,
-    )
-

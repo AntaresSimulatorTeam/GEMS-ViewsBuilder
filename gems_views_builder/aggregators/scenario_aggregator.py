@@ -10,10 +10,6 @@ from uuid import uuid4
 import polars as pl
 
 from gems_views_builder.common import sink_to_parquet
-<<<<<<< HEAD
-=======
-from gems_views_builder.input.catalog import Metric
->>>>>>> origin/main
 from gems_views_builder.input.view_config import AggregationPattern
 from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.spatial_filter import SpatialFilter, apply_spatial_filter
