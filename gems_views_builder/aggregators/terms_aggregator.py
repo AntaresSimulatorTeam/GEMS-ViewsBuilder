@@ -27,6 +27,7 @@ class TermsAggregator(AggregationOperator):
             .agg(
                 [
                     value_agg.alias("granular_metric_value"),
+                    # Drop nulls if we have mixed groups
                     pl.col("granular_date").drop_nulls().first(),
                 ]
             )

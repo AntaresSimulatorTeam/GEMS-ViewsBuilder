@@ -55,9 +55,10 @@ class MetricId(ViewBuilderBasedModel, frozen=True):
 class RawViewConfig(ViewBuilderBasedModel):
     id: str
     scope: Scope
+    taxonomy: str
     transformations_patterns: tuple[TransformationPattern, ...] = Field(min_length=1)
-    catalogs: list[CatalogId]
-    metrics: list[MetricId]
+    catalogs: list[CatalogId] = Field(min_length=1)
+    metrics: list[MetricId] = Field(min_length=1)
 
 
 @dataclass
@@ -65,6 +66,7 @@ class ViewConfig:
     id: str
     calendar_id: str
     location_taxonomy_category: str
+    taxonomy_id: str
     transformations_patterns: tuple[TransformationPattern, ...]
     catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
@@ -74,8 +76,9 @@ class ViewConfig:
     def get_time_granularities(self) -> set[TimeGranularity]:
         return {pattern.time_granularity for pattern in self.transformations_patterns}
 
-    def fetch_metrics(self, catalogs: dict[str, Catalog]) -> None:
+    def fetch_metrics(self, catalogs: list[Catalog]) -> None:
         logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
+        catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for metric_ref in self.metric_ids:
             if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
                 raise ValueError(
@@ -89,7 +92,7 @@ class ViewConfig:
 
             logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
 
-            self.metrics.append(catalogs[catalog_id].get_metric(metric_id))
+            self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
@@ -106,6 +109,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         id=raw_view_config.id,
         calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
+        taxonomy_id=raw_view_config.taxonomy,
         catalog_ids={c.id for c in raw_view_config.catalogs},
         transformations_patterns=raw_view_config.transformations_patterns,
         metric_ids=[metric.id for metric in raw_view_config.metrics],

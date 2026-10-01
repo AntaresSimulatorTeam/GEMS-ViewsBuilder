@@ -71,7 +71,10 @@ def load_yml_libs(library_dir: Path) -> list[LibrarySchema]:
 
 
 def collect_lib_files(library_dir: Path) -> list[Path]:
-    return list(library_dir.glob("*.yml"))
+    collected_libs = list(library_dir.glob("*.yml"))
+    if not collected_libs:
+        raise ValueError(f"No model libraries found in {library_dir}")
+    return collected_libs
 
 
 def associate_models_with_a_taxon(libraries: dict[str, Library]) -> dict[str, str]:

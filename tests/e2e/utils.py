@@ -76,9 +76,9 @@ def build_raw_input_data(
     system: Any,
     taxon_by_model: dict[str, str],
     view_config: ViewConfig,
-    simulation_table: SimulationTable,
+    simulation_tables: list[SimulationTable],
     calendar: Calendar,
-    catalogs: dict[str, Catalog] | None = None,
+    catalogs: list[Catalog] | None = None,
 ) -> RawInputData:
     """
     Build a real RawInputData, skipping only the disk-reading Loader.load() step:
@@ -99,7 +99,7 @@ def build_raw_input_data(
         },
         system=system,
         view_config=view_config,
-        simulation_table=simulation_table,
+        simulation_tables=simulation_tables,
         calendar=calendar,
-        catalogs=catalogs or {},
+        catalogs=catalogs or [],
     )

@@ -72,6 +72,7 @@ def make_view_config() -> ViewConfig:
         id="view_area",
         calendar_id="calendar",
         location_taxonomy_category="balance",
+        taxonomy_id="taxonomy",
         catalog_ids={"catalog"},
         transformations_patterns=(
             TransformationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),
@@ -81,16 +82,16 @@ def make_view_config() -> ViewConfig:
     )
 
 
-def make_catalogs(metrics: list[Metric]) -> dict[str, Catalog]:
+def make_catalogs(metrics: list[Metric]) -> list[Catalog]:
     load_metric, prod_metric = metrics
-    return {
-        "catalog": Catalog(
+    return [
+        Catalog(
             id="catalog",
             taxonomy="taxonomy",
             location_taxonomy_category="balance",
             metrics={"LOAD": load_metric, "PROD": prod_metric},
         )
-    }
+    ]
 
 
 SIMULATION_ROWS = [
@@ -114,7 +115,7 @@ def build_input() -> RawInputData:
         system,
         TAXONOMY_CATEGORY_BY_MODEL,
         view_config,
-        make_simulation_table(SIMULATION_ROWS),
+        [make_simulation_table(SIMULATION_ROWS)],
         make_calendar(SIMULATION_ROWS),
         catalogs=catalogs,
     )
