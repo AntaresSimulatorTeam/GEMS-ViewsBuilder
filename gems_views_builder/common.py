@@ -16,6 +16,15 @@ PARQUET_ROW_GROUP_SIZE = 64_000
 LOG_DIR = Path.cwd() / "logs"
 
 
+def sink_to_parquet(dataframe: LazyFrame, path: Path) -> None:
+    dataframe.sink_parquet(
+        path,
+        compression=PARQUET_COMPRESSION,
+        compression_level=PARQUET_COMPRESSION_LEVEL,
+        row_group_size=PARQUET_ROW_GROUP_SIZE,
+    )
+
+
 def make_log_file(log_dir: Path | None = None) -> Path:
     log_dir = log_dir if log_dir is not None else LOG_DIR
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -37,12 +46,3 @@ def configure_logging(verbose: bool = False, log_dir: Path | None = None) -> Non
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
-
-
-def sink_to_parquet(dataframe: LazyFrame, path: Path) -> None:
-    dataframe.sink_parquet(
-        path,
-        compression=PARQUET_COMPRESSION,
-        compression_level=PARQUET_COMPRESSION_LEVEL,
-        row_group_size=PARQUET_ROW_GROUP_SIZE,
-    )
