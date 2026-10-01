@@ -2,17 +2,14 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-import os
-import tempfile
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
+from uuid import uuid4
 
 import polars as pl
 
 from gems_views_builder.common import sink_to_parquet
-from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import AggregationPattern
 from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.spatial_filter import SpatialFilter, apply_spatial_filter
@@ -84,20 +81,10 @@ class ScenarioAggregator:
         self.scenario_operator = make_scenario_operator(aggregation_pattern.scenario)
         self.spatial_filter = SpatialFilter(aggregation_pattern.spatial_filter)
 
-    def run(self, metric_view: TemporalMetricView, metric: Metric) -> TemporalMetricView:
-        try:
-            file_descriptor, tmp_path = tempfile.mkstemp(suffix=".parquet")
-            os.close(file_descriptor)
-
-            view = self.scenario_operator.run(metric_view)
-            view = apply_spatial_filter(view, self.spatial_filter)
-            sink_to_parquet(view, Path(tmp_path))
-            os.replace(src=tmp_path, dst=metric_view.persistence_path)
-        except Exception:
-            os.remove(tmp_path)
-        logg_write(metric, metric_view.persistence_path)
-        return metric_view
-
-
-def logg_write(metric: Metric, file_path: Path) -> None:
-    logging.info(f"[{metric.id}] Scenario view written to {file_path}")
+    def run(self, metric_view: TemporalMetricView) -> TemporalMetricView:
+        new_path = metric_view.persistence_path.parent / f"{uuid4()}.parquet"
+        view = self.scenario_operator.run(metric_view)
+        view = apply_spatial_filter(view, self.spatial_filter)
+        sink_to_parquet(view, new_path)
+        logging.info(f"Scenario view written to {new_path}")
+        return TemporalMetricView(new_path, metric_view.time_granularity)

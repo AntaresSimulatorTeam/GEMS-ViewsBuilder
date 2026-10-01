@@ -3,7 +3,7 @@
 
 import logging
 
-from gems_views_builder.aggregators.aggregations_processor import AgggregationProcessor
+from gems_views_builder.aggregators.aggregations_processor import AggregationProcessor
 from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import (
     configure_logging,
@@ -48,7 +48,7 @@ def build_metric_views(raw_input_data: RawInputData) -> list[TemporalMetricView]
         components_by_taxon,
     )
 
-    aggregation_processor = AgggregationProcessor(view_building_input.view_config)
+    aggregation_processor = AggregationProcessor(view_building_input.view_config)
     return ViewBuilder(view_building_input, metric_structure_table_builder, aggregation_processor).build()
 
 
