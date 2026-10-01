@@ -4,15 +4,12 @@
 """System wrapper with helper methods for component lookup."""
 
 import logging
-from pathlib import Path
 from typing import Any, cast
 
-from gems_craft.model.parsing import LibrarySchema  # type: ignore
-from gems_craft.model.resolve_library import resolve_library  # type: ignore
 from gems_craft.study import Component as GemsPyComponent  # type: ignore
 from gems_craft.study import PortRef
 from gems_craft.study import System as GemsPySystem
-from gems_craft.study.parsing import ComponentSchema, SystemSchema, parse_yaml_system  # type: ignore
+from gems_craft.study.parsing import ComponentSchema, SystemSchema  # type: ignore
 
 
 class System:
@@ -76,12 +73,3 @@ def resolve_system(yml_system: SystemSchema, resolved_libraries: dict[str, Any])
             PortRef(components_by_id[connection.component2], connection.port2),
         )
     return system
-
-
-def load_system(system_file_path: Path, yml_libs: list[LibrarySchema]) -> System:
-    logging.info("Loading system")
-    with open(system_file_path, encoding="utf-8") as f:
-        yml_system = parse_yaml_system(f)
-    resolved_system = resolve_system(yml_system, resolve_library(yml_libs))
-    logging.info(f"System loaded and resolved from {system_file_path}")
-    return System(resolved_system)

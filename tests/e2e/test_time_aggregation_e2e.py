@@ -8,7 +8,8 @@ import polars as pl
 import pytest
 
 from gems_views_builder.__main__ import run_view_building_process
-from gems_views_builder.input.view_config import TimeGranularity, load_view_config
+from gems_views_builder.input.load import load_view_config
+from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.view import ParquetViewSinker
 from tests.conftest import paths_from_dataset
 from tests.e2e.utils import create_results_dir, fetch_view

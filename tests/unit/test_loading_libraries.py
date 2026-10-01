@@ -6,7 +6,9 @@ from pathlib import Path
 import pytest
 from gems_craft.model.parsing import ModelSchema  # type: ignore
 
-from gems_views_builder.input.library import collect_lib_files, create_lib_from_yml, load_yml_libs
+from gems_views_builder.input.library import create_lib_from_yml
+from gems_views_builder.input.load import load_yml_libs
+from gems_views_builder.input.load.library import collect_lib_files
 
 LIBRARY_YAML_1 = """\
 library:
@@ -23,6 +25,7 @@ library:
     - id: generator
       taxonomy-category: production
 """
+
 
 def test_collect_lib_files_raises_when_no_yml_files(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="No model libraries found"):
