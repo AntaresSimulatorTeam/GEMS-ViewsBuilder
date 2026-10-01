@@ -17,9 +17,7 @@ class TaxonomyItem(ViewBuilderBasedModel):
 
 class TaxonomyCategory(ViewBuilderBasedModel):
     id: str
-    parent_category: str | None = Field(
-        None, alias="parent-category"
-    )  # for now keep like this because taxonomy.yml used for testing isn't completed
+    parent_category: str | None = None
     variables: list[TaxonomyItem] = Field(default_factory=list)
     parameters: list[TaxonomyItem] = Field(default_factory=list)
     ports: list[TaxonomyItem] = Field(default_factory=list)
@@ -56,6 +54,7 @@ def allowed_output(taxon: TaxonomyCategory) -> set[str]:
 def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
     logging.info(f"Loading taxonomy from {taxonomy_file_path}")
     parsed = load_taxonomy_file(taxonomy_file_path)
+    check_taxon_categories(parsed.categories)
     taxonomy = Taxonomy(
         id=parsed.id,
         description=parsed.description,
@@ -63,6 +62,14 @@ def load_taxonomy(taxonomy_file_path: Path) -> Taxonomy:
     )
     logging.info(f"Taxonomy {taxonomy.id!r} loaded with {len(taxonomy.categories)} categor(ies)")
     return taxonomy
+
+
+def check_taxon_categories(taxon_categories: list[TaxonomyCategory]) -> None:
+    cats = set()
+    for cat in taxon_categories:
+        if cat.id in cats:
+            raise ValueError(f"Category ID={cat.id} is not unique")
+        cats.add(cat.id)
 
 
 def load_taxonomy_file(taxonomy_file_path: Path) -> TaxonomyData:
