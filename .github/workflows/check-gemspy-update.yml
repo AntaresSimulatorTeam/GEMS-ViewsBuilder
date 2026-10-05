@@ -8,18 +8,29 @@ on:
   schedule:
     - cron: "0 6 * * 1"
   workflow_dispatch:
+    inputs:
+      retest:
+        description: "Re-run the tests against the new version and post the results on its open tracking issue"
+        type: boolean
+        default: false
 
 permissions:
-  issues: write
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 jobs:
   check-update:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      issues: write
     outputs:
       latest_version: ${{ steps.versions.outputs.latest }}
       issue_number: ${{ steps.create_issue.outputs.issue_number }}
-      new_issue: ${{ steps.create_issue.outputs.new_issue }}
+      run_tests: ${{ steps.create_issue.outputs.run_tests }}
 
     steps:
       - uses: actions/checkout@v4
@@ -29,51 +40,7 @@ jobs:
 
       - name: Compare pinned and latest GemsPy versions
         id: versions
-        run: |
-          uv run --no-project --python 3.11 --with packaging python - <<'EOF'
-          import json
-          import os
-          import tomllib
-          import urllib.request
-
-          from packaging.requirements import Requirement
-          from packaging.utils import canonicalize_name
-          from packaging.version import Version
-
-          with open("pyproject.toml", "rb") as f:
-              dependencies = tomllib.load(f)["project"]["dependencies"]
-
-          pins = [
-              spec.version
-              for requirement in map(Requirement, dependencies)
-              if canonicalize_name(requirement.name) == "gemspy"
-              for spec in requirement.specifier
-              if spec.operator == "=="
-          ]
-          if len(pins) != 1:
-              raise SystemExit("ERROR: expected exactly one 'gemspy==X.Y.Z' pin in pyproject.toml")
-          current = Version(pins[0])
-
-          with urllib.request.urlopen("https://pypi.org/pypi/gemspy/json", timeout=30) as response:
-              releases = json.load(response)["releases"]
-
-          # Latest stable release: skip pre-releases, dev releases and fully yanked releases
-          stable = [
-              Version(version)
-              for version, files in releases.items()
-              if files and not all(file["yanked"] for file in files) and not Version(version).is_prerelease
-          ]
-          if not stable:
-              raise SystemExit("ERROR: no stable GemsPy release found on PyPI")
-          latest = max(stable)
-
-          print(f"Pinned version: {current}  |  Latest version: {latest}")
-          print("New version detected." if latest > current else "Already up to date.")
-          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              output.write(f"current={current}\n")
-              output.write(f"latest={latest}\n")
-              output.write(f"update={str(latest > current).lower()}\n")
-          EOF
+        run: uv run --no-project --python 3.11 --with packaging .github/scripts/check_gemspy_update.py
 
       - name: Create GitHub Issue
         id: create_issue
@@ -82,11 +49,13 @@ jobs:
         env:
           CURRENT_VERSION: ${{ steps.versions.outputs.current }}
           LATEST_VERSION: ${{ steps.versions.outputs.latest }}
+          RETEST: ${{ inputs.retest }}
         with:
           script: |
             const latest = process.env.LATEST_VERSION;
             const current = process.env.CURRENT_VERSION;
             const title = `GemsPy v${latest} detected - validation required`;
+            const marker = `<!-- gemspy-update-check: ${latest} -->`;
 
             // Look at closed issues too, so that a rejected version is not reported again every week
             const issues = await github.paginate(github.rest.issues.listForRepo, {
@@ -95,11 +64,13 @@ jobs:
               state: 'all',
               per_page: 100,
             });
-            const duplicate = issues.find(i => !i.pull_request && i.title.includes(`GemsPy v${latest} `));
+            const duplicate = issues.find(i =>
+              !i.pull_request && ((i.body || '').includes(marker) || i.title.includes(`GemsPy v${latest} `)));
             if (duplicate) {
-              console.log(`Issue already exists: #${duplicate.number} (${duplicate.state}) - skipping.`);
+              const runTests = process.env.RETEST === 'true' && duplicate.state === 'open';
+              console.log(`Issue already exists: #${duplicate.number} (${duplicate.state}) - ${runTests ? 're-running tests' : 'skipping'}.`);
               core.setOutput('issue_number', String(duplicate.number));
-              core.setOutput('new_issue', 'false');
+              core.setOutput('run_tests', String(runTests));
               return;
             }
 
@@ -120,7 +91,21 @@ jobs:
               }
             }
 
+            // Point short references (#12) to GemsPy rather than this repo, and do not notify @mentioned users
+            releaseNotes = releaseNotes
+              .replace(/(^|[^\w/&`])#(\d+)\b/g, '$1AntaresSimulatorTeam/GemsPy#$2')
+              .replace(/(^|[^\w/`])@([A-Za-z0-9][A-Za-z0-9-]*)/g, '$1`@$2`');
+
+            // GitHub rejects issue bodies over 65536 characters
+            const maxNotesLength = 60000;
+            if (releaseNotes.length > maxNotesLength) {
+              releaseNotes = releaseNotes.slice(0, maxNotesLength) +
+                `\n\n_Release notes truncated, see the [release page](${releaseUrl})._`;
+            }
+
+            // Release notes go last, so that their content cannot break the rendering of the checklist
             const body = [
+              marker,
               '## New Version Detected',
               '',
               'A new version of GemsPy has been published on PyPI.',
@@ -134,12 +119,7 @@ jobs:
               '',
               'This issue tracks validation and integration into GEMS-ViewsBuilder.',
               'Test results against the new version are posted below as a comment.',
-              '',
-              '---',
-              '',
-              '## Release Notes',
-              '',
-              releaseNotes,
+              'To re-run them, start the "Check GemsPy Update" workflow manually with **retest** checked.',
               '',
               '---',
               '',
@@ -163,6 +143,12 @@ jobs:
               '## Notes',
               '',
               '_Add findings and observations here._',
+              '',
+              '---',
+              '',
+              '## GemsPy Release Notes',
+              '',
+              releaseNotes,
             ].join('\n');
 
             const result = await github.rest.issues.create({
@@ -173,13 +159,14 @@ jobs:
             });
 
             core.setOutput('issue_number', String(result.data.number));
-            core.setOutput('new_issue', 'true');
+            core.setOutput('run_tests', 'true');
             console.log(`Issue created: #${result.data.number} - ${result.data.html_url}`);
 
+  # Runs code from a new, not yet reviewed GemsPy release: keep the default read-only token and do not store it
   test-new-version:
     name: Tests against GemsPy v${{ needs.check-update.outputs.latest_version }} (Python ${{ matrix.python-version }})
     needs: check-update
-    if: needs.check-update.outputs.new_issue == 'true'
+    if: needs.check-update.outputs.run_tests == 'true'
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -188,11 +175,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          enable-cache: true
+          enable-cache: false
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -200,13 +189,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies with GemsPy v${{ needs.check-update.outputs.latest_version }}
+        id: install
         run: uv add "gemspy==${{ needs.check-update.outputs.latest_version }}"
 
       - name: Run tests
         run: uv run pytest tests/ -v
 
       - name: Run Mypy type checking
-        if: matrix.python-version == '3.11'
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && matrix.python-version == '3.11' }}
         run: |
           uv run mypy gems_views_builder
           uv run mypy tests
@@ -215,7 +205,10 @@ jobs:
     name: Post test results to issue
     runs-on: ubuntu-22.04
     needs: [check-update, test-new-version]
-    if: always() && needs.check-update.outputs.new_issue == 'true'
+    if: always() && needs.check-update.outputs.run_tests == 'true'
+    permissions:
+      actions: read
+      issues: write
 
     steps:
       - name: Post results to issue
@@ -235,14 +228,41 @@ jobs:
             const body = [
               `## Test Results — GemsPy v${version}`,
               '',
-              `${icon} Tests (Python 3.11 to 3.14) and type checking **${status}** against GemsPy v${version}.`,
+              `${icon} Tests (Python 3.11 to 3.14) and type checking (Python 3.11) **${status}** against GemsPy v${version}.`,
               '',
-              `[View full run](${runUrl})`,
-            ].join('\n');
+            ];
+
+            // Detail per Python version: tells a dependency resolution failure apart from failing tests
+            try {
+              const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.runId,
+                filter: 'latest',
+                per_page: 100,
+              });
+              const testJobs = jobs.filter(job => job.name.startsWith('Tests against GemsPy'));
+              if (testJobs.length > 0) {
+                body.push('| Job | Result | Failed steps |', '|---|---|---|');
+                for (const job of testJobs) {
+                  const failedSteps = (job.steps || []).filter(step => step.conclusion === 'failure').map(step => step.name);
+                  const jobIcon = job.conclusion === 'success' ? '✅' : '❌';
+                  body.push(`| [${job.name}](${job.html_url}) | ${jobIcon} ${job.conclusion} | ${failedSteps.join(', ') || '-'} |`);
+                }
+                body.push('');
+                if (testJobs.some(job => (job.steps || []).some(step => step.conclusion === 'failure' && step.name.startsWith('Install dependencies')))) {
+                  body.push('> GemsPy could not be installed on some Python versions: check its `requires-python` and dependency constraints.', '');
+                }
+              }
+            } catch (e) {
+              console.log(`Could not list the jobs of this run: ${e.message}`);
+            }
+
+            body.push(`[View full run](${runUrl})`);
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: Number(process.env.ISSUE_NUMBER),
-              body: body,
+              body: body.join('\n'),
             });
