@@ -1,28 +1,13 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 import logging
-from collections.abc import Iterator
-from contextlib import contextmanager
 from dataclasses import dataclass
-
 from gems_views_builder.input.catalog import Catalog, Metric, Term
 from gems_views_builder.input.taxonomy import (
     Taxonomy,
     TaxonomyCategory,
     allowed_output,
 )
-
-
-@contextmanager
-def _error_context(prefix: str) -> Iterator[None]:
-    """Prepend `prefix` to any ValueError raised within the block, avoiding
-    having to thread identifying arguments (catalog/metric id) through every
-    validation method just to build error messages."""
-    try:
-        yield
-    except ValueError as error:
-        raise ValueError(f"{prefix} {error}") from error
-
 
 @dataclass
 class CatalogsTaxonomyValidator:
@@ -42,8 +27,10 @@ class CatalogsTaxonomyValidator:
 
     def _validate_catalog_metrics_taxon(self, catalog: Catalog) -> None:
         for metric in catalog.metrics.values():
-            with _error_context(f"Catalog {catalog.id!r} metric {metric.id!r}"):
+            try:
                 self._validate_metric_terms(metric)
+            except ValueError as error:
+                raise ValueError(f"Catalog {catalog.id!r} metric {metric.id!r}: {error}") from error
 
     def _match_catalog_taxonomy(self, catalog: Catalog) -> None:
         if catalog.taxonomy != self.taxonomy.id:
