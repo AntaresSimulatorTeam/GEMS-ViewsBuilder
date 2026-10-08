@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 import logging
 from dataclasses import dataclass
+
 from gems_views_builder.input.catalog import Catalog, Metric, Term
 from gems_views_builder.input.taxonomy import (
     Taxonomy,
