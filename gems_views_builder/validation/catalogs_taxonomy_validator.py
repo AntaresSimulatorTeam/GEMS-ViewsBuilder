@@ -9,6 +9,7 @@ from gems_views_builder.input.taxonomy import (
     allowed_output,
 )
 
+
 @dataclass
 class CatalogsTaxonomyValidator:
     catalogs: list[Catalog]
