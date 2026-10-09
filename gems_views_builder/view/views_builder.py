@@ -24,5 +24,6 @@ class ViewBuilder:
         for metric in self.input_data.view_config.metrics:
             metric_structure_table = self.metric_structure_table_builder.build(metric)
             structured_simulation_table = sink_metric_view(join(metric_structure_table, self.input_data.filtered_st))
-            metric_views.extend(self.transformation_processor.run(structured_simulation_table, metric))
+            transformed_views = self.transformation_processor.run(structured_simulation_table, metric)
+            metric_views.extend(transformed_views)
         return metric_views
