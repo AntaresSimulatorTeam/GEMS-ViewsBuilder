@@ -11,7 +11,7 @@ from gems_views_builder.input.view_config import TimeGranularity, ViewConfig
 from gems_views_builder.metric_view import MetricView, TemporalMetricView, sink_temporal_metric_view
 
 
-class TransformationsPatternsProcessor:
+class TransformationProcessor:
     def __init__(self, view_config: ViewConfig) -> None:
         self.terms_aggregator = TermsAggregator()
         self.time_aggregators = {
