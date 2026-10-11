@@ -33,12 +33,14 @@ def pinned_version() -> Version:
         for spec in requirement.specifier
         if spec.operator == "=="
     ]
+    error = "ERROR: expected exactly one 'gemspy==X.Y.Z' pin in pyproject.toml"
+    if len(pins) != 1:
+        raise SystemExit(error)
     try:
-        if len(pins) == 1:
-            return Version(pins[0])
+        return Version(pins[0])
     except InvalidVersion:
-        pass
-    raise SystemExit("ERROR: expected exactly one 'gemspy==X.Y.Z' pin in pyproject.toml")
+        # A wildcard pin such as gemspy==0.2.* is not a single version
+        raise SystemExit(error) from None
 
 
 def latest_stable_version() -> Version:
