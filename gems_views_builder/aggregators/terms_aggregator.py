@@ -10,7 +10,7 @@ import polars as pl
 
 from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
 
 class TermsAggregator:
@@ -19,12 +19,13 @@ class TermsAggregator:
         self._metric_view_dir = self._root_dir / "views" / "metric_view"
         self._metric_view_dir.mkdir(parents=True, exist_ok=True)
 
-    def run(self, structured_simulation_table: pl.LazyFrame, metric: Metric) -> MetricView:
+    def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         # # 2B group by
         logging.info(f"[{metric.id}] Aggregating terms with operator {metric.terms_operator.value}")
         value_agg = pl.col("value").sum() if metric.terms_operator == AggregOperatorType.SUM else pl.col("value").mean()
-        metric_view = (
-            structured_simulation_table.with_columns(pl.col("scenario_index").alias("scenario_id"))
+        lazy_df = metric_view.lazy_data_frame()
+        view = (
+            lazy_df.with_columns(pl.col("scenario_index").alias("scenario_id"))
             .group_by(
                 [
                     "metric_id",
@@ -54,9 +55,9 @@ class TermsAggregator:
             )
         )
         out_path = self._metric_view_dir / f"{metric.id}.parquet"
-        sink_to_parquet(metric_view, out_path)
+        sink_to_parquet(view, out_path)
         logging.info(f"[{metric.id}] Terms aggregation written to {out_path}")
-        return MetricView(out_path)
+        return PersistentMetricView(persistence_path=out_path)
 
     def __del__(self) -> None:
         rmtree(self._root_dir, ignore_errors=True)

@@ -17,7 +17,7 @@ from gems_views_builder.aggregators.scenario_aggregator import (
     make_scenario_operator,
 )
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity
-from gems_views_builder.metric_view import TemporalMetricView
+from gems_views_builder.metric_view import PersistentMetricView
 
 
 def make_pattern(scenario: bool = False, spatial_filter: list[str] | None = None) -> AggregationPattern:
@@ -29,7 +29,7 @@ def make_pattern(scenario: bool = False, spatial_filter: list[str] | None = None
     )
 
 
-def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -> TemporalMetricView:
+def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -> PersistentMetricView:
     """Minimal parquet for the scenario step: metric_id, metric_location, breakdown_properties, view_date."""
     n = len(location_values)
     dataframe = pl.DataFrame(
@@ -52,10 +52,10 @@ def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -
     )
     path = tmp_path / "temporal.parquet"
     dataframe.write_parquet(path)
-    return TemporalMetricView(path, TimeGranularity.HOUR)
+    return PersistentMetricView(TimeGranularity.HOUR, persistence_path=path)
 
 
-def temporal_metric_view(tmp_path: Path, values: list[float]) -> TemporalMetricView:
+def temporal_metric_view(tmp_path: Path, values: list[float]) -> PersistentMetricView:
     return make_metric_view(tmp_path, [("L", value) for value in values])
 
 

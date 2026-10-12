@@ -16,7 +16,7 @@ from gems_views_builder.aggregators.time_aggregator import (
 )
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
 
 def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> MetricView:
@@ -36,7 +36,7 @@ def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> Metr
     )
     path = tmp_path / "granular.parquet"
     dataframe.write_parquet(path)
-    return MetricView(path)
+    return PersistentMetricView(persistence_path=path)
 
 
 def make_metric(time_operator: AggregOperatorType) -> Metric:

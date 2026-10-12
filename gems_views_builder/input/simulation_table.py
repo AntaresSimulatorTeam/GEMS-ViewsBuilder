@@ -9,6 +9,7 @@ from shutil import rmtree
 
 import polars as pl
 
+from gems_views_builder.metric_view import MetricView, RamMetricView
 from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
@@ -120,7 +121,9 @@ def validate_columns(dataframe: pl.LazyFrame, table_id: str, expected: frozenset
 
 def join(
     metric_structure_table: MetricStructureTable, filtered_simulation_table: FilteredSimulationTable
-) -> pl.LazyFrame:
-    return filtered_simulation_table.dataframe.join(
-        metric_structure_table.dataframe, on=["component", "output"], how="right"
+) -> MetricView:
+    return RamMetricView(
+        lazyframe=filtered_simulation_table.dataframe.join(
+            metric_structure_table.dataframe, on=["component", "output"], how="right"
+        )
     )

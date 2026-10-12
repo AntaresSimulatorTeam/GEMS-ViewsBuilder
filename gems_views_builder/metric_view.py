@@ -2,17 +2,29 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from abc import ABC, abstractmethod
+import polars as pl
 
 from gems_views_builder.input.view_config import TimeGranularity
 
 
 @dataclass
-class MetricView:
-    """View for a single computed metric, stored as a parquet file."""
+class MetricView(ABC):
+    time_granularity: TimeGranularity | None = None
 
-    persistence_path: Path
+    @abstractmethod
+    def lazy_data_frame(self) -> pl.LazyFrame:
+        pass
+
+
+@dataclass
+class PersistentMetricView(MetricView):
+    persistence_path: Path = field(kw_only=True)
+
+    def lazy_data_frame(self) -> pl.LazyFrame:
+        return pl.scan_parquet(self.persistence_path)
 
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric view {self.persistence_path}")
@@ -20,5 +32,8 @@ class MetricView:
 
 
 @dataclass
-class TemporalMetricView(MetricView):
-    time_granularity: TimeGranularity
+class RamMetricView(MetricView):
+    lazyframe: pl.LazyFrame = field(kw_only=True)
+
+    def lazy_data_frame(self) -> pl.LazyFrame:
+        return self.lazyframe
