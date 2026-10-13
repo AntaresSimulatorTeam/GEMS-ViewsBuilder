@@ -16,13 +16,8 @@ from gems_views_builder.aggregators.scenario_aggregator import (
     ScenarioColumnsAddition,
     make_scenario_operator,
 )
-from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity
 from gems_views_builder.metric_view import TemporalMetricView
-
-
-def make_metric() -> Metric:
-    return Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM)
 
 
 def make_pattern(scenario: bool = False, spatial_filter: list[str] | None = None) -> AggregationPattern:
@@ -80,10 +75,11 @@ def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -
     aggregator = ScenarioAggregator(make_pattern(scenario=False))
 
     # Act
-    aggregator.run(metric_view, make_metric())
+    result = aggregator.run(metric_view)
 
     # Assert
-    df = pl.read_parquet(metric_view.persistence_path).sort("scenario_id")
+    df = pl.read_parquet(result.persistence_path).sort("scenario_id")
+    assert result.persistence_path != original_path
     assert metric_view.persistence_path == original_path
     assert "scenario_aggregation" in df.columns and "scenario_stat" in df.columns
     assert df.height == 3
@@ -101,10 +97,11 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
     aggregator = ScenarioAggregator(make_pattern(scenario=True))
 
     # Act
-    aggregator.run(metric_view, make_metric())
+    result = aggregator.run(metric_view)
 
     # Assert
-    df = pl.read_parquet(metric_view.persistence_path)
+    df = pl.read_parquet(result.persistence_path)
+    assert result.persistence_path != original_path
     assert metric_view.persistence_path == original_path
     assert df.height == 4
     assert set(df["scenario_stat"].to_list()) == {"exp", "std", "min", "max"}
@@ -137,8 +134,8 @@ def test_spatial_filter(
     scenario_aggregator = ScenarioAggregator(make_pattern(scenario=scenario, spatial_filter=locations))
 
     # Act
-    scenario_aggregator.run(metric_view, make_metric())
+    result = scenario_aggregator.run(metric_view)
 
     # Assert
-    df = pl.read_parquet(metric_view.persistence_path)
+    df = pl.read_parquet(result.persistence_path)
     assert set(df["metric_location"].to_list()) == expected_locations
