@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import polars as pl
 
 from gems_views_builder.input.view_config import TimeGranularity
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import PersistentMetricView
 
 
 @dataclass
@@ -19,18 +19,18 @@ from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
 
 
 def group_by_time_granularity(
-    metric_views: list[MetricView],
-) -> dict[TimeGranularity, list[MetricView]]:
-    views_by_time_granularity: dict[TimeGranularity, list[MetricView]] = defaultdict(list)
+    metric_views: list[PersistentMetricView],
+) -> dict[TimeGranularity, list[PersistentMetricView]]:
+    views_by_time_granularity: dict[TimeGranularity, list[PersistentMetricView]] = defaultdict(list)
     for view in metric_views:
         views_by_time_granularity[view.time_granularity].append(view)
     return views_by_time_granularity
 
 
-def accumulate_views(views: list[MetricView]) -> pl.LazyFrame:
+def accumulate_views(views: list[PersistentMetricView]) -> pl.LazyFrame:
     return pl.scan_parquet([v.persistence_path for v in views])
 
 
-def accumulate_on_disk(metric_views: list[MetricView], sinker: ViewSinker) -> None:
+def accumulate_on_disk(metric_views: list[PersistentMetricView], sinker: ViewSinker) -> None:
     for time_granularity, views in group_by_time_granularity(metric_views).items():
         sinker.sink(accumulate_views(views), time_granularity)
