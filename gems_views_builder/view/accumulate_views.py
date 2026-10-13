@@ -2,19 +2,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from collections import defaultdict
-from dataclasses import dataclass
 
 import polars as pl
 
 from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
-
-
-@dataclass
-class View:
-    dataframe: pl.LazyFrame
-
-
 from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
 
 

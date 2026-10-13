@@ -9,7 +9,6 @@ import polars as pl
 
 from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.view_config import TimeGranularity
-from gems_views_builder.view.accumulate_views import View
 
 
 class ViewSinker(ABC):
