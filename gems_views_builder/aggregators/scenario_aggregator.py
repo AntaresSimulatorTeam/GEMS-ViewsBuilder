@@ -82,8 +82,11 @@ class ScenarioAggregator:
         self.spatial_filter = SpatialFilter(aggregation_pattern.spatial_filter)
 
     def run(self, metric_view: MetricView) -> MetricView:
-        new_path = metric_view.persistence_path.parent / f"{uuid4()}.parquet"
         view = self.scenario_operator.run(metric_view)
         view = apply_spatial_filter(view, self.spatial_filter)
+
+        new_path = metric_view.persistence_path.parent / f"{uuid4()}.parquet"
         logging.info(f"Scenario view written to {new_path}")
-        return PersistentMetricView(metric_view.time_granularity, view=view, persistence_path=new_path)
+        return PersistentMetricView(metric_view.time_granularity,
+                                    view=view.lazy_data_frame(),
+                                    persistence_path=new_path)

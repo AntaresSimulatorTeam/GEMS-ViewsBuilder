@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 
 import polars as pl
-from gems_views_builder import MetricView
+from gems_views_builder import MetricView, RamMetricView
 
 
 @dataclass
@@ -12,7 +12,8 @@ class SpatialFilter:
     locations: list[str] | None
 
 
-def apply_spatial_filter(metric_view: MetricView, spatial_filter: SpatialFilter) -> pl.LazyFrame:
+def apply_spatial_filter(metric_view: MetricView, spatial_filter: SpatialFilter) -> MetricView:
     if spatial_filter.locations:
-        return metric_view.lazy_data_frame().filter(pl.col("metric_location").is_in(spatial_filter.locations))
-    return metric_view.lazy_data_frame()
+        lazy_frame = metric_view.lazy_data_frame().filter(pl.col("metric_location").is_in(spatial_filter.locations))
+        return RamMetricView(lazyframe=lazy_frame, time_granularity=metric_view.time_granularity)
+    return metric_view
