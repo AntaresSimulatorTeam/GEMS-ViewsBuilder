@@ -10,7 +10,6 @@ from shutil import rmtree
 
 import polars as pl
 
-from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
@@ -76,9 +75,8 @@ class TimeAggregator:
         file_path = (
             self._temporal_aggregation_dir / f"{self._time_granularity.value}_{metric.id}_{uuid.uuid4()}.parquet"
         )
-        sink_to_parquet(view, file_path)
         logg_write(metric, file_path)
-        return PersistentMetricView(self._time_granularity, persistence_path=file_path)
+        return PersistentMetricView(self._time_granularity, view=view, persistence_path=file_path)
 
 
 # This class is a Decorator (for TimeAggregator) : it adds functionality to TimeAggregator without

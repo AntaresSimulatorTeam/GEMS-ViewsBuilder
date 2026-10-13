@@ -9,7 +9,6 @@ from uuid import uuid4
 
 import polars as pl
 
-from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.view_config import AggregationPattern
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
 from gems_views_builder.spatial_filter import SpatialFilter, apply_spatial_filter
@@ -85,6 +84,5 @@ class ScenarioAggregator:
         new_path = metric_view.persistence_path.parent / f"{uuid4()}.parquet"
         view = self.scenario_operator.run(metric_view)
         view = apply_spatial_filter(view, self.spatial_filter)
-        sink_to_parquet(view, new_path)
         logging.info(f"Scenario view written to {new_path}")
-        return PersistentMetricView(metric_view.time_granularity, persistence_path=new_path)
+        return PersistentMetricView(metric_view.time_granularity, view=view, persistence_path=new_path)

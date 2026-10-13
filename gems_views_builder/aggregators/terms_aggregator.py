@@ -8,7 +8,6 @@ from shutil import rmtree
 
 import polars as pl
 
-from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
@@ -55,9 +54,8 @@ class TermsAggregator:
             )
         )
         out_path = self._metric_view_dir / f"{metric.id}.parquet"
-        sink_to_parquet(view, out_path)
         logging.info(f"[{metric.id}] Terms aggregation written to {out_path}")
-        return PersistentMetricView(persistence_path=out_path)
+        return PersistentMetricView(view=view, persistence_path=out_path)
 
     def __del__(self) -> None:
         rmtree(self._root_dir, ignore_errors=True)

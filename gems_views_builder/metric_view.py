@@ -8,6 +8,7 @@ from pathlib import Path
 
 import polars as pl
 
+from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.view_config import TimeGranularity
 
 
@@ -23,6 +24,10 @@ class MetricView(ABC):
 @dataclass
 class PersistentMetricView(MetricView):
     persistence_path: Path = field(kw_only=True)
+    view: pl.LazyFrame = field(kw_only=True)
+
+    def __post_init__(self) -> None:
+        sink_to_parquet(self.view, self.persistence_path)
 
     def lazy_data_frame(self) -> pl.LazyFrame:
         return pl.scan_parquet(self.persistence_path)
