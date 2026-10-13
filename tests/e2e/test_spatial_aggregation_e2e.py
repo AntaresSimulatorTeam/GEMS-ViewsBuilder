@@ -76,7 +76,7 @@ def make_view_config() -> ViewConfig:
         taxonomy_id="taxonomy",
         aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
         extra_locations=["country", "region"],
-        metric_ids=["catalog.LOAD", "catalog.PROD"],
+        full_metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
 
 

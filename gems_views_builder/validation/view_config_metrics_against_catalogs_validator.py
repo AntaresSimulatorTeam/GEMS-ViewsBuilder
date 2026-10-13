@@ -18,7 +18,7 @@ class ViewConfigMetricsAgainstCatalogsValidator:
         logging.info("All metrics are present in the catalogs")
 
     def validate_used_metric_ids(self) -> None:
-        for metric_ref in self.view_config.metric_ids:
+        for metric_ref in self.view_config.full_metric_ids:
             validate_metric_ref(metric_ref)
             catalog_id, metric_id = metric_ref.split(".", 1)
             self._match_catalog_id(catalog_id)

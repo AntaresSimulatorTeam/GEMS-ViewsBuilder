@@ -64,14 +64,14 @@ class ViewConfig:
     taxonomy_id: str
     aggregation_patterns: tuple[AggregationPattern, ...]
     extra_locations: list[str] = field(default_factory=list)
-    metric_ids: list[str] = field(default_factory=list)
+    full_metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
     def fetch_metrics(self, catalogs: list[Catalog]) -> None:
-        logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
+        logging.debug(f"Fetching {len(self.full_metric_ids)} metric(s) from catalogs")
         catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
-        for metric_ref in self.metric_ids:
-            catalog_id, metric_id = metric_ref.split(".")
+        for full_metric_id in self.full_metric_ids:
+            catalog_id, metric_id = full_metric_id.split(".")
             self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
 
     def get_metrics(self) -> list[Metric]:
@@ -91,7 +91,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         taxonomy_id=raw_view_config.taxonomy,
         aggregation_patterns=raw_view_config.aggregations_patterns,
-        metric_ids=[metric.id for metric in raw_view_config.metrics],
+        full_metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )
     logg_loaded_view_config(view_config)
@@ -101,7 +101,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
 def logg_loaded_view_config(view_config: ViewConfig) -> None:
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
-        f"metrics={len(view_config.metric_ids)}"
+        f"metrics={len(view_config.full_metric_ids)}"
     )
 
 

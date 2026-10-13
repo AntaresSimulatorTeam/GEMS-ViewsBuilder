@@ -15,13 +15,13 @@ def test_loads(test_dataset_dir: Path) -> None:
     assert isinstance(config.id, str)
     assert isinstance(config.location_taxonomy_category, str)
     assert isinstance(config.calendar_id, str)
-    assert len(config.metric_ids) > 0
+    assert len(config.full_metric_ids) > 0
 
 
 def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
     config = load_view_config(config_path)
-    for metric_id in config.metric_ids:
+    for metric_id in config.full_metric_ids:
         assert isinstance(metric_id, str)
         assert "." in metric_id
         catalog_id, metric_name = metric_id.split(".", 1)
@@ -34,7 +34,7 @@ def test_known_values(test_dataset_dir: Path) -> None:
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.taxonomy_id == "my_taxonomy"
-    metric_names = {metric_id.split(".", 1)[1] for metric_id in config.metric_ids}
+    metric_names = {metric_id.split(".", 1)[1] for metric_id in config.full_metric_ids}
     assert "LOAD" in metric_names
     if test_dataset_dir.name == "test_3":
         assert "PROD" in metric_names

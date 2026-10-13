@@ -33,7 +33,7 @@ def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
 def test_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    view_config.metric_ids = [
+    view_config.full_metric_ids = [
         "catalog_a.LOAD",
         "catalog_a.PROD",
         "catalog_b.BALANCE",
@@ -52,7 +52,7 @@ def test_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
 def test_raises_when_metric_missing_from_catalog(test_dataset_dir: Path) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    view_config.metric_ids = ["catalog.MISSING_METRIC"]
+    view_config.full_metric_ids = ["catalog.MISSING_METRIC"]
     catalogs = [make_catalog("catalog", ["LOAD", "PROD"])]
 
     # Act & Assert
@@ -63,7 +63,7 @@ def test_raises_when_metric_missing_from_catalog(test_dataset_dir: Path) -> None
 def test_raises_when_metric_id_is_invalid(test_dataset_dir: Path) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    view_config.metric_ids = ["catalog.INVALID_METRIC"]
+    view_config.full_metric_ids = ["catalog.INVALID_METRIC"]
     catalogs = [make_catalog("catalog", ["LOAD", "PROD"])]
 
     # Act & Assert
@@ -83,7 +83,7 @@ def test_raises_when_metric_id_is_invalid(test_dataset_dir: Path) -> None:
 def test_raises_when_metric_ref_format_is_invalid(test_dataset_dir: Path, metric_ref: str) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    view_config.metric_ids = [metric_ref]
+    view_config.full_metric_ids = [metric_ref]
     catalogs = [make_catalog("catalog", ["LOAD", "PROD"])]
 
     # Act & Assert
