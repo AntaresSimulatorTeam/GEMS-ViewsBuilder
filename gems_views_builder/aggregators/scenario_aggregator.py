@@ -10,7 +10,7 @@ from uuid import uuid4
 import polars as pl
 
 from gems_views_builder.input.view_config import AggregationPattern
-from gems_views_builder.metric_view import MetricView, PersistentMetricView
+from gems_views_builder.metric_view import MetricView, PersistentMetricView, RamMetricView
 from gems_views_builder.spatial_filter import SpatialFilter, apply_spatial_filter
 
 
@@ -38,10 +38,10 @@ class ScenarioOperator(ABC):
 
 
 class ScenarioAggregation(ScenarioOperator):
-    def run(self, metric_view: MetricView) -> pl.LazyFrame:
+    def run(self, metric_view: MetricView) -> MetricView:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
-        return (
+        lazyframe = (
             metric_view.lazy_data_frame()
             .group_by(index_columns)
             .agg(AGGREGATION_OPERATORS)
@@ -58,17 +58,18 @@ class ScenarioAggregation(ScenarioOperator):
                 ]
             )
         )
-
+        return RamMetricView(lazyframe=lazyframe, time_granularity=metric_view.time_granularity)
 
 class ScenarioColumnsAddition(ScenarioOperator):
-    def run(self, metric_view: MetricView) -> pl.LazyFrame:
+    def run(self, metric_view: MetricView) -> MetricView:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
-        return metric_view.lazy_data_frame().with_columns(
+        lazyframe = metric_view.lazy_data_frame().with_columns(
             [
                 pl.lit(False, dtype=pl.Boolean).alias("scenario_aggregation"),
                 pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
             ]
         )
+        return RamMetricView(lazyframe=lazyframe, time_granularity=metric_view.time_granularity)
 
 
 def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
