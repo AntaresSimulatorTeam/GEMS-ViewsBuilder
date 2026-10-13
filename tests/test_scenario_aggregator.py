@@ -17,7 +17,7 @@ from gems_views_builder.aggregators.scenario_aggregator import (
     ScenarioColumnsAddition,
     make_scenario_operator,
 )
-from gems_views_builder.spatial_filter import SpatialFiltering
+from gems_views_builder.aggregators.spatial_filter import SpatialFiltering
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity
 from gems_views_builder.metric_view import PersistentMetricView
 

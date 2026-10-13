@@ -6,7 +6,7 @@ from gems_views_builder.aggregators.time_aggregator import TimeAggregatorDecorat
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import AggregationPattern, ViewConfig
 from gems_views_builder.metric_view import MetricView
-from gems_views_builder.spatial_filter import SpatialFiltering
+from gems_views_builder.aggregators.spatial_filter import SpatialFiltering
 
 
 class PatternAggregator:
