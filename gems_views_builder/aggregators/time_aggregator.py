@@ -42,13 +42,12 @@ class TimeAggregator:
         Step 2.C from POC[temporal aggregation]: Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
         """
         logging.info(f"[{metric.id}] Aggregating temporally with operator {metric.time_operator.value}")
-        lazy_df = metric_view.lazy_data_frame()
-
         aggreg_op = aggregate_into_column(metric.time_operator, "granular_metric_value")
         date_column = date_column_into_time_granularity(self._time_granularity)
 
-        view = (
-            lazy_df.with_columns(date_column)
+        lazy_frame = (
+            metric_view.lazy_data_frame()
+            .with_columns(date_column)
             .group_by(
                 [
                     "metric_id",
@@ -76,7 +75,7 @@ class TimeAggregator:
             self._temporal_aggregation_dir / f"{self._time_granularity.value}_{metric.id}_{uuid.uuid4()}.parquet"
         )
         logg_write(metric, file_path)
-        return PersistentMetricView(self._time_granularity, view=view, persistence_path=file_path)
+        return PersistentMetricView(self._time_granularity, lazy_frame=lazy_frame, persistence_path=file_path)
 
 
 # This class is a Decorator (for TimeAggregator) : it adds functionality to TimeAggregator without

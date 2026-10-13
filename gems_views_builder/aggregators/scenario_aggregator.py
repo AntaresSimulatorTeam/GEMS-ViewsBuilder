@@ -11,7 +11,7 @@ import polars as pl
 
 from gems_views_builder.input.view_config import AggregationPattern
 from gems_views_builder.metric_view import MetricView, PersistentMetricView, RamMetricView
-from gems_views_builder.spatial_filter import SpatialFilter, apply_spatial_filter
+from gems_views_builder.spatial_filter import SpatialFiltering
 
 
 class Operator(Enum):
@@ -79,14 +79,6 @@ def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
 class ScenarioAggregator:
     def __init__(self, aggregation_pattern: AggregationPattern):
         self.scenario_operator = make_scenario_operator(aggregation_pattern.scenario)
-        self.spatial_filter = SpatialFilter(aggregation_pattern.spatial_filter)
 
     def run(self, metric_view: MetricView) -> MetricView:
-        view = self.scenario_operator.run(metric_view)
-        view = apply_spatial_filter(view, self.spatial_filter)
-
-        new_path = metric_view.persistence_path.parent / f"{uuid4()}.parquet"
-        logging.info(f"Scenario view written to {new_path}")
-        return PersistentMetricView(metric_view.time_granularity,
-                                    view=view.lazy_data_frame(),
-                                    persistence_path=new_path)
+        return self.scenario_operator.run(metric_view)

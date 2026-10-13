@@ -6,16 +6,19 @@ from gems_views_builder.aggregators.time_aggregator import TimeAggregatorDecorat
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import AggregationPattern, ViewConfig
 from gems_views_builder.metric_view import MetricView
+from gems_views_builder.spatial_filter import SpatialFiltering
 
 
 class PatternAggregator:
     def __init__(self, pattern: AggregationPattern) -> None:
         self.time_aggregator = TimeAggregatorDecorator(pattern.time_granularity)
         self.scenario_aggregator = ScenarioAggregator(pattern)
+        self.spatial_filtering = SpatialFiltering(pattern)
 
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
-        temporal_metric_view = self.time_aggregator.run(metric_view, metric)
-        return self.scenario_aggregator.run(temporal_metric_view)
+        time_metric_view = self.time_aggregator.run(metric_view, metric)
+        scenario_metric_view = self.scenario_aggregator.run(time_metric_view)
+        return self.spatial_filtering.run(scenario_metric_view, metric)
 
 
 class AggregationPatternList:

@@ -22,9 +22,10 @@ class TermsAggregator:
         # # 2B group by
         logging.info(f"[{metric.id}] Aggregating terms with operator {metric.terms_operator.value}")
         value_agg = pl.col("value").sum() if metric.terms_operator == AggregOperatorType.SUM else pl.col("value").mean()
-        lazy_df = metric_view.lazy_data_frame()
-        view = (
-            lazy_df.with_columns(pl.col("scenario_index").alias("scenario_id"))
+
+        lazy_frame = (
+            metric_view.lazy_data_frame()
+            .with_columns(pl.col("scenario_index").alias("scenario_id"))
             .group_by(
                 [
                     "metric_id",
@@ -55,7 +56,7 @@ class TermsAggregator:
         )
         out_path = self._metric_view_dir / f"{metric.id}.parquet"
         logging.info(f"[{metric.id}] Terms aggregation written to {out_path}")
-        return PersistentMetricView(view=view, persistence_path=out_path)
+        return PersistentMetricView(lazy_frame=lazy_frame, persistence_path=out_path)
 
     def __del__(self) -> None:
         rmtree(self._root_dir, ignore_errors=True)

@@ -84,8 +84,8 @@ class Term:
 class Metric:
     id: str
     terms: list[Term]
-    terms_operator: AggregOperatorType
-    time_operator: AggregOperatorType
+    terms_operator: AggregOperatorType = AggregOperatorType.SUM
+    time_operator: AggregOperatorType = AggregOperatorType.SUM
     breakdown: list[PropertySchema] | None = None
     filter: PropertySchema | None = None
 
