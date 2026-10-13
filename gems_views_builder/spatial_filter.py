@@ -26,10 +26,10 @@ class SpatialFiltering:
         if self.locations:
             lazy_frame = metric_view.lazy_data_frame().filter(pl.col("metric_location").is_in(self.locations))
             return PersistentMetricView(
-                lazy_frame=lazy_frame, time_granularity=metric_view.time_granularity, persistence_path=file_path
+                lazyframe=lazy_frame, time_granularity=metric_view.time_granularity, persistence_path=file_path
             )
         return PersistentMetricView(
-            lazy_frame=metric_view.lazy_data_frame(),
+            lazyframe=metric_view.lazy_data_frame(),
             time_granularity=metric_view.time_granularity,
             persistence_path=file_path,
         )

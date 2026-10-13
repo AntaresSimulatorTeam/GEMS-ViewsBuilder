@@ -9,7 +9,7 @@ from enum import Enum
 import polars as pl
 
 from gems_views_builder.input.view_config import AggregationPattern
-from gems_views_builder.metric_view import MetricView, RamMetricView
+from gems_views_builder.metric_view import MetricView
 
 
 class Operator(Enum):
@@ -56,7 +56,7 @@ class ScenarioAggregation(ScenarioOperator):
                 ]
             )
         )
-        return RamMetricView(lazyframe=lazyframe, time_granularity=metric_view.time_granularity)
+        return MetricView(lazyframe=lazyframe, time_granularity=metric_view.time_granularity)
 
 
 class ScenarioColumnsAddition(ScenarioOperator):
@@ -68,7 +68,7 @@ class ScenarioColumnsAddition(ScenarioOperator):
                 pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
             ]
         )
-        return RamMetricView(lazyframe=lazyframe, time_granularity=metric_view.time_granularity)
+        return MetricView(lazyframe=lazyframe, time_granularity=metric_view.time_granularity)
 
 
 def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:

@@ -75,7 +75,7 @@ class TimeAggregator:
             self._temporal_aggregation_dir / f"{self._time_granularity.value}_{metric.id}_{uuid.uuid4()}.parquet"
         )
         logg_write(metric, file_path)
-        return PersistentMetricView(self._time_granularity, lazy_frame=lazy_frame, persistence_path=file_path)
+        return PersistentMetricView(self._time_granularity, lazyframe=lazy_frame, persistence_path=file_path)
 
 
 # This class is a Decorator (for TimeAggregator) : it adds functionality to TimeAggregator without

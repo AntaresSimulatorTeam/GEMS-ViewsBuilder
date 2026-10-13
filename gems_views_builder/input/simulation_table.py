@@ -12,7 +12,7 @@ import polars as pl
 from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
-from gems_views_builder.metric_view import MetricView, RamMetricView
+from gems_views_builder.metric_view import MetricView
 
 # Columns of the SIMULATION_TABLE:
 # block               (str)   – identifies the timeblock in the simulation
@@ -122,7 +122,7 @@ def validate_columns(dataframe: pl.LazyFrame, table_id: str, expected: frozenset
 def join(
     metric_structure_table: MetricStructureTable, filtered_simulation_table: FilteredSimulationTable
 ) -> MetricView:
-    return RamMetricView(
+    return MetricView(
         lazyframe=filtered_simulation_table.dataframe.join(
             metric_structure_table.dataframe, on=["component", "output"], how="right"
         )

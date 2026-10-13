@@ -56,7 +56,7 @@ class TermsAggregator:
         )
         out_path = self._metric_view_dir / f"{metric.id}.parquet"
         logging.info(f"[{metric.id}] Terms aggregation written to {out_path}")
-        return PersistentMetricView(lazy_frame=lazy_frame, persistence_path=out_path)
+        return PersistentMetricView(lazyframe=lazy_frame, persistence_path=out_path)
 
     def __del__(self) -> None:
         rmtree(self._root_dir, ignore_errors=True)

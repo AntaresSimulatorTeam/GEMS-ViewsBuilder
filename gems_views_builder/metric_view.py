@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -13,21 +12,19 @@ from gems_views_builder.input.view_config import TimeGranularity
 
 
 @dataclass
-class MetricView(ABC):
+class MetricView:
     time_granularity: TimeGranularity = TimeGranularity.HOUR
+    lazyframe: pl.LazyFrame = field(kw_only=True)
 
-    @abstractmethod
     def lazy_data_frame(self) -> pl.LazyFrame:
-        pass
-
+        return self.lazyframe
 
 @dataclass
 class PersistentMetricView(MetricView):
     persistence_path: Path = field(kw_only=True)
-    lazy_frame: pl.LazyFrame = field(kw_only=True)
 
     def __post_init__(self) -> None:
-        sink_to_parquet(self.lazy_frame, self.persistence_path)
+        sink_to_parquet(self.lazyframe, self.persistence_path)
 
     def lazy_data_frame(self) -> pl.LazyFrame:
         return pl.scan_parquet(self.persistence_path)
@@ -35,11 +32,3 @@ class PersistentMetricView(MetricView):
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric view {self.persistence_path}")
         self.persistence_path.unlink(missing_ok=True)
-
-
-@dataclass
-class RamMetricView(MetricView):
-    lazyframe: pl.LazyFrame = field(kw_only=True)
-
-    def lazy_data_frame(self) -> pl.LazyFrame:
-        return self.lazyframe
