@@ -13,7 +13,7 @@ from gems_views_builder.input.view_config import TimeGranularity
 
 @dataclass
 class MetricView(ABC):
-    time_granularity: TimeGranularity | None = None
+    time_granularity: TimeGranularity = TimeGranularity.HOUR
 
     @abstractmethod
     def lazy_data_frame(self) -> pl.LazyFrame:
