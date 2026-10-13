@@ -79,11 +79,8 @@ class ViewConfig:
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
-    from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
-
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
-    AggregationPatternsValidator(raw_view_config.aggregations_patterns).validate()
 
     view_config = ViewConfig(
         id=raw_view_config.id,
@@ -94,15 +91,11 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
         full_metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )
-    logg_loaded_view_config(view_config)
-    return view_config
-
-
-def logg_loaded_view_config(view_config: ViewConfig) -> None:
     logging.info(
         f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
         f"metrics={len(view_config.full_metric_ids)}"
     )
+    return view_config
 
 
 def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:

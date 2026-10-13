@@ -2,10 +2,14 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
+from types import SimpleNamespace
+from typing import cast
 
 import pytest
 
 from gems_views_builder import TimeGranularity, ViewConfig, load_view_config
+from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
 
 
 def test_loads(test_dataset_dir: Path) -> None:
@@ -144,5 +148,8 @@ view:
 """.strip()
     )
 
+    config = load_view_config(config_path)
+    raw_input_data = cast(RawInputData, SimpleNamespace(view_config=config))
+
     with pytest.raises(ValueError, match="already defined"):
-        load_view_config(config_path)
+        AggregationPatternsValidator(raw_input_data).validate()
