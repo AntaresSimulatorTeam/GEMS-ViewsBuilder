@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from abc import ABC, abstractmethod
+
 import polars as pl
 
 from gems_views_builder.input.view_config import TimeGranularity

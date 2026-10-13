@@ -9,10 +9,10 @@ from shutil import rmtree
 
 import polars as pl
 
-from gems_views_builder.metric_view import MetricView, RamMetricView
 from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
+from gems_views_builder.metric_view import MetricView, RamMetricView
 
 # Columns of the SIMULATION_TABLE:
 # block               (str)   – identifies the timeblock in the simulation
