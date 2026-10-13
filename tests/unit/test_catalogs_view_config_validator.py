@@ -5,8 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder.input.catalog import load_catalog, load_catalogs
-from gems_views_builder.input.view_config import load_view_config
+from gems_views_builder.input.load import load_catalog, load_catalogs, load_view_config
 from gems_views_builder.validation.catalogs_view_config_validator import ViewConfigCatalogsValidator
 
 

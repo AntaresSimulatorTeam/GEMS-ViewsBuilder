@@ -28,11 +28,8 @@ from gems_views_builder.input.component import (
 from gems_views_builder.input.library import (
     associate_models_with_a_taxon,
     create_lib_from_yml,
-    load_lib_file,
-    load_yml_libs,
 )
-from gems_views_builder.input.system import load_system
-from gems_views_builder.input.view_config import load_view_config
+from gems_views_builder.input.load import load_lib_file, load_system, load_view_config, load_yml_libs
 from gems_views_builder.view import ParquetViewSinker
 from tests.conftest import paths_from_dataset
 

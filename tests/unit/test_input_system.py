@@ -6,8 +6,7 @@ from pathlib import Path
 import yaml
 from gems_craft.study.parsing import SystemSchema, parse_yaml_system  # type: ignore
 
-from gems_views_builder.input.library import load_yml_libs
-from gems_views_builder.input.system import load_system
+from gems_views_builder.input.load import load_system, load_yml_libs
 
 
 def test_input_system_using(test_dataset_dir: Path) -> None:

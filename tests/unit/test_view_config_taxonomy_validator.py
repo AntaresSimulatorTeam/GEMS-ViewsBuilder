@@ -5,8 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder.input.taxonomy import load_taxonomy
-from gems_views_builder.input.view_config import load_view_config
+from gems_views_builder.input.load import load_taxonomy, load_view_config
 from gems_views_builder.validation.view_config_taxonomy import ViewConfigTaxonomyValidator
 
 
