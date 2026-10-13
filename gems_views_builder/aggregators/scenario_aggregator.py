@@ -5,13 +5,11 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from uuid import uuid4
 
 import polars as pl
 
 from gems_views_builder.input.view_config import AggregationPattern
-from gems_views_builder.metric_view import MetricView, PersistentMetricView, RamMetricView
-from gems_views_builder.spatial_filter import SpatialFiltering
+from gems_views_builder.metric_view import MetricView, RamMetricView
 
 
 class Operator(Enum):
@@ -33,7 +31,7 @@ AGGREGATION_OPERATORS = [
 @dataclass
 class ScenarioOperator(ABC):
     @abstractmethod
-    def run(self, metric_view: MetricView) -> pl.LazyFrame:
+    def run(self, metric_view: MetricView) -> MetricView:
         pass
 
 
@@ -59,6 +57,7 @@ class ScenarioAggregation(ScenarioOperator):
             )
         )
         return RamMetricView(lazyframe=lazyframe, time_granularity=metric_view.time_granularity)
+
 
 class ScenarioColumnsAddition(ScenarioOperator):
     def run(self, metric_view: MetricView) -> MetricView:

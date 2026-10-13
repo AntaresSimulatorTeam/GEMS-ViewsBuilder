@@ -8,9 +8,9 @@ from statistics import pstdev as std_deviation
 
 import polars as pl
 import pytest
-from gems_views_builder import Metric
 from pytest import approx
 
+from gems_views_builder import Metric
 from gems_views_builder.aggregators.scenario_aggregator import (
     ScenarioAggregation,
     ScenarioAggregator,
@@ -72,7 +72,6 @@ def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -
     # Arrange
     values = [10.0, 20.0, 30.0]
     metric_view = time_metric_view(tmp_path, values)
-    original_path = metric_view.persistence_path
     aggregator = ScenarioAggregator(make_pattern(scenario=False))
 
     # Act
@@ -92,7 +91,6 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
     # Arrange
     values = [10.0, 20.0, 30.0]
     metric_view = time_metric_view(tmp_path, values)
-    original_path = metric_view.persistence_path
     aggregator = ScenarioAggregator(make_pattern(scenario=True))
 
     # Act

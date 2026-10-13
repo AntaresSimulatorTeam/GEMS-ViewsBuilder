@@ -1,15 +1,16 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-from dataclasses import dataclass
+import logging
 import tempfile
 import uuid
-import logging
 from pathlib import Path
+
 import polars as pl
-from gems_views_builder.input.view_config import AggregationPattern
+
 from gems_views_builder import MetricView, PersistentMetricView
 from gems_views_builder.input.catalog import Metric
+from gems_views_builder.input.view_config import AggregationPattern
 
 
 class SpatialFiltering:
@@ -24,9 +25,11 @@ class SpatialFiltering:
         logging.info(f"Spatial filtered view written to {file_path}")
         if self.locations:
             lazy_frame = metric_view.lazy_data_frame().filter(pl.col("metric_location").is_in(self.locations))
-            return PersistentMetricView(lazy_frame=lazy_frame,
-                                        time_granularity=metric_view.time_granularity,
-                                        persistence_path=file_path)
-        return PersistentMetricView(lazy_frame=metric_view.lazy_data_frame(),
-                                    time_granularity=metric_view.time_granularity,
-                                    persistence_path=file_path)
+            return PersistentMetricView(
+                lazy_frame=lazy_frame, time_granularity=metric_view.time_granularity, persistence_path=file_path
+            )
+        return PersistentMetricView(
+            lazy_frame=metric_view.lazy_data_frame(),
+            time_granularity=metric_view.time_granularity,
+            persistence_path=file_path,
+        )
