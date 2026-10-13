@@ -15,8 +15,8 @@ from gems_views_builder.metric_view import MetricView, PersistentMetricView
 class TermsAggregator:
     def __init__(self) -> None:
         self._root_dir = Path(tempfile.mkdtemp())
-        self._metric_view_dir = self._root_dir / "views" / "metric_view"
-        self._metric_view_dir.mkdir(parents=True, exist_ok=True)
+        self._save_dir = self._root_dir / "views" / "terms_aggregation"
+        self._save_dir.mkdir(parents=True, exist_ok=True)
 
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         # # 2B group by
@@ -54,7 +54,7 @@ class TermsAggregator:
                 ]
             )
         )
-        out_path = self._metric_view_dir / f"{metric.id}.parquet"
+        out_path = self._save_dir / f"{metric.id}.parquet"
         logging.info(f"[{metric.id}] Terms aggregation written to {out_path}")
         return PersistentMetricView(lazyframe=lazy_frame, persistence_path=out_path)
 

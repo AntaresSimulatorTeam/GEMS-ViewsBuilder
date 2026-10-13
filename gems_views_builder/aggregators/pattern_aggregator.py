@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator
+from gems_views_builder.aggregators.spatial_filter import SpatialFiltering
 from gems_views_builder.aggregators.time_aggregator import TimeAggregatorDecorator
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import AggregationPattern, ViewConfig
 from gems_views_builder.metric_view import MetricView
-from gems_views_builder.aggregators.spatial_filter import SpatialFiltering
 
 
 class PatternAggregator:
