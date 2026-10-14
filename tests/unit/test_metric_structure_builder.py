@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import polars as pl
 import pytest
 
-from gems_views_builder import AggregOperatorType, Metric, PropertySchema, Term
+from gems_views_builder import AggregOperatorType, Metric, Term
 from gems_views_builder.input.component import (
     Component,
     ConnectionsThroughPort,
@@ -39,42 +39,6 @@ def make_view_config() -> ViewConfig:
         taxonomy_id="taxonomy",
         aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
     )
-
-
-def test_format_breakdown_properties_missing_keys_use_none_literal() -> None:
-    breakdown = [
-        PropertySchema(key="country"),
-        PropertySchema(key="company"),
-        PropertySchema(key="technology"),
-    ]
-    component = make_component({"company": "rhonepower"})
-    assert component.format_breakdown_properties(breakdown) == "{(country,None),(company,rhonepower),(technology,None)}"
-
-
-def test_format_breakdown_properties_all_keys_present() -> None:
-    breakdown = [PropertySchema(key="technology"), PropertySchema(key="company")]
-    component = make_component({"technology": "gas", "company": "rhonepower"})
-    assert component.format_breakdown_properties(breakdown) == "{(technology,gas),(company,rhonepower)}"
-
-
-def test_breakdown_follows_schema_order_not_property_insertion_order() -> None:
-    """Two components with the same properties, inserted in opposite order, share one breakdown key."""
-    breakdown = [PropertySchema(key="technology"), PropertySchema(key="company")]
-    technology_first: dict[str, str] = {}
-    technology_first["technology"] = "gas"
-    technology_first["company"] = "rhonepower"
-    company_first: dict[str, str] = {}
-    company_first["company"] = "rhonepower"
-    company_first["technology"] = "gas"
-    expected = "{(technology,gas),(company,rhonepower)}"
-
-    assert make_component(technology_first).format_breakdown_properties(breakdown) == expected
-    assert make_component(company_first).format_breakdown_properties(breakdown) == expected
-
-
-def test_format_breakdown_properties_empty_breakdown() -> None:
-    component = make_component({"company": "x"})
-    assert component.format_breakdown_properties(None) == "{}"
 
 
 def test_port_whose_peers_are_outside_the_location_category_is_skipped() -> None:

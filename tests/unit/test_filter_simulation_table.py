@@ -41,7 +41,7 @@ def test_filter_simulation_table_keeps_calendar_matches_and_null_time_index() ->
     calendar = make_calendar(absolute_time_index=1, block="b1", granular_date=granular_date)
     table = simulation_table(
         [
-            make_simulation_table_row(component="kept"),
+            make_simulation_table_row(component="kept", absolute_time_index=1),
             make_simulation_table_row(component="other-time", absolute_time_index=99),
             make_simulation_table_row(component="static", absolute_time_index=None),
         ]
@@ -59,11 +59,15 @@ def test_filter_simulation_table_keeps_calendar_matches_and_null_time_index() ->
 
 
 def test_filter_simulation_table_drops_mismatched_block() -> None:
+    """
+    Inner join on absolute_time_index
+    Static will be in filtered table with null date because absolute_time_index is null(we want to keep them)
+    """
     calendar = make_calendar(absolute_time_index=1, block="b1", granular_date=datetime(2026, 1, 1))
     table = simulation_table(
         [
-            make_simulation_table_row(component="kept", block="b1"),
-            make_simulation_table_row(component="wrong-block", block="b2"),
+            make_simulation_table_row(component="kept", block="b1", absolute_time_index=1),
+            make_simulation_table_row(component="wrong-block", block="b2", absolute_time_index=1),
             make_simulation_table_row(component="static", absolute_time_index=None, block="b2"),
         ]
     )
@@ -72,6 +76,8 @@ def test_filter_simulation_table_drops_mismatched_block() -> None:
     filtered = pl.read_parquet(filtered_table.file_path)
 
     assert set(filtered["component"].to_list()) == {"kept", "static"}
+    assert filtered.filter(pl.col("component") == "static")["block"][0] == "b2"
+    assert filtered.filter(pl.col("component") == "kept")["block"][0] == "b1"
 
 
 @pytest.mark.parametrize(
@@ -89,8 +95,12 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
 ) -> None:
     granular_date = datetime(2026, 1, 1)
     calendar = make_calendar(absolute_time_index=1, block="b1", granular_date=granular_date)
-    st_a = SimulationTable(pl.DataFrame([make_simulation_table_row(component="comp-a", block=block_a)]).lazy())
-    st_b = SimulationTable(pl.DataFrame([make_simulation_table_row(component="comp-b", block=block_b)]).lazy())
+    st_a = SimulationTable(
+        pl.DataFrame([make_simulation_table_row(component="comp-a", block=block_a, absolute_time_index=1)]).lazy()
+    )
+    st_b = SimulationTable(
+        pl.DataFrame([make_simulation_table_row(component="comp-b", block=block_b, absolute_time_index=1)]).lazy()
+    )
 
     filtered_table = filter_simulation_table(concat_simulation_tables([st_a, st_b]), calendar)
 

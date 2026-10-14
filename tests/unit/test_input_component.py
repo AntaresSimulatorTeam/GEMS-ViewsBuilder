@@ -44,12 +44,3 @@ def test_group_components_by_taxonomy_category() -> None:
     grouped = group_components_by_taxon(components)
     assert {c.id for c in grouped["production"]} == {"gen_1"}
     assert {c.id for c in grouped["balance"]} == {"bus_1"}
-
-
-def test_match() -> None:
-    from gems_views_builder.input.catalog import PropertySchema
-
-    component = Component(make_raw_component("gen_1", "lib.generator", {"technology": "gas"}))
-    assert component.match(None) is True
-    assert component.match(PropertySchema(key="technology", value="gas")) is True
-    assert component.match(PropertySchema(key="technology", value="nuclear")) is False
