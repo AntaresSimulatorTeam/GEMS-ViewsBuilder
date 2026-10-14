@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 for view in area link; do
   mkdir -p "output/$view"
   gems-views-builder \
-    --system system.yml \
+    --system system-for-views.yml \
     --libraries-dir libraries \
     --taxonomy antares_legacy_taxonomy_flattened.yml \
     --catalogs-dir catalogs \

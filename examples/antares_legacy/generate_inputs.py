@@ -1,12 +1,14 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-"""Regenerate the simulation tables and the calendar of this example from a small fictitious Antares legacy study.
+"""Regenerate the simulation tables, the system and the calendar of this example from a small fictitious Antares
+legacy study.
 
 Requires antares-craft and an Antares Simulator 10.2.0 binary:
     python generate_inputs.py path/to/antares-10.2.0-Ubuntu-22.04/bin/antares-solver
 """
 
+import re
 import shutil
 import subprocess
 import sys
@@ -136,11 +138,16 @@ def main(antares_solver: Path) -> None:
             ],
             check=True,
         )
+        output_dir = next((study_dir / "output").iterdir())
         tables_dir = EXAMPLE_DIR / "simulation_tables"
         shutil.rmtree(tables_dir, ignore_errors=True)
         tables_dir.mkdir()
-        for table in sorted((study_dir / "output").glob(f"*/**/simulation-table-*-{STAGE}.parquet")):
+        for table in sorted(output_dir.glob(f"simulation-table-*-{STAGE}.parquet")):
             shutil.copy(table, tables_dir / table.name)
+        # Antares names the system after the absolute study path: name it after the study instead.
+        system = (output_dir / "system-for-views.yml").read_text()
+        system = re.sub(r"^  id: .*$", "  id: two_areas", system, count=1, flags=re.MULTILINE)
+        (EXAMPLE_DIR / "system-for-views.yml").write_text(system)
 
     # One row per simulated hour (52 weeks), one block per week, as in the simulation tables.
     time_index = np.arange(52 * 168)
