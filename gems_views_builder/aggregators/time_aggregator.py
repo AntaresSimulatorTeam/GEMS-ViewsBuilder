@@ -27,6 +27,9 @@ class TimeAggregator(PersistingAggregator):
         self._time_granularity = time_granularity
         super().__init__()
 
+    def _output_time_granularity(self, metric_view: MetricView) -> TimeGranularity:
+        return self._time_granularity
+
     def _build_lazy_frame(self, metric_view: MetricView, metric: Metric) -> pl.LazyFrame:
         """
         Step 2.C from POC[time aggregation]: Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario

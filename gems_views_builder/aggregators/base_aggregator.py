@@ -37,10 +37,18 @@ class PersistingAggregator(ABC):
     def _build_lazy_frame(self, metric_view: MetricView, metric: Metric) -> pl.LazyFrame:
         """Return the transformed lazy frame to persist."""
 
+    def _output_time_granularity(self, metric_view: MetricView) -> TimeGranularity:
+        """Return the time granularity to tag the persisted output with.
+
+        Defaults to passing the input view's granularity through unchanged. Subclasses
+        that actually change the time granularity (e.g. TimeAggregator) must override this.
+        """
+        return metric_view.time_granularity
+
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         lazy_frame = self._build_lazy_frame(metric_view, metric)
 
-        time_granularity = metric_view.time_granularity
+        time_granularity = self._output_time_granularity(metric_view)
         out_path = self._save_dir / f"{time_granularity.value}_{metric.id}_{uuid.uuid4()}.parquet"
         logging.info(f"[{metric.id}] {type(self).__name__} view written to {out_path}")
         return PersistentMetricView(time_granularity, lazyframe=lazy_frame, persistence_path=out_path)
