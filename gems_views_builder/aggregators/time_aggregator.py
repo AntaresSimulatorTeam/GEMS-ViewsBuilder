@@ -1,18 +1,14 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-import atexit
 import logging
-import tempfile
-import uuid
-from pathlib import Path
-from shutil import rmtree
 
 import polars as pl
 
+from gems_views_builder.aggregators.base_aggregator import PersistingAggregator
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
-from gems_views_builder.metric_view import MetricView, PersistentMetricView
+from gems_views_builder.metric_view import MetricView
 
 # # Polars truncate windows are strings like "1h", "1d", "1w", "1mo", "1y".
 TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
@@ -24,20 +20,14 @@ TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
 }
 
 
-class TimeAggregator:
+class TimeAggregator(PersistingAggregator):
+    _subdirectory = "time_aggregation"
+
     def __init__(self, time_granularity: TimeGranularity) -> None:
         self._time_granularity = time_granularity
-        self._root_dir = Path(tempfile.mkdtemp())
-        self._save_dir = self._root_dir / "views" / "time_aggregation"
-        self._save_dir.mkdir(parents=True, exist_ok=True)
-        # # The time aggregation files are the pipeline's final output: they must
-        # # outlive this aggregator because accumulate_on_disk() reads them after build() returns and
-        # # the ViewBuilder (and this aggregator) has already been garbage collected.
-        # # Cleaning up in __del__ would delete them too early, so we defer removal of
-        # # the whole temp tree until interpreter exit instead.
-        atexit.register(rmtree, self._root_dir, True)
+        super().__init__()
 
-    def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
+    def _build_lazy_frame(self, metric_view: MetricView, metric: Metric) -> pl.LazyFrame:
         """
         Step 2.C from POC[time aggregation]: Group by metric_id, metric_location, breakdown_properties, absolute_time_index, scenario
         """
@@ -45,7 +35,7 @@ class TimeAggregator:
         aggreg_op = aggregate_into_column(metric.time_operator, "granular_metric_value")
         date_column = date_column_into_time_granularity(self._time_granularity)
 
-        lazy_frame = (
+        return (
             metric_view.lazy_data_frame()
             .with_columns(date_column)
             .group_by(
@@ -69,13 +59,6 @@ class TimeAggregator:
                 ]
             )
         )
-        # # Safest and most elegant option to remove part counter
-        # # https://www.researchgate.net/publication/215758035_A_Universally_Unique_IDentifier_UUID_URN_Namespace
-        out_path = (
-            self._save_dir / f"{self._time_granularity.value}_{metric.id}_{uuid.uuid4()}.parquet"
-        )
-        logg_write(metric, out_path)
-        return PersistentMetricView(self._time_granularity, lazyframe=lazy_frame, persistence_path=out_path)
 
 
 # This class is a Decorator (for TimeAggregator) : it adds functionality to TimeAggregator without
@@ -94,10 +77,6 @@ class TimeAggregatorDecorator:  # Should inherit from base common class
             self.views_storage[self.time_granularity] = view  # Registering the view
             return view
         return self.views_storage[self.time_granularity]
-
-
-def logg_write(metric: Metric, file_path: Path) -> None:
-    logging.info(f"[{metric.id}] Temporal aggregation written to {file_path}")
 
 
 def date_column_into_time_granularity(time_granularity: TimeGranularity) -> pl.Expr:
