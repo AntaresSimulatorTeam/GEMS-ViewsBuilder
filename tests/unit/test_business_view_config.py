@@ -27,7 +27,7 @@ def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
     config = load_view_config(config_path)
     for metric_id in config.full_metric_ids:
         assert isinstance(metric_id, str)
-        assert "." in metric_id
+        assert metric_id.count(".") == 1
         catalog_id, metric_name = metric_id.split(".", 1)
         assert catalog_id
         assert metric_name

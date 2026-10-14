@@ -72,7 +72,7 @@ def test_raises_when_metric_id_is_invalid(test_dataset_dir: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "metric_ref",
+    "full_metric_id",
     [
         "catalog.INVALID.METRIC",
         "catalog..INVALID_METRIC",
@@ -80,10 +80,10 @@ def test_raises_when_metric_id_is_invalid(test_dataset_dir: Path) -> None:
         ".catalogINVALID_METRIC",
     ],
 )
-def test_raises_when_metric_ref_format_is_invalid(test_dataset_dir: Path, metric_ref: str) -> None:
+def test_raises_when_metric_ref_format_is_invalid(test_dataset_dir: Path, full_metric_id: str) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    view_config.full_metric_ids = [metric_ref]
+    view_config.full_metric_ids = [full_metric_id]
     catalogs = [make_catalog("catalog", ["LOAD", "PROD"])]
 
     # Act & Assert
