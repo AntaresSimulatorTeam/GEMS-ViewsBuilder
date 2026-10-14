@@ -16,9 +16,12 @@ from gems_views_builder.input.view_config import AggregationPattern, TimeGranula
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
-def make_component(properties: dict[str, str] | None = None, component_id: str = "fake") -> Component:
+def make_component(
+    taxonomy_category: str, properties: dict[str, str] | None = None, component_id: str = "fake"
+) -> Component:
     return Component(
-        SimpleNamespace(id=component_id, model=SimpleNamespace(id="lib.model"), properties=properties or {})
+        SimpleNamespace(id=component_id, model=SimpleNamespace(id="lib.model"), properties=properties or {}),
+        taxonomy_category=taxonomy_category,
     )
 
 
@@ -43,12 +46,9 @@ def make_view_config() -> ViewConfig:
 
 def test_port_whose_peers_are_outside_the_location_category_is_skipped() -> None:
     """Peers that are not in the view's location category do not locate the component, so the row is skipped."""
-    bus = make_component(component_id="bus")
-    generator = make_component(component_id="generator")
-    load = make_component(component_id="load")
-    bus.taxonomy_category = "balance"
-    generator.taxonomy_category = "production"
-    load.taxonomy_category = "consumption"
+    bus = make_component(taxonomy_category="balance", component_id="bus")
+    generator = make_component(taxonomy_category="production", component_id="generator")
+    load = make_component(taxonomy_category="consumption", component_id="load")
     bus.connections = ConnectionsThroughPort(port_components={"p_port": [generator, load]})
     metric = make_metric("BUS", "balance", "p_port")
 
@@ -60,12 +60,9 @@ def test_port_whose_peers_are_outside_the_location_category_is_skipped() -> None
 def test_supply_components_with_locations_raises_on_genuine_ambiguity() -> None:
     """Two peers on the same port both belonging to the term's taxonomy category is an actual
     inconsistency and must raise during the up-front location precomputation."""
-    owner = make_component()
-    peer_1 = make_component()
-    peer_2 = make_component()
-    owner.taxonomy_category = "cat"
-    peer_1.taxonomy_category = "cat"
-    peer_2.taxonomy_category = "cat"
+    owner = make_component(taxonomy_category="cat")
+    peer_1 = make_component(taxonomy_category="cat")
+    peer_2 = make_component(taxonomy_category="cat")
     owner.connections = ConnectionsThroughPort(port_components={"p0_port": [peer_1, peer_2]})
     components_by_taxon = {"cat": [owner]}
     metric = make_metric("AMBIGUITY_TEST", "cat", "p0_port")
@@ -75,10 +72,8 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity() -> None:
 
 
 def test_location_returns_peer_component() -> None:
-    link = make_component(component_id="link")
-    bus = make_component(component_id="busA")
-    link.taxonomy_category = "link"
-    bus.taxonomy_category = "balance"
+    link = make_component(taxonomy_category="link", component_id="link")
+    bus = make_component(taxonomy_category="balance", component_id="busA")
     link.connections = ConnectionsThroughPort(port_components={"p0_port": [bus]})
     metric = make_metric("FLOW", "link", "p0_port")
 
@@ -93,8 +88,7 @@ def test_none_location_port_resolves_to_the_component_itself() -> None:
     Self-location is only valid when the term taxonomy category matches the view's
     location taxonomy category.
     """
-    bus = make_component(component_id="busA")
-    bus.taxonomy_category = "balance"
+    bus = make_component(taxonomy_category="balance", component_id="busA")
     metric = make_metric("SELF_LOCATED", "balance", None)
     components_by_taxon = {"balance": [bus]}
     supply_components_with_locations(components_by_taxon, [metric], "balance")

@@ -14,7 +14,7 @@ def write_simulation_table(path: Path) -> None:
     pl.DataFrame([SIMULATION_TABLE_ROW]).write_parquet(path)
 
 
-def test_load_simulation_tables_returns_one_table_per_path_in_order(tmp_path: Path) -> None:
+def test_load_simulation_tables_returns_one_table_per_path(tmp_path: Path) -> None:
     # Arrange
     first_path = tmp_path / "simulation_table-1.parquet"
     second_path = tmp_path / "simulation_table-2.parquet"
