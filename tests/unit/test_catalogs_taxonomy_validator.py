@@ -1,24 +1,40 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-from pathlib import Path
-
 import pytest
 
-from gems_views_builder.input.catalog import load_catalog, load_catalogs
-from gems_views_builder.input.taxonomy import load_taxonomy
-from gems_views_builder.input.view_config import load_view_config
+from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
+from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem
 from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTaxonomyValidator
 
 
-def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
-    # Arrange
-    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
-    view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    catalogs = load_catalogs(test_dataset_dir / "catalogs", view_config.catalog_ids)
+def make_taxonomy() -> Taxonomy:
+    category = TaxonomyCategory(
+        id="production",
+        ports=[TaxonomyItem(id="p_port")],
+        variables=[TaxonomyItem(id="p")],
+    )
+    return Taxonomy(id="taxonomy", categories={"production": category})
 
-    # Act & Assert
-    CatalogsTaxonomyValidator(catalogs, taxonomy).validate()
+
+def make_catalog() -> Catalog:
+    return Catalog(
+        id="catalog",
+        taxonomy="taxonomy",
+        location_taxonomy_category="balance",
+        metrics={
+            "PROD": Metric(
+                id="PROD",
+                terms=[Term(taxonomy_category="production", output_id="p", location_port="p_port")],
+                terms_operator=AggregOperatorType.SUM,
+                time_operator=AggregOperatorType.SUM,
+            )
+        },
+    )
+
+
+def test_passes_for_matching_catalog() -> None:
+    CatalogsTaxonomyValidator([make_catalog()], make_taxonomy()).validate()
 
 
 @pytest.mark.parametrize(
@@ -30,13 +46,10 @@ def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
         ("output_id", "unknown_output", "uses output-id"),
     ],
 )
-def test_rejects_invalid_references(test_dataset_dir: Path, attribute: str, value: str, match: str) -> None:
-    # Arrange
-    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
-    catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
+def test_rejects_invalid_references(attribute: str, value: str, match: str) -> None:
+    catalog = make_catalog()
     target = catalog if attribute == "taxonomy" else next(iter(catalog.metrics.values())).terms[0]
     setattr(target, attribute, value)
 
-    # Act & Assert
     with pytest.raises(ValueError, match=match):
-        CatalogsTaxonomyValidator([catalog], taxonomy).validate()
+        CatalogsTaxonomyValidator([catalog], make_taxonomy()).validate()
