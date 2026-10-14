@@ -95,7 +95,7 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
     out_metric_view = aggregator.run(metric_view, metric)
 
     # Assert
-    df = pl.read_parquet(out_metric_view.persistence_path)
+    df = out_metric_view.lazy_data_frame().collect()
     assert df.shape[0] == 1
     assert df["view_date"][0] == datetime(2026, 1, 1, 0, 0)
     assert df["metric_value"][0] == approx(30.0)
@@ -113,7 +113,7 @@ def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     out_metric_view = aggregator.run(metric_view, metric)
 
     # Assert
-    df = pl.read_parquet(out_metric_view.persistence_path)
+    df = out_metric_view.lazy_data_frame().collect()
     assert df.shape[0] == 1
     assert df["view_date"][0] == datetime(2026, 1, 1, 0, 0)
     assert df["metric_value"][0] == approx(15.0)  # mean(10.0, 20.0)

@@ -24,7 +24,7 @@ from gems_views_builder.__main__ import build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
-from gems_views_builder.metric_view import PersistentMetricView
+from gems_views_builder.metric_view import MetricView, PersistentMetricView
 from tests.e2e.utils import (
     build_raw_input_data,
     make_calendar,
@@ -130,10 +130,10 @@ def extract_values_from_view(view: PersistentMetricView) -> dict[tuple[str, date
     )
 
 
-def views_by_metric_id(metric_views: list[PersistentMetricView]) -> dict[str, PersistentMetricView]:
-    by_metric_id: dict[str, PersistentMetricView] = {}
+def views_by_metric_id(metric_views: list[MetricView]) -> dict[str, MetricView]:
+    by_metric_id: dict[str, MetricView] = {}
     for view in metric_views:
-        metric_id = pl.read_parquet(view.persistence_path, columns=["metric_id"])["metric_id"][0]
+        metric_id = view.lazy_data_frame().select("metric_id").limit(1).collect()["metric_id"][0]
         by_metric_id[str(metric_id)] = view
     return by_metric_id
 
