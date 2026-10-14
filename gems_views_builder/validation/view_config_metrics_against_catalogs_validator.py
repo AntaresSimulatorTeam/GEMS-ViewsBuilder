@@ -15,9 +15,9 @@ class ViewConfigMetricsAgainstCatalogsValidator:
         logging.info(
             f"Validating view config {self.view_config.id!r} metrics against {len(self.ids_to_catalogs)} catalog(s)"
         )
-        for metric_ref in self.view_config.full_metric_ids:
-            check_is_well_formed(metric_ref)
-            catalog_id, metric_id = metric_ref.split(".", 1)
+        for full_metric_id in self.view_config.full_metric_ids:
+            check_is_well_formed(full_metric_id)
+            catalog_id, metric_id = full_metric_id.split(".", 1)
             self._match_catalog_id(catalog_id)
             self._match_metric_id(catalog_id, metric_id)
         logging.info("All metrics are present in the catalogs")
@@ -33,6 +33,6 @@ class ViewConfigMetricsAgainstCatalogsValidator:
             )
 
 
-def check_is_well_formed(metric_ref: str) -> None:
-    if metric_ref.count(".") != 1 or metric_ref.startswith(".") or metric_ref.endswith("."):
-        raise ValueError(f"Invalid metric id '{metric_ref}'. Expected format '<catalog_id>.<metric_id>'")
+def check_is_well_formed(full_metric_id: str) -> None:
+    if full_metric_id.count(".") != 1 or full_metric_id.startswith(".") or full_metric_id.endswith("."):
+        raise ValueError(f"Invalid metric id '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'")
