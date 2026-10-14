@@ -35,8 +35,8 @@ SIMULATION_TABLE_COLUMNS: frozenset[str] = frozenset(
     }
 )
 
-# Filtered simulation table has all SIMULATION_TABLE columns plus granular_date from the calendar join
-FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {"granular_date"}
+# Persistent simulation table has all SIMULATION_TABLE columns plus granular_date from the calendar join
+PERSISTENT_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {"granular_date"}
 
 
 @dataclass
@@ -47,17 +47,16 @@ class SimulationTable:
 
 
 @dataclass
-class FilteredSimulationTable:
-    """Lazy representation of a filtered SIMULATION_TABLE parquet file.
+class PersistentSimulationTable(SimulationTable):
+    """Lazy representation of a persistent SIMULATION_TABLE parquet file.
 
     Has all SIMULATION_TABLE columns plus granular_date from the calendar join.
     """
 
     file_path: Path
-    dataframe: pl.LazyFrame
 
     def __del__(self) -> None:
-        logging.debug(f"Cleaning filtered simulation table {self.file_path.parent}")
+        logging.debug(f"Cleaning persistent simulation table {self.file_path.parent}")
         rmtree(self.file_path.parent, ignore_errors=True)
 
 
@@ -79,11 +78,11 @@ def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
     return SimulationTable(dataframe)
 
 
-def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) -> FilteredSimulationTable:
+def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) -> PersistentSimulationTable:
     """Filter simulation tables by calendar, persist result to a private tempdir, and return it."""
     logging.info("Filtering simulation table by calendar")
     intermediates_dir = Path(tempfile.mkdtemp())
-    output_path = intermediates_dir / "simulation_table_filtered.parquet"
+    output_path = intermediates_dir / "simulation_table_persistent.parquet"
     # Time-dependent rows: keep only timesteps present in the calendar.
     time_dep = (
         simulation_table.join(calendar.dataframe, on="absolute_time_index", how="inner")
@@ -97,15 +96,15 @@ def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) 
     )
     columns = time_dep.collect_schema().names()
     sink_to_parquet(pl.concat([time_dep.select(columns), non_time_dep.select(columns)]), output_path)
-    logging.info(f"Filtered simulation table written to {output_path}")
+    logging.info(f"Persistent simulation table written to {output_path}")
 
-    filtered = pl.scan_parquet(output_path)
-    return FilteredSimulationTable(output_path, filtered)
+    persistent = pl.scan_parquet(output_path)
+    return PersistentSimulationTable(dataframe=persistent, file_path=output_path)
 
 
 def join(
-    metric_structure_table: MetricStructureTable, filtered_simulation_table: FilteredSimulationTable
+    metric_structure_table: MetricStructureTable, persistent_simulation_table: PersistentSimulationTable
 ) -> pl.LazyFrame:
-    return filtered_simulation_table.dataframe.join(
+    return persistent_simulation_table.dataframe.join(
         metric_structure_table.dataframe, on=["component", "output"], how="right"
     )

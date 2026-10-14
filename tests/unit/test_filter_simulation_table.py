@@ -7,7 +7,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder import Calendar, FilteredSimulationTable, load_calendar
+from gems_views_builder import Calendar, PersistentSimulationTable, load_calendar
 from gems_views_builder.input.simulation_table import (
     SimulationTable,
     filter_simulation_table,
@@ -20,22 +20,22 @@ from tests.common import make_simulation_table_row
 
 
 def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path) -> None:
-    """Filtered result must satisfy: every row (absolute_time_index, block) in calendar, correct count, rows from sim table."""
+    """Persistent result must satisfy: every row (absolute_time_index, block) in calendar, correct count, rows from sim table."""
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     calendar = load_calendar(test_dataset_dir / "calendar_file.csv")
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
-    assert isinstance(filtered_table, FilteredSimulationTable)
-    filtered = pl.read_parquet(filtered_table.file_path)
+    persistent_table = filter_simulation_table(simulation_table.dataframe, calendar)
+    assert isinstance(persistent_table, PersistentSimulationTable)
+    persistent = pl.read_parquet(persistent_table.file_path)
 
     # Time-dependent rows must have (absolute_time_index, block) in the calendar.
     # Non-time-dependent rows (null absolute_time_index) are passed through as-is.
-    time_dep = filtered.filter(pl.col("absolute_time_index").is_not_null())
+    time_dep = persistent.filter(pl.col("absolute_time_index").is_not_null())
     calendar_df = calendar.dataframe.collect()
     in_calendar = time_dep.join(calendar_df, on=["absolute_time_index", "block"], how="semi")
     assert in_calendar.height == time_dep.height, (
-        "Every filtered row must have (absolute_time_index, block) in the calendar"
+        "Every persistent row must have (absolute_time_index, block) in the calendar"
     )
 
     # Total count = time-dep (inner join + block match) + non-time-dep (null index)
@@ -49,7 +49,9 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
         simulation_table.dataframe.filter(pl.col("absolute_time_index").is_null()).collect(engine="streaming").height
     )
     expected_total = time_dep_count + non_time_dep_count
-    assert filtered.height == expected_total, "Filtered count must equal calendar-matched plus non-time-dependent rows"
+    assert persistent.height == expected_total, (
+        "Persistent count must equal calendar-matched plus non-time-dependent rows"
+    )
 
 
 def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dataset_dir: Path) -> None:
@@ -66,29 +68,29 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     duplicated.write_parquet(sim_path_block2)
     simulation_table = load_simulation_table(sim_path_block2)
 
-    filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
-    assert isinstance(filtered_table, FilteredSimulationTable)
-    filtered = pl.read_parquet(filtered_table.file_path)
+    persistent_table = filter_simulation_table(simulation_table.dataframe, calendar)
+    assert isinstance(persistent_table, PersistentSimulationTable)
+    persistent = pl.read_parquet(persistent_table.file_path)
     # Time-dependent rows with block=2 are all dropped; only non-time-dependent
     # rows (null absolute_time_index) are preserved regardless of block.
     non_time_dep_count = duplicated.filter(pl.col("absolute_time_index").is_null()).height
-    assert filtered.height == non_time_dep_count
+    assert persistent.height == non_time_dep_count
 
 
 def test_filter_simulation_table_writes_parquet(
     tmp_path: Path,
     test_dataset_dir: Path,
 ) -> None:
-    """The filtered table is written to parquet with expected content."""
+    """The persistent table is written to parquet with expected content."""
     calendar = load_calendar(test_dataset_dir / "calendar_file.csv")
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
-    assert isinstance(filtered_table, FilteredSimulationTable)
+    persistent_table = filter_simulation_table(simulation_table.dataframe, calendar)
+    assert isinstance(persistent_table, PersistentSimulationTable)
 
-    assert filtered_table.file_path.exists(), "Output parquet should be created"
-    written = filtered_table.dataframe.collect()
+    assert persistent_table.file_path.exists(), "Output parquet should be created"
+    written = persistent_table.dataframe.collect()
     expected = (
         simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
@@ -138,8 +140,8 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
     st_b = SimulationTable(pl.DataFrame([make_simulation_table_row(component="comp-b", block=block_b)]).lazy())
 
     # Act
-    filtered_table = filter_simulation_table(concat_simulation_tables([st_a, st_b]), calendar)
+    persistent_table = filter_simulation_table(concat_simulation_tables([st_a, st_b]), calendar)
 
     # Assert
-    filtered = pl.read_parquet(filtered_table.file_path)
-    assert set(filtered["component"].to_list()) == expected_components
+    persistent = pl.read_parquet(persistent_table.file_path)
+    assert set(persistent["component"].to_list()) == expected_components

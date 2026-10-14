@@ -4,7 +4,7 @@
 import pytest
 from polars import DataFrame
 
-from gems_views_builder.input.simulation_table import FILTERED_SIMULATION_TABLE_COLUMNS, SimulationTable
+from gems_views_builder.input.simulation_table import PERSISTENT_SIMULATION_TABLE_COLUMNS, SimulationTable
 from gems_views_builder.validation.simulation_tables import validate_columns, validate_simulation_tables_consistency
 from tests.common import SIMULATION_TABLE_ROW, make_simulation_table_row
 
@@ -33,7 +33,7 @@ def test_validate_filter_simulation_table_consistency_pass() -> None:
     dataframe = DataFrame([make_simulation_table_row(granular_date="2026-01-01")]).lazy()
 
     # Act + Assert
-    validate_columns(dataframe, FILTERED_SIMULATION_TABLE_COLUMNS, "FilteredSimulationTable")
+    validate_columns(dataframe, PERSISTENT_SIMULATION_TABLE_COLUMNS, "PersistentSimulationTable")
 
 
 def test_validate_filter_simulation_table_consistency_fails_when_there_are_missing_columns() -> None:
@@ -42,6 +42,6 @@ def test_validate_filter_simulation_table_consistency_fails_when_there_are_missi
 
     # Act + Assert
     with pytest.raises(
-        ValueError, match=r"FilteredSimulationTable has invalid columns: Missing columns:.*granular_date"
+        ValueError, match=r"PersistentSimulationTable has invalid columns: Missing columns:.*granular_date"
     ):
-        validate_columns(dataframe, FILTERED_SIMULATION_TABLE_COLUMNS, "FilteredSimulationTable")
+        validate_columns(dataframe, PERSISTENT_SIMULATION_TABLE_COLUMNS, "PersistentSimulationTable")
