@@ -31,7 +31,7 @@ def write_minimal_input_data_set(root: Path) -> InputPaths:
     return InputPaths(
         Namespace(
             libraries_dir=libraries_dir,
-            catalogs=str(catalogs_dir / "*.yml"),
+            catalogs=str(catalogs_dir / "catalog.yml"),
             system=system,
             calendar=calendar,
             taxonomy=taxonomy,
@@ -46,112 +46,102 @@ def test_validate_passes_for_minimal_valid_paths(tmp_path: Path) -> None:
 
 
 def test_validate_raises_when_model_libraries_contain_non_yml(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    (paths.libraries_dir / "readme.txt").touch()
+    input_paths = write_minimal_input_data_set(tmp_path)
+    (input_paths.libraries_dir / "readme.txt").touch()
     with pytest.raises(ValueError, match=r"should have \.yml extension"):
-        InputPathsValidator(paths).validate()
+        InputPathsValidator(input_paths).validate()
 
 
 def test_validate_passes_with_multiple_model_libraries(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    (paths.libraries_dir / "other.yml").touch()
-    InputPathsValidator(paths).validate()
+    input_paths = write_minimal_input_data_set(tmp_path)
+    (input_paths.libraries_dir / "other.yml").touch()
+    InputPathsValidator(input_paths).validate()
 
 
 def test_validate_passes_with_arbitrarily_named_model_library_file(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    (paths.libraries_dir / "library.yml").unlink()
-    (paths.libraries_dir / "any_name.yml").touch()
-    InputPathsValidator(paths).validate()
+    input_paths = write_minimal_input_data_set(tmp_path)
+    (input_paths.libraries_dir / "library.yml").unlink()
+    (input_paths.libraries_dir / "any_name.yml").touch()
+    InputPathsValidator(input_paths).validate()
 
 
 def test_validate_raises_when_catalog_is_not_yml(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
+    input_paths = write_minimal_input_data_set(tmp_path)
     notes = tmp_path / "notes.txt"
     notes.touch()
-    paths.catalogs.append(notes)
+    input_paths.catalogs.append(notes)
     with pytest.raises(ValueError, match="Catalog files must have extension"):
-        InputPathsValidator(paths).validate()
+        InputPathsValidator(input_paths).validate()
 
 
 def test_validate_ignores_unmatched_files_in_catalogs_directory(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
+    input_paths = write_minimal_input_data_set(tmp_path)
     (tmp_path / "catalogs" / "notes.txt").touch()
-    InputPathsValidator(paths).validate()
+    InputPathsValidator(input_paths).validate()
 
 
 def test_validate_passes_with_multiple_catalogs(tmp_path: Path) -> None:
     # Arrange
     catalogs_dir = tmp_path / "catalogs"
-    write_minimal_input_data_set(tmp_path)
+    input_paths = write_minimal_input_data_set(tmp_path)
     (catalogs_dir / "other.yml").touch()
-    paths = InputPaths(
-        Namespace(
-            libraries_dir=tmp_path / "libraries",
-            catalogs=str(catalogs_dir / "*.yml"),
-            system=tmp_path / "system.yml",
-            calendar=tmp_path / "calendar.csv",
-            taxonomy=tmp_path / "taxonomy.yml",
-            view_config=tmp_path / "view_config.yml",
-            simulation_tables=str(tmp_path / "simulation_table.parquet"),
-        )
-    )
+    input_paths.catalogs = [catalogs_dir / "other.yml"]
     # Act & Assert
-    InputPathsValidator(paths).validate()
+    InputPathsValidator(input_paths).validate()
 
 
 def test_validate_raises_when_system_has_wrong_extension(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    paths.system = tmp_path / "system.yaml"
+    input_paths = write_minimal_input_data_set(tmp_path)
+    input_paths.system = tmp_path / "system.yaml"
     with pytest.raises(ValueError, match="System file"):
-        InputPathsValidator(paths).validate()
+        InputPathsValidator(input_paths).validate()
 
 
 def test_validate_raises_when_calendar_has_wrong_extension(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    paths.calendar = tmp_path / "calendar.txt"
+    input_paths = write_minimal_input_data_set(tmp_path)
+    input_paths.calendar = tmp_path / "calendar.txt"
     with pytest.raises(ValueError, match="Calendar file"):
-        InputPathsValidator(paths).validate()
+        InputPathsValidator(input_paths).validate()
 
 
 def test_validate_raises_when_taxonomy_has_wrong_extension(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    paths.taxonomy = tmp_path / "taxonomy.txt"
+    input_paths = write_minimal_input_data_set(tmp_path)
+    input_paths.taxonomy = tmp_path / "taxonomy.txt"
     with pytest.raises(ValueError, match="Taxonomy file"):
-        InputPathsValidator(paths).validate()
+        InputPathsValidator(input_paths).validate()
 
 
 def test_validate_raises_when_view_config_has_wrong_extension(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    paths.view_config = tmp_path / "view_config.json"
+    input_paths = write_minimal_input_data_set(tmp_path)
+    input_paths.view_config = tmp_path / "view_config.json"
     with pytest.raises(ValueError, match="View config file"):
-        InputPathsValidator(paths).validate()
+        InputPathsValidator(input_paths).validate()
 
 
 def test_validate_raises_when_simulation_table_has_wrong_extension(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    paths.simulation_tables = [tmp_path / "simulation_table.xls"]
+    input_paths = write_minimal_input_data_set(tmp_path)
+    input_paths.simulation_tables = [tmp_path / "simulation_table.xls"]
     with pytest.raises(ValueError, match="Simulation table"):
-        InputPathsValidator(paths).validate()
+        InputPathsValidator(input_paths).validate()
 
 
 def test_validate_raises_when_simulation_tables_are_missing(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    paths.simulation_tables = []
+    input_paths = write_minimal_input_data_set(tmp_path)
+    input_paths.simulation_tables = []
     with pytest.raises(ValueError, match="Simulation table files are required"):
-        InputPathsValidator(paths).validate()
+        InputPathsValidator(input_paths).validate()
 
 
 def test_validate_raises_when_simulation_tables_have_different_extensions(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
-    paths.simulation_tables = [tmp_path / "simulation_table.csv", tmp_path / "simulation_table.parquet"]
+    input_paths = write_minimal_input_data_set(tmp_path)
+    input_paths.simulation_tables = [tmp_path / "simulation_table.csv", tmp_path / "simulation_table.parquet"]
     with pytest.raises(ValueError, match="Simulation table files must have the same extension"):
-        InputPathsValidator(paths).validate()
+        InputPathsValidator(input_paths).validate()
 
 
 def test_validate_passes_when_simulation_table_is_csv(tmp_path: Path) -> None:
-    paths = write_minimal_input_data_set(tmp_path)
+    input_paths = write_minimal_input_data_set(tmp_path)
     csv_table = tmp_path / "simulation_table.csv"
     csv_table.touch()
-    paths.simulation_tables = [csv_table]
-    InputPathsValidator(paths).validate()
+    input_paths.simulation_tables = [csv_table]
+    InputPathsValidator(input_paths).validate()
