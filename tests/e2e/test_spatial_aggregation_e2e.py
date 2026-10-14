@@ -120,8 +120,8 @@ def build_input() -> RawInputData:
     )
 
 
-def extract_values_from_view(view: PersistentMetricView) -> dict[tuple[str, datetime], float]:
-    df = pl.read_parquet(view.persistence_path)
+def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], float]:
+    df = view.lazy_data_frame().collect()
     return dict(
         zip(
             zip(df["metric_location"].to_list(), df["view_date"].to_list()),
