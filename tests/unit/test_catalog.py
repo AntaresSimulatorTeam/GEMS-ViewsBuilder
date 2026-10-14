@@ -25,7 +25,7 @@ catalog:
 """
 
 
-def test_load_catalog_reads_one_metric(tmp_path: Path) -> None:
+def test_load_catalog_and_read_one_metric(tmp_path: Path) -> None:
     catalog_path = tmp_path / "catalog.yml"
     catalog_path.write_text(CATALOG_YML)
 

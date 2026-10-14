@@ -20,20 +20,27 @@ def test_passes_for_matching_catalog() -> None:
     CatalogsTaxonomyValidator([catalog], taxonomy).validate()
 
 
+def test_raises_on_taxonomy_id_mismatch() -> None:
+    catalog = make_catalog(taxonomy="wrong_taxonomy", metrics={"PROD": make_metric("PROD", "production", "p_port")})
+    taxonomy = make_taxonomy(categories={"production": PRODUCTION_CATEGORY})
+
+    with pytest.raises(ValueError, match="references taxonomy"):
+        CatalogsTaxonomyValidator([catalog], taxonomy).validate()
+
+
 @pytest.mark.parametrize(
-    ("attribute", "value", "match"),
+    ("taxonomy_category", "location_port", "output_id", "match"),
     [
-        ("taxonomy", "wrong_taxonomy", "references taxonomy"),
-        ("taxonomy_category", "unknown_category", "uses taxonomy-category"),
-        ("location_port", "unknown_port", "uses location-port"),
-        ("output_id", "unknown_output", "uses output-id"),
+        ("unknown_category", "p_port", "p", "uses taxonomy-category"),
+        ("production", "unknown_port", "p", "uses location-port"),
+        ("production", "p_port", "unknown_output", "uses output-id"),
     ],
 )
-def test_rejects_invalid_references(attribute: str, value: str, match: str) -> None:
-    catalog = make_catalog(metrics={"PROD": make_metric("PROD", "production", "p_port")})
-    target = catalog if attribute == "taxonomy" else next(iter(catalog.metrics.values())).terms[0]
-    setattr(target, attribute, value)
+def test_rejects_invalid_term_references(
+    taxonomy_category: str, location_port: str, output_id: str, match: str
+) -> None:
+    catalog = make_catalog(metrics={"PROD": make_metric("PROD", taxonomy_category, location_port, output_id)})
+    taxonomy = make_taxonomy(categories={"production": PRODUCTION_CATEGORY})
 
     with pytest.raises(ValueError, match=match):
-        taxonomy = make_taxonomy(categories={"production": PRODUCTION_CATEGORY})
         CatalogsTaxonomyValidator([catalog], taxonomy).validate()
