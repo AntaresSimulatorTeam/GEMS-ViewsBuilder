@@ -48,7 +48,7 @@ def test_validate_passes_for_minimal_valid_paths(tmp_path: Path) -> None:
 def test_validate_raises_when_model_libraries_contain_non_yml(tmp_path: Path) -> None:
     paths = write_minimal_input_data_set(tmp_path)
     (paths.libraries_dir / "readme.txt").touch()
-    with pytest.raises(ValueError, match="non-.yml"):
+    with pytest.raises(ValueError, match=r"should have \.yml extension"):
         InputPathsValidator(paths).validate()
 
 
