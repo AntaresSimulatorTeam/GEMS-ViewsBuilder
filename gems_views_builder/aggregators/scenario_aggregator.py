@@ -27,20 +27,6 @@ AGGREGATION_OPERATORS = [
     pl.col("metric_value").max().alias(Operator.MAX.value),
 ]
 
-# Shared output column order so parquet files from True/False scenario branches
-# have an identical schema and can be merged by accumulate_on_disk.
-OUTPUT_COLUMNS = [
-    "metric_id",
-    "metric_location",
-    "breakdown_properties",
-    "view_date",
-    "scenario_id",
-    "metric_value",
-    "scenario_stat",
-    "scenario_aggregation",
-]
-
-
 @dataclass
 class ScenarioOperator(ABC):
     @abstractmethod
@@ -68,7 +54,6 @@ class ScenarioAggregation(ScenarioOperator):
                     pl.lit(True, dtype=pl.Boolean).alias("scenario_aggregation"),
                 ]
             )
-            .select(OUTPUT_COLUMNS)
         )
         return MetricView(lazyframe=lazyframe, time_granularity=metric_view.time_granularity)
 
@@ -81,7 +66,7 @@ class ScenarioColumnsAddition(ScenarioOperator):
                 pl.lit(False, dtype=pl.Boolean).alias("scenario_aggregation"),
                 pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
             ]
-        ).select(OUTPUT_COLUMNS)
+        )
         return MetricView(lazyframe=lazyframe, time_granularity=metric_view.time_granularity)
 
 
