@@ -44,7 +44,7 @@ library:
       ports:
         - id: balance_port
           type: flow
-""".strip()
+"""
 
 SYSTEM_YML = """
 system:
@@ -59,7 +59,7 @@ system:
       port1: balance_port
       component2: node_b
       port2: balance_port
-""".strip()
+"""
 
 TAXONOMY_YML = """
 taxonomy:
@@ -69,7 +69,7 @@ taxonomy:
     - id: balance
       ports:
         - id: balance_port
-""".strip()
+"""
 
 CATALOG_YML = """
 catalog:
@@ -85,7 +85,7 @@ catalog:
           location-port: balance_port
       terms-operator: sum
       time-operator: sum
-""".strip()
+"""
 
 VIEW_CONFIG_YML = """
 view:
@@ -103,7 +103,7 @@ view:
     - id: catalog
   metrics:
     - id: catalog.LOAD
-""".strip()
+"""
 
 CALENDAR_CSV = """absolute_time_index,block,granular_date
 0,b1,2026-01-01T00:00:00

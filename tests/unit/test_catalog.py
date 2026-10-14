@@ -22,7 +22,7 @@ catalog:
           location-port: p_port
       terms-operator: sum
       time-operator: sum
-""".strip()
+"""
 
 
 def test_load_catalog_reads_one_metric(tmp_path: Path) -> None:

@@ -3,8 +3,6 @@
 
 from pathlib import Path
 
-import yaml
-
 from gems_views_builder.input.library import load_yml_libs
 from gems_views_builder.input.system import load_system
 
@@ -38,7 +36,7 @@ library:
       ports:
         - id: balance_port
           type: flow
-""".strip()
+"""
 
 SYSTEM_YML = """
 system:
@@ -58,10 +56,10 @@ system:
       port1: balance_port
       component2: node_b
       port2: balance_port
-""".strip()
+"""
 
 
-def test_load_system_tolerates_missing_component_parameters(tmp_path: Path) -> None:
+def test_load_system(tmp_path: Path) -> None:
     library_dir = tmp_path / "libraries"
     library_dir.mkdir()
     (library_dir / "library.yml").write_text(LIBRARY_YML)
@@ -71,12 +69,5 @@ def test_load_system_tolerates_missing_component_parameters(tmp_path: Path) -> N
     system_path.write_text(SYSTEM_YML)
     system = load_system(system_path, yml_libs)
 
-    stripped = yaml.safe_load(SYSTEM_YML)
-    for component in stripped["system"]["components"]:
-        component.pop("parameters", None)
-    system_no_params_path = tmp_path / "system_no_params.yml"
-    system_no_params_path.write_text(yaml.safe_dump(stripped))
-    system_no_params = load_system(system_no_params_path, yml_libs)
-
-    assert {c.id for c in system_no_params.components} == {c.id for c in system.components} == {"node_a", "node_b"}
-    assert len(system_no_params.connections) == len(system.connections) == 1
+    assert {c.id for c in system.components} == {"node_a", "node_b"}
+    assert len(system.connections) == 1

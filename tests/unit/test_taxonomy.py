@@ -17,7 +17,7 @@ taxonomy:
         - id: p_port
       variables:
         - id: p
-""".strip()
+"""
 
 
 def test_load_taxonomy_reads_category_port_and_variable(tmp_path: Path) -> None:

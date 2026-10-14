@@ -64,7 +64,7 @@ view:
     - id: catalog
   metrics:
     - id: catalog.LOAD
-""".strip()
+"""
     )
 
     # Act
@@ -94,7 +94,7 @@ view:
     - id: catalog
   metrics:
     - id: catalog.LOAD
-""".strip()
+"""
     )
 
     # Act

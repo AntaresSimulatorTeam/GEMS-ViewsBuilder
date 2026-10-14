@@ -27,7 +27,7 @@ view:
     - id: catalog_1
   metrics:
     - id: invalid_metric_id
-""".strip()
+"""
     )
 
     config = load_view_config(invalid_config)
@@ -51,7 +51,7 @@ view:
     - id: catalog
   metrics:
     - id: catalog.LOAD
-""".strip()
+"""
     )
 
     with pytest.raises(ValueError, match="aggregations"):
@@ -76,7 +76,7 @@ view:
     - id: catalog
   metrics:
     - id: catalog.LOAD
-""".strip()
+"""
     )
 
     with pytest.raises(ValueError, match="time"):
@@ -101,7 +101,7 @@ view:
     - id: catalog
   metrics:
     - id: catalog.LOAD
-""".strip()
+"""
     )
 
     with pytest.raises(ValueError, match="scenario"):
@@ -130,7 +130,7 @@ view:
     - id: catalog
   metrics:
     - id: catalog.LOAD
-""".strip()
+"""
     )
 
     with pytest.raises(ValueError, match="already defined"):
