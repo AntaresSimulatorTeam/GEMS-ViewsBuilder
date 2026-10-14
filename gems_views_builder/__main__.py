@@ -51,7 +51,7 @@ def create_view_builders(
             view_building_input.view_config,
             components_by_taxon_copy,
         )
-        aggregation_processor = AgggregationProcessor(view_building_input.view_config)
+        aggregation_processor = AggregationProcessor(view_building_input.view_config)
         view_builder = ViewBuilder(view_building_input, metric_structure_table_builder, aggregation_processor)
         view_builders.append(view_builder)
     return view_builders
