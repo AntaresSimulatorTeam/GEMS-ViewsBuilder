@@ -67,9 +67,9 @@ def test_validate_passes_with_arbitrarily_named_model_library_file(tmp_path: Pat
 
 def test_validate_raises_when_catalog_is_not_yml(tmp_path: Path) -> None:
     input_paths = write_minimal_input_data_set(tmp_path)
-    notes = tmp_path / "notes.txt"
-    notes.touch()
-    input_paths.catalogs.append(notes)
+    catalog_txt = tmp_path / "notes.txt"
+    catalog_txt.touch()
+    input_paths.catalogs.append(catalog_txt)
     with pytest.raises(ValueError, match="Catalog files must have extension"):
         InputPathsValidator(input_paths).validate()
 

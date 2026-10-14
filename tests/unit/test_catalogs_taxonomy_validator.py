@@ -13,7 +13,7 @@ from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTa
 def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
     # Arrange
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
-    catalogs = load_catalogs(list((test_dataset_dir / "catalogs").glob("*.yml")))
+    catalogs = load_catalogs(list((test_dataset_dir / "catalogs").glob("catalog.yml")))
 
     # Act & Assert
     CatalogsTaxonomyValidator(catalogs, taxonomy).validate()
@@ -31,7 +31,7 @@ def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
 def test_rejects_invalid_references(test_dataset_dir: Path, attribute: str, value: str, match: str) -> None:
     # Arrange
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
-    catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("*.yml")))
+    catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("catalog.yml")))
     target = catalog if attribute == "taxonomy" else next(iter(catalog.metrics.values())).terms[0]
     setattr(target, attribute, value)
 

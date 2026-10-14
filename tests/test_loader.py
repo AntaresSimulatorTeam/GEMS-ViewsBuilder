@@ -31,7 +31,7 @@ def test_loader_init_has_no_io(tmp_path: Path) -> None:
     paths = InputPaths(
         Namespace(
             libraries_dir=missing / "libraries",
-            catalogs=str(catalogs_dir / "*.yml"),
+            catalogs=str(catalogs_dir / "catalog.yml"),
             system=missing / "system.yml",
             calendar=missing / "calendar.csv",
             taxonomy=missing / "taxonomy.yml",
