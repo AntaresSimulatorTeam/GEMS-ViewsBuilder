@@ -3,13 +3,13 @@
 
 import polars as pl
 
-from gems_views_builder.aggregators.base_aggregator import PersistingAggregator
+from gems_views_builder.aggregators.base_aggregator import CreatePersistingView
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import AggregationPattern
 from gems_views_builder.metric_view import MetricView
 
 
-class SpatialFiltering(PersistingAggregator):
+class SpatialFiltering(CreatePersistingView):
     _subdirectory = "spatial_filtering"
 
     def __init__(self, aggregation_pattern: AggregationPattern) -> None:

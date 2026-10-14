@@ -5,12 +5,12 @@ import logging
 
 import polars as pl
 
-from gems_views_builder.aggregators.base_aggregator import PersistingAggregator
+from gems_views_builder.aggregators.base_aggregator import CreatePersistingView
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.metric_view import MetricView
 
 
-class TermsAggregator(PersistingAggregator):
+class TermsAggregator(CreatePersistingView):
     _subdirectory = "terms_aggregation"
 
     def _build_lazy_frame(self, metric_view: MetricView, metric: Metric) -> pl.LazyFrame:

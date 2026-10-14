@@ -16,7 +16,7 @@ from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
 
-class PersistingAggregator(ABC):
+class CreatePersistingView(ABC):
     """Shared parent class for aggregators.
     Subclasses will transform a MetricView's lazy frame and persists the result as a new parquet-backed MetricView.
     Subclasses just has to implement _build_lazy_frame(...) and set _subdirectory.

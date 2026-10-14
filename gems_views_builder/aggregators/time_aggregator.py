@@ -5,7 +5,7 @@ import logging
 
 import polars as pl
 
-from gems_views_builder.aggregators.base_aggregator import PersistingAggregator
+from gems_views_builder.aggregators.base_aggregator import CreatePersistingView
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView
@@ -20,7 +20,7 @@ TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
 }
 
 
-class TimeAggregator(PersistingAggregator):
+class TimeAggregator(CreatePersistingView):
     _subdirectory = "time_aggregation"
 
     def __init__(self, time_granularity: TimeGranularity) -> None:
