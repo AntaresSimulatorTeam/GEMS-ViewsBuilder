@@ -7,13 +7,12 @@ from argparse import Namespace
 from pathlib import Path
 
 from gems_views_builder.multiple_files_collector import MultipleFilesCollector
-from gems_views_builder.paths_resolver import PathsResolver
 
 
 class InputPaths:
     def __init__(self, args: Namespace) -> None:
         self.libraries_dir: Path = Path(args.libraries_dir)
-        self.catalogs: list[Path] = PathsResolver(args.catalogs).resolve()
+        self.catalogs: list[Path] = MultipleFilesCollector(args.catalogs).collect()
         self.system: Path = Path(args.system)
         self.calendar: Path = Path(args.calendar)
         self.taxonomy: Path = Path(args.taxonomy)
