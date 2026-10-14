@@ -1,0 +1,28 @@
+view:
+  id: view_link
+
+  scope:
+    location:
+      taxonomy-category: link  # one location per link
+    calendar: calendar
+
+  taxonomy: antares_legacy_taxonomy
+
+  aggregations-patterns:
+    - id: hourly_per_scenario
+      time-granularity: hour
+      scenario: false
+    - id: daily_all_scenario
+      time-granularity: day
+      scenario: true
+
+  catalogs:
+    - id: antares_legacy_link_catalog
+
+  metrics:
+    - id: antares_legacy_link_catalog.FLOW_LIN
+    - id: antares_legacy_link_catalog.UCAP_LIN
+    - id: antares_legacy_link_catalog.HURDLE_COST
+    - id: antares_legacy_link_catalog.CONG_FEE_ALG
+    - id: antares_legacy_link_catalog.CONG_PROB_DIR
+    - id: antares_legacy_link_catalog.CONG_PROB_INDIR

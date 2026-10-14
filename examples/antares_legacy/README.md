@@ -1,0 +1,43 @@
+# Example: views of an Antares legacy study
+
+A fictitious Antares legacy study: two areas (`fr`, `be`) joined by a link, with load, thermal and renewable
+clusters and a battery, simulated hourly over one year (52 weeks) for 2 Monte Carlo years.
+
+| Input | File |
+|---|---|
+| SimulationTables (Antares 10.2.0, one per MC year) | `simulation_tables/*.parquet` |
+| Calendar (from 2030-01-01, one block per week) | `calendar.csv` |
+| System (components and connections, no parameters) | `system.yml` |
+| Library, catalogs and taxonomy (copied from [AntaresLegacyModels-to-GEMS-Converter](https://github.com/AntaresSimulatorTeam/AntaresLegacyModels-to-GEMS-Converter) 0.5.0) | `libraries/`, `catalogs/`, `antares_legacy_taxonomy_flattened.yml` |
+| View configs (hourly per scenario, daily over all scenarios) | `view_config_area.yml`, `view_config_link.yml` |
+
+## Run
+
+From this directory, with `gems-views-builder` installed:
+
+```bash
+mkdir -p output/area
+gems-views-builder \
+  --system system.yml \
+  --libraries-dir libraries \
+  --taxonomy antares_legacy_taxonomy_flattened.yml \
+  --catalogs-dir catalogs \
+  --calendar calendar.csv \
+  --simulation-tables "simulation_tables/simulation-table-*-optim-nb-2.parquet" \
+  --view-config view_config_area.yml \
+  --output output/area \
+  --output-format csv
+```
+
+This writes `view_hour_<timestamp>.csv` and `view_day_<timestamp>.csv` in `output/area`.
+`./run_example.sh` builds both the area and link views.
+
+## Regenerate the inputs
+
+`generate_inputs.py` builds the study with antares-craft, runs
+`antares-solver --output=simulation-tables --simulation-table-stages=optim-nb-2 --parquet`
+and writes `simulation_tables/` and `calendar.csv`:
+
+```bash
+python generate_inputs.py path/to/antares-10.2.0-Ubuntu-22.04/bin/antares-solver
+```

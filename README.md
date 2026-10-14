@@ -16,6 +16,10 @@ The main inputs are
 
 The main outputs are Views.
 
+## Example
+
+[examples/antares_legacy](examples/antares_legacy) holds a complete set of inputs, built from a small Antares legacy study, and the CLI call that builds its views.
+
 ## Input validation diagram
 ```mermaid
 graph LR
