@@ -13,7 +13,6 @@ from pathlib import Path
 class SystemType(Enum):
     DIRECTORY = "directory"
     FILE = "file"
-    FILES = "files"
 
 
 @dataclass
@@ -46,10 +45,7 @@ REQUIRED_PATHS_OPTIONS: list[PathOption] = [
 
 MULTIPLE_FILE_PATH_OPTIONS: list[PathOption] = [
     PathOption("simulation-tables", SystemType.DIRECTORY, parent_is_dir),
-]
-
-GLOB_PATTERN_OPTIONS: list[Option] = [
-    Option("catalogs", SystemType.FILES),
+    PathOption("catalogs", SystemType.DIRECTORY, parent_is_dir),
 ]
 
 
@@ -61,8 +57,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     add_path_options(parser, REQUIRED_PATHS_OPTIONS)
     add_multiple_file_path_options(parser, MULTIPLE_FILE_PATH_OPTIONS)
-    add_glob_pattern_options(parser, GLOB_PATTERN_OPTIONS)
-
     parser.add_argument(
         "-o",
         "--output",
@@ -113,16 +107,6 @@ def add_multiple_file_path_options(parser: argparse.ArgumentParser, options: lis
         )
 
 
-def add_glob_pattern_options(parser: argparse.ArgumentParser, glob_pattern_options: list[Option]) -> None:
-    for option in glob_pattern_options:
-        parser.add_argument(
-            f"--{option.name}",
-            type=str,
-            required=True,
-            help=f"Glob pattern matching {option.name} files (e.g. path/catalog-*.yml).",
-        )
-
-
 def check_paths_options(args: argparse.Namespace) -> None:
     for option in REQUIRED_PATHS_OPTIONS:
         option_value = getattr(args, option.args_attribute)
@@ -137,17 +121,9 @@ def check_multiple_file_path_options(args: argparse.Namespace) -> None:
             raise OSError(f"--{option.name} : {option_value.parent} is not a {option.system_type.value}")
 
 
-def check_glob_options(args: argparse.Namespace) -> None:
-    for option in GLOB_PATTERN_OPTIONS:
-        pattern = Path(getattr(args, option.args_attribute))
-        if not pattern.parent.is_dir():
-            raise NotADirectoryError(f"--{option.name} directory does not exist: {pattern.parent}")
-
-
 def check_options(args: argparse.Namespace) -> None:
     check_paths_options(args)
     check_multiple_file_path_options(args)
-    check_glob_options(args)
 
     if not args.output.is_dir():
         raise NotADirectoryError(f"--output is not a directory: {args.output}")
