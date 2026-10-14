@@ -53,7 +53,7 @@ class MetricId(ViewBuilderBasedModel, frozen=True):
 
 
 class RawViewConfig(ViewBuilderBasedModel):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]+$")
     scope: Scope
     taxonomy: str
     aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)

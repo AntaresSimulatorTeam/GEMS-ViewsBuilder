@@ -23,7 +23,6 @@ class ViewBuildingInputData:
 
 
 def create_view_building_inputs(raw_input_data: RawInputData) -> list[ViewBuildingInputData]:
-    """Resolve catalog metrics, filter the simulation table, and assemble view-building inputs."""
     concatenated_st = concat_simulation_tables(raw_input_data.simulation_tables)
     filtered_st = filter_simulation_table(concatenated_st, raw_input_data.calendar)
     return [
