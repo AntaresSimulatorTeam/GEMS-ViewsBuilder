@@ -19,7 +19,7 @@ from gems_views_builder.aggregators.scenario_aggregator import (
 )
 from gems_views_builder.aggregators.spatial_filter import SpatialFiltering
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity
-from gems_views_builder.metric_view import PersistentMetricView
+from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
 
 def make_pattern(scenario: bool = False, spatial_filter: list[str] | None = None) -> AggregationPattern:
@@ -31,7 +31,7 @@ def make_pattern(scenario: bool = False, spatial_filter: list[str] | None = None
     )
 
 
-def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -> PersistentMetricView:
+def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -> MetricView:
     """Minimal parquet for the scenario step: metric_id, metric_location, breakdown_properties, view_date."""
     n = len(location_values)
     dataframe = pl.DataFrame(
@@ -56,7 +56,7 @@ def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -
     return PersistentMetricView(TimeGranularity.HOUR, lazyframe=dataframe.lazy(), persistence_path=path)
 
 
-def time_metric_view(tmp_path: Path, values: list[float]) -> PersistentMetricView:
+def time_metric_view(tmp_path: Path, values: list[float]) -> MetricView:
     return make_metric_view(tmp_path, [("L", value) for value in values])
 
 
