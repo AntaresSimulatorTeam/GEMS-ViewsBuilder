@@ -3,7 +3,7 @@
 
 import polars as pl
 
-from gems_views_builder.aggregators.base_aggregator import CreatePersistingView
+from gems_views_builder.aggregators.base_persisting_view import CreatePersistingView
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import AggregationPattern
 from gems_views_builder.metric_view import MetricView
