@@ -3,23 +3,8 @@
 
 import pytest
 
-from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory
-from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.validation.view_config_taxonomy import ViewConfigTaxonomyValidator
-
-
-def make_taxonomy() -> Taxonomy:
-    return Taxonomy(id="taxonomy", categories={"balance": TaxonomyCategory(id="balance")})
-
-
-def make_view_config() -> ViewConfig:
-    return ViewConfig(
-        id="view",
-        calendar_id="calendar",
-        location_taxonomy_category="balance",
-        taxonomy_id="taxonomy",
-        aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
-    )
+from tests.common import make_taxonomy, make_view_config
 
 
 def test_passes_when_view_config_matches_taxonomy() -> None:

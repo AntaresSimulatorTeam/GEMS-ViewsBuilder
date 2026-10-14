@@ -3,38 +3,21 @@
 
 import pytest
 
-from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
-from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem
+from gems_views_builder.input.taxonomy import TaxonomyCategory, TaxonomyItem
 from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTaxonomyValidator
+from tests.common import make_catalog, make_metric, make_taxonomy
 
-
-def make_taxonomy() -> Taxonomy:
-    category = TaxonomyCategory(
-        id="production",
-        ports=[TaxonomyItem(id="p_port")],
-        variables=[TaxonomyItem(id="p")],
-    )
-    return Taxonomy(id="taxonomy", categories={"production": category})
-
-
-def make_catalog() -> Catalog:
-    return Catalog(
-        id="catalog",
-        taxonomy="taxonomy",
-        location_taxonomy_category="balance",
-        metrics={
-            "PROD": Metric(
-                id="PROD",
-                terms=[Term(taxonomy_category="production", output_id="p", location_port="p_port")],
-                terms_operator=AggregOperatorType.SUM,
-                time_operator=AggregOperatorType.SUM,
-            )
-        },
-    )
+PRODUCTION_CATEGORY = TaxonomyCategory(
+    id="production",
+    ports=[TaxonomyItem(id="p_port")],
+    variables=[TaxonomyItem(id="p")],
+)
 
 
 def test_passes_for_matching_catalog() -> None:
-    CatalogsTaxonomyValidator([make_catalog()], make_taxonomy()).validate()
+    taxonomy = make_taxonomy(categories={"production": PRODUCTION_CATEGORY})
+    catalog = make_catalog(metrics={"PROD": make_metric("PROD", "production", "p_port")})
+    CatalogsTaxonomyValidator([catalog], taxonomy).validate()
 
 
 @pytest.mark.parametrize(
@@ -47,9 +30,10 @@ def test_passes_for_matching_catalog() -> None:
     ],
 )
 def test_rejects_invalid_references(attribute: str, value: str, match: str) -> None:
-    catalog = make_catalog()
+    catalog = make_catalog(metrics={"PROD": make_metric("PROD", "production", "p_port")})
     target = catalog if attribute == "taxonomy" else next(iter(catalog.metrics.values())).terms[0]
     setattr(target, attribute, value)
 
     with pytest.raises(ValueError, match=match):
-        CatalogsTaxonomyValidator([catalog], make_taxonomy()).validate()
+        taxonomy = make_taxonomy(categories={"production": PRODUCTION_CATEGORY})
+        CatalogsTaxonomyValidator([catalog], taxonomy).validate()

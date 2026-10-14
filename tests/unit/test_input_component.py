@@ -1,17 +1,12 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-from types import SimpleNamespace
-
 from gems_views_builder.input.component import (
     Component,
     group_components_by_taxon,
     supply_components_with_taxon,
 )
-
-
-def make_raw_component(component_id: str, model: str, properties: dict[str, str] | None = None) -> SimpleNamespace:
-    return SimpleNamespace(id=component_id, model=SimpleNamespace(id=model), properties=properties or {})
+from tests.common import make_raw_component
 
 
 def test_location_none_returns_own_component() -> None:

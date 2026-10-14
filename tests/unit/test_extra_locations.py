@@ -2,42 +2,10 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
-from types import SimpleNamespace
 
-from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
-from gems_views_builder.input.component import Component
-from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig, load_view_config
+from gems_views_builder.input.view_config import load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
-
-
-def make_component(component_id: str, properties: dict[str, str] | None = None) -> Component:
-    return Component(
-        SimpleNamespace(
-            id=component_id,
-            model=SimpleNamespace(id="lib.model"),
-            properties=properties or {},
-        )
-    )
-
-
-def make_metric() -> Metric:
-    return Metric(
-        id="LOAD",
-        terms_operator=AggregOperatorType.SUM,
-        time_operator=AggregOperatorType.SUM,
-        terms=[Term(taxonomy_category="production", output_id="p", location_port=None)],
-    )
-
-
-def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
-    return ViewConfig(
-        id="view_area",
-        calendar_id="calendar_file",
-        location_taxonomy_category="balance",
-        taxonomy_id="my_taxonomy",
-        aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
-        extra_locations=extra_locations or [],
-    )
+from tests.common import make_component, make_metric, make_view_config
 
 
 def test_view_config_parses_extra_locations(tmp_path: Path) -> None:
@@ -115,11 +83,11 @@ def test_located_component_emits_primary_and_extra_locations() -> None:
     production.locations[(None, "balance")] = balance_node
 
     components_by_taxon = {"balance": [balance_node], "production": [production]}
-    view_config = make_view_config(["country", "district", "city_part"])
+    view_config = make_view_config(extra_locations=["country", "district", "city_part"])
     builder = MetricStructureTableBuilder(view_config, components_by_taxon)
 
     # Act
-    table = builder.build(make_metric())
+    table = builder.build(make_metric("LOAD"))
     rows = table.dataframe.collect()
 
     # Assert
@@ -137,7 +105,7 @@ def test_no_extra_locations_keeps_primary_only() -> None:
     builder = MetricStructureTableBuilder(make_view_config(), components_by_taxon)
 
     # Act
-    table = builder.build(make_metric())
+    table = builder.build(make_metric("LOAD"))
     locations = table.dataframe.collect()["metric_location"].to_list()
 
     # Assert
@@ -151,11 +119,11 @@ def test_missing_extra_properties_keeps_primary_only() -> None:
     production.locations[(None, "balance")] = balance_node
 
     components_by_taxon = {"balance": [balance_node], "production": [production]}
-    view_config = make_view_config(["country", "district", "city_part"])
+    view_config = make_view_config(extra_locations=["country", "district", "city_part"])
     builder = MetricStructureTableBuilder(view_config, components_by_taxon)
 
     # Act
-    table = builder.build(make_metric())
+    table = builder.build(make_metric("LOAD"))
     locations = table.dataframe.collect()["metric_location"].to_list()
 
     # Assert
@@ -169,11 +137,11 @@ def test_partial_extra_locations_emits_only_present_ones() -> None:
     production.locations[(None, "balance")] = balance_node
 
     components_by_taxon = {"balance": [balance_node], "production": [production]}
-    view_config = make_view_config(["country", "district", "city_part"])
+    view_config = make_view_config(extra_locations=["country", "district", "city_part"])
     builder = MetricStructureTableBuilder(view_config, components_by_taxon)
 
     # Act
-    table = builder.build(make_metric())
+    table = builder.build(make_metric("LOAD"))
     locations = table.dataframe.collect()["metric_location"].to_list()
 
     # Assert

@@ -30,10 +30,6 @@ def values_by_day(df: pl.DataFrame) -> dict[datetime, float]:
     return dict(zip(df["view_date"].to_list(), df["metric_value"].to_list()))
 
 
-def make_raw_component(component_id: str, model_id: str, properties: dict[str, str]) -> Any:
-    return SimpleNamespace(id=component_id, model=SimpleNamespace(id=model_id), properties=properties)
-
-
 def make_raw_connection(component1: str, port1: str, component2: str, port2: str) -> Any:
     return SimpleNamespace(component1=component1, port1=port1, component2=component2, port2=port2)
 

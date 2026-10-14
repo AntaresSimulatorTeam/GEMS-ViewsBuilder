@@ -14,9 +14,10 @@ from gems_views_builder.aggregators.time_aggregator import (
     aggregate_into_column,
     date_column_into_time_granularity,
 )
-from gems_views_builder.input.catalog import AggregOperatorType, Metric
+from gems_views_builder.input.catalog import AggregOperatorType
 from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView
+from tests.common import make_metric
 
 
 def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> MetricView:
@@ -37,10 +38,6 @@ def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> Metr
     path = tmp_path / "granular.parquet"
     dataframe.write_parquet(path)
     return MetricView(path)
-
-
-def make_metric(time_operator: AggregOperatorType) -> Metric:
-    return Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=time_operator)
 
 
 @pytest.mark.parametrize(
@@ -90,7 +87,7 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
     aggregator = TimeAggregator(TimeGranularity.DAY)
     rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
-    metric = make_metric(AggregOperatorType.SUM)
+    metric = make_metric(terms=[], time_operator=AggregOperatorType.SUM)
 
     # Act
     out_metric_view = aggregator.run(metric_view, metric)
@@ -108,7 +105,7 @@ def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     aggregator = TimeAggregator(TimeGranularity.DAY)
     rows = [(datetime(2026, 1, 1, 1, 0), 10.0), (datetime(2026, 1, 1, 2, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
-    metric = make_metric(AggregOperatorType.AVG)
+    metric = make_metric(terms=[], time_operator=AggregOperatorType.AVG)
 
     # Act
     out_metric_view = aggregator.run(metric_view, metric)
