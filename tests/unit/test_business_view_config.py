@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from gems_views_builder import TimeGranularity, ViewConfig, load_view_config
+from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
 
 
 def test_loads(test_dataset_dir: Path) -> None:
@@ -187,6 +188,6 @@ view:
     - id: catalog.LOAD
 """.strip()
     )
-
+    view_config = load_view_config(config_path)
     with pytest.raises(ValueError, match="already defined"):
-        load_view_config(config_path)
+        AggregationPatternsValidator(view_config.aggregation_patterns).validate()

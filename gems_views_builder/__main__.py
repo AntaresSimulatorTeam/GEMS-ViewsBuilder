@@ -20,6 +20,7 @@ from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
+from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
 from gems_views_builder.validation.input_consistency_validator import InputConsistencyValidator
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.validation.simulation_tables import validate_simulation_tables_consistency
@@ -28,9 +29,18 @@ from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, 
 
 def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     raw_input_data = Loader(input_paths).load()
-    validate_simulation_tables_consistency(raw_input_data.simulation_tables)
-    InputConsistencyValidator(raw_input_data).validate()
+    validate_input_data(raw_input_data)
     return raw_input_data
+
+
+def validate_input_data(raw_input_data: RawInputData) -> None:
+    input_data_direct_validation(raw_input_data)
+    InputConsistencyValidator(raw_input_data).validate()
+
+
+def input_data_direct_validation(raw_input_data: RawInputData) -> None:
+    validate_simulation_tables_consistency(raw_input_data.simulation_tables)
+    AggregationPatternsValidator(raw_input_data.view_config.aggregation_patterns).validate()
 
 
 def build_metric_views(raw_input_data: RawInputData) -> list[TemporalMetricView]:
