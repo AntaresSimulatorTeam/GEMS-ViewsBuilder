@@ -14,6 +14,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder.__main__ import run_view_building_process
+from gems_views_builder.cli import DEFAULT_PARALLEL_MODE
 from gems_views_builder.view import ParquetViewSinker
 from tests.conftest import paths_from_dataset
 
@@ -36,7 +37,7 @@ def filtering_and_breakdown_workspace(test_files_root: Path, tmp_path: Path) -> 
     results_dir = tmp_path / "results"
     results_dir.mkdir()
     shutil.copytree(src, dst)
-    run_view_building_process(paths_from_dataset(dst), ParquetViewSinker(results_dir))
+    run_view_building_process(paths_from_dataset(dst), ParquetViewSinker(results_dir), DEFAULT_PARALLEL_MODE)
     view = pl.read_parquet(next(results_dir.glob("view*.parquet")))
     return dst, view
 

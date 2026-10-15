@@ -48,6 +48,9 @@ MULTIPLE_FILE_PATH_OPTIONS: list[PathOption] = [
     PathOption("catalogs", SystemType.DIRECTORY, parent_is_dir),
 ]
 
+PARALLEL_MODE_CHOICES = ("minimum", "low", "medium", "high", "maximum")
+DEFAULT_PARALLEL_MODE = "minimum"
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -83,6 +86,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--verbose",
         action="store_true",
         help="Enable verbose console logging.",
+    )
+    parser.add_argument(
+        "-p",
+        "--parallel-mode",
+        choices=PARALLEL_MODE_CHOICES,
+        default=DEFAULT_PARALLEL_MODE,
+        help=f"How many cores to use when building views for multiple view configs (default: {DEFAULT_PARALLEL_MODE}).",
     )
     return parser
 
