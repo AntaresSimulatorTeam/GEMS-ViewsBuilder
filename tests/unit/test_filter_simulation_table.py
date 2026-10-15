@@ -141,5 +141,5 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
     filtered_table = filter_simulation_table(concat_simulation_tables([st_a, st_b]), calendar)
 
     # Assert
-    filtered_table = pl.read_parquet(filtered_table.file_path)
-    assert set(filtered_table["component"].to_list()) == expected_components
+    filtered = pl.read_parquet(filtered_table.file_path)
+    assert set(filtered["component"].to_list()) == expected_components
