@@ -3,40 +3,7 @@
 A fictitious Antares legacy study: two areas (`fr`, `be`) joined by a link, with load, thermal and renewable
 clusters and a battery, simulated hourly over one year (52 weeks) for 2 Monte Carlo years.
 
-All the ViewsBuilder inputs are in `inputs/`:
-
-| Input | File in `inputs/` |
-|---|---|
-| SimulationTables (Antares 10.2.0, one per MC year) | `simulation_tables/*.parquet` |
-| System (exported by Antares 10.2.0 next to the simulation tables) | `system-for-views.yml` |
-| Calendar (from 2030-01-01, one block per week) | `calendar.csv` |
-| Catalogs and taxonomy (copied from [AntaresLegacyModels-to-GEMS-Converter](https://github.com/AntaresSimulatorTeam/AntaresLegacyModels-to-GEMS-Converter) 0.5.0) | `catalogs/`, `antares_legacy_taxonomy_flattened.yml` |
-| Library (antares_legacy_models 2.2.0: 2.2.1 adds a `name` property that Antares 10.2.0 does not export) | `libraries/` |
-| View configs (hourly per scenario, daily over all scenarios) | `view_config_area.yml`, `view_config_link.yml` |
-
-[OPERATING_MODE.md](OPERATING_MODE.md) explains how to build them for your own Antares study.
-
-## Run
-
-From this directory, with `gems-views-builder` installed:
-
-```bash
-mkdir -p output/area
-gems-views-builder \
-  --system inputs/system-for-views.yml \
-  --libraries-dir inputs/libraries \
-  --taxonomy inputs/antares_legacy_taxonomy_flattened.yml \
-  --catalogs-dir inputs/catalogs \
-  --calendar inputs/calendar.csv \
-  --simulation-tables "inputs/simulation_tables/simulation-table-*-optim-nb-2.parquet" \
-  --view-config inputs/view_config_area.yml \
-  --output output/area \
-  --output-format csv
-```
-
-This writes `view_hour_<timestamp>.csv` and `view_day_<timestamp>.csv` in `output/area`.
-In Windows PowerShell, end the lines with `` ` `` instead of `\` and create the folder with `mkdir output/area`.
-
+[OPERATING_MODE.md](OPERATING_MODE.md) describes the input files, in `inputs/`, and the CLI call that builds the views.
 `python run_example.py` builds both the area and link views, on any OS.
 
 ## Regenerate the inputs
