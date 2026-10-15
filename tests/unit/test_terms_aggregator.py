@@ -12,7 +12,7 @@ from gems_views_builder.input.simulation_table import PersistentSimulationTable,
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
 
-def create_persistent_st(values: list[float], tmp_path: Path) -> PersistentSimulationTable:
+def create_filtered_st(values: list[float], tmp_path: Path) -> PersistentSimulationTable:
     n = len(values)
     dataframe = pl.DataFrame(
         {
@@ -46,12 +46,12 @@ def create_metric_structure_table() -> MetricStructureTable:
 
 def test_terms_aggregation_sum(tmp_path: Path) -> None:
     # Arrange
-    persistent_st = create_persistent_st([2.0, 3.0], tmp_path)
+    filtered_st = create_filtered_st([2.0, 3.0], tmp_path)
     metric_structure_table = create_metric_structure_table()
     aggregator = TermsAggregator()
 
     # Act
-    structured_simulation_table = join(metric_structure_table, persistent_st)
+    structured_simulation_table = join(metric_structure_table, filtered_st)
     metric_view = aggregator.run(
         structured_simulation_table,
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
@@ -65,12 +65,12 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
 
 def test_terms_aggregation_avg(tmp_path: Path) -> None:
     # Arrange
-    persistent_st = create_persistent_st([2.0, 3.0], tmp_path)
+    filtered_st = create_filtered_st([2.0, 3.0], tmp_path)
     metric_structure_table = create_metric_structure_table()
     aggregator = TermsAggregator()
 
     # Act
-    structured_simulation_table = join(metric_structure_table, persistent_st)
+    structured_simulation_table = join(metric_structure_table, filtered_st)
     metric_view = aggregator.run(
         structured_simulation_table,
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.AVG, time_operator=AggregOperatorType.SUM),
