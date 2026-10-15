@@ -50,11 +50,13 @@ From [AntaresLegacyModels-to-GEMS-Converter](https://github.com/AntaresSimulator
 
 ## 5. Build the views
 
+Gather the inputs of steps 1 to 4 in one folder, as `inputs/` in this example, then:
+
 ```bash
-gems-views-builder --system system-for-views.yml --libraries-dir libraries \
-  --taxonomy antares_legacy_taxonomy_flattened.yml --catalogs-dir catalogs --calendar calendar.csv \
-  --simulation-tables "<run>/simulation-table-*-optim-nb-2.parquet" \
-  --view-config view_config_area.yml --output output/area --output-format csv
+gems-views-builder --system inputs/system-for-views.yml --libraries-dir inputs/libraries \
+  --taxonomy inputs/antares_legacy_taxonomy_flattened.yml --catalogs-dir inputs/catalogs \
+  --calendar inputs/calendar.csv --simulation-tables "inputs/simulation_tables/simulation-table-*-optim-nb-2.parquet" \
+  --view-config inputs/view_config_area.yml --output output/area --output-format csv
 ```
 
 Quote the `--simulation-tables` pattern: the ViewsBuilder expands it itself, on every OS.
