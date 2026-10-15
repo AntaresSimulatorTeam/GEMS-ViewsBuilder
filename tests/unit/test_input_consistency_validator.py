@@ -77,7 +77,6 @@ def test_groups_each_catalog_once_under_the_view_config_that_references_it() -> 
         raw_input_data, {catalog.id: catalog, catalog2.id: catalog2, catalog3.id: catalog3}
     )
 
-
     # Assert
     assert [item.id for item in grouped["view_config_one"]] == ["catalog"]
     assert [item.id for item in grouped["view_config_two"]] == ["catalog2", "catalog3"]

@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-from copy import deepcopy
 
 from gems_views_builder.aggregators.aggregations_processor import AggregationProcessor
 from gems_views_builder.cli import build_parser, check_options
@@ -41,15 +40,14 @@ def create_view_builders(
 ) -> list[ViewBuilder]:
     view_builders = []
     for view_building_input in view_building_inputs:
-        components_by_taxon_copy = deepcopy(components_by_taxon)
         supply_components_with_locations(
-            components_by_taxon_copy,
+            components_by_taxon,
             view_building_input.view_config.get_metrics(),
             view_building_input.view_config.location_taxonomy_category,
         )
         metric_structure_table_builder = MetricStructureTableBuilder(
             view_building_input.view_config,
-            components_by_taxon_copy,
+            components_by_taxon,
         )
         aggregation_processor = AggregationProcessor(view_building_input.view_config)
         view_builder = ViewBuilder(view_building_input, metric_structure_table_builder, aggregation_processor)
@@ -80,33 +78,27 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     accumulate_on_disk(metric_views, view_sinker)
 
 
-def main(argv: list[str] | None = None) -> int:
-    """
-    0 - Success
-    1 - Pipeline ran but throw exception
-    2 - Bad/Invalid command line usage/inputs
-    """
+def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose, log_dir=args.log_dir)
 
     try:
         check_options(args)
     except Exception as e:
-        logging.exception(f"Command lines options : {str(e)}")
-        return 2
+        raise ValueError(f"Command lines options : {str(e)}") from e
 
     try:
+        logging.info("Starting view building process")
         input_paths = InputPaths(args)
         InputPathsValidator(input_paths).validate()
         view_sinker = ViewSinkerFactory(args.output, args.output_format).make()
         run_view_building_process(input_paths, view_sinker)
-    except Exception:
-        logging.exception("View building failed")
-        return 1
+    except Exception as e:
+        # from e will keep upper level exception message
+        raise ValueError(f"View building failed: {e}") from e
 
     logging.info(f"View successfully written to {view_sinker.output_path}")
-    return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
