@@ -16,14 +16,18 @@ class SystemType(Enum):
 
 
 @dataclass
-class PathOption:
+class Option:
     name: str
-    args_attribute: str = field(init=False)
     system_type: SystemType
-    system_check: Callable[[Path], bool]
+    args_attribute: str = field(init=False)
 
     def __post_init__(self) -> None:
         self.args_attribute = self.name.replace("-", "_")
+
+
+@dataclass
+class PathOption(Option):
+    system_check: Callable[[Path], bool]
 
 
 def parent_is_dir(path: Path) -> bool:
@@ -31,8 +35,7 @@ def parent_is_dir(path: Path) -> bool:
     return parent_dir != Path(".") and parent_dir.is_dir()
 
 
-PATHS_OPTIONS: list[PathOption] = [
-    PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
+REQUIRED_PATHS_OPTIONS: list[PathOption] = [
     PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir),
     PathOption("system", SystemType.FILE, Path.is_file),
     PathOption("calendar", SystemType.FILE, Path.is_file),
@@ -42,6 +45,7 @@ PATHS_OPTIONS: list[PathOption] = [
 MULTIPLE_FILE_PATH_OPTIONS: list[PathOption] = [
     PathOption("simulation-tables", SystemType.DIRECTORY, parent_is_dir),
     PathOption("view-configs", SystemType.DIRECTORY, parent_is_dir),
+    PathOption("catalogs", SystemType.DIRECTORY, parent_is_dir),
 ]
 
 
@@ -51,9 +55,8 @@ def build_parser() -> argparse.ArgumentParser:
         description="Build aggregated metric views from a GEMS simulation dataset.",
     )
 
-    add_path_options(parser, PATHS_OPTIONS)
+    add_path_options(parser, REQUIRED_PATHS_OPTIONS)
     add_multiple_file_path_options(parser, MULTIPLE_FILE_PATH_OPTIONS)
-
     parser.add_argument(
         "-o",
         "--output",
@@ -84,8 +87,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def add_path_options(parser: argparse.ArgumentParser, options: list[PathOption]) -> None:
-    for option in options:
+def add_path_options(parser: argparse.ArgumentParser, path_options: list[PathOption]) -> None:
+    for option in path_options:
         parser.add_argument(
             f"--{option.name}",
             type=Path,
@@ -105,16 +108,14 @@ def add_multiple_file_path_options(parser: argparse.ArgumentParser, options: lis
 
 
 def check_paths_options(args: argparse.Namespace) -> None:
-    for option in PATHS_OPTIONS:
-        # Fetching the value of the option from the parsed args
+    for option in REQUIRED_PATHS_OPTIONS:
         option_value = getattr(args, option.args_attribute)
         if not option.system_check(option_value):
-            raise OSError(f"--{option.name} : {option_value} is not a {option.system_type.value}")
+            raise OSError(f"--{option.name} is not a {option.system_type.value}: {option_value}")
 
 
 def check_multiple_file_path_options(args: argparse.Namespace) -> None:
     for option in MULTIPLE_FILE_PATH_OPTIONS:
-        # Fetching the value of the option from the parsed args
         option_value = Path(getattr(args, option.args_attribute))
         if not option.system_check(option_value):
             raise OSError(f"--{option.name} : {option_value.parent} is not a {option.system_type.value}")

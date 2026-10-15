@@ -78,9 +78,8 @@ def make_view_config() -> ViewConfig:
         calendar_id="calendar",
         location_taxonomy_category="balance",
         taxonomy_id="taxonomy",
-        catalog_ids={"catalog"},
         aggregation_patterns=PATTERNS,
-        metric_ids=["catalog.LOAD", "catalog.PROD"],
+        full_metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
 
 

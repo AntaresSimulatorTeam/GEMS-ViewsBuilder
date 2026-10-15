@@ -9,15 +9,11 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import yaml
 from pydantic import field_validator
 
 from gems_views_builder.base_model import ViewBuilderBasedModel
-
-if TYPE_CHECKING:
-    from gems_views_builder.input.view_config import ViewConfig
 
 """
 They are the same for now but we could keep them separated for future use.
@@ -132,15 +128,8 @@ def to_metric(metric_data: MetricData) -> Metric:
     )
 
 
-def load_catalogs(catalogs_dir: Path, catalog_ids: set[str]) -> list[Catalog]:
-    return [load_catalog(catalogs_dir / f"{catalog_id}.yml") for catalog_id in catalog_ids]
-
-
-def catalogs_referenced_in_view_configs(view_configs: list[ViewConfig]) -> set[str]:
-    catalog_ids: set[str] = set()
-    for view_config in view_configs:
-        catalog_ids.update(view_config.catalog_ids)
-    return catalog_ids
+def load_catalogs(catalogs: list[Path]) -> list[Catalog]:
+    return [load_catalog(catalog) for catalog in catalogs]
 
 
 def load_catalog(catalog_file_path: Path) -> Catalog:

@@ -19,8 +19,12 @@ from tests.conftest import paths_from_dataset
 
 def test_loader_init_has_no_io(tmp_path: Path) -> None:
     """
-    Constructor should not touch the filesystem (no glob/yaml/parquet reads).
+    Constructor should not read yaml or parquet.
+    Catalog and view-config paths are resolved from globs when InputPaths is built.
     """
+    catalogs_dir = tmp_path / "catalogs"
+    catalogs_dir.mkdir()
+    (catalogs_dir / "catalog.yml").touch()
     missing = Path("/this/path/should-not-exist")
     simulation_table = tmp_path / "simulation_table.parquet"
     simulation_table.touch()
@@ -29,7 +33,7 @@ def test_loader_init_has_no_io(tmp_path: Path) -> None:
     paths = InputPaths(
         Namespace(
             libraries_dir=missing / "libraries",
-            catalogs_dir=missing / "catalogs",
+            catalogs=str(catalogs_dir / "catalog.yml"),
             system=missing / "system.yml",
             calendar=missing / "calendar.csv",
             taxonomy=missing / "taxonomy.yml",
@@ -40,6 +44,7 @@ def test_loader_init_has_no_io(tmp_path: Path) -> None:
     loader = Loader(paths)
     assert loader.input_paths is paths
     assert loader.input_paths.libraries_dir == missing / "libraries"
+    assert loader.input_paths.catalogs == [catalogs_dir / "catalog.yml"]
 
 
 def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
@@ -61,7 +66,7 @@ def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
     assert raw_input_data.catalogs
     assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs)
     assert all(view_config.metrics for view_config in raw_input_data.view_configs)
-    assert all(len(view_config.metrics) == len(view_config.metric_ids) for view_config in raw_input_data.view_configs)
+    assert all(len(view_config.metrics) == len(view_config.full_metric_ids) for view_config in raw_input_data.view_configs)
 
 
 def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
@@ -84,4 +89,4 @@ def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path
     assert raw_input_data.catalogs
     assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs)
     assert all(view_config.metrics for view_config in raw_input_data.view_configs)
-    assert all(len(view_config.metrics) == len(view_config.metric_ids) for view_config in raw_input_data.view_configs)
+    assert all(len(view_config.metrics) == len(view_config.full_metric_ids) for view_config in raw_input_data.view_configs)

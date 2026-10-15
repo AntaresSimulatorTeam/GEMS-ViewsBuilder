@@ -33,8 +33,7 @@ def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
 def test_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    view_config.catalog_ids = {"catalog_a", "catalog_b"}
-    view_config.metric_ids = [
+    view_config.full_metric_ids = [
         "catalog_a.LOAD",
         "catalog_a.PROD",
         "catalog_b.BALANCE",
@@ -53,10 +52,40 @@ def test_passes_when_metric_ids_are_unique(test_dataset_dir: Path) -> None:
 def test_raises_when_metric_missing_from_catalog(test_dataset_dir: Path) -> None:
     # Arrange
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    view_config.catalog_ids = {"catalog"}
-    view_config.metric_ids = ["catalog.MISSING_METRIC"]
+    view_config.full_metric_ids = ["catalog.MISSING_METRIC"]
     catalogs = [make_catalog("catalog", ["LOAD", "PROD"])]
 
     # Act & Assert
     with pytest.raises(ValueError, match="MISSING_METRIC.*doesn't exist in catalog 'catalog'"):
+        ViewConfigMetricsAgainstCatalogsValidator(catalogs, view_config).validate()
+
+
+def test_raises_when_metric_id_is_invalid(test_dataset_dir: Path) -> None:
+    # Arrange
+    view_config = load_view_config(test_dataset_dir / "view_config.yml")
+    view_config.full_metric_ids = ["catalog.INVALID_METRIC"]
+    catalogs = [make_catalog("catalog", ["LOAD", "PROD"])]
+
+    # Act & Assert
+    with pytest.raises(ValueError, match="INVALID_METRIC.*doesn't exist in catalog 'catalog'"):
+        ViewConfigMetricsAgainstCatalogsValidator(catalogs, view_config).validate()
+
+
+@pytest.mark.parametrize(
+    "full_metric_id",
+    [
+        "catalog.INVALID.METRIC",
+        "catalog..INVALID_METRIC",
+        "catalog.INVALID_METRIC.",
+        ".catalogINVALID_METRIC",
+    ],
+)
+def test_raises_when_metric_ref_format_is_invalid(test_dataset_dir: Path, full_metric_id: str) -> None:
+    # Arrange
+    view_config = load_view_config(test_dataset_dir / "view_config.yml")
+    view_config.full_metric_ids = [full_metric_id]
+    catalogs = [make_catalog("catalog", ["LOAD", "PROD"])]
+
+    # Act & Assert
+    with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
         ViewConfigMetricsAgainstCatalogsValidator(catalogs, view_config).validate()

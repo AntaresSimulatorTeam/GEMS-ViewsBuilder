@@ -5,7 +5,7 @@ import logging
 from dataclasses import dataclass
 
 from gems_views_builder.input.calendar import load_calendar
-from gems_views_builder.input.catalog import Catalog, catalogs_referenced_in_view_configs, load_catalogs
+from gems_views_builder.input.catalog import Catalog, load_catalogs
 from gems_views_builder.input.library import create_lib_from_yml, load_yml_libs
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import load_simulation_tables
@@ -26,7 +26,7 @@ class Loader:
         view_configs: list[ViewConfig] = load_view_configs(self.input_paths.view_configs)
         yml_libs = load_yml_libs(self.input_paths.libraries_dir)
 
-        catalogs = load_catalogs(self.input_paths.catalogs_dir, catalogs_referenced_in_view_configs(view_configs))
+        catalogs = load_catalogs(self.input_paths.catalogs)
         populate_view_configs_with_metrics(view_configs, catalogs)
         raw_input_data = RawInputData(
             taxonomy=load_taxonomy(self.input_paths.taxonomy),
