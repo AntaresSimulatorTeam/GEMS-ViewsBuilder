@@ -6,6 +6,7 @@ legacy study.
 
 Requires antares-craft and an Antares Simulator 10.2.0 binary:
     python generate_inputs.py path/to/antares-10.2.0-Ubuntu-22.04/bin/antares-solver
+    python generate_inputs.py path/to/antares-10.2.0-win64/bin/antares-solver.exe
 """
 
 import re
@@ -145,9 +146,9 @@ def main(antares_solver: Path) -> None:
         for table in sorted(output_dir.glob(f"simulation-table-*-{STAGE}.parquet")):
             shutil.copy(table, tables_dir / table.name)
         # Antares names the system after the absolute study path: name it after the study instead.
-        system = (output_dir / "system-for-views.yml").read_text()
+        system = (output_dir / "system-for-views.yml").read_text(encoding="utf-8")
         system = re.sub(r"^  id: .*$", "  id: two_areas", system, count=1, flags=re.MULTILINE)
-        (EXAMPLE_DIR / "system-for-views.yml").write_text(system)
+        (EXAMPLE_DIR / "system-for-views.yml").write_text(system, encoding="utf-8", newline="\n")
 
     # One row per simulated hour (52 weeks), one block per week, as in the simulation tables.
     time_index = np.arange(52 * 168)
@@ -157,7 +158,7 @@ def main(antares_solver: Path) -> None:
             "block": time_index // 168,
             "granular_date": pd.date_range(CALENDAR_START, periods=len(time_index), freq="h"),
         }
-    ).to_csv(EXAMPLE_DIR / "calendar.csv", index=False)
+    ).to_csv(EXAMPLE_DIR / "calendar.csv", index=False, lineterminator="\n")
 
 
 if __name__ == "__main__":

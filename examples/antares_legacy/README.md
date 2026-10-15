@@ -31,7 +31,9 @@ gems-views-builder \
 ```
 
 This writes `view_hour_<timestamp>.csv` and `view_day_<timestamp>.csv` in `output/area`.
-`./run_example.sh` builds both the area and link views.
+In Windows PowerShell, end the lines with `` ` `` instead of `\` and create the folder with `mkdir output/area`.
+
+`python run_example.py` builds both the area and link views, on any OS.
 
 ## Regenerate the inputs
 
@@ -40,5 +42,5 @@ This writes `view_hour_<timestamp>.csv` and `view_day_<timestamp>.csv` in `outpu
 and writes `simulation_tables/`, `system-for-views.yml` and `calendar.csv`:
 
 ```bash
-python generate_inputs.py path/to/antares-10.2.0-Ubuntu-22.04/bin/antares-solver
+python generate_inputs.py path/to/antares-10.2.0-Ubuntu-22.04/bin/antares-solver  # Windows: antares-10.2.0-win64/bin/antares-solver.exe
 ```
