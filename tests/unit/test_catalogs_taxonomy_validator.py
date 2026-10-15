@@ -1,40 +1,46 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-from pathlib import Path
-
 import pytest
 
-from gems_views_builder.input.catalog import load_catalog, load_catalogs
-from gems_views_builder.input.taxonomy import load_taxonomy
+from gems_views_builder.input.taxonomy import TaxonomyCategory, TaxonomyItem
 from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTaxonomyValidator
+from tests.common import make_catalog, make_metric, make_taxonomy
+
+PRODUCTION_CATEGORY = TaxonomyCategory(
+    id="production",
+    ports=[TaxonomyItem(id="p_port")],
+    variables=[TaxonomyItem(id="p")],
+)
 
 
-def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
-    # Arrange
-    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
-    catalogs = load_catalogs(list((test_dataset_dir / "catalogs").glob("catalog.yml")))
+def test_passes_for_matching_catalog() -> None:
+    taxonomy = make_taxonomy(categories={"production": PRODUCTION_CATEGORY})
+    catalog = make_catalog(metrics={"PROD": make_metric("PROD", "production", "p_port")})
+    CatalogsTaxonomyValidator([catalog], taxonomy).validate()
 
-    # Act & Assert
-    CatalogsTaxonomyValidator(catalogs, taxonomy).validate()
+
+def test_raises_on_taxonomy_id_mismatch() -> None:
+    catalog = make_catalog(taxonomy="wrong_taxonomy", metrics={"PROD": make_metric("PROD", "production", "p_port")})
+    taxonomy = make_taxonomy(categories={"production": PRODUCTION_CATEGORY})
+
+    with pytest.raises(ValueError, match="references taxonomy"):
+        CatalogsTaxonomyValidator([catalog], taxonomy).validate()
 
 
 @pytest.mark.parametrize(
-    ("attribute", "value", "match"),
+    ("taxonomy_category", "location_port", "output_id", "match"),
     [
-        ("taxonomy", "wrong_taxonomy", "references taxonomy"),
-        ("taxonomy_category", "unknown_category", "uses taxonomy-category"),
-        ("location_port", "unknown_port", "uses location-port"),
-        ("output_id", "unknown_output", "uses output-id"),
+        ("unknown_category", "p_port", "p", "uses taxonomy-category"),
+        ("production", "unknown_port", "p", "uses location-port"),
+        ("production", "p_port", "unknown_output", "uses output-id"),
     ],
 )
-def test_rejects_invalid_references(test_dataset_dir: Path, attribute: str, value: str, match: str) -> None:
-    # Arrange
-    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
-    catalog = load_catalog(next((test_dataset_dir / "catalogs").glob("catalog.yml")))
-    target = catalog if attribute == "taxonomy" else next(iter(catalog.metrics.values())).terms[0]
-    setattr(target, attribute, value)
+def test_rejects_invalid_term_references(
+    taxonomy_category: str, location_port: str, output_id: str, match: str
+) -> None:
+    catalog = make_catalog(metrics={"PROD": make_metric("PROD", taxonomy_category, location_port, output_id)})
+    taxonomy = make_taxonomy(categories={"production": PRODUCTION_CATEGORY})
 
-    # Act & Assert
     with pytest.raises(ValueError, match=match):
         CatalogsTaxonomyValidator([catalog], taxonomy).validate()

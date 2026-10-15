@@ -21,14 +21,13 @@ import polars as pl
 from pytest import approx
 
 from gems_views_builder.__main__ import build_metric_views
-from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
+from gems_views_builder.input.catalog import AggregOperatorType, PropertySchema
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.metric_view import TemporalMetricView
+from tests.common import make_catalog, make_metric, make_raw_component, make_view_config
 from tests.e2e.utils import (
     build_raw_input_data,
     make_calendar,
-    make_raw_component,
     make_raw_connection,
     make_simulation_table,
 )
@@ -51,47 +50,6 @@ def make_system() -> Any:
     )
 
 
-def make_metrics() -> list[Metric]:
-    load_metric = Metric(
-        id="LOAD",
-        terms=[Term(taxonomy_category="load", output_id="active_load", location_port="injection")],
-        terms_operator=AggregOperatorType.SUM,
-        time_operator=AggregOperatorType.SUM,
-    )
-    prod_metric = Metric(
-        id="PROD",
-        terms=[Term(taxonomy_category="balance", output_id="active_power", location_port=None)],
-        terms_operator=AggregOperatorType.SUM,
-        time_operator=AggregOperatorType.AVG,
-        filter=PropertySchema(key="country", value="France"),
-    )
-    return [load_metric, prod_metric]
-
-
-def make_view_config() -> ViewConfig:
-    return ViewConfig(
-        id="view_area",
-        calendar_id="calendar",
-        location_taxonomy_category="balance",
-        taxonomy_id="taxonomy",
-        aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
-        extra_locations=["country", "region"],
-        full_metric_ids=["catalog.LOAD", "catalog.PROD"],
-    )
-
-
-def make_catalogs(metrics: list[Metric]) -> list[Catalog]:
-    load_metric, prod_metric = metrics
-    return [
-        Catalog(
-            id="catalog",
-            taxonomy="taxonomy",
-            location_taxonomy_category="balance",
-            metrics={"LOAD": load_metric, "PROD": prod_metric},
-        )
-    ]
-
-
 SIMULATION_ROWS = [
     ("loadX", "active_load", 0, T1, 10.0),
     ("loadX", "active_load", 0, T2, 20.0),
@@ -106,9 +64,22 @@ SIMULATION_ROWS = [
 
 def build_input() -> RawInputData:
     system = make_system()
-    metrics = make_metrics()
-    view_config = make_view_config()
-    catalogs = make_catalogs(metrics)
+    metrics = [
+        make_metric("LOAD", "load", "injection", "active_load"),
+        make_metric(
+            "PROD",
+            "balance",
+            output_id="active_power",
+            time_operator=AggregOperatorType.AVG,
+            filter=PropertySchema(key="country", value="France"),
+        ),
+    ]
+    view_config = make_view_config(
+        view_id="view_area",
+        extra_locations=["country", "region"],
+        full_metric_ids=["catalog.LOAD", "catalog.PROD"],
+    )
+    catalogs = [make_catalog(metrics={metric.id: metric for metric in metrics})]
     return build_raw_input_data(
         system,
         TAXONOMY_CATEGORY_BY_MODEL,

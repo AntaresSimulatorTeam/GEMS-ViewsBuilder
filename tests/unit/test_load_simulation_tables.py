@@ -6,11 +6,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder.input.simulation_table import (
-    SimulationTable,
-    load_simulation_table,
-    load_simulation_tables,
-)
+from gems_views_builder.input.simulation_table import SimulationTable, load_simulation_tables
 from tests.common import SIMULATION_TABLE_ROW
 
 
@@ -18,7 +14,7 @@ def write_simulation_table(path: Path) -> None:
     pl.DataFrame([SIMULATION_TABLE_ROW]).write_parquet(path)
 
 
-def test_load_simulation_tables_returns_one_table_per_path_in_order(tmp_path: Path) -> None:
+def test_load_simulation_tables_returns_one_table_per_path(tmp_path: Path) -> None:
     # Arrange
     first_path = tmp_path / "simulation_table-1.parquet"
     second_path = tmp_path / "simulation_table-2.parquet"
@@ -44,13 +40,3 @@ def test_load_simulation_tables_raises_when_one_of_several_files_has_invalid_ext
     # Act & Assert
     with pytest.raises(ValueError, match=r"is not a parquet or csv file"):
         load_simulation_tables([valid_path, invalid_path])
-
-
-def test_filter_simulation_table_invalid_file_format(test_dataset_dir: Path) -> None:
-    """When a non-parquet, non-csv file is provided, an error is raised."""
-    simulation_table_file = test_dataset_dir / "simulation_table--invalid.txt"
-    with pytest.raises(
-        ValueError,
-        match=r"Simulation table file '.*simulation_table--invalid\.txt' is not a parquet or csv file",
-    ):
-        load_simulation_table(simulation_table_file)

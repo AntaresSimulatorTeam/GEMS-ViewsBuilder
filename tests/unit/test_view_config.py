@@ -7,56 +7,9 @@ from typing import cast
 
 import pytest
 
-from gems_views_builder import TimeGranularity, ViewConfig, load_view_config
+from gems_views_builder import load_view_config
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
-
-
-def test_loads(test_dataset_dir: Path) -> None:
-    config_path = test_dataset_dir / "view_config.yml"
-    config = load_view_config(config_path)
-    assert isinstance(config, ViewConfig)
-    assert isinstance(config.id, str)
-    assert isinstance(config.location_taxonomy_category, str)
-    assert isinstance(config.calendar_id, str)
-    assert len(config.full_metric_ids) > 0
-
-
-def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
-    config_path = test_dataset_dir / "view_config.yml"
-    config = load_view_config(config_path)
-    for metric_id in config.full_metric_ids:
-        assert isinstance(metric_id, str)
-        assert metric_id.count(".") == 1
-        catalog_id, metric_name = metric_id.split(".", 1)
-        assert catalog_id
-        assert metric_name
-
-
-def test_known_values(test_dataset_dir: Path) -> None:
-    config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.id == "view_area"
-    assert config.location_taxonomy_category == "balance"
-    assert config.taxonomy_id == "my_taxonomy"
-    metric_names = {metric_id.split(".", 1)[1] for metric_id in config.full_metric_ids}
-    assert "LOAD" in metric_names
-    if test_dataset_dir.name == "test_3":
-        assert "PROD" in metric_names
-        assert "BALANCE" in metric_names
-    else:
-        assert "PRODUCTION" in metric_names
-        assert "NUCLEAR_PRODUCTION" in metric_names
-
-
-def test_time_aggregation(test_dataset_dir: Path) -> None:
-    config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.aggregation_patterns[0].time_granularity == TimeGranularity.HOUR
-
-
-def test_scenario_aggregation(test_dataset_dir: Path) -> None:
-    config = load_view_config(test_dataset_dir / "view_config.yml")
-    assert config.aggregation_patterns[0].id == "hourly"
-    assert config.aggregation_patterns[0].scenario is False
 
 
 def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
@@ -72,7 +25,7 @@ view:
     calendar: calendar_file
   metrics:
     - id: catalog.LOAD
-""".strip()
+"""
     )
 
     with pytest.raises(ValueError, match="aggregations"):
@@ -95,7 +48,7 @@ view:
       scenario: false
   metrics:
     - id: catalog.LOAD
-""".strip()
+"""
     )
 
     with pytest.raises(ValueError, match="time"):
@@ -118,7 +71,7 @@ view:
       time_granularity: hour
   metrics:
     - id: catalog.LOAD
-""".strip()
+"""
     )
 
     with pytest.raises(ValueError, match="scenario"):
@@ -145,7 +98,7 @@ view:
       scenario: false
   metrics:
     - id: catalog.LOAD
-""".strip()
+"""
     )
 
     config = load_view_config(config_path)
