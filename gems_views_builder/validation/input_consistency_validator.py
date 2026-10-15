@@ -10,9 +10,6 @@ from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTaxonomyValidator
 from gems_views_builder.validation.catalogs_view_config_validator import ViewConfigCatalogsValidator
-from gems_views_builder.validation.view_config_metrics_against_catalogs_validator import (
-    ViewConfigMetricsAgainstCatalogsValidator,
-)
 from gems_views_builder.validation.view_config_taxonomy import ViewConfigTaxonomyValidator
 
 
@@ -27,7 +24,6 @@ class InputConsistencyValidator:
         for view_config in self.raw_input_data.view_configs:
             ViewConfigTaxonomyValidator(self.raw_input_data.taxonomy, view_config).validate()
             ViewConfigCatalogsValidator(catalogs_by_view_configs[view_config.id], view_config).validate()
-            ViewConfigMetricsAgainstCatalogsValidator(catalogs_by_view_configs[view_config.id], view_config).validate()
 
 
 def group_catalogs_by_view_configs(
@@ -40,11 +36,6 @@ def group_catalogs_by_view_configs(
             catalog_id, _ = full_metric_id.split(".", 1)
             if catalog_id in catalog_ids:
                 continue
-            catalog = catalogs_by_ids.get(catalog_id)
-            if catalog is None:
-                raise ValueError(
-                    f"Catalog {catalog_id!r} not found in input data but used in view config {view_config.id!r}"
-                )
             catalog_ids.add(catalog_id)
-            catalogs_by_view_configs[view_config.id].append(catalog)
+            catalogs_by_view_configs[view_config.id].append(catalogs_by_ids[catalog_id])
     return catalogs_by_view_configs

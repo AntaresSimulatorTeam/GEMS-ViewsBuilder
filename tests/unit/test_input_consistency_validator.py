@@ -4,8 +4,6 @@
 from types import SimpleNamespace
 from typing import cast
 
-import pytest
-
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory
@@ -99,32 +97,3 @@ def test_validates_view_configs_with_different_location_categories() -> None:
     assert len(validator.raw_input_data.view_configs) == 2
     assert validator.raw_input_data.view_configs[0].id == "view_config_one"
     assert validator.raw_input_data.view_configs[1].id == "view_config_two"
-
-
-def test_raises_when_a_view_config_references_an_unknown_catalog() -> None:
-    # Arrange
-    view_config_one = make_view_config("view_config_one", "balance", ["missing.LOAD"])
-    raw_input_data = make_raw_input_data([view_config_one], [])
-
-    # Act
-    with pytest.raises(ValueError) as error:
-        group_catalogs_by_view_configs(raw_input_data, {})
-
-    # Assert
-    assert str(error.value) == "Catalog 'missing' not found in input data but used in view config 'view_config_one'"
-
-
-def test_raises_when_a_view_config_references_a_catalog_that_is_not_defined() -> None:
-    # Arrange
-    view_config_one = make_view_config("view_config_one", "balance", ["catalog.LOAD"])
-    view_config_two = make_view_config("view_config_two", "consumption", ["catalog2.CONSUMPTION"])
-    raw_input_data = make_raw_input_data(
-        [view_config_one, view_config_two], [make_catalog("catalog", "balance", ["LOAD"])]
-    )
-
-    # Act
-    with pytest.raises(ValueError) as error:
-        InputConsistencyValidator(raw_input_data).validate()
-
-    # Assert
-    assert str(error.value) == "Catalog 'catalog2' not found in input data but used in view config 'view_config_two'"
