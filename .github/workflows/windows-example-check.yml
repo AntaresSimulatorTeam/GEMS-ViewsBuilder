@@ -72,6 +72,8 @@ jobs:
 
       - name: Annual sums of the views (to compare with Linux)
         shell: bash
+        env:
+          PYTHONUTF8: "1"  # polars prints its tables with box-drawing characters
         run: |
           cat > "$RUNNER_TEMP/sums.py" <<'EOF'
           import glob
