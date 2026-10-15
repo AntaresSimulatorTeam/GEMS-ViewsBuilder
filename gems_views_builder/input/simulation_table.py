@@ -98,8 +98,8 @@ def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) 
     sink_to_parquet(pl.concat([time_dep.select(columns), non_time_dep.select(columns)]), output_path)
     logging.info(f"Filtered simulation table written to {output_path}")
 
-    filtered_st_dataframe = pl.scan_parquet(output_path)
-    return PersistentSimulationTable(dataframe=filtered_st_dataframe, file_path=output_path)
+    filtered = pl.scan_parquet(output_path)
+    return PersistentSimulationTable(dataframe=filtered, file_path=output_path)
 
 
 def join(metric_structure_table: MetricStructureTable, filtered_st: PersistentSimulationTable) -> pl.LazyFrame:
