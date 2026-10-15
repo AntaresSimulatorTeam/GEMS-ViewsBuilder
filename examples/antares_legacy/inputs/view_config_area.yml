@@ -16,9 +16,6 @@ view:
       time-granularity: day
       scenario: true
 
-  catalogs:
-    - id: antares_legacy_area_catalog
-
   metrics:
     - id: antares_legacy_area_catalog.LOAD
     - id: antares_legacy_area_catalog.DTG_BY_TECHNOLOGY
