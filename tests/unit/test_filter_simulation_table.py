@@ -138,8 +138,8 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
     st_b = SimulationTable(pl.DataFrame([make_simulation_table_row(component="comp-b", block=block_b)]).lazy())
 
     # Act
-    filtered_st = filter_simulation_table(concat_simulation_tables([st_a, st_b]), calendar)
+    filtered_table = filter_simulation_table(concat_simulation_tables([st_a, st_b]), calendar)
 
     # Assert
-    filtered_st_dataframe = pl.read_parquet(filtered_st.file_path)
-    assert set(filtered_st_dataframe["component"].to_list()) == expected_components
+    filtered_table = pl.read_parquet(filtered_table.file_path)
+    assert set(filtered_table["component"].to_list()) == expected_components
