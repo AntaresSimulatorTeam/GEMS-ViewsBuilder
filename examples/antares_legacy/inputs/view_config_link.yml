@@ -16,6 +16,9 @@ view:
       time-granularity: day
       scenario: true
 
+  catalogs:
+    - id: antares_legacy_link_catalog
+
   metrics:
     - id: antares_legacy_link_catalog.FLOW_LIN
     - id: antares_legacy_link_catalog.UCAP_LIN

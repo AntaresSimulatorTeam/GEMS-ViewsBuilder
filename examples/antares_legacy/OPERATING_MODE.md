@@ -17,16 +17,33 @@ All the inputs of the ViewsBuilder are in `inputs/`. The library, the taxonomy a
 
 The views are written in `output/area/` and `output/link/`.
 
+## Installation
+
+The example runs with **gems-views-builder 0.0.1**, published on PyPI (Python 3.11 or later). Install it with pip,
+in a virtual environment:
+
+```bash
+pip install gems-views-builder==0.0.1
+```
+
+or with uv:
+
+```bash
+uv tool install gems-views-builder==0.0.1
+```
+
+The ViewsBuilder of the `main` branch cannot run the example as is: since #134, it reads another view config format.
+
 ## CLI call
 
-From `examples/antares_legacy`, with the ViewsBuilder installed (`uv sync` at the root of the repository):
+From `examples/antares_legacy`:
 
 ```bash
 gems-views-builder \
   --system inputs/system-for-views.yml \
   --libraries-dir inputs/libraries \
   --taxonomy inputs/antares_legacy_taxonomy_flattened.yml \
-  --catalogs inputs/catalogs/antares_legacy_area_catalog.yml \
+  --catalogs-dir inputs/catalogs \
   --calendar inputs/calendar.csv \
   --simulation-tables "inputs/simulation_tables/simulation-table-*-optim-nb-2.parquet" \
   --view-config inputs/view_config_area.yml \
@@ -35,10 +52,6 @@ gems-views-builder \
 ```
 
 This writes one file per time granularity of the view config in `output/area/`: `view_hour_<timestamp>.csv` and
-`view_day_<timestamp>.csv`. For the link view, use `--catalogs inputs/catalogs/antares_legacy_link_catalog.yml
---view-config inputs/view_config_link.yml --output output/link`.
-
-`--catalogs` takes the catalogs of the view's location only: the ViewsBuilder rejects a catalog located elsewhere,
-such as the link catalog for the area view.
+`view_day_<timestamp>.csv`. For the link view, use `--view-config inputs/view_config_link.yml --output output/link`.
 
 In Windows PowerShell, end the lines with `` ` `` instead of `\`.
