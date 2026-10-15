@@ -102,10 +102,5 @@ def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) 
     return PersistentSimulationTable(dataframe=filtered_st_dataframe, file_path=output_path)
 
 
-
-def join(
-    metric_structure_table: MetricStructureTable, filtered_st: PersistentSimulationTable
-) -> pl.LazyFrame:
-    return filtered_st.dataframe.join(
-        metric_structure_table.dataframe, on=["component", "output"], how="right"
-    )
+def join(metric_structure_table: MetricStructureTable, filtered_st: PersistentSimulationTable) -> pl.LazyFrame:
+    return filtered_st.dataframe.join(metric_structure_table.dataframe, on=["component", "output"], how="right")
