@@ -1,11 +1,11 @@
-# Copyright 2007-2026, RTE (https://www.rte-france.com)
+# Copyright 2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
 
 import pytest
 
-from gems_views_builder import AggregOperatorType, Metric, PropertySchema, Term, load_catalog
+from gems_views_builder import AggregOperatorType, PropertySchema, load_catalog
 from gems_views_builder.input.catalog import MetricData, TermData
 
 CATALOG_YML = """
@@ -25,20 +25,21 @@ catalog:
 """
 
 
-def test_load_catalog_and_read_one_metric(tmp_path: Path) -> None:
+def test_load_catalog(tmp_path: Path) -> None:
     catalog_path = tmp_path / "catalog.yml"
     catalog_path.write_text(CATALOG_YML)
 
     catalog = load_catalog(catalog_path)
 
+    assert catalog is not None
     assert catalog.id == "catalog"
     assert catalog.taxonomy == "my_taxonomy"
     assert catalog.location_taxonomy_category == "balance"
-    metric = catalog.metrics["LOAD"]
-    assert isinstance(metric, Metric)
-    assert metric.terms_operator is AggregOperatorType.SUM
-    assert metric.time_operator is AggregOperatorType.SUM
-    assert metric.terms == [Term(taxonomy_category="consumption", output_id="active_load", location_port="p_port")]
+    assert catalog.metrics["LOAD"].terms_operator is AggregOperatorType.SUM
+    assert catalog.metrics["LOAD"].time_operator is AggregOperatorType.SUM
+    assert catalog.metrics["LOAD"].terms[0].taxonomy_category == "consumption"
+    assert catalog.metrics["LOAD"].terms[0].output_id == "active_load"
+    assert catalog.metrics["LOAD"].terms[0].location_port == "p_port"
 
 
 def test_metric_filter_property_requires_value() -> None:

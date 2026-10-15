@@ -1,4 +1,4 @@
-# Copyright 2007-2026, RTE (https://www.rte-france.com)
+# Copyright 2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
 import polars as pl
@@ -27,13 +27,15 @@ def test_format_breakdown_properties_missing_keys_use_none_literal() -> None:
         PropertySchema(key="technology"),
     ]
     component = production_component({"company": "rhonepower"})
-    assert component.format_breakdown_properties(breakdown) == "{(country,None),(company,rhonepower),(technology,None)}"
+    formatted = component.format_breakdown_properties(breakdown)
+    assert formatted == "{(country,None),(company,rhonepower),(technology,None)}"
 
 
 def test_format_breakdown_properties_all_keys_present() -> None:
     breakdown = [PropertySchema(key="technology"), PropertySchema(key="company")]
     component = production_component({"technology": "gas", "company": "rhonepower"})
-    assert component.format_breakdown_properties(breakdown) == "{(technology,gas),(company,rhonepower)}"
+    formatted = component.format_breakdown_properties(breakdown)
+    assert formatted == "{(technology,gas),(company,rhonepower)}"
 
 
 def test_breakdown_follows_schema_order_not_property_insertion_order() -> None:
@@ -45,15 +47,16 @@ def test_breakdown_follows_schema_order_not_property_insertion_order() -> None:
     company_first: dict[str, str] = {}
     company_first["company"] = "rhonepower"
     company_first["technology"] = "gas"
-    expected = "{(technology,gas),(company,rhonepower)}"
-
-    assert production_component(technology_first).format_breakdown_properties(breakdown) == expected
-    assert production_component(company_first).format_breakdown_properties(breakdown) == expected
+    formatted_a = production_component(technology_first).format_breakdown_properties(breakdown)
+    formatted_b = production_component(company_first).format_breakdown_properties(breakdown)
+    assert formatted_a == "{(technology,gas),(company,rhonepower)}"
+    assert formatted_b == "{(technology,gas),(company,rhonepower)}"
 
 
 def test_format_breakdown_properties_empty_breakdown() -> None:
     component = production_component({"company": "x"})
-    assert component.format_breakdown_properties(None) == "{}"
+    formatted = component.format_breakdown_properties(None)
+    assert formatted == "{}"
 
 
 def test_structure_table_applies_filter_and_breakdown() -> None:
