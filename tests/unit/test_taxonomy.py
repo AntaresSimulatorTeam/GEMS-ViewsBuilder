@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from gems_views_builder import TaxonomyCategory, TaxonomyItem, load_taxonomy
+from gems_views_builder import TaxonomyItem, load_taxonomy
 
 TAXONOMY_YML = """
 taxonomy:
@@ -28,11 +28,9 @@ def test_load_taxonomy_reads_category_port_and_variable(tmp_path: Path) -> None:
 
     assert taxonomy.id == "my_taxonomy"
     assert taxonomy.description == "Minimal taxonomy"
-    category = taxonomy.categories["production"]
-    assert isinstance(category, TaxonomyCategory)
-    assert category.id == "production"
-    assert category.ports == [TaxonomyItem(id="p_port")]
-    assert category.variables == [TaxonomyItem(id="p")]
+    assert taxonomy.categories["production"].id == "production"
+    assert taxonomy.categories["production"].ports == [TaxonomyItem(id="p_port")]
+    assert taxonomy.categories["production"].variables == [TaxonomyItem(id="p")]
 
 
 def test_load_taxonomy_raises_when_root_key_is_missing(tmp_path: Path) -> None:

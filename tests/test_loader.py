@@ -21,54 +21,15 @@ from tests.common import SIMULATION_TABLE_ROW
 LIBRARY_YML = """
 library:
   id: lib
-  port-types:
-    - id: flow
-      fields:
-        - id: flow
-  models:
-    - id: node
-      taxonomy-category: balance
-      variables:
-        - id: p
-          lower-bound: "0"
-          upper-bound: "1"
-      ports:
-        - id: balance_port
-          type: flow
-      port-field-definitions:
-        - port: balance_port
-          field: flow
-          definition: p
-    - id: peer
-      taxonomy-category: balance
-      ports:
-        - id: balance_port
-          type: flow
 """
 
 SYSTEM_YML = """
-system:
-  id: tiny
-  components:
-    - id: node_a
-      model: lib.node
-    - id: node_b
-      model: lib.peer
-  connections:
-    - component1: node_a
-      port1: balance_port
-      component2: node_b
-      port2: balance_port
+system: {}
 """
 
 TAXONOMY_YML = """
 taxonomy:
   id: my_taxonomy
-  description: Minimal taxonomy
-  categories:
-    - id: balance
-      ports:
-        - id: balance_port
 """
 
 CATALOG_YML = """
@@ -77,14 +38,7 @@ catalog:
   taxonomy: my_taxonomy
   location:
     taxonomy-category: balance
-  metrics-definition:
-    - id: LOAD
-      terms:
-        - taxonomy-category: balance
-          output-id: flow
-          location-port: balance_port
-      terms-operator: sum
-      time-operator: sum
+  metrics-definition: []
 """
 
 VIEW_CONFIG_YML = """

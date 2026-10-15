@@ -17,6 +17,7 @@ class ViewConfigMetricsAgainstCatalogsValidator:
         logging.info("All metrics are present in the catalogs")
 
     def _validate_metric_ids(self) -> None:
+        seen_metric_ids: set[str] = set()
         for metric_ref in self.view_config.metric_ids:
             catalog_id, metric_id = metric_ref.split(".")
 
@@ -27,3 +28,10 @@ class ViewConfigMetricsAgainstCatalogsValidator:
                 raise ValueError(
                     f"Metric {metric_id} used in view config {self.view_config.id!r} doesn't exist in catalog {catalog_id!r}"
                 )
+
+            if metric_id in seen_metric_ids:
+                raise ValueError(
+                    f"metric ids are not unique: {metric_id!r} is selected more than once "
+                    f"in view config {self.view_config.id!r}"
+                )
+            seen_metric_ids.add(metric_id)

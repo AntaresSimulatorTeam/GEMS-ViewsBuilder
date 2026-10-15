@@ -62,5 +62,4 @@ def test_none_location_port_resolves_to_the_component_itself() -> None:
     df = table.dataframe.collect()
 
     assert df.height == 1
-    bus_rows = df.filter(pl.col("component") == "busA")
-    assert bus_rows["metric_location"][0] == "busA"
+    assert df.filter(pl.col("component") == "busA")["metric_location"].to_list() == ["busA"]

@@ -17,15 +17,22 @@ def test_passes_when_metric_ids_are_unique() -> None:
             "catalog_a.PROD",
             "catalog_b.BALANCE",
             "catalog_b.FLOW",
-            "catalog_b.PROD",
+            "catalog_b.EXPORT",
         ],
     )
     catalogs = [
         make_catalog("catalog_a", metric_ids=["LOAD", "PROD"]),
-        make_catalog("catalog_b", metric_ids=["BALANCE", "FLOW", "PROD"]),
+        make_catalog("catalog_b", metric_ids=["BALANCE", "FLOW", "EXPORT"]),
     ]
 
     ViewConfigMetricsAgainstCatalogsValidator(catalogs, view_config).validate()
+
+def test_raises_when_metric_ids_are_not_unique_across_catalogs() -> None:
+    view_config = make_view_config(catalog_ids={"catalog_a", "catalog_b"}, metric_ids=["catalog_a.LOAD", "catalog_b.LOAD"])
+    catalogs = [make_catalog("catalog_a", metric_ids=["LOAD"]), make_catalog("catalog_b", metric_ids=["LOAD"])]
+
+    with pytest.raises(ValueError, match="metric ids are not unique"):
+        ViewConfigMetricsAgainstCatalogsValidator(catalogs, view_config).validate()
 
 
 def test_raises_when_metric_missing_from_catalog() -> None:
