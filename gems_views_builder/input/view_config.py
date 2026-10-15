@@ -71,8 +71,6 @@ class ViewConfig:
         logging.debug(f"Fetching {len(self.full_metric_ids)} metric(s) from catalogs")
         catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for full_metric_id in self.full_metric_ids:
-            if full_metric_id.count(".") != 1 or full_metric_id.startswith(".") or full_metric_id.endswith("."):
-                raise ValueError(f"Invalid metric id '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'")
             catalog_id, metric_id = full_metric_id.split(".", 1)
             self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
 

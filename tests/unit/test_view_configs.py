@@ -9,7 +9,7 @@ import yaml
 
 from gems_views_builder import load_view_config
 from gems_views_builder.validation.aggregation_patterns_validator import ViewConfigsAggregationPatternsValidator
-from gems_views_builder.validation.view_config import validate_unique_ids
+from gems_views_builder.validation.view_config import validate_unique_ids, validate_full_metric_ids
 
 VIEW_CONFIG_YAML = """
 id: view
@@ -37,13 +37,23 @@ def write_view_config(tmp_path: Path, view: dict[str, Any]) -> Path:
     return path
 
 
-def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "full_metric_id",
+    [
+        "invalid_metric_id",
+        "catalog.INVALID.METRIC",
+        "catalog..INVALID_METRIC",
+        "catalog.INVALID_METRIC.",
+        ".catalogINVALID_METRIC",
+    ],
+)
+def test_raises_on_invalid_metric_id_format(tmp_path: Path, full_metric_id: str) -> None:
     view = make_view_config()
-    view["metrics"] = [{"id": "invalid_metric_id"}]
+    view["metrics"] = [{"id": full_metric_id}]
     config = load_view_config(write_view_config(tmp_path, view))
 
     with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        config.populate_with_metrics([])
+        validate_full_metric_ids([config])
 
 
 def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
