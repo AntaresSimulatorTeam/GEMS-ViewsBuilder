@@ -16,7 +16,7 @@ from typing import Any
 
 import polars as pl
 
-from gems_views_builder.__main__ import build_views, create_view_builders
+from gems_views_builder.__main__ import create_view_builder
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.input.component import create_components, enrich_components, group_components_by_taxon
 from gems_views_builder.input.raw_input_data import RawInputData
@@ -136,8 +136,9 @@ def test_one_output_file_per_time_granularity_merges_all_scenarios(tmp_path: Pat
     components_by_taxon = group_components_by_taxon(components)
 
     # Act
-    view_builders = create_view_builders(view_building_inputs, components_by_taxon)
-    views = build_views(view_builders)
+    views = []
+    for view_building_input in view_building_inputs:
+        views.extend(create_view_builder(view_building_input, components_by_taxon).build())
     accumulate_on_disk(views, ParquetViewSinker(results_dir))
 
     # Assert
