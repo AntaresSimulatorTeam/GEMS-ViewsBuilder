@@ -103,3 +103,31 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git status --porcelain
           git diff --stat
+
+      - name: Compare the regenerated simulation tables with the committed ones
+        shell: bash
+        env:
+          PYTHONUTF8: "1"
+        run: |
+          cat > "$RUNNER_TEMP/compare.py" <<'EOF'
+          import io
+          import subprocess
+          import polars as pl
+          pl.Config.set_tbl_width_chars(200)
+          keys = ["block", "component", "output", "absolute_time_index", "scenario_index"]
+          for year in (0, 1):
+              path = f"simulation_tables/simulation-table-{year}-optim-nb-2.parquet"
+              committed = subprocess.run(
+                  ["git", "show", f"HEAD:examples/antares_legacy/{path}"], capture_output=True, check=True
+              ).stdout
+              ref = pl.read_parquet(io.BytesIO(committed))
+              new = pl.read_parquet(path)
+              joined = ref.join(new, on=keys, how="full", coalesce=True, suffix="_win")
+              diff = joined.with_columns((pl.col("value") - pl.col("value_win")).abs().alias("abs_diff"))
+              print(path, "rows", ref.height, new.height, "schema equal", ref.schema == new.schema)
+              print("  unmatched rows", joined.filter(pl.col("value").is_null() | pl.col("value_win").is_null()).height)
+              print("  max abs diff", diff["abs_diff"].max(), "rows above 1e-6", diff.filter(pl.col("abs_diff") > 1e-6).height)
+              print("  basis_status differences", joined.filter(pl.col("basis_status") != pl.col("basis_status_win")).height)
+              print(diff.filter(pl.col("abs_diff") > 1e-6).sort("abs_diff", descending=True).head(5))
+          EOF
+          uv run python "$RUNNER_TEMP/compare.py"
