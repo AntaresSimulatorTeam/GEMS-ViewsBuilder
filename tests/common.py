@@ -44,9 +44,8 @@ def make_view_config(
     location_taxonomy_category: str = "balance",
     taxonomy_id: str = "taxonomy",
     aggregation_patterns: tuple[AggregationPattern, ...] | None = None,
-    catalog_ids: set[str] | None = None,
     extra_locations: list[str] | None = None,
-    metric_ids: list[str] | None = None,
+    full_metric_ids: list[str] | None = None,
 ) -> ViewConfig:
     return ViewConfig(
         id=view_id,
@@ -56,9 +55,8 @@ def make_view_config(
         aggregation_patterns=aggregation_patterns
         if aggregation_patterns is not None
         else (make_aggregation_pattern(pattern_id="hourly", time_granularity=TimeGranularity.HOUR),),
-        catalog_ids=catalog_ids or set(),
         extra_locations=extra_locations or [],
-        metric_ids=metric_ids or [],
+        full_metric_ids=full_metric_ids or [],
     )
 
 

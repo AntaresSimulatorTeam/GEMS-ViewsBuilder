@@ -76,9 +76,8 @@ def build_input() -> RawInputData:
     ]
     view_config = make_view_config(
         view_id="view_area",
-        catalog_ids={"catalog"},
         extra_locations=["country", "region"],
-        metric_ids=["catalog.LOAD", "catalog.PROD"],
+        full_metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
     catalogs = [make_catalog(metrics={metric.id: metric for metric in metrics})]
     return build_raw_input_data(

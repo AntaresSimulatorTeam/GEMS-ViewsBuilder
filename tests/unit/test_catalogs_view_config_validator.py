@@ -8,7 +8,7 @@ from tests.common import make_catalog, make_view_config
 
 
 def test_passes_when_catalog_matches_view_config() -> None:
-    ViewConfigCatalogsValidator([make_catalog()], make_view_config(catalog_ids={"catalog"})).validate()
+    ViewConfigCatalogsValidator([make_catalog()], make_view_config()).validate()
 
 
 def test_raises_on_taxonomy_id_mismatch() -> None:
@@ -16,7 +16,7 @@ def test_raises_on_taxonomy_id_mismatch() -> None:
     catalog.taxonomy = "wrong_taxonomy"
 
     with pytest.raises(ValueError, match="references taxonomy"):
-        ViewConfigCatalogsValidator([catalog], make_view_config(catalog_ids={"catalog"})).validate()
+        ViewConfigCatalogsValidator([catalog], make_view_config()).validate()
 
 
 def test_raises_on_location_category_mismatch() -> None:
@@ -24,4 +24,4 @@ def test_raises_on_location_category_mismatch() -> None:
     catalog.location_taxonomy_category = "wrong_category"
 
     with pytest.raises(ValueError, match="location taxonomy category"):
-        ViewConfigCatalogsValidator([catalog], make_view_config(catalog_ids={"catalog"})).validate()
+        ViewConfigCatalogsValidator([catalog], make_view_config()).validate()

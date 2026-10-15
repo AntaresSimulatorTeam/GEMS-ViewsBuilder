@@ -12,7 +12,7 @@ from gems_views_builder.multiple_files_collector import MultipleFilesCollector
 class InputPaths:
     def __init__(self, args: Namespace) -> None:
         self.libraries_dir: Path = Path(args.libraries_dir)
-        self.catalogs_dir: Path = Path(args.catalogs_dir)
+        self.catalogs: list[Path] = MultipleFilesCollector(args.catalogs).collect()
         self.system: Path = Path(args.system)
         self.calendar: Path = Path(args.calendar)
         self.taxonomy: Path = Path(args.taxonomy)

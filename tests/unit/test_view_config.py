@@ -2,38 +2,14 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
+from types import SimpleNamespace
+from typing import cast
 
 import pytest
 
 from gems_views_builder import load_view_config
-
-
-def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
-    invalid_config = tmp_path / "view_config.yml"
-    invalid_config.write_text(
-        """
-view:
-  id: invalid_metric_format
-  taxonomy: my_taxonomy
-  scope:
-    location:
-      taxonomy-category: balance
-    calendar: calendar_file
-  aggregations-patterns:
-    - id: hourly
-      time_granularity: hour
-      scenario: false
-  catalogs:
-    - id: catalog_1
-  metrics:
-    - id: invalid_metric_id
-"""
-    )
-
-    config = load_view_config(invalid_config)
-
-    with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        config.fetch_metrics([])
+from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
 
 
 def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
@@ -47,8 +23,6 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """
@@ -72,8 +46,6 @@ view:
   aggregations-patterns:
     - id: hourly
       scenario: false
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """
@@ -97,8 +69,6 @@ view:
   aggregations-patterns:
     - id: hourly
       time_granularity: hour
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """
@@ -126,12 +96,13 @@ view:
     - id: hourly_again
       time_granularity: hour
       scenario: false
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """
     )
 
+    config = load_view_config(config_path)
+    raw_input_data = cast(RawInputData, SimpleNamespace(view_config=config))
+
     with pytest.raises(ValueError, match="already defined"):
-        load_view_config(config_path)
+        AggregationPatternsValidator(raw_input_data).validate()

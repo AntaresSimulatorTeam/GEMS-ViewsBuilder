@@ -62,9 +62,8 @@ def build_input() -> RawInputData:
     ]
     view_config = make_view_config(
         view_id="view_area",
-        catalog_ids={"catalog"},
         aggregation_patterns=PATTERNS,
-        metric_ids=["catalog.LOAD", "catalog.PROD"],
+        full_metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
     catalogs = [make_catalog(metrics={metric.id: metric for metric in metrics})]
     rows = [
