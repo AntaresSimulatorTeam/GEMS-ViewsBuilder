@@ -10,7 +10,7 @@ import yaml
 from gems_views_builder import load_view_config
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.validation.aggregation_patterns_validator import ViewConfigsAggregationPatternsValidator
-from gems_views_builder.validation.view_config import validate_full_metric_ids, validate_unique_ids
+from gems_views_builder.validation.view_config import validate_unique_ids, validate_view_configs_full_metric_ids
 
 VIEW_CONFIG_YAML = """
 id: view
@@ -56,10 +56,10 @@ def test_raises_on_invalid_metric_id_format(tmp_path: Path, full_metric_id: str)
 
     # Act
     with pytest.raises(ValueError) as error:
-        validate_full_metric_ids([config])
+        validate_view_configs_full_metric_ids([config])
 
     # Assert
-    assert str(error.value) == f"Invalid metric id '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'"
+    assert str(error.value) == f"Invalid metric id reference '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'"
 
 
 def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:

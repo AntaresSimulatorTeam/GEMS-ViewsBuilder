@@ -60,8 +60,7 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     components_by_taxon = group_components_by_taxon(components)
 
     for view_building_input in view_building_inputs:
-        view_builder = create_view_builder(view_building_input, components_by_taxon)
-        metric_views = view_builder.build()
+        metric_views = create_view_builder(view_building_input, components_by_taxon).build()
         accumulate_on_disk(metric_views, view_sinker)
         # Drop this config's intermediate parquet files before the next config is built.
         del metric_views

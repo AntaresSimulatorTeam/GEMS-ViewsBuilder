@@ -85,6 +85,13 @@ class ViewConfig:
     def get_metrics(self) -> list[Metric]:
         return self.metrics
 
+    def validate_full_metric_ids(self) -> None:
+        for full_metric_id in self.full_metric_ids:
+            if full_metric_id.count(".") != 1 or full_metric_id.startswith(".") or full_metric_id.endswith("."):
+                raise ValueError(
+                    f"Invalid metric id reference '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'"
+                )
+
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
