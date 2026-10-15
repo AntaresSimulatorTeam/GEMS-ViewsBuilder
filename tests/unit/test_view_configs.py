@@ -9,7 +9,7 @@ import yaml
 
 from gems_views_builder import load_view_config
 from gems_views_builder.validation.aggregation_patterns_validator import ViewConfigsAggregationPatternsValidator
-from gems_views_builder.validation.view_config import validate_unique_ids, validate_full_metric_ids
+from gems_views_builder.validation.view_config import validate_full_metric_ids, validate_unique_ids
 
 VIEW_CONFIG_YAML = """
 id: view
