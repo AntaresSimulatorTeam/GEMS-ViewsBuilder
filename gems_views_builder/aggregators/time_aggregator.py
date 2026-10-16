@@ -21,7 +21,7 @@ TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
 }
 
 
-def cache_view_by_time_granularity(cls: type["TimeAggregator"]) -> type["TimeAggregator"]:
+def cache_view_by_time_granularity(cls: TimeAggregator) -> TimeAggregator:
     """Class decorator adding functionality to TimeAggregator without touching it: it records,
     class-wide, the MetricView generated for each time_granularity so that several aggregation
     patterns sharing the same time_granularity reuse the same generated view.
