@@ -1,7 +1,6 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-import functools
 import logging
 
 import polars as pl
@@ -21,22 +20,24 @@ TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
 }
 
 
-def cache_view_by_time_granularity(cls: TimeAggregator) -> TimeAggregator:
-    """Class decorator adding functionality to TimeAggregator without touching it: it records,
-    class-wide, the MetricView generated for each time_granularity so that several aggregation
-    patterns sharing the same time_granularity reuse the same generated view.
+def cache_view_by_time_granularity(cls: type["TimeAggregator"]) -> type["TimeAggregator"]:
+    """Class decorator: returns a new class wrapping `cls`, whose run() caches the MetricView
+    generated for each time_granularity (class-wide), delegating actual computation to the
+    original run() via super(). Several aggregation patterns sharing the same time_granularity
+    thus reuse the same generated view.
     """
-    cls.views_storage = {}
-    original_run = cls.run
 
-    @functools.wraps(original_run)
-    def run(self: "TimeAggregator", metric_view: MetricView, metric: Metric) -> MetricView:
-        if self._time_granularity not in cls.views_storage:
-            cls.views_storage[self._time_granularity] = original_run(self, metric_view, metric)
-        return cls.views_storage[self._time_granularity]
+    class _CachingAggregator(cls):
+        views_storage: dict[TimeGranularity, MetricView] = {}
 
-    cls.run = run
-    return cls
+        def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
+            if self._time_granularity not in self.views_storage:
+                self.views_storage[self._time_granularity] = super().run(metric_view, metric)
+            return self.views_storage[self._time_granularity]
+
+    _CachingAggregator.__name__ = cls.__name__
+    _CachingAggregator.__qualname__ = cls.__qualname__
+    return _CachingAggregator
 
 
 @cache_view_by_time_granularity
