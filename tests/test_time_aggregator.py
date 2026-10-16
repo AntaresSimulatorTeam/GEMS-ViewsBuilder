@@ -64,12 +64,6 @@ def test_date_column_function(
     # Assert
     assert cast(datetime, df.select(date_col).item()) == expected_date
 
-@pytest.fixture(autouse=True)
-def clear_views_storage() -> None:
-    """TimeAggregator caches its generated views class-wide. Clear it before each test so tests
-    using the same time_granularity don't see each other's results."""
-    TimeAggregator.views_storage.clear()
-
 @pytest.mark.parametrize(
     ("agg_operator", "values", "expected"),
     [
