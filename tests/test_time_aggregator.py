@@ -42,6 +42,13 @@ def make_metric(time_operator: AggregOperatorType) -> Metric:
     return Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=time_operator)
 
 
+@pytest.fixture(autouse=True)
+def clear_views_storage() -> None:
+    """TimeAggregator caches its generated views class-wide (keyed by time_granularity); clear it
+    before each test so tests using the same time_granularity don't see each other's results."""
+    TimeAggregator.views_storage.clear()
+
+
 @pytest.mark.parametrize(
     ("time_granularity", "input_date", "expected_date"),
     [
