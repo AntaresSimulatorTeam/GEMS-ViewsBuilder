@@ -20,7 +20,7 @@ TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
 }
 
 
-def cache_view_by_time_granularity(cls: TimeAggregator) -> TimeAggregator:
+def cache_view_by_time_granularity(cls: "type[TimeAggregator]") -> "type[TimeAggregator]":
     """Class decorator: returns a new class CachingTimeAggregator, wrapping TimeAggregator.
     CachingTimeAggregator run() method caches the MetricView generated for each time_granularity,
     delegating actual computation to the original run() via super().
