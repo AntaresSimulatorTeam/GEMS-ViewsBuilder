@@ -147,9 +147,7 @@ view:
     - id: catalog.LOAD
 """.strip()
     )
-
-    config = load_view_config(config_path)
-    raw_input_data = cast(RawInputData, SimpleNamespace(view_config=config))
-
+    view_config = load_view_config(config_path)
+    raw_input_data = cast(RawInputData, SimpleNamespace(view_config=view_config))
     with pytest.raises(ValueError, match="already defined"):
         AggregationPatternsValidator(raw_input_data).validate()
