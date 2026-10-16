@@ -20,9 +20,8 @@ from typing import Any
 import polars as pl
 from pytest import approx
 
-from gems_views_builder.__main__ import create_view_builder
+from gems_views_builder.__main__ import build_components_by_taxon, build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
-from gems_views_builder.input.component import create_components, enrich_components, group_components_by_taxon
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input_data import create_view_building_inputs
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
@@ -174,16 +173,12 @@ EXPECTED_PROD = {
 def test_extra_locations_values_in_final_metric_views() -> None:
     # Arrange
     input_data = build_input()
-    view_building_inputs = create_view_building_inputs(input_data)
-
-    components = create_components(input_data.system.components)
-    enrich_components(components, input_data)
-    components_by_taxon = group_components_by_taxon(components)
+    components_by_taxon = build_components_by_taxon(input_data)
 
     # Act
     views = []
-    for view_building_input in view_building_inputs:
-        views.extend(create_view_builder(view_building_input, components_by_taxon).build())
+    for view_building_input in create_view_building_inputs(input_data):
+        views.extend(build_metric_views(view_building_input, components_by_taxon))
     views_by_metric = views_grouped_by_metric_id(views)
 
     # Assert

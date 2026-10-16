@@ -59,7 +59,10 @@ def test_raises_on_invalid_metric_id_format(tmp_path: Path, full_metric_id: str)
         validate_view_configs_full_metric_ids([config])
 
     # Assert
-    assert str(error.value) == f"Invalid metric id reference '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'"
+    assert (
+        str(error.value)
+        == f"Invalid metric id reference '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'"
+    )
 
 
 def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
