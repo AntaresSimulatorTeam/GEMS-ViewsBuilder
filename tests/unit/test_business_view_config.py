@@ -8,6 +8,7 @@ from typing import cast
 import pytest
 
 from gems_views_builder import TimeGranularity, ViewConfig, load_view_config
+from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
 
 
@@ -147,5 +148,6 @@ view:
 """.strip()
     )
     view_config = load_view_config(config_path)
+    raw_input_data = cast(RawInputData, SimpleNamespace(view_config=view_config))
     with pytest.raises(ValueError, match="already defined"):
-        AggregationPatternsValidator(view_config.aggregation_patterns).validate()
+        AggregationPatternsValidator(raw_input_data).validate()

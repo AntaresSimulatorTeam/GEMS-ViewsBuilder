@@ -81,10 +81,7 @@ class ViewConfig:
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
     raw_view_config = load_raw_view_config_file(config_file_path)
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/main
     view_config = ViewConfig(
         id=raw_view_config.id,
         calendar_id=raw_view_config.scope.calendar,

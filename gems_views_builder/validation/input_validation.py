@@ -14,4 +14,4 @@ def validate_input_data(raw_input_data: RawInputData) -> None:
 
 def input_data_direct_validation(raw_input_data: RawInputData) -> None:
     validate_simulation_tables_consistency(raw_input_data.simulation_tables)
-    AggregationPatternsValidator(raw_input_data.view_config.aggregation_patterns).validate()
+    AggregationPatternsValidator(raw_input_data).validate()
