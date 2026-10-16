@@ -25,25 +25,15 @@ class InputPathsValidator:
 
     def _check_libraries_directory(self) -> None:
         """Strictly reject any entry in the libraries directory that is not a .yml file."""
-        libraries_dir = self.input_paths.libraries_dir
-        logging.info(f"Validating model libraries directory {libraries_dir}")
-        unexpected = [
-            path.name for path in libraries_dir.iterdir() if not (path.is_file() and path.suffix.lower() == YAML_SUFFIX)
-        ]
-        if unexpected:
-            raise ValueError(
-                f"Model libraries directory {libraries_dir} contains non-.yml entries: {', '.join(unexpected)}"
-            )
+        logging.info(f"Validating directory {self.input_paths.libraries_dir}")
+        for path in self.input_paths.libraries_dir.iterdir():
+            if not (path.is_file() and path.suffix.lower() == YAML_SUFFIX):
+                raise ValueError(f"File {path} should have {YAML_SUFFIX} extension")
 
-    def _check_catalogs_directory(self) -> None:
-        """Strictly reject any entry in the catalogs directory that is not a .yml file."""
-        catalogs_dir = self.input_paths.catalogs_dir
-        logging.info(f"Validating catalogs directory {catalogs_dir}")
-        unexpected = [
-            path.name for path in catalogs_dir.iterdir() if not (path.is_file() and path.suffix.lower() == YAML_SUFFIX)
-        ]
-        if unexpected:
-            raise ValueError(f"Catalogs directory {catalogs_dir} contains non-.yml entries: {', '.join(unexpected)}")
+    def _check_catalog_files(self) -> None:
+        logging.info(f"Validating {len(self.input_paths.catalogs)} catalog file(s)")
+        for catalog_path in self.input_paths.catalogs:
+            require_suffix(catalog_path, {YAML_SUFFIX}, "Catalog files")
 
     def _check_system_file(self) -> None:
         require_suffix(self.input_paths.system, {YAML_SUFFIX}, "System file")
@@ -72,7 +62,7 @@ class InputPathsValidator:
     def validate(self) -> None:
         logging.info("Starting input paths validation")
         self._check_libraries_directory()
-        self._check_catalogs_directory()
+        self._check_catalog_files()
         self._check_system_file()
         self._check_taxonomy_file()
         self._check_calendar_file()
