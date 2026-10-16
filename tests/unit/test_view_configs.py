@@ -28,7 +28,8 @@ metrics:
 """
 
 
-def make_view_config() -> dict[str, Any]:
+@pytest.fixture
+def view_config_yaml() -> dict[str, Any]:
     return cast(dict[str, Any], yaml.safe_load(VIEW_CONFIG_YAML))
 
 
@@ -48,10 +49,9 @@ def write_view_config(tmp_path: Path, view: dict[str, Any]) -> Path:
         ".catalogINVALID_METRIC",
     ],
 )
-def test_raises_on_invalid_metric_id_format(tmp_path: Path, full_metric_id: str) -> None:
+def test_raises_on_invalid_metric_id_format(tmp_path: Path, full_metric_id: str, view_config_yaml: dict[str, Any]) -> None:
     # Arrange
-    yaml_config_view = make_view_config()
-    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    path_to_yml = write_view_config(tmp_path, view_config_yaml)
     view_config = load_view_config(path_to_yml)
     view_config.full_metric_ids = [full_metric_id]
 
@@ -66,11 +66,10 @@ def test_raises_on_invalid_metric_id_format(tmp_path: Path, full_metric_id: str)
     )
 
 
-def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
+def test_raises_when_aggregation_key_is_missing(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
     # Arrange
-    yaml_config_view = make_view_config()
-    yaml_config_view.pop("aggregations-patterns")
-    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    view_config_yaml.pop("aggregations-patterns")
+    path_to_yml = write_view_config(tmp_path, view_config_yaml)
 
     # Act
     with pytest.raises(ValueError) as error:
@@ -81,11 +80,10 @@ def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
     assert "Field required" in str(error.value)
 
 
-def test_raises_when_aggregation_time_is_missing(tmp_path: Path) -> None:
+def test_raises_when_aggregation_time_is_missing(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
     # Arrange
-    yaml_config_view = make_view_config()
-    yaml_config_view["aggregations-patterns"][0].pop("time_granularity")
-    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    view_config_yaml["aggregations-patterns"][0].pop("time_granularity")
+    path_to_yml = write_view_config(tmp_path, view_config_yaml)
 
     # Act
     with pytest.raises(ValueError) as error:
@@ -96,11 +94,10 @@ def test_raises_when_aggregation_time_is_missing(tmp_path: Path) -> None:
     assert "Field required" in str(error.value)
 
 
-def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path) -> None:
+def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
     # Arrange
-    yaml_config_view = make_view_config()
-    yaml_config_view["aggregations-patterns"][0].pop("scenario")
-    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    view_config_yaml["aggregations-patterns"][0].pop("scenario")
+    path_to_yml = write_view_config(tmp_path, view_config_yaml)
 
     # Act
     with pytest.raises(ValueError) as error:
@@ -111,10 +108,9 @@ def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path) -> None:
     assert "Field required" in str(error.value)
 
 
-def test_view_config_raises_when_ids_are_not_unique(tmp_path: Path) -> None:
+def test_view_config_raises_when_ids_are_not_unique(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
     # Arrange
-    yaml_config_view = make_view_config()
-    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    path_to_yml = write_view_config(tmp_path, view_config_yaml)
     view_config = load_view_config(path_to_yml)
 
     # Act
@@ -125,10 +121,9 @@ def test_view_config_raises_when_ids_are_not_unique(tmp_path: Path) -> None:
     assert str(error.value) == "View config 'view' is defined multiple times"
 
 
-def test_view_config_aggregation_patterns_validator(tmp_path: Path) -> None:
+def test_view_config_aggregation_patterns_validator(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
     # Arrange
-    yaml_config_view = make_view_config()
-    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    path_to_yml = write_view_config(tmp_path, view_config_yaml)
     view_config = load_view_config(path_to_yml)
 
     # Act + Assert
@@ -152,10 +147,9 @@ def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
     )
 
 
-def test_populate_with_metrics_raises_when_catalog_is_missing(tmp_path: Path) -> None:
+def test_populate_with_metrics_raises_when_catalog_is_missing(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
     # Arrange
-    yaml_config_view = make_view_config()
-    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    path_to_yml = write_view_config(tmp_path, view_config_yaml)
     view_config = load_view_config(path_to_yml)
 
     # Act
@@ -166,10 +160,9 @@ def test_populate_with_metrics_raises_when_catalog_is_missing(tmp_path: Path) ->
     assert str(error.value) == "Catalog 'catalog' used in view config 'view' doesn't exist!"
 
 
-def test_populate_with_metrics_raises_when_metric_is_missing(tmp_path: Path) -> None:
+def test_populate_with_metrics_raises_when_metric_is_missing(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
     # Arrange
-    yaml_config_view = make_view_config()
-    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    path_to_yml = write_view_config(tmp_path, view_config_yaml)
     view_config = load_view_config(path_to_yml)
 
     # Act
@@ -180,10 +173,11 @@ def test_populate_with_metrics_raises_when_metric_is_missing(tmp_path: Path) -> 
     assert str(error.value) == "Metric 'LOAD' used in view config 'view' doesn't exist in catalog 'catalog'"
 
 
-def test_view_config_aggregation_patterns_validator_raises_when_patterns_are_not_unique(tmp_path: Path) -> None:
+def test_view_config_aggregation_patterns_validator_raises_when_patterns_are_not_unique(
+    tmp_path: Path, view_config_yaml: dict[str, Any]
+) -> None:
     # Arrange
-    yaml_config_view = make_view_config()
-    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    path_to_yml = write_view_config(tmp_path, view_config_yaml)
     view_config = load_view_config(path_to_yml)
     view_config.aggregation_patterns = view_config.aggregation_patterns * 2
 
