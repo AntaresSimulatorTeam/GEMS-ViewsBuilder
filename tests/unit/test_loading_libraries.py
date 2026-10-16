@@ -24,6 +24,7 @@ library:
       taxonomy-category: production
 """
 
+
 def test_collect_lib_files_raises_when_no_yml_files(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="No model libraries found"):
         collect_lib_files(tmp_path)
