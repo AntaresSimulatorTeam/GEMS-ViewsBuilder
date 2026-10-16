@@ -7,12 +7,8 @@ from pathlib import Path
 import pytest
 
 from gems_views_builder.input.taxonomy.taxonomy import load_taxonomy
-from gems_views_builder.input.taxonomy.taxonomy_tree import (
-    TaxonomyTreeNode,
-    enrich_tree,
-    make_neighbors,
-    make_taxonomy_tree,
-)
+from gems_views_builder.input.taxonomy.taxonomy_tree import TaxonomyTreeNode
+from gems_views_builder.input.taxonomy.taxonomy_utils import enrich_tree, make_neighbors, make_taxonomy_tree
 
 TAXONOMY = """
 taxonomy:

@@ -9,7 +9,8 @@ from gems_views_builder.input.taxonomy.taxonomy import (
     allowed_output,
     load_taxonomy,
 )
-from gems_views_builder.input.taxonomy.taxonomy_tree import TaxonomyTree, TaxonomyTreeNode, make_taxonomy_tree
+from gems_views_builder.input.taxonomy.taxonomy_tree import TaxonomyTree, TaxonomyTreeNode
+from gems_views_builder.input.taxonomy.taxonomy_utils import make_taxonomy_tree
 
 __all__ = [
     "Taxonomy",

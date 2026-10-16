@@ -89,4 +89,13 @@ def enrich_tree(node: TaxonomyTreeNode) -> set[str]:
     return {node.id} | descendants
 
 
-def get_enriched_nodes(taxon_tree: TaxonomyTree) -> dict[str, TaxonomyTreeNode]: ...
+def get_enriched_nodes(taxon_tree: TaxonomyTree) -> dict[str, TaxonomyTreeNode]:
+    nodes: dict[str, TaxonomyTreeNode] = {}
+    collect_nodes(taxon_tree.root, nodes)
+    return nodes
+
+
+def collect_nodes(node: TaxonomyTreeNode, nodes: dict[str, TaxonomyTreeNode]) -> None:
+    nodes[node.id] = node
+    for child in node.children.values():
+        collect_nodes(child, nodes)

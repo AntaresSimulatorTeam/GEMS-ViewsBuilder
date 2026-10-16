@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: MPL-2.0
 from __future__ import annotations
 
-from collections import defaultdict
 from dataclasses import dataclass, field
 
-from gems_views_builder.input.taxonomy.taxonomy import Taxonomy, TaxonomyCategory
+from gems_views_builder.input.taxonomy.taxonomy import TaxonomyCategory
 
 
 @dataclass(kw_only=True)
