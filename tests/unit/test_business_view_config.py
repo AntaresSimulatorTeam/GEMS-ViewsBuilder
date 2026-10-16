@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from pathlib import Path
+from types import SimpleNamespace
+from typing import cast
 
 import pytest
 
@@ -16,24 +18,17 @@ def test_loads(test_dataset_dir: Path) -> None:
     assert isinstance(config.id, str)
     assert isinstance(config.location_taxonomy_category, str)
     assert isinstance(config.calendar_id, str)
-    assert len(config.catalog_ids) > 0
-
-
-def test_catalog_ids_are_strings(test_dataset_dir: Path) -> None:
-    config_path = test_dataset_dir / "view_config.yml"
-    config = load_view_config(config_path)
-    for catalog_id in config.catalog_ids:
-        assert isinstance(catalog_id, str)
+    assert len(config.full_metric_ids) > 0
 
 
 def test_metric_ids_are_strings(test_dataset_dir: Path) -> None:
     config_path = test_dataset_dir / "view_config.yml"
     config = load_view_config(config_path)
-    for metric_id in config.metric_ids:
+    for metric_id in config.full_metric_ids:
         assert isinstance(metric_id, str)
-        assert "." in metric_id
+        assert metric_id.count(".") == 1
         catalog_id, metric_name = metric_id.split(".", 1)
-        assert catalog_id in config.catalog_ids
+        assert catalog_id
         assert metric_name
 
 
@@ -42,8 +37,7 @@ def test_known_values(test_dataset_dir: Path) -> None:
     assert config.id == "view_area"
     assert config.location_taxonomy_category == "balance"
     assert config.taxonomy_id == "my_taxonomy"
-    assert config.catalog_ids == {"catalog"}
-    metric_names = {metric_id.split(".", 1)[1] for metric_id in config.metric_ids}
+    metric_names = {metric_id.split(".", 1)[1] for metric_id in config.full_metric_ids}
     assert "LOAD" in metric_names
     if test_dataset_dir.name == "test_3":
         assert "PROD" in metric_names
@@ -64,34 +58,6 @@ def test_scenario_aggregation(test_dataset_dir: Path) -> None:
     assert config.aggregation_patterns[0].scenario is False
 
 
-def test_raises_on_invalid_metric_id_format(tmp_path: Path) -> None:
-    invalid_config = tmp_path / "view_config.yml"
-    invalid_config.write_text(
-        """
-view:
-  id: invalid_metric_format
-  taxonomy: my_taxonomy
-  scope:
-    location:
-      taxonomy-category: balance
-    calendar: calendar_file
-  aggregations-patterns:
-    - id: hourly
-      time_granularity: hour
-      scenario: false
-  catalogs:
-    - id: catalog_1
-  metrics:
-    - id: invalid_metric_id
-""".strip()
-    )
-
-    config = load_view_config(invalid_config)
-
-    with pytest.raises(ValueError, match=r"Expected format '<catalog_id>\.<metric_id>'"):
-        config.fetch_metrics([])
-
-
 def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
     config_path = tmp_path / "view_config.yml"
     config_path.write_text(
@@ -103,8 +69,6 @@ view:
     location:
       taxonomy-category: balance
     calendar: calendar_file
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()
@@ -128,8 +92,6 @@ view:
   aggregations-patterns:
     - id: hourly
       scenario: false
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()
@@ -153,8 +115,6 @@ view:
   aggregations-patterns:
     - id: hourly
       time_granularity: hour
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()
@@ -182,8 +142,6 @@ view:
     - id: hourly_again
       time_granularity: hour
       scenario: false
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()
