@@ -52,12 +52,12 @@ def test_raises_on_invalid_metric_id_format(tmp_path: Path, full_metric_id: str)
     # Arrange
     yaml_config_view = make_view_config()
     path_to_yml = write_view_config(tmp_path, yaml_config_view)
-    config_view = load_view_config(path_to_yml)
-    config_view.full_metric_ids = [full_metric_id]
+    view_config = load_view_config(path_to_yml)
+    view_config.full_metric_ids = [full_metric_id]
 
     # Act
     with pytest.raises(ValueError) as error:
-        validate_view_configs_full_metric_ids([config_view])
+        validate_view_configs_full_metric_ids([view_config])
 
     # Assert
     assert (
@@ -68,12 +68,13 @@ def test_raises_on_invalid_metric_id_format(tmp_path: Path, full_metric_id: str)
 
 def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
     # Arrange
-    view = make_view_config()
-    view.pop("aggregations-patterns")
+    yaml_config_view = make_view_config()
+    yaml_config_view.pop("aggregations-patterns")
+    path_to_yml = write_view_config(tmp_path, yaml_config_view)
 
     # Act
     with pytest.raises(ValueError) as error:
-        load_view_config(write_view_config(tmp_path, view))
+        load_view_config(path_to_yml)
 
     # Assert
     assert "aggregations-patterns" in str(error.value)
@@ -82,12 +83,13 @@ def test_raises_when_aggregation_key_is_missing(tmp_path: Path) -> None:
 
 def test_raises_when_aggregation_time_is_missing(tmp_path: Path) -> None:
     # Arrange
-    view = make_view_config()
-    view["aggregations-patterns"][0].pop("time_granularity")
+    yaml_config_view = make_view_config()
+    yaml_config_view["aggregations-patterns"][0].pop("time_granularity")
+    path_to_yml = write_view_config(tmp_path, yaml_config_view)
 
     # Act
     with pytest.raises(ValueError) as error:
-        load_view_config(write_view_config(tmp_path, view))
+        load_view_config(path_to_yml)
 
     # Assert
     assert "time-granularity" in str(error.value)
@@ -96,12 +98,13 @@ def test_raises_when_aggregation_time_is_missing(tmp_path: Path) -> None:
 
 def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path) -> None:
     # Arrange
-    view = make_view_config()
-    view["aggregations-patterns"][0].pop("scenario")
+    yaml_config_view = make_view_config()
+    yaml_config_view["aggregations-patterns"][0].pop("scenario")
+    path_to_yml = write_view_config(tmp_path, yaml_config_view)
 
     # Act
     with pytest.raises(ValueError) as error:
-        load_view_config(write_view_config(tmp_path, view))
+        load_view_config(path_to_yml)
 
     # Assert
     assert "scenario" in str(error.value)
@@ -110,7 +113,9 @@ def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path) -> None:
 
 def test_view_config_raises_when_ids_are_not_unique(tmp_path: Path) -> None:
     # Arrange
-    view_config = load_view_config(write_view_config(tmp_path, make_view_config()))
+    yaml_config_view = make_view_config()
+    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    view_config = load_view_config(path_to_yml)
 
     # Act
     with pytest.raises(ValueError) as error:
@@ -122,7 +127,9 @@ def test_view_config_raises_when_ids_are_not_unique(tmp_path: Path) -> None:
 
 def test_view_config_aggregation_patterns_validator(tmp_path: Path) -> None:
     # Arrange
-    view_config = load_view_config(write_view_config(tmp_path, make_view_config()))
+    yaml_config_view = make_view_config()
+    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    view_config = load_view_config(path_to_yml)
 
     # Act + Assert
     ViewConfigsAggregationPatternsValidator([view_config]).validate()
@@ -147,7 +154,9 @@ def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
 
 def test_populate_with_metrics_raises_when_catalog_is_missing(tmp_path: Path) -> None:
     # Arrange
-    view_config = load_view_config(write_view_config(tmp_path, make_view_config()))
+    yaml_config_view = make_view_config()
+    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    view_config = load_view_config(path_to_yml)
 
     # Act
     with pytest.raises(ValueError) as error:
@@ -159,7 +168,9 @@ def test_populate_with_metrics_raises_when_catalog_is_missing(tmp_path: Path) ->
 
 def test_populate_with_metrics_raises_when_metric_is_missing(tmp_path: Path) -> None:
     # Arrange
-    view_config = load_view_config(write_view_config(tmp_path, make_view_config()))
+    yaml_config_view = make_view_config()
+    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    view_config = load_view_config(path_to_yml)
 
     # Act
     with pytest.raises(ValueError) as error:
@@ -171,9 +182,10 @@ def test_populate_with_metrics_raises_when_metric_is_missing(tmp_path: Path) -> 
 
 def test_view_config_aggregation_patterns_validator_raises_when_patterns_are_not_unique(tmp_path: Path) -> None:
     # Arrange
-    view = make_view_config()
-    view["aggregations-patterns"] = view["aggregations-patterns"] * 2
-    view_config = load_view_config(write_view_config(tmp_path, view))
+    yaml_config_view = make_view_config()
+    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    view_config = load_view_config(path_to_yml)
+    view_config.aggregation_patterns = view_config.aggregation_patterns * 2
 
     # Act
     with pytest.raises(ValueError) as error:
