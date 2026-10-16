@@ -33,7 +33,14 @@ def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
 
 def build_metric_views(raw_input_data: RawInputData) -> list[TemporalMetricView]:
     components = create_components(raw_input_data.system.components)
+
+    # Here also some adaptation
+    # taxon_tree = make_taxonomy_tree(raw_input_data.taxonomy)
+
+    # No needs for adaptation
     enrich_components(components, raw_input_data)
+
+    # # Here we will need to call taxonomy tree to get the components by taxon
     components_by_taxon = group_components_by_taxon(components)
 
     view_building_input = create_view_building_input(raw_input_data)
