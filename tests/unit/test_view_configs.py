@@ -50,13 +50,14 @@ def write_view_config(tmp_path: Path, view: dict[str, Any]) -> Path:
 )
 def test_raises_on_invalid_metric_id_format(tmp_path: Path, full_metric_id: str) -> None:
     # Arrange
-    view = make_view_config()
-    view["metrics"] = [{"id": full_metric_id}]
-    config = load_view_config(write_view_config(tmp_path, view))
+    yaml_config_view = make_view_config()
+    path_to_yml = write_view_config(tmp_path, yaml_config_view)
+    config_view = load_view_config(path_to_yml)
+    config_view.full_metric_ids = [full_metric_id]
 
     # Act
     with pytest.raises(ValueError) as error:
-        validate_view_configs_full_metric_ids([config])
+        validate_view_configs_full_metric_ids([config_view])
 
     # Assert
     assert (
