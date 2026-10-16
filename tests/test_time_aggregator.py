@@ -64,6 +64,11 @@ def test_date_column_function(
     # Assert
     assert cast(datetime, df.select(date_col).item()) == expected_date
 
+@pytest.fixture(autouse=True)
+def clear_views_storage() -> None:
+    """TimeAggregator caches its generated views class-wide. Clear it before each test so tests
+    using the same time_granularity don't see each other's results."""
+    TimeAggregator.views_storage.clear()
 
 @pytest.mark.parametrize(
     ("agg_operator", "values", "expected"),
@@ -85,9 +90,6 @@ def test_time_aggregation(agg_operator: AggregOperatorType, values: list[float],
 
 def test_truncation_groups_by_window(tmp_path: Path) -> None:
     # Arrange
-    # Clear cached views to avoid interference between parametrized tests
-    TimeAggregator.views_storage.clear()
-
     aggregator = TimeAggregator(TimeGranularity.DAY)
     rows = [(datetime(2026, 1, 1, 3, 0), 10.0), (datetime(2026, 1, 1, 20, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
@@ -106,9 +108,6 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
 
 def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     # Arrange
-    # Clear cached views to avoid interference between parametrized tests
-    TimeAggregator.views_storage.clear()
-
     aggregator = TimeAggregator(TimeGranularity.DAY)
     rows = [(datetime(2026, 1, 1, 1, 0), 10.0), (datetime(2026, 1, 1, 2, 0), 20.0)]
     metric_view = make_metric_view(rows, tmp_path)
