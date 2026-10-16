@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
+from typing import TypeVar
 
 import polars as pl
 
@@ -19,8 +20,9 @@ TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
     TimeGranularity.YEAR: "1y",
 }
 
+T = TypeVar("T", bound="TimeAggregator")
 
-def cache_view_by_time_granularity(cls: type["TimeAggregator"]) -> type["TimeAggregator"]:
+def cache_view_by_time_granularity(cls: type[T]) -> type[T]:
     """Class decorator: returns a new class CachingTimeAggregator, wrapping TimeAggregator.
     CachingTimeAggregator run() method caches the MetricView generated for each time_granularity,
     delegating actual computation to the original run() via super().
