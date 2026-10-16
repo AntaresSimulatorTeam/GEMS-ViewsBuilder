@@ -1,9 +1,13 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-from dataclasses import dataclass
+from __future__ import annotations
 
-from gems_views_builder.input.raw_input_data import RawInputData
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gems_views_builder.input.view_config import AggregationPattern, ViewConfig
 
 # Basic combinatorial formula 5 * 2 = 10 at maximum
 # 5 time granularities
@@ -12,11 +16,14 @@ ALLOWED_PATTERN_COUNT = 10
 
 
 @dataclass
-class AggregationPatternsValidator:
-    raw_input_data: RawInputData
+class ViewConfigsAggregationPatternsValidator:
+    view_configs: list[ViewConfig]
 
     def validate(self) -> None:
-        aggregation_patterns = self.raw_input_data.view_config.aggregation_patterns
+        for view_config in self.view_configs:
+            self._validate_patterns(view_config.aggregation_patterns)
+
+    def _validate_patterns(self, aggregation_patterns: tuple[AggregationPattern, ...]) -> None:
         if len(aggregation_patterns) > ALLOWED_PATTERN_COUNT:
             raise ValueError(f"At most {ALLOWED_PATTERN_COUNT} patterns are allowed")
 

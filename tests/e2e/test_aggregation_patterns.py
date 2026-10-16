@@ -16,9 +16,10 @@ from typing import Any
 
 import polars as pl
 
-from gems_views_builder.__main__ import build_metric_views
+from gems_views_builder.__main__ import build_components_by_taxon, build_metric_views
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.view_building_input_data import create_view_building_inputs
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
 from tests.e2e.utils import (
@@ -115,21 +116,26 @@ def build_input() -> RawInputData:
 
 
 def fetch_result_files(results_dir: Path) -> list[Path]:
-    return [path for path in results_dir.glob("view_*.parquet")]
+    return list(results_dir.glob("*.parquet"))
 
 
 def sort_by_time_granularity(result_files: list[Path]) -> dict[str, Path]:
-    # Output files are named view_{time}_{timestamp}.parquet
-    return {path.stem.split("_")[1]: path for path in result_files}
+    # Output files are named {view_config_id}_{time}_{timestamp}.parquet
+    return {path.stem.rsplit("_", 2)[1]: path for path in result_files}
 
 
 def test_one_output_file_per_time_granularity_merges_all_scenarios(tmp_path: Path) -> None:
     # Arrange
     input_data = build_input()
     results_dir = create_results_dir(tmp_path)
+    components_by_taxon = build_components_by_taxon(input_data)
+    sinker = ParquetViewSinker(results_dir)
 
     # Act
-    accumulate_on_disk(build_metric_views(input_data), ParquetViewSinker(results_dir))
+    for view_building_input in create_view_building_inputs(input_data):
+        metric_views = build_metric_views(view_building_input, components_by_taxon)
+        accumulate_on_disk(metric_views, sinker)
+        del metric_views
 
     # Assert
     result = sort_by_time_granularity(fetch_result_files(results_dir))

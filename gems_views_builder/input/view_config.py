@@ -49,7 +49,7 @@ class MetricId(ViewBuilderBasedModel, frozen=True):
 
 
 class RawViewConfig(ViewBuilderBasedModel):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]+$")
     scope: Scope
     taxonomy: str
     aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
@@ -67,20 +67,35 @@ class ViewConfig:
     full_metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
-    def fetch_metrics(self, catalogs: list[Catalog]) -> None:
+    def populate_with_metrics(self, catalogs: list[Catalog]) -> None:
         logging.debug(f"Fetching {len(self.full_metric_ids)} metric(s) from catalogs")
         catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for full_metric_id in self.full_metric_ids:
-            catalog_id, metric_id = full_metric_id.split(".")
-            self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
+            catalog_id, metric_id = full_metric_id.split(".", 1)
+            catalog = catalogs_by_id.get(catalog_id)
+            if catalog is None:
+                raise ValueError(f"Catalog {catalog_id!r} used in view config {self.id!r} doesn't exist!")
+            metric = catalog.metrics.get(metric_id)
+            if metric is None:
+                raise ValueError(
+                    f"Metric {metric_id!r} used in view config {self.id!r} doesn't exist in catalog {catalog_id!r}"
+                )
+            self.metrics.append(metric)
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
 
+    def validate_full_metric_ids(self) -> None:
+        for full_metric_id in self.full_metric_ids:
+            if full_metric_id.count(".") != 1 or full_metric_id.startswith(".") or full_metric_id.endswith("."):
+                raise ValueError(
+                    f"Invalid metric id reference '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'"
+                )
+
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
-    raw_view_config = load_raw_view_config_file(config_file_path)
+    raw_view_config = load_view_config_from_yaml(config_file_path)
 
     view_config = ViewConfig(
         id=raw_view_config.id,
@@ -98,7 +113,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
     return view_config
 
 
-def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
+def load_view_config_from_yaml(view_file_path: Path) -> RawViewConfig:
     logging.info(f"Parsing view config YAML from {view_file_path}")
     with open(view_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
@@ -106,3 +121,10 @@ def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
         raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
     logging.info(f"View config YAML parsed successfully from {view_file_path}")
     return RawViewConfig.model_validate(raw["view"])
+
+
+def load_view_configs(view_configs_paths: list[Path]) -> list[ViewConfig]:
+    view_configs: list[ViewConfig] = []
+    for path in view_configs_paths:
+        view_configs.append(load_view_config(path))
+    return view_configs
