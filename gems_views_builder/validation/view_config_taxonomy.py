@@ -1,4 +1,4 @@
-# Copyright 2007-2026, RTE (https://www.rte-france.com)
+# Copyright 2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
 """Validate consistency between the view config and the study taxonomy."""
