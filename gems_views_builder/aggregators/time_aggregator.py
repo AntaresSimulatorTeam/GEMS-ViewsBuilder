@@ -20,14 +20,14 @@ TRUNCATE_WINDOWS: dict[TimeGranularity, str] = {
 }
 
 
-def cache_view_by_time_granularity(cls: type["TimeAggregator"]) -> type["TimeAggregator"]:
+def cache_view_by_time_granularity(cls: TimeAggregator) -> TimeAggregator:
     """Class decorator: returns a new class wrapping `cls`, whose run() caches the MetricView
     generated for each time_granularity (class-wide), delegating actual computation to the
     original run() via super(). Several aggregation patterns sharing the same time_granularity
     thus reuse the same generated view.
     """
 
-    class _CachingAggregator(cls):
+    class CachingTimeAggregator(cls):
         views_storage: dict[TimeGranularity, MetricView] = {}
 
         def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
@@ -35,9 +35,8 @@ def cache_view_by_time_granularity(cls: type["TimeAggregator"]) -> type["TimeAgg
                 self.views_storage[self._time_granularity] = super().run(metric_view, metric)
             return self.views_storage[self._time_granularity]
 
-    _CachingAggregator.__name__ = cls.__name__
-    _CachingAggregator.__qualname__ = cls.__qualname__
-    return _CachingAggregator
+    CachingTimeAggregator.__name__ = cls.__name__
+    return CachingTimeAggregator
 
 
 @cache_view_by_time_granularity
