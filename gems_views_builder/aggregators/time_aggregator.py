@@ -28,7 +28,7 @@ def cache_view_by_time_granularity(cls: type[T]) -> type[T]:
     delegating actual computation to the original run() via super().
     """
 
-    class CachingTimeAggregator(cls):
+    class CachingTimeAggregator(cls):  # type: ignore[misc, valid-type]  # mypy can't check a runtime variable as a base class
         views_storage: dict[TimeGranularity, MetricView] = {}
         current_metric_id = None
 
