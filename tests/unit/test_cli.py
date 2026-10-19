@@ -18,6 +18,7 @@ TABLE_FILES = ("st-x-mc-1.parquet", "st-x-mc-2.parquet")
         ("dataset", "./st-x-mc-*.parquet"),
         ("dataset/sub", "../st-x-mc-*.parquet"),
     ],
+    ids=["current-folder", "dot-slash", "parent-folder"],
 )
 def test_relative_multiple_file_path_options_are_accepted_and_collected(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, working_dir: str, global_pattern: str
@@ -28,6 +29,7 @@ def test_relative_multiple_file_path_options_are_accepted_and_collected(
     for name in TABLE_FILES:
         (dataset_dir / name).touch()
     monkeypatch.chdir(tmp_path / working_dir)
+    # The CLI check ignores file extensions, so both options can share the same pattern
     args = Namespace(simulation_tables=global_pattern, catalogs=global_pattern)
 
     # Act
@@ -38,11 +40,24 @@ def test_relative_multiple_file_path_options_are_accepted_and_collected(
     assert {path.resolve() for path in collected} == {(dataset_dir / name).resolve() for name in TABLE_FILES}
 
 
-def test_multiple_file_path_option_with_missing_parent_directory_is_rejected(tmp_path: Path) -> None:
+@pytest.mark.parametrize("option_name", ["simulation-tables", "catalogs"])
+@pytest.mark.parametrize(
+    ("global_pattern", "expected_error"),
+    [
+        ("", "does not end with a file name pattern"),
+        (".", "does not end with a file name pattern"),
+        ("missing/st-x-mc-*.parquet", "is not a directory"),
+    ],
+    ids=["empty", "dot", "missing-parent"],
+)
+def test_invalid_multiple_file_path_option_is_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, option_name: str, global_pattern: str, expected_error: str
+) -> None:
     # Arrange
-    global_pattern = str(tmp_path / "missing" / "st-x-mc-*.parquet")
-    args = Namespace(simulation_tables=global_pattern, catalogs=str(tmp_path / "*.yml"))
+    monkeypatch.chdir(tmp_path)
+    args = Namespace(simulation_tables="*.parquet", catalogs="*.yml")
+    setattr(args, option_name.replace("-", "_"), global_pattern)
 
     # Act & Assert
-    with pytest.raises(OSError, match="--simulation-tables .* is not a directory"):
+    with pytest.raises(OSError, match=f"--{option_name} : .*{expected_error}"):
         check_multiple_file_path_options(args)

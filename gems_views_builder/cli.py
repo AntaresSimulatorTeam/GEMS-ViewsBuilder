@@ -115,7 +115,10 @@ def check_paths_options(args: argparse.Namespace) -> None:
 
 def check_multiple_file_path_options(args: argparse.Namespace) -> None:
     for option in MULTIPLE_FILE_PATH_OPTIONS:
-        option_value = Path(getattr(args, option.args_attribute))
+        raw_value = getattr(args, option.args_attribute)
+        option_value = Path(raw_value)
+        if not option_value.name:
+            raise OSError(f"--{option.name} : {raw_value!r} does not end with a file name pattern")
         if not option.system_check(option_value):
             raise OSError(f"--{option.name} : {option_value.parent} is not a {option.system_type.value}")
 
