@@ -2,8 +2,10 @@
 
 GVB checks all its inputs before building any View. It stops at the **first** rule that fails and reports which file and which rule:
 
-- problems with the command line itself (a missing option, a path that does not exist) end the run with **exit code 2** and a message in the terminal;
-- every other problem ends the run with **exit code 1**, and the message is written to the log file.
+- problems with the command line itself (a missing or unknown option, a path that does not exist) end the run with **exit code 2**;
+- every other problem ends the run with **exit code 1**.
+
+The message is printed in the terminal and written to the log file. Only a missing, unknown or abbreviated option is reported in the terminal alone, because it is detected before the log file is opened.
 
 The checks run in the order of the sections below.
 
@@ -16,7 +18,7 @@ The checks run in the order of the sections below.
 | `--libraries-dir` and `--catalogs-dir` point to existing folders. | `--catalogs-dir is not a directory: …` |
 | `--simulation-tables` and `--view-configs` end with a file name or a file name pattern, not with a folder. | `--simulation-tables : 'out/' does not end with a file name pattern` |
 | The folder part of those patterns is an existing folder. It may be the current folder, as in `"st-*.parquet"`. | `--simulation-tables : folder 'missing' of glob pattern 'missing/st-x-mc-*.parquet' is not an existing folder` |
-| `--output-dir` and, if given, `--log-dir` are existing folders. | `--output-dir is not a directory: …` |
+| `--output-dir` is an existing folder. The `--log-dir` folder is created if it does not exist. | `--output-dir is not a directory: …` |
 
 ## 2. Files and extensions
 
@@ -38,7 +40,7 @@ Each YAML file is read against its GEMS format. **Unknown fields are rejected**,
 | Taxonomy | root key `taxonomy:` | [Taxonomy file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/taxonomy/) |
 | Catalog | root key `catalog:`; a term's `location-port`, if given, is not blank; a metric `filter` has both a `key` and a `value` | [Catalog file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/catalog/) |
 | View config | root key `view:`; the `id` contains only letters, digits, `_` and `-` (it is used in the View file names); at least one aggregation pattern and one metric; time granularity is one of `hour`, `day`, `week`, `month`, `year`; every selected metric names an existing catalog and an existing metric in it | [Views configuration file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) |
-| Model libraries | read by GemsPy; each library id is defined only once across the folder | [Library file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/) |
+| Model libraries | read by GemsPy; each library id is defined only once across the folder; every model used by a component of the system declares a `taxonomy-category` | [Library file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/) |
 | System | read by GemsPy against the libraries; each component sets every property its model declares, each property only once | [System file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/) |
 | SimulationTables | exactly these columns, no missing and no extra ones: `block`, `component`, `output`, `absolute_time_index`, `block_time_index`, `scenario_index`, `value`, `basis_status` | [Simulation Table](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/) |
 | Calendar | exactly the columns `absolute_time_index`, `block`, `granular_date`; `absolute_time_index` runs 0, 1, 2, … without gaps; the step between consecutive `granular_date` values is constant | — |
@@ -56,9 +58,6 @@ For each view config:
 
 - at most **10** aggregation patterns (5 time granularities × with or without scenario aggregation);
 - each combination of time granularity and scenario aggregation appears **only once**.
-
-!!! note "Location filter"
-    The optional `location-filter` of an aggregation pattern lists the locations to keep in the View. Its values are not checked: a location id that does not exist simply matches no row, so a misspelt id gives a View without that location rather than an error.
 
 ## 5. Consistency between files
 
@@ -89,4 +88,22 @@ While building the Views, GVB finds the location of each component used by a sel
 - a term **with** a `location-port`: the component must be connected, on that port, to **exactly one** component, and that component must belong to the location taxonomy category of the view config;
 - a term **without** a `location-port`: the term's taxonomy category must be the location taxonomy category itself (the component is its own location).
 
-If a component cannot be located, the run stops with a message naming the component and the port, for example `Component 'gen_1' port balance_port has 0 peers, expected 1`.
+If a component cannot be located, the run stops with a message naming the component, for example:
+
+| Case | Example message |
+|---|---|
+| no peer, or several peers, on the location port | `Component 'gen_1' port balance_port has 0 peers, expected 1` |
+| the peer is not in the location taxonomy category | `Component 'gen_1' port balance_port has peer 'node_1' with taxonomy category 'node', expected 'balance'` |
+| no location port, and the component is not in the location taxonomy category | `Component 'gen_1' has taxonomy category 'generator', expected 'balance'` |
+
+## What is not checked
+
+Some inputs are matched rather than checked. When they do not match, GVB gives fewer rows or an empty value, not an error:
+
+| Input | Behaviour |
+|---|---|
+| SimulationTable rows and calendar | A time-dependent row is kept only if its `absolute_time_index` is in the calendar **and** its `block` is the `block` of that calendar row. Other rows are left out. Rows that do not depend on time (no `absolute_time_index`) are always kept. |
+| `location-filter` of an aggregation pattern | A location id that does not exist matches no row. |
+| `extra-locations` of the view config scope | A location component that does not have the named property gets no extra location. |
+| `scope.calendar` of the view config | Not compared with anything: the calendar given with `--calendar` is always used. |
+| Components without SimulationTable rows | A component of the system with no rows in the SimulationTables gives empty values in the View. |
