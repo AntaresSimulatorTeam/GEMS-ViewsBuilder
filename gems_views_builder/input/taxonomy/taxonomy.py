@@ -33,7 +33,7 @@ class TaxonomyCategory(ViewBuilderBasedModel):
 class TaxonomyData(ViewBuilderBasedModel):
     id: str
     description: str = ""
-    categories: list[TaxonomyCategory] = Field(default_factory=list)
+    categories: list[TaxonomyCategory] = Field(default_factory=list, min_length=1)
 
 
 @dataclass

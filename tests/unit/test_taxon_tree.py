@@ -8,7 +8,12 @@ import pytest
 
 from gems_views_builder.input.taxonomy.taxonomy import load_taxonomy
 from gems_views_builder.input.taxonomy.taxonomy_tree import TaxonomyTreeNode
-from gems_views_builder.input.taxonomy.taxonomy_utils import enrich_tree, make_neighbors, make_taxonomy_tree
+from gems_views_builder.input.taxonomy.taxonomy_utils import (
+    collect_nodes,
+    enrich_tree,
+    make_neighbors,
+    make_taxonomy_tree,
+)
 
 TAXONOMY = """
 taxonomy:
@@ -110,3 +115,19 @@ def test_enrich_tree(tmp_path: Path) -> None:
     assert taxonomy_tree.root.children["energy"].children["production"].descendants == set()
     assert taxonomy_tree.root.children["energy"].children["consumption"].descendants == set()
     assert taxonomy_tree.root.children["balance"].descendants == set()
+
+
+def test_collect_nodes(tmp_path: Path) -> None:
+    # Arrange
+    (tmp_path / "taxonomy.yml").write_text(TAXONOMY)
+    taxonomy = load_taxonomy(tmp_path / "taxonomy.yml")
+    taxonomy_tree = make_taxonomy_tree(taxonomy)
+
+    # Act
+    nodes: dict[str, TaxonomyTreeNode] = {}
+    collect_nodes(taxonomy_tree.root, nodes)
+    node_ids = [node.id for node in nodes.values()]
+    expected_node_ids = ["energy", "production", "consumption", "balance"]
+
+    # Assert
+    assert node_ids == expected_node_ids
