@@ -31,8 +31,7 @@ class PathOption(Option):
 
 
 def parent_is_dir(path: Path) -> bool:
-    parent_dir = path.parent
-    return parent_dir != Path(".") and parent_dir.is_dir()
+    return path.parent.is_dir()
 
 
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
