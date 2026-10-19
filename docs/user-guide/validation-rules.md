@@ -1,4 +1,92 @@
 # Validation rules
 
-!!! warning "Work in progress"
-    This page is being written.
+GVB checks all its inputs before building any View. It stops at the **first** rule that fails and reports which file and which rule:
+
+- problems with the command line itself (a missing option, a path that does not exist) end the run with **exit code 2** and a message in the terminal;
+- every other problem ends the run with **exit code 1**, and the message is written to the log file.
+
+The checks run in the order of the sections below.
+
+## 1. Command line paths
+
+| Rule | Example message |
+|---|---|
+| Every required option is given, with its full name (abbreviations are not accepted). | `the following arguments are required: --catalogs-dir` |
+| `--system`, `--taxonomy` and `--calendar` point to existing files. | `--calendar is not a file: …` |
+| `--libraries-dir` and `--catalogs-dir` point to existing folders. | `--catalogs-dir is not a directory: …` |
+| `--simulation-tables` and `--view-configs` end with a file name or a file name pattern, not with a folder. | `--simulation-tables : 'out/' does not end with a file name pattern` |
+| The folder part of those patterns is an existing folder. It may be the current folder, as in `"st-*.parquet"`. | `--simulation-tables : folder 'missing' of glob pattern 'missing/st-x-mc-*.parquet' is not an existing folder` |
+| `--output-dir` and, if given, `--log-dir` are existing folders. | `--output-dir is not a directory: …` |
+
+## 2. Files and extensions
+
+| Input | Rule |
+|---|---|
+| System, taxonomy | `.yml` file |
+| Libraries folder | contains only `.yml` files, and at least one |
+| Catalogs folder | contains only `.yml` files, and at least one; any other file or sub-folder is an error |
+| View configs | every matched file is `.yml` |
+| Calendar | `.csv` file |
+| SimulationTables | at least one file matches the pattern; every file is `.parquet` or `.csv`; all files use the **same** extension |
+
+## 3. Content of each file
+
+Each YAML file is read against its GEMS format. **Unknown fields are rejected**, so a misspelt key is reported instead of being silently ignored.
+
+| File | Rules | Format |
+|---|---|---|
+| Taxonomy | root key `taxonomy:` | [Taxonomy file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/taxonomy/) |
+| Catalog | root key `catalog:`; a term's `location-port`, if given, is not blank; a metric `filter` has both a `key` and a `value` | [Catalog file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/catalog/) |
+| View config | root key `view:`; the `id` contains only letters, digits, `_` and `-` (it is used in the View file names); at least one aggregation pattern and one metric; time granularity is one of `hour`, `day`, `week`, `month`, `year`; every selected metric names an existing catalog and an existing metric in it | [Views configuration file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) |
+| Model libraries | read by GemsPy; each library id is defined only once across the folder | [Library file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/) |
+| System | read by GemsPy against the libraries; each component sets every property its model declares, each property only once | [System file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/) |
+| SimulationTables | exactly these columns, no missing and no extra ones: `block`, `component`, `output`, `absolute_time_index`, `block_time_index`, `scenario_index`, `value`, `basis_status` | [Simulation Table](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/) |
+| Calendar | exactly the columns `absolute_time_index`, `block`, `granular_date`; `absolute_time_index` runs 0, 1, 2, … without gaps; the step between consecutive `granular_date` values is constant | — |
+
+## 4. Catalog ids, view configs and aggregation patterns
+
+Across all catalogs in `--catalogs-dir`, each catalog `id` is used **only once**. The message names both files, for example `Catalog id 'x' is defined in both c1.yml and c2.yml`.
+
+Across all view configs given with `--view-configs`:
+
+- each view config `id` is used **only once**;
+- every selected metric is written `<catalog id>.<metric id>`, with exactly one dot.
+
+For each view config:
+
+- at most **10** aggregation patterns (5 time granularities × with or without scenario aggregation);
+- each combination of time granularity and scenario aggregation appears **only once**.
+
+!!! note "Location filter"
+    The optional `location-filter` of an aggregation pattern lists the locations to keep in the View. Its values are not checked: a location id that does not exist simply matches no row, so a misspelt id gives a View without that location rather than an error.
+
+## 5. Consistency between files
+
+All catalogs are first checked against the taxonomy (row 1). Rows 2 and 3 then run for **every view config** given with `--view-configs`.
+
+```mermaid
+graph LR
+    catalog(("catalogs"))
+    taxonomy(("taxonomy"))
+    view_config(("view config"))
+    catalog -- "taxonomy id · categories · outputs · ports" --- taxonomy
+    view_config -- "taxonomy id · location category" --- taxonomy
+    view_config -- "taxonomy id · location category" --- catalog
+```
+
+| # | Between | Rule |
+|---|---|---|
+| 1 | catalogs and taxonomy | `catalog.taxonomy` is the taxonomy id; every term's `taxonomy-category` exists in the taxonomy; every `output-id` is declared as a variable or extra-output of that category; every `location-port` is declared as a port of that category |
+| 2 | view config and taxonomy | `view.taxonomy` is the taxonomy id; the location `taxonomy-category` is a category of the taxonomy |
+| 3 | catalogs and view config | every catalog **used by the view config** (named in its metrics) uses the same taxonomy and the same location taxonomy category as the view config |
+
+Whether each selected metric exists is checked earlier, when the view config is loaded (section 3).
+
+## 6. Locating components
+
+While building the Views, GVB finds the location of each component used by a selected metric:
+
+- a term **with** a `location-port`: the component must be connected, on that port, to **exactly one** component, and that component must belong to the location taxonomy category of the view config;
+- a term **without** a `location-port`: the term's taxonomy category must be the location taxonomy category itself (the component is its own location).
+
+If a component cannot be located, the run stops with a message naming the component and the port, for example `Component 'gen_1' port balance_port has 0 peers, expected 1`.
