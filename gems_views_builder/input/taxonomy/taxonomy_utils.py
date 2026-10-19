@@ -89,11 +89,11 @@ def enrich_tree(node: TaxonomyTreeNode) -> set[str]:
     return {node.id} | descendants
 
 
-def collect_nodes(root: TaxonomyTreeNode, nodes: dict[str, TaxonomyTreeNode]) -> None:
+def collect_enriched_taxon_nodes(root: TaxonomyTreeNode, nodes: dict[str, TaxonomyTreeNode]) -> None:
     """
     No need to check for self loops/cycles
     This function will be called after the tree is enriched
     """
     for child in root.children.values():
         nodes[child.id] = child
-        collect_nodes(child, nodes)
+        collect_enriched_taxon_nodes(child, nodes)

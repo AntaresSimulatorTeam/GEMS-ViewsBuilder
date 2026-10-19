@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from itertools import chain
 from typing import TYPE_CHECKING, Any, cast
 
 from gems_craft.study import Component as GemsPyComponent  # type: ignore
@@ -13,6 +14,7 @@ from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component.component import Component
 from gems_views_builder.input.component.connection import ConnectionsThroughPort
 from gems_views_builder.input.library import associate_models_with_a_taxon
+from gems_views_builder.input.taxonomy.taxonomy_tree import TaxonomyTreeNode
 
 if TYPE_CHECKING:
     from gems_views_builder.input.raw_input_data import RawInputData
@@ -22,23 +24,31 @@ def create_components(gemspy_components: list[GemsPyComponent]) -> list[Componen
     return [Component(component) for component in gemspy_components]
 
 
-def enrich_components(components: list[Component], raw_input_data: RawInputData) -> None:
+def enrich_components(components: list[Component], raw_input_data: RawInputData, enriched_taxon_nodes: dict[str, TaxonomyTreeNode]) -> None:
     """Attach taxonomy categories and port connections to components."""
-    supply_components_with_taxon(components, associate_models_with_a_taxon(raw_input_data.libraries))
+    supply_components_with_taxon(components, associate_models_with_a_taxon(raw_input_data.libraries), enriched_taxon_nodes)
     component_port_connections = build_component_port_connections(raw_input_data.system.connections)
     supply_components_with_port_connections(components, component_port_connections)
 
 
-def supply_components_with_taxon(components: list[Component], taxonomy_category_by_model: dict[str, str]) -> None:
+def supply_components_with_taxon(components: list[Component], taxonomy_category_by_model: dict[str, str], enriched_taxon_nodes: dict[str, TaxonomyTreeNode]) -> None:
     for component in components:
-        component.taxonomy_category = taxonomy_category_by_model[component.model_id]
+        if component.model_id not in taxonomy_category_by_model:
+            raise ValueError(f"Model {component.model_id} doesn't define taxonomy category in library")
+        if taxonomy_category_by_model[component.model_id] not in enriched_taxon_nodes:
+            raise ValueError(f"Taxonomy category {taxonomy_category_by_model[component.model_id]} not found in input taxonomy tree")
+
+        # component taxonomy category + all its descendants
+        # if someone writes in catalog taxonomy category 
+        component.taxonomy_categories = {enriched_taxon_nodes[taxonomy_category_by_model[component.model_id]].id} | enriched_taxon_nodes[taxonomy_category_by_model[component.model_id]].descendants
 
 
 def group_components_by_taxon(components: list[Component]) -> dict[str, list[Component]]:
     """Group components by taxonomy category. Requires ``supply_components_with_taxon`` first."""
     components_by_taxon: dict[str, list[Component]] = defaultdict(list)
     for component in components:
-        components_by_taxon[cast(str, component.taxonomy_category)].append(component)
+        for taxon_cat in component.taxonomy_categories:
+            components_by_taxon[cast(str, taxon_cat)].append(component)
     return components_by_taxon
 
 
@@ -151,6 +161,9 @@ def supply_component_with_location(component: Component, location_port: str, loc
     peers = component.connections.get_components(location_port)
     if len(peers) != 1:
         raise ValueError(f"Component {component.id!r} port {location_port} has {len(peers)} peers, expected 1")
+    if location_taxonomy_category not in peers[0].taxonomy_categories:
+        raise ValueError(f"Component {peers[0].id!r} has taxonomy categories {peers[0].taxonomy_categories!r}, expected {location_taxonomy_category!r}")
+    
     if peers[0].taxonomy_category != location_taxonomy_category:
         raise ValueError(
             f"Component {component.id!r} port {location_port} has peer {peers[0].id!r} with taxonomy category {peers[0].taxonomy_category!r}, expected {location_taxonomy_category!r}"
