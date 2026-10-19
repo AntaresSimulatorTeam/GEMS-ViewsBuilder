@@ -4,9 +4,8 @@
 """
 E2E test for scenario aggregation through the view-building process.
 
-PatternRunner emits one temporal view per (time, scenario) pattern.
-accumulate_on_disk then writes one result file per time granularity, merging
-every pattern that shares that time.
+Each aggregation pattern produces its own result file, named
+{view_config_id}_{aggregation_pattern_id}_{time_granularity}_{scenario}_{timestamp}.parquet.
 """
 
 from datetime import datetime
@@ -119,12 +118,12 @@ def fetch_result_files(results_dir: Path) -> list[Path]:
     return list(results_dir.glob("*.parquet"))
 
 
-def sort_by_time_granularity(result_files: list[Path]) -> dict[str, Path]:
-    # Output files are named {view_config_id}_{time}_{timestamp}.parquet
-    return {path.stem.rsplit("_", 2)[1]: path for path in result_files}
+def result_name(path: Path) -> str:
+    # Timestamp is appended as a final _{timestamp} segment with no underscore inside it.
+    return path.stem.rsplit("_", 1)[0]
 
 
-def test_one_output_file_per_time_granularity_merges_all_scenarios(tmp_path: Path) -> None:
+def test_one_output_file_per_aggregation_pattern(tmp_path: Path) -> None:
     # Arrange
     input_data = build_input()
     results_dir = create_results_dir(tmp_path)
@@ -138,13 +137,22 @@ def test_one_output_file_per_time_granularity_merges_all_scenarios(tmp_path: Pat
         del metric_views
 
     # Assert
-    result = sort_by_time_granularity(fetch_result_files(results_dir))
-    hour_view = pl.read_parquet(result["hour"])
-    day_view = pl.read_parquet(result["day"])
+    result = {result_name(path): path for path in fetch_result_files(results_dir)}
+    hourly = pl.read_parquet(result["view_area_hourly_hour_false"])
+    hourly_aggregated = pl.read_parquet(result["view_area_hourly2_hour_true"])
+    daily = pl.read_parquet(result["view_area_daily_day_false"])
+    daily_aggregated = pl.read_parquet(result["view_area_daily2_day_true"])
 
-    assert set(result) == {"hour", "day", "month"}
-    assert len(result) == 3
-    assert set(hour_view["metric_id"].to_list()) == {"LOAD", "PROD"}
-    assert set(hour_view["scenario_aggregation"].to_list()) == {True, False}
-    assert set(day_view["metric_id"].to_list()) == {"LOAD", "PROD"}
-    assert set(day_view["scenario_aggregation"].to_list()) == {True, False}
+    assert set(result) == {
+        "view_area_hourly_hour_false",
+        "view_area_hourly2_hour_true",
+        "view_area_daily_day_false",
+        "view_area_daily2_day_true",
+        "view_area_monthly_month_false",
+    }
+    assert set(hourly["metric_id"].to_list()) == {"LOAD", "PROD"}
+    assert set(hourly["scenario_aggregation"].to_list()) == {False}
+    assert set(hourly_aggregated["scenario_aggregation"].to_list()) == {True}
+    assert set(daily["metric_id"].to_list()) == {"LOAD", "PROD"}
+    assert set(daily["scenario_aggregation"].to_list()) == {False}
+    assert set(daily_aggregated["scenario_aggregation"].to_list()) == {True}

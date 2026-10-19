@@ -168,10 +168,26 @@ def test_populate_with_metrics_raises_when_metric_is_missing(tmp_path: Path) -> 
     assert str(error.value) == "Metric 'LOAD' used in view config 'view' doesn't exist in catalog 'catalog'"
 
 
-def test_view_config_aggregation_patterns_validator_raises_when_patterns_are_not_unique(tmp_path: Path) -> None:
+def test_view_config_aggregation_patterns_validator_raises_when_pattern_ids_are_not_unique(tmp_path: Path) -> None:
     # Arrange
     view = make_view_config()
     view["aggregations-patterns"] = view["aggregations-patterns"] * 2
+    view_config = load_view_config(write_view_config(tmp_path, view))
+
+    # Act
+    with pytest.raises(ValueError) as error:
+        ViewConfigsAggregationPatternsValidator([view_config]).validate()
+
+    # Assert
+    assert str(error.value) == "Aggregation pattern 'hourly' is defined multiple times"
+
+
+def test_view_config_aggregation_patterns_validator_raises_when_time_and_scenario_match(tmp_path: Path) -> None:
+    # Arrange
+    view = make_view_config()
+    duplicate = dict(view["aggregations-patterns"][0])
+    duplicate["id"] = "hourly_again"
+    view["aggregations-patterns"].append(duplicate)
     view_config = load_view_config(write_view_config(tmp_path, view))
 
     # Act

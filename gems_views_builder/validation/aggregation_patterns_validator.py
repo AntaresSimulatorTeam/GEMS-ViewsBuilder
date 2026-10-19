@@ -27,8 +27,12 @@ class ViewConfigsAggregationPatternsValidator:
         if len(aggregation_patterns) > ALLOWED_PATTERN_COUNT:
             raise ValueError(f"At most {ALLOWED_PATTERN_COUNT} patterns are allowed")
 
+        pattern_ids: set[str] = set()
         pattern_combinations = set()
         for pattern in aggregation_patterns:
+            if pattern.id in pattern_ids:
+                raise ValueError(f"Aggregation pattern {pattern.id!r} is defined multiple times")
+            pattern_ids.add(pattern.id)
             if (pattern.time_granularity, pattern.scenario) in pattern_combinations:
                 raise ValueError(f"Pattern ({pattern.time_granularity}, {pattern.scenario}) is already defined")
             pattern_combinations.add((pattern.time_granularity, pattern.scenario))

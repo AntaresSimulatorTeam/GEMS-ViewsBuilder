@@ -21,4 +21,6 @@ class MetricView:
 
 class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity
+    scenario: bool
     view_config_id: str
+    aggregation_pattern_id: str
