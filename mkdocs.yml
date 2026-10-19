@@ -13,7 +13,7 @@ nav:
   - Examples:
       - Simple setups: examples/simple-setups.md
       - CLI calls: examples/cli-calls.md
-      - Two areas, end to end: examples/two-areas.md
+      - Two-area case study: examples/two-areas.md
   - Developer guide: developer-guide.md
   - Changelog: CHANGELOG.md
 
