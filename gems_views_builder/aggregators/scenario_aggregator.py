@@ -90,7 +90,7 @@ class ScenarioAggregator:
         sink_to_parquet(view, new_path)
         logging.info(f"Scenario view written to {new_path}")
         scenario_view = TemporalMetricView(new_path)
-        scenario_view.time_granularity = metric_view.time_granularity
-        scenario_view.scenario = self.scenario
-        scenario_view.aggregation_pattern_id = self.aggregation_pattern_id
+        scenario_view.set_temp_metric_view_data(
+            metric_view.time_granularity, self.scenario, self.aggregation_pattern_id
+        )
         return scenario_view

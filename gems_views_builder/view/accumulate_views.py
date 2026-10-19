@@ -5,15 +5,20 @@ from collections import defaultdict
 
 import polars as pl
 
+from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import TemporalMetricView
 from gems_views_builder.view.view_sinker import ViewSinker
 
 
-def group_views(metric_views: list[TemporalMetricView]) -> dict[tuple[str, str], list[TemporalMetricView]]:
-    """Group metric views that share a view config and an aggregation pattern."""
-    grouped_views: dict[tuple[str, str], list[TemporalMetricView]] = defaultdict(list)
+def group_views(
+    metric_views: list[TemporalMetricView],
+) -> dict[tuple[str, str, TimeGranularity, bool], list[TemporalMetricView]]:
+    """Group metric views by view config, aggregation pattern, time granularity, and scenario."""
+    grouped_views: dict[tuple[str, str, TimeGranularity, bool], list[TemporalMetricView]] = defaultdict(list)
     for view in metric_views:
-        grouped_views[(view.view_config_id, view.aggregation_pattern_id)].append(view)
+        grouped_views[(view.view_config_id, view.aggregation_pattern_id, view.time_granularity, view.scenario)].append(
+            view
+        )
     return grouped_views
 
 
@@ -22,10 +27,9 @@ def accumulate_views(views: list[TemporalMetricView]) -> pl.LazyFrame:
 
 
 def accumulate_on_disk(metric_views: list[TemporalMetricView], sinker: ViewSinker) -> None:
-    for (view_config_id, aggregation_pattern_id), views in group_views(metric_views).items():
-        view = views[0]
+    for (view_config_id, aggregation_pattern_id, time_granularity, scenario), views in group_views(
+        metric_views
+    ).items():
         accumulated_views = accumulate_views(views)
-        save_file_name = (
-            f"{view_config_id}_{aggregation_pattern_id}_{view.time_granularity.value}_{str(view.scenario).lower()}"
-        )
+        save_file_name = f"{view_config_id}_{aggregation_pattern_id}_{time_granularity.value}_{str(scenario).lower()}"
         sinker.sink(accumulated_views, save_file_name)

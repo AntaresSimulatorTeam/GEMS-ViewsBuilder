@@ -24,3 +24,10 @@ class TemporalMetricView(MetricView):
     scenario: bool
     view_config_id: str
     aggregation_pattern_id: str
+
+    def set_temp_metric_view_data(
+        self, time_granularity: TimeGranularity, scenario: bool, aggregation_pattern_id: str
+    ) -> None:
+        self.time_granularity = time_granularity
+        self.scenario = scenario
+        self.aggregation_pattern_id = aggregation_pattern_id
