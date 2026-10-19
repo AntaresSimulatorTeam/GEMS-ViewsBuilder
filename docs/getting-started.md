@@ -94,7 +94,7 @@ gems-views-builder \
   --view-configs      resources/tests_inputs/test_3/view_config.yml \
   --calendar          resources/tests_inputs/test_3/calendar_file.csv \
   --simulation-tables "resources/tests_inputs/test_3/simulation_table*.parquet" \
-  --output            results
+  --output-dir        results
 ```
 
 | Option | What to give |
@@ -106,7 +106,7 @@ gems-views-builder \
 | `--view-configs` | One view config file, or a pattern matching several (for example `"views/*.yml"`). GVB builds the Views of each one in the same run. |
 | `--calendar` | The calendar file. |
 | `--simulation-tables` | One SimulationTable file, or a pattern matching several (for example one file per Monte Carlo batch). |
-| `--output` | An existing folder where the Views are written. |
+| `--output-dir` | An existing folder where the Views are written. |
 
 !!! tip "Quote the patterns"
     Put patterns such as `"simulation_table*.parquet"` in quotes, so that GVB expands them and not your shell. A pattern may point to the current folder, for example `"st-*.parquet"`.
