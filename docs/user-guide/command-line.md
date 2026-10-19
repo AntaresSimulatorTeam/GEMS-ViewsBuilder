@@ -1,6 +1,6 @@
 # Command line
 
-GVB is run with one command, `gems-views-builder`. It reads a GEMS study and its simulation results, checks them, and writes one View file per view config and aggregation pattern.
+GVB is run with one command, `gems-views-builder`. It reads a GEMS study and its simulation results, checks them, and writes the [Views](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/views/) asked for by the view configs.
 
 ```text
 gems-views-builder --libraries-dir DIR --catalogs-dir DIR
@@ -45,7 +45,7 @@ All input options are required.
 
 | Option | Value | Default | Description |
 |---|---|---|---|
-| `-o`, `--output-dir` | folder | — (required) | Existing folder where the View files are written. |
+| `-o`, `--output-dir` | folder | — (required) | Existing folder where the [Views](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/views/) are written. |
 | `-f`, `--output-format` | `parquet` or `csv` | `parquet` | Format of the View files. |
 | `-l`, `--log-dir` | folder | `logs` in the current folder | Folder where the log file is written. |
 | `-v`, `--verbose` | — | off | Adds debug messages to the terminal and the log file. |
@@ -73,27 +73,6 @@ A pattern picks files out of one folder that may also hold other files, such as 
 
 !!! tip "Quote the patterns"
     Write patterns in quotes, as in `"output/st-*.parquet"`. Without quotes, your shell replaces the pattern by the list of matching files before GVB starts. As soon as more than one file matches, the run stops with `unrecognized arguments`.
-
-## Output files
-
-GVB writes one View file for each view config and each of its aggregation patterns, in the folder given with `--output-dir`:
-
-```text
-<view id>_<aggregation-pattern id>_<timestamp>.<parquet|csv>
-```
-
-- `<view id>` is the `id` of the view config, and `<aggregation-pattern id>` the `id` of the aggregation pattern;
-- `<timestamp>` is the start of the run, in UTC, written `YYYYMMDDTHHMMSS`. It is the same for all files of one run, so the Views of one run are easy to find together.
-
-For example, a view config `view_area` with the patterns `hourly` and `yearly_stats` gives:
-
-```text
-views/
-├── view_area_hourly_20261019T141953.parquet
-└── view_area_yearly_stats_20261019T141953.parquet
-```
-
-The columns of a View are described on the GEMS [Views](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/views/) page.
 
 ## Logs
 
