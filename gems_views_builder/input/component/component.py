@@ -20,7 +20,7 @@ class Component:
     """
 
     raw_component: GemsPyComponent
-    taxonomy_category: str | None = None
+    taxonomy_categories: set[str]
     # Connections holding the peer components connected on each port
     connections: ConnectionsThroughPort = field(default_factory=ConnectionsThroughPort)
     # Where this component is located for a given (location_port, taxonomy_category).
@@ -40,9 +40,6 @@ class Component:
     @property
     def properties(self) -> dict[str, str]:
         return cast(dict[str, str], self.raw_component.properties)
-
-    def set_taxonomy_category(self, taxonomy_category: str) -> None:
-        self.taxonomy_category = taxonomy_category
 
     def is_located_at(self, location_port: str | None, location_taxonomy_category: str) -> bool:
         """Whether a location was precomputed for ``(location_port, location_taxonomy_category)``."""
