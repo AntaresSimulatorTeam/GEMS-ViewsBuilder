@@ -17,6 +17,7 @@ from gems_views_builder.input.component import (
 )
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input_data import ViewBuildingInputData, create_view_building_inputs
+from gems_views_builder.input.view_config import populate_view_configs_with_metrics
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
 from gems_views_builder.metric_view import TemporalMetricView
@@ -66,6 +67,7 @@ def build_metric_views(
 
 def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) -> None:
     raw_input_data = load_and_validate_input_data(input_paths)
+    populate_view_configs_with_metrics(raw_input_data.view_configs, raw_input_data.catalogs)
     components_by_taxon = build_components_by_taxon(raw_input_data)
     for view_building_input in create_view_building_inputs(raw_input_data):
         metric_views = build_metric_views(view_building_input, components_by_taxon)

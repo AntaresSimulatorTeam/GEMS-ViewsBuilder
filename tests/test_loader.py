@@ -4,6 +4,7 @@
 from argparse import Namespace
 from pathlib import Path
 
+from gems_views_builder.__main__ import load_and_validate_input_data
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.library import Library
@@ -11,7 +12,7 @@ from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import SimulationTable
 from gems_views_builder.input.system import System
 from gems_views_builder.input.taxonomy import Taxonomy
-from gems_views_builder.input.view_config import ViewConfig
+from gems_views_builder.input.view_config import ViewConfig, populate_view_configs_with_metrics
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
 from tests.conftest import paths_from_dataset
@@ -65,6 +66,16 @@ def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
     assert isinstance(raw_input_data.calendar, Calendar)
     assert raw_input_data.catalogs
     assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs)
+    assert all(view_config.full_metric_ids for view_config in raw_input_data.view_configs)
+    assert all(view_config.metrics == [] for view_config in raw_input_data.view_configs)
+
+
+def test_metrics_are_populated_after_validation(test_dataset_dir: Path) -> None:
+    raw_input_data = load_and_validate_input_data(paths_from_dataset(test_dataset_dir))
+    assert all(view_config.metrics == [] for view_config in raw_input_data.view_configs)
+
+    populate_view_configs_with_metrics(raw_input_data.view_configs, raw_input_data.catalogs)
+
     assert all(view_config.metrics for view_config in raw_input_data.view_configs)
     assert all(
         len(view_config.metrics) == len(view_config.full_metric_ids) for view_config in raw_input_data.view_configs
@@ -90,7 +101,5 @@ def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path
     assert isinstance(raw_input_data.calendar, Calendar)
     assert raw_input_data.catalogs
     assert all(isinstance(catalog, Catalog) for catalog in raw_input_data.catalogs)
-    assert all(view_config.metrics for view_config in raw_input_data.view_configs)
-    assert all(
-        len(view_config.metrics) == len(view_config.full_metric_ids) for view_config in raw_input_data.view_configs
-    )
+    assert all(view_config.full_metric_ids for view_config in raw_input_data.view_configs)
+    assert all(view_config.metrics == [] for view_config in raw_input_data.view_configs)

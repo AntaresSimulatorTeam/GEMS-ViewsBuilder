@@ -5,7 +5,7 @@ import logging
 from dataclasses import dataclass
 
 from gems_views_builder.input.calendar import load_calendar
-from gems_views_builder.input.catalog import Catalog, load_catalogs
+from gems_views_builder.input.catalog import load_catalogs
 from gems_views_builder.input.library import create_lib_from_yml, load_yml_libs
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import load_simulation_tables
@@ -20,14 +20,13 @@ class Loader:
     input_paths: InputPaths
 
     def load(self) -> RawInputData:
-        """Perform all input data I/O and return populated raw input data."""
+        """Perform all input data I/O and return the loaded raw input data."""
 
         logging.info("Loading inputs from explicit input paths")
         view_configs: list[ViewConfig] = load_view_configs(self.input_paths.view_configs)
         yml_libs = load_yml_libs(self.input_paths.libraries_dir)
 
         catalogs = load_catalogs(self.input_paths.catalogs)
-        populate_view_configs_with_metrics(view_configs, catalogs)
         raw_input_data = RawInputData(
             taxonomy=load_taxonomy(self.input_paths.taxonomy),
             view_configs=view_configs,
@@ -40,8 +39,3 @@ class Loader:
 
         logging.info("All inputs loaded successfully")
         return raw_input_data
-
-
-def populate_view_configs_with_metrics(view_configs: list[ViewConfig], catalogs: list[Catalog]) -> None:
-    for view_config in view_configs:
-        view_config.populate_with_metrics(catalogs)
