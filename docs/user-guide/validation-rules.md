@@ -47,7 +47,7 @@ Each YAML file is read against its GEMS format. **Unknown fields are rejected**,
 
 ## 4. Catalog ids, view configs and aggregation patterns
 
-Across all catalogs in `--catalogs-dir`, each catalog `id` is used **only once**. The message names both files, for example `Catalog id 'x' is defined in both c1.yml and c2.yml`.
+Across all catalogs in `--catalogs-dir`, each catalog `id` is used **only once**, for example `Catalog id 'x' defined more than once in catalogs (also found in a different file)`.
 
 Across all view configs given with `--view-configs`:
 
@@ -56,6 +56,7 @@ Across all view configs given with `--view-configs`:
 
 For each view config:
 
+- each aggregation pattern `id` is used **only once**, for example `Aggregation pattern 'hourly' is defined multiple times`;
 - at most **10** aggregation patterns (5 time granularities × with or without scenario aggregation);
 - each combination of time granularity and scenario aggregation appears **only once**.
 
