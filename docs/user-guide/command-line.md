@@ -84,14 +84,34 @@ Each run writes one log file:
 
 The log folder is the one given with `--log-dir`, or `logs` in the current folder. It is created if it does not exist. The same messages are printed in the terminal, on standard error.
 
-By default the log holds the steps of the run (files loaded, checks passed, Views written) and, if the run fails, the error. With `--verbose` it also holds debug messages, for example each metric and term being processed.
+By default the log holds the steps of the run: files loaded, checks passed, Views written. With `--verbose` it also holds debug messages, for example each metric and term being processed. When a run fails, the log stops at the last step that ran; the error itself is printed in the terminal only (see below).
 
-## Exit codes
+## Errors and exit codes
+
+GVB stops at the first problem it finds.
 
 | Code | Meaning |
 |---|---|
 | `0` | The Views were written. |
-| `1` | The options were fine, but an input is invalid or inconsistent with another, or view building failed. The error names the file and the rule; see [Validation rules](validation-rules.md). |
-| `2` | The command line is wrong: an option is missing or unknown, or a path does not exist. |
+| `1` | GVB found a problem: a path that does not exist, or an input that is invalid or inconsistent with another. The rules are listed on the [Validation rules](validation-rules.md) page. |
+| `2` | The option parser rejected the command line: an option is missing or unknown, or has no value. |
+
+For code `2`, the parser prints the usage and the reason:
+
+```text
+gems-views-builder: error: the following arguments are required: --catalogs-dir
+```
+
+For code `1`, the error is printed in the terminal as a Python traceback. Its last line names the file and the rule, after the prefix `Command lines options :` for a path problem, or `View building failed:` for the other problems:
+
+```text
+ValueError: Command lines options : --system is not a file: study/system.yml
+```
+
+```text
+ValueError: View building failed: Catalog 'catalog' used in view config 'view_area' doesn't exist!
+```
+
+The error is not written to the log file.
 
 Scripts and CI jobs can use the exit code to know whether the run succeeded.
