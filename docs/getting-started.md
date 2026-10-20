@@ -1,6 +1,6 @@
 # Getting started
 
-This page takes you from installation to a first View, using a small study shipped with the GVB repository.
+This page takes you from installation to a first View, on your own GEMS study.
 
 ## Requirements
 
@@ -35,94 +35,62 @@ The command prints the list of options. If your shell does not find `gems-views-
 
 ## First run
 
-### 1. Get the example study
+### 1. Prepare your inputs
 
-The GVB repository contains a small study in `resources/tests_inputs/test_3`: two buses (`busA`, `busB`), one day at hourly resolution, one scenario. If you installed GVB with pip, clone the repository to get it:
-
-```bash
-git clone https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder.git
-cd GEMS-ViewsBuilder
-```
-
-The study contains:
+GVB reads a GEMS study and the results of its simulation. Put them in one folder, for example:
 
 ```text
-resources/tests_inputs/test_3/
-├── system.yml                       # the GEMS system
-├── libraries/
-│   └── library.yml                  # the model library used by the system
-├── taxonomy.yml                     # categories of the models
-├── catalogs/
-│   └── catalog.yml                  # metric definitions (one or more catalogs)
-├── view_config.yml                  # which metrics, which location, which aggregation
-├── calendar_file.csv                # time index → date
-└── simulation_table--20260318-0623.parquet   # the simulation results
+my_study/
+├── system.yml            # the GEMS system
+├── taxonomy.yml          # the taxonomy of the models
+├── calendar.csv          # time index → date
+├── libraries/            # the model libraries used by the system (.yml)
+├── catalogs/             # the catalogs, which define the metrics (.yml)
+├── views/                # the view configs (.yml)
+└── output/               # the simulation results
+    ├── st-x-mc-1.parquet
+    └── st-x-mc-2.parquet
 ```
 
-The [view config](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) asks for three metrics, `PROD`, `LOAD` and `BALANCE`, per bus (taxonomy category `balance`), at hourly resolution, for each scenario:
+The formats of these files are described in the GEMS documentation: [system](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/), [taxonomy](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/taxonomy/), [library](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/), [catalog](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/catalog/), [view config](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) and [SimulationTable](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/).
 
-```yaml
-view:
-  id: view_area
-  taxonomy: my_taxonomy
-  scope:
-    location:
-      taxonomy-category: balance
-    calendar: calendar_file
-  aggregations-patterns:
-    - id: hourly
-      time_granularity: hour
-      scenario: false
-  metrics:
-    - id: catalog.PROD
-    - id: catalog.LOAD
-    - id: catalog.BALANCE
-```
+The view configs say which Views to build. An example is given on the GEMS [view config](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) page. In this page, the view config has the id `view_area` and one aggregation pattern, `hourly`.
 
 ### 2. Run GVB
 
 Create an output folder, then run:
 
 ```bash
-mkdir -p results
+mkdir -p views_out
 
 gems-views-builder \
-  --system            resources/tests_inputs/test_3/system.yml \
-  --libraries-dir     resources/tests_inputs/test_3/libraries \
-  --taxonomy          resources/tests_inputs/test_3/taxonomy.yml \
-  --catalogs-dir      resources/tests_inputs/test_3/catalogs \
-  --view-configs      resources/tests_inputs/test_3/view_config.yml \
-  --calendar          resources/tests_inputs/test_3/calendar_file.csv \
-  --simulation-tables "resources/tests_inputs/test_3/simulation_table*.parquet" \
-  --output-dir        results
+  --system            my_study/system.yml \
+  --libraries-dir     my_study/libraries \
+  --taxonomy          my_study/taxonomy.yml \
+  --catalogs-dir      my_study/catalogs \
+  --view-configs      "my_study/views/*.yml" \
+  --calendar          my_study/calendar.csv \
+  --simulation-tables "my_study/output/st-x-mc-*.parquet" \
+  --output-dir        views_out
 ```
 
-| Option | What to give |
-|---|---|
-| `--system` | The GEMS system file of the study. |
-| `--libraries-dir` | The folder with the model libraries the system uses. It may contain only `.yml` files. |
-| `--taxonomy` | The taxonomy file. |
-| `--catalogs-dir` | The folder with the catalogs. It may contain only `.yml` files. |
-| `--view-configs` | One view config file, or a pattern matching several (for example `"views/*.yml"`). GVB builds the Views of each one in the same run. |
-| `--calendar` | The calendar file. |
-| `--simulation-tables` | One SimulationTable file, or a pattern matching several (for example one file per Monte Carlo batch). |
-| `--output-dir` | An existing folder where the Views are written. |
+Each option points to one file, folder or pattern of the study. All options are described on the [Command line](user-guide/command-line.md) page.
 
 !!! tip "Quote the patterns"
-    Put patterns such as `"simulation_table*.parquet"` in quotes, so that GVB expands them and not your shell. A pattern may point to the current folder, for example `"st-*.parquet"`.
+    Write patterns such as `"my_study/output/st-x-mc-*.parquet"` in quotes, so that GVB expands them and not your shell.
 
 The run ends with:
 
 ```text
-INFO - View successfully written to results
+INFO - View successfully written to views_out
 ```
 
 ### 3. Look at the result
 
-GVB writes one View file per view config and aggregation pattern, named `<view id>_<aggregation-pattern id>_<timestamp>`. Here the view config `view_area` has one pattern, `hourly`, so there is one file, plus a log file in `logs/`:
+GVB writes the Views in `views_out`, and a log file in `logs`:
 
 ```text
-results/
+views_out/
 └── view_area_hourly_20261019T141953.parquet
 logs/
 └── gems-views-builder-pipeline-run-2026-10-19-14-19-53-072136Z.log
@@ -133,16 +101,18 @@ Open the View with any Parquet reader, for example Polars:
 ```python
 import polars as pl
 
-view = pl.read_parquet("results/view_area_hourly_*.parquet")
+view = pl.read_parquet("views_out/view_area_hourly_*.parquet")
 print(view.sort("metric_id", "metric_location", "view_date").head())
 ```
 
+The first rows look like this (example values):
+
 | metric_id | metric_location | breakdown_properties | view_date | scenario_id | metric_value | scenario_aggregation | scenario_stat |
 |---|---|---|---|---|---|---|---|
-| BALANCE | busA | {} | 2025-01-01 00:00:00 | 0 | 98.0 | false | null |
-| BALANCE | busA | {} | 2025-01-01 01:00:00 | 0 | 96.0 | false | null |
-| BALANCE | busA | {} | 2025-01-01 02:00:00 | 0 | 94.0 | false | null |
-| BALANCE | busA | {} | 2025-01-01 03:00:00 | 0 | 92.0 | false | null |
+| LOAD | area_1 | {} | 2025-01-01 00:00:00 | 0 | 102.0 | false | null |
+| LOAD | area_1 | {} | 2025-01-01 01:00:00 | 0 | 98.0 | false | null |
+| LOAD | area_1 | {} | 2025-01-01 02:00:00 | 0 | 95.0 | false | null |
+| LOAD | area_1 | {} | 2025-01-01 03:00:00 | 0 | 93.0 | false | null |
 
 Each row is one metric, at one location, at one date, for one scenario. The columns are described on the GEMS [Views](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/views/) page.
 
@@ -150,17 +120,11 @@ To get CSV instead of Parquet, add `--output-format csv`.
 
 ## When a run fails
 
-GVB stops at the first problem and returns an exit code:
+GVB stops at the first problem it finds. The message, printed in the terminal and written to the log file in `logs/`, names the file and the rule that failed. The exit codes are listed on the [Command line](user-guide/command-line.md) page.
 
-| Exit code | Meaning | Where to look |
-|---|---|---|
-| `0` | The Views were written. | — |
-| `1` | The options were fine, but an input file is invalid or inconsistent with another, or view building failed. | The log file in `logs/` (or in the folder given with `--log-dir`) names the file and the rule that failed. |
-| `2` | An option is missing, or a path does not exist. | The message printed in the terminal. |
-
-Add `--verbose` to get debug messages in the terminal. The rules GVB checks are listed on the [Validation rules](user-guide/validation-rules.md) page.
+Add `--verbose` to get debug messages. The rules GVB checks are listed on the [Validation rules](user-guide/validation-rules.md) page.
 
 ## Next steps
 
+- [User guide](user-guide/command-line.md): every option, the rules GVB checks, and the supported versions.
 - [Examples](examples/simple-setups.md): more view configs, scenario statistics and several SimulationTables.
-- [Command line](user-guide/command-line.md): every option in detail.
