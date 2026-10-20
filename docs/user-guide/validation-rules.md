@@ -1,11 +1,6 @@
 # Validation rules
 
-GVB checks the command line and all input files before building any View. Components are located while each view config is built (section 7). GVB stops at the **first** rule that fails and reports which file and which rule:
-
-- problems with the command line itself (a missing or unknown option, a path that does not exist) end the run with **exit code 2**;
-- every other problem ends the run with **exit code 1**.
-
-The message is printed in the terminal and written to the log file. Only a missing, unknown or abbreviated option is reported in the terminal alone, because it is detected before the log file is opened.
+GVB checks the command line and all input files before building any View. Components are located while each view config is built (section 7). GVB stops at the **first** rule that fails, with an error that names the file and the rule. How errors are reported and which exit code is returned is described on the [Command line](command-line.md) page.
 
 The checks run in the order of the sections below.
 
