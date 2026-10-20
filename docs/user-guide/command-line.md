@@ -76,7 +76,7 @@ A pattern picks files out of one folder that may also hold other files, such as 
 
 ## Logs
 
-Each run writes one log file:
+Each run writes one log file, except when the option parser rejects the command line (exit code `2`):
 
 ```text
 <log dir>/gems-views-builder-pipeline-run-<UTC timestamp>.log
@@ -102,14 +102,14 @@ For code `2`, the parser prints the usage and the reason:
 gems-views-builder: error: the following arguments are required: --catalogs-dir
 ```
 
-For code `1`, the error is printed in the terminal as a Python traceback. Its last line names the file and the rule, after the prefix `Command lines options :` for a path problem, or `View building failed:` for the other problems:
+For code `1`, the error is printed in the terminal as a Python traceback. Its last line names the file and the rule, after the prefix `Command lines options :` when a file or folder given on the command line does not exist, or `View building failed:` for every other problem:
 
 ```text
 ValueError: Command lines options : --system is not a file: study/system.yml
 ```
 
 ```text
-ValueError: View building failed: Catalog 'catalog' used in view config 'view_area' doesn't exist!
+ValueError: View building failed: Metric 'PROD' used in view config 'view_area' doesn't exist in catalog 'catalog'
 ```
 
 The error is not written to the log file.
