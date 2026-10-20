@@ -97,19 +97,10 @@ gems-views-builder \
   --output-dir        results
 ```
 
-| Option | What to give |
-|---|---|
-| `--system` | The GEMS system file of the study. |
-| `--libraries-dir` | The folder with the model libraries the system uses. It may contain only `.yml` files. |
-| `--taxonomy` | The taxonomy file. |
-| `--catalogs-dir` | The folder with the catalogs. It may contain only `.yml` files. |
-| `--view-configs` | One view config file, or a pattern matching several (for example `"views/*.yml"`). GVB builds the Views of each one in the same run. |
-| `--calendar` | The calendar file. |
-| `--simulation-tables` | One SimulationTable file, or a pattern matching several (for example one file per Monte Carlo batch). |
-| `--output-dir` | An existing folder where the Views are written. |
+Each option points to one file, folder or pattern of the example study. All options are described on the [Command line](user-guide/command-line.md) page.
 
 !!! tip "Quote the patterns"
-    Put patterns such as `"simulation_table*.parquet"` in quotes, so that GVB expands them and not your shell. A pattern may point to the current folder, for example `"st-*.parquet"`.
+    Write patterns such as `"simulation_table*.parquet"` in quotes, so that GVB expands them and not your shell.
 
 The run ends with:
 
@@ -150,13 +141,7 @@ To get CSV instead of Parquet, add `--output-format csv`.
 
 ## When a run fails
 
-GVB stops at the first problem and returns an exit code:
-
-| Exit code | Meaning | Where to look |
-|---|---|---|
-| `0` | The Views were written. | — |
-| `1` | The options were fine, but an input file is invalid or inconsistent with another, or view building failed. | The log file in `logs/` (or in the folder given with `--log-dir`) names the file and the rule that failed. |
-| `2` | An option is missing, or a path does not exist. | The message printed in the terminal. |
+GVB stops at the first problem it finds. The message, printed in the terminal and written to the log file in `logs/`, names the file and the rule that failed. The exit codes are listed on the [Command line](user-guide/command-line.md#exit-codes) page.
 
 Add `--verbose` to get debug messages in the terminal. The rules GVB checks are listed on the [Validation rules](user-guide/validation-rules.md) page.
 
