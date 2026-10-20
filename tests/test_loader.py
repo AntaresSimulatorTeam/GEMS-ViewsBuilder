@@ -21,11 +21,8 @@ from tests.conftest import paths_from_dataset
 def test_loader_init_has_no_io(tmp_path: Path) -> None:
     """
     Constructor should not read yaml or parquet.
-    Catalog and view-config paths are resolved from globs when InputPaths is built.
+    View-config and simulation-table paths are resolved from globs when InputPaths is built.
     """
-    catalogs_dir = tmp_path / "catalogs"
-    catalogs_dir.mkdir()
-    (catalogs_dir / "catalog.yml").touch()
     missing = Path("/this/path/should-not-exist")
     simulation_table = tmp_path / "simulation_table.parquet"
     simulation_table.touch()
@@ -34,7 +31,7 @@ def test_loader_init_has_no_io(tmp_path: Path) -> None:
     paths = InputPaths(
         Namespace(
             libraries_dir=missing / "libraries",
-            catalogs=str(catalogs_dir / "catalog.yml"),
+            catalogs_dir=missing / "catalogs",
             system=missing / "system.yml",
             calendar=missing / "calendar.csv",
             taxonomy=missing / "taxonomy.yml",
@@ -45,7 +42,7 @@ def test_loader_init_has_no_io(tmp_path: Path) -> None:
     loader = Loader(paths)
     assert loader.input_paths is paths
     assert loader.input_paths.libraries_dir == missing / "libraries"
-    assert loader.input_paths.catalogs == [catalogs_dir / "catalog.yml"]
+    assert loader.input_paths.catalogs_dir == missing / "catalogs"
 
 
 def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:

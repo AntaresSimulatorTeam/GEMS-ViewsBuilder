@@ -26,7 +26,6 @@ class Loader:
         view_configs: list[ViewConfig] = load_view_configs(self.input_paths.view_configs)
         yml_libs = load_yml_libs(self.input_paths.libraries_dir)
 
-        catalogs = load_catalogs(self.input_paths.catalogs)
         raw_input_data = RawInputData(
             taxonomy=load_taxonomy(self.input_paths.taxonomy),
             view_configs=view_configs,
@@ -34,7 +33,7 @@ class Loader:
             system=load_system(self.input_paths.system, yml_libs),
             simulation_tables=load_simulation_tables(self.input_paths.simulation_tables),
             calendar=load_calendar(self.input_paths.calendar),
-            catalogs=catalogs,
+            catalogs=load_catalogs(self.input_paths.catalogs_dir),
         )
 
         logging.info("All inputs loaded successfully")

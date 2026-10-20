@@ -36,6 +36,7 @@ def parent_is_dir(path: Path) -> bool:
 
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
     PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir),
+    PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
     PathOption("system", SystemType.FILE, Path.is_file),
     PathOption("calendar", SystemType.FILE, Path.is_file),
     PathOption("taxonomy", SystemType.FILE, Path.is_file),
@@ -44,7 +45,6 @@ REQUIRED_PATHS_OPTIONS: list[PathOption] = [
 MULTIPLE_FILE_PATH_OPTIONS: list[PathOption] = [
     PathOption("simulation-tables", SystemType.DIRECTORY, parent_is_dir),
     PathOption("view-configs", SystemType.DIRECTORY, parent_is_dir),
-    PathOption("catalogs", SystemType.DIRECTORY, parent_is_dir),
 ]
 
 

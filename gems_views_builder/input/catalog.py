@@ -128,8 +128,26 @@ def to_metric(metric_data: MetricData) -> Metric:
     )
 
 
-def load_catalogs(catalogs: list[Path]) -> list[Catalog]:
-    return [load_catalog(catalog) for catalog in catalogs]
+def load_catalogs(catalogs_dir: Path) -> list[Catalog]:
+    logging.info(f"Loading catalogs from {catalogs_dir}")
+    catalogs: list[Catalog] = []
+    catalog_ids: set[str] = set()
+    for catalog_file_path in collect_catalog_files(catalogs_dir):
+        catalog = load_catalog(catalog_file_path)
+        if catalog.id in catalog_ids:
+            raise ValueError(
+                f"Catalog id {catalog.id!r} defined more than once in {catalogs_dir} (also found in a different file)"
+            )
+        catalog_ids.add(catalog.id)
+        catalogs.append(catalog)
+    return catalogs
+
+
+def collect_catalog_files(catalogs_dir: Path) -> list[Path]:
+    collected_catalogs = list(catalogs_dir.glob("*.yml"))
+    if not collected_catalogs:
+        raise ValueError(f"No catalogs found in {catalogs_dir}")
+    return collected_catalogs
 
 
 def load_catalog(catalog_file_path: Path) -> Catalog:
