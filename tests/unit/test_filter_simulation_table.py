@@ -13,7 +13,7 @@ from gems_views_builder.input.simulation_table import (
     filter_simulation_table,
     load_simulation_table,
 )
-from gems_views_builder.input.view_building_input_data import concat_simulation_tables
+from gems_views_builder.input.view_building_input import concat_simulation_tables
 from tests.common import make_simulation_table_row
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
