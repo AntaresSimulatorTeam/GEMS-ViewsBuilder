@@ -8,6 +8,7 @@ import pytest
 import yaml
 
 from gems_views_builder import load_view_config
+from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.validation.aggregation_patterns_validator import ViewConfigsAggregationPatternsValidator
 from gems_views_builder.validation.view_config import validate_unique_ids, validate_view_configs_full_metric_ids
@@ -38,6 +39,12 @@ def write_view_config(tmp_path: Path, view: dict[str, Any]) -> Path:
     path.write_text(yaml.dump({"view": view}))
     return path
 
+@pytest.fixture
+def view_config(
+    tmp_path: Path, view_config_yaml: dict[str, Any]
+) -> ViewConfig:
+    path_to_yml = write_view_config(tmp_path, view_config_yaml)
+    return load_view_config(path_to_yml)
 
 @pytest.mark.parametrize(
     "full_metric_id",
@@ -49,10 +56,8 @@ def write_view_config(tmp_path: Path, view: dict[str, Any]) -> Path:
         ".catalogINVALID_METRIC",
     ],
 )
-def test_raises_on_invalid_metric_id_format(tmp_path: Path, full_metric_id: str, view_config_yaml: dict[str, Any]) -> None:
+def test_raises_on_invalid_metric_id_format(full_metric_id: str, view_config: ViewConfig) -> None:
     # Arrange
-    path_to_yml = write_view_config(tmp_path, view_config_yaml)
-    view_config = load_view_config(path_to_yml)
     view_config.full_metric_ids = [full_metric_id]
 
     # Act
@@ -108,11 +113,8 @@ def test_raises_when_aggregation_scenario_is_missing(tmp_path: Path, view_config
     assert "Field required" in str(error.value)
 
 
-def test_view_config_raises_when_ids_are_not_unique(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
+def test_view_config_raises_when_ids_are_not_unique(view_config: ViewConfig) -> None:
     # Arrange
-    path_to_yml = write_view_config(tmp_path, view_config_yaml)
-    view_config = load_view_config(path_to_yml)
-
     # Act
     with pytest.raises(ValueError) as error:
         validate_unique_ids([view_config, view_config])
@@ -121,11 +123,7 @@ def test_view_config_raises_when_ids_are_not_unique(tmp_path: Path, view_config_
     assert str(error.value) == "View config 'view' is defined multiple times"
 
 
-def test_view_config_aggregation_patterns_validator(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
-    # Arrange
-    path_to_yml = write_view_config(tmp_path, view_config_yaml)
-    view_config = load_view_config(path_to_yml)
-
+def test_view_config_aggregation_patterns_validator(view_config: ViewConfig) -> None:
     # Act + Assert
     ViewConfigsAggregationPatternsValidator([view_config]).validate()
 
@@ -147,11 +145,7 @@ def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
     )
 
 
-def test_populate_with_metrics_raises_when_catalog_is_missing(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
-    # Arrange
-    path_to_yml = write_view_config(tmp_path, view_config_yaml)
-    view_config = load_view_config(path_to_yml)
-
+def test_populate_with_metrics_raises_when_catalog_is_missing(view_config: ViewConfig) -> None:
     # Act
     with pytest.raises(ValueError) as error:
         view_config.populate_with_metrics([make_catalog("catalogX", ["LOAD"])])
@@ -160,11 +154,7 @@ def test_populate_with_metrics_raises_when_catalog_is_missing(tmp_path: Path, vi
     assert str(error.value) == "Catalog 'catalog' used in view config 'view' doesn't exist!"
 
 
-def test_populate_with_metrics_raises_when_metric_is_missing(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
-    # Arrange
-    path_to_yml = write_view_config(tmp_path, view_config_yaml)
-    view_config = load_view_config(path_to_yml)
-
+def test_populate_with_metrics_raises_when_metric_is_missing(view_config: ViewConfig) -> None:
     # Act
     with pytest.raises(ValueError) as error:
         view_config.populate_with_metrics([make_catalog("catalog", ["PROD"])])
@@ -173,12 +163,7 @@ def test_populate_with_metrics_raises_when_metric_is_missing(tmp_path: Path, vie
     assert str(error.value) == "Metric 'LOAD' used in view config 'view' doesn't exist in catalog 'catalog'"
 
 
-def test_view_config_aggregation_patterns_validator_raises_when_patterns_are_not_unique(
-    tmp_path: Path, view_config_yaml: dict[str, Any]
-) -> None:
-    # Arrange
-    path_to_yml = write_view_config(tmp_path, view_config_yaml)
-    view_config = load_view_config(path_to_yml)
+def test_view_config_aggregation_patterns_validator_raises_when_patterns_are_not_unique(view_config: ViewConfig) -> None:
     view_config.aggregation_patterns = view_config.aggregation_patterns * 2
 
     # Act
