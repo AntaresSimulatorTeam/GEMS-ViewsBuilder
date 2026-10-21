@@ -37,6 +37,12 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 
+[project.optional-dependencies]
+doc = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+]
+
 [project.scripts]
 gems-views-builder = "gems_views_builder.__main__:main"
 

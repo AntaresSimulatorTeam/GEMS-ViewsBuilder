@@ -1,0 +1,68 @@
+site_name: GEMS-ViewsBuilder
+site_description: Build aggregated Views from GEMS SimulationTables
+repo_url: https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder
+repo_name: GEMS-ViewsBuilder
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - User guide:
+      - Command line: user-guide/command-line.md
+      - Validation rules: user-guide/validation-rules.md
+      - Compatibility: user-guide/compatibility.md
+  - Examples:
+      - Simple setups: examples/simple-setups.md
+      - CLI calls: examples/cli-calls.md
+      - Two-area case study: examples/two-areas.md
+  - Developer guide: developer-guide.md
+  - Changelog: CHANGELOG.md
+
+theme:
+  name: material
+  logo: images/logo.png
+  favicon: images/logo.png
+  features:
+    - navigation.instant
+    - navigation.top
+    - navigation.sections
+    - content.tabs.link
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: antares
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+
+plugins:
+  - search
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
