@@ -1,0 +1,474 @@
+system:
+  id: two_areas
+  components:
+    - id: be_node
+      model: antares_legacy_models.area
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+    - id: be_load
+      model: antares_legacy_models.load
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+    - id: be_wind
+      model: antares_legacy_models.renewable
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: wind
+    - id: be_solar
+      model: antares_legacy_models.renewable
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: solar
+    - id: be_run_of_river
+      model: antares_legacy_models.renewable
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: run_of_river
+    - id: be_combined_heat_power
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: combined_heat_power
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: be_biomass
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: biomass
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: be_biogas
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: biogas
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: be_waste
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: waste
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: be_geothermal
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: geothermal
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: be_other
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: other
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: be_pumped_storage_power
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: pumped_storage_power
+        - id: miscellaneous_type
+          value: pumped_storage_power
+    - id: be_rest_world
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: rest_world
+        - id: miscellaneous_type
+          value: rest_world
+    - id: be_thermal_ccgt
+      model: antares_legacy_models.thermal
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: gas
+    - id: be_thermal_oil_peaker
+      model: antares_legacy_models.thermal
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: oil
+    - id: be_renewable_solar_pv
+      model: antares_legacy_models.renewable
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: solar pv
+    - id: be_renewable_wind_offshore
+      model: antares_legacy_models.renewable
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: wind offshore
+    - id: be_short_term_storage_battery
+      model: antares_legacy_models.short_term_storage
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: group
+          value: battery
+    - id: be_hydro_storage
+      model: antares_legacy_models.long_term_storage
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+    - id: be_fr_link
+      model: antares_legacy_models.link
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+    - id: fr_node
+      model: antares_legacy_models.area
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+    - id: fr_load
+      model: antares_legacy_models.load
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+    - id: fr_wind
+      model: antares_legacy_models.renewable
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: wind
+    - id: fr_solar
+      model: antares_legacy_models.renewable
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: solar
+    - id: fr_run_of_river
+      model: antares_legacy_models.renewable
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: run_of_river
+    - id: fr_combined_heat_power
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: combined_heat_power
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: fr_biomass
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: biomass
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: fr_biogas
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: biogas
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: fr_waste
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: waste
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: fr_geothermal
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: geothermal
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: fr_other
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: other
+        - id: miscellaneous_type
+          value: misc_ndg
+    - id: fr_pumped_storage_power
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: pumped_storage_power
+        - id: miscellaneous_type
+          value: pumped_storage_power
+    - id: fr_rest_world
+      model: antares_legacy_models.miscellaneous_generation
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: rest_world
+        - id: miscellaneous_type
+          value: rest_world
+    - id: fr_thermal_ccgt
+      model: antares_legacy_models.thermal
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: gas
+    - id: fr_thermal_nuclear
+      model: antares_legacy_models.thermal
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: nuclear
+    - id: fr_renewable_solar_pv
+      model: antares_legacy_models.renewable
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: solar pv
+    - id: fr_renewable_wind_onshore
+      model: antares_legacy_models.renewable
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+        - id: technology
+          value: wind onshore
+    - id: fr_hydro_storage
+      model: antares_legacy_models.long_term_storage
+      parameters: []
+      properties:
+        - id: carrier
+          value: electricity
+  connections:
+    - component1: be_load
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_wind
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_solar
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_run_of_river
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_combined_heat_power
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_biomass
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_biogas
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_waste
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_geothermal
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_other
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_pumped_storage_power
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_rest_world
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_thermal_ccgt
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_thermal_oil_peaker
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_renewable_solar_pv
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_renewable_wind_offshore
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_short_term_storage_battery
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_hydro_storage
+      port1: balance_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_fr_link
+      port1: in_port
+      component2: be_node
+      port2: balance_port
+    - component1: be_fr_link
+      port1: out_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_load
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_wind
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_solar
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_run_of_river
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_combined_heat_power
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_biomass
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_biogas
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_waste
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_geothermal
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_other
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_pumped_storage_power
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_rest_world
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_thermal_ccgt
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_thermal_nuclear
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_renewable_solar_pv
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_renewable_wind_onshore
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
+    - component1: fr_hydro_storage
+      port1: balance_port
+      component2: fr_node
+      port2: balance_port
