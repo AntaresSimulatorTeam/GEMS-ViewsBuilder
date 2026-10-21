@@ -1,0 +1,31 @@
+taxonomy:
+  id: basic_taxonomy
+  description: Categories of the basic models library used by this study
+
+  categories:
+    - id: balance
+      variables:
+        - id: spillage
+        - id: unsupplied_energy
+      ports:
+        - id: balance_port
+
+    - id: production
+      variables:
+        - id: generation
+      ports:
+        - id: balance_port
+
+    - id: consumption
+      ports:
+        - id: balance_port
+      extra-outputs:
+        - id: load
+
+    - id: storage
+      variables:
+        - id: p_injection
+        - id: p_withdrawal
+        - id: level
+      ports:
+        - id: injection_port

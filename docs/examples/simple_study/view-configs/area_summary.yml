@@ -1,0 +1,18 @@
+view:
+  id: area_summary
+  taxonomy: basic_taxonomy
+  scope:
+    location:
+      taxonomy-category: balance
+    calendar: calendar
+  aggregations-patterns:
+    - id: daily
+      time_granularity: day
+      scenario: false
+    - id: weekly_stats
+      time_granularity: week
+      scenario: true
+  metrics:
+    - id: catalog.LOAD
+    - id: catalog.PRODUCTION
+    - id: catalog.UNSUPPLIED_ENERGY
