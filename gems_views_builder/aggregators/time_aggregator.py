@@ -80,7 +80,6 @@ class TimeAggregator:
         logg_write(metric, file_path)
 
         temporal_aggregation_view = TemporalMetricView(file_path)
-        temporal_aggregation_view.time_granularity = self._time_granularity
         return temporal_aggregation_view
 
 

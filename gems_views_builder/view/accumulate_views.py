@@ -15,9 +15,7 @@ def group_views(
     """Group metric views by view config, aggregation pattern."""
     grouped_views: dict[tuple[str, str], list[TemporalMetricView]] = defaultdict(list)
     for view in metric_views:
-        grouped_views[(view.view_config_id, view.aggregation_pattern_id)].append(
-            view
-        )
+        grouped_views[(view.view_config_id, view.aggregation_pattern_id)].append(view)
     return grouped_views
 
 
@@ -26,9 +24,7 @@ def accumulate_views(views: list[TemporalMetricView]) -> pl.LazyFrame:
 
 
 def accumulate_on_disk(metric_views: list[TemporalMetricView], sinker: ViewSinker) -> None:
-    for (view_config_id, aggregation_pattern_id), views in group_views(
-        metric_views
-    ).items():
+    for (view_config_id, aggregation_pattern_id), views in group_views(metric_views).items():
         accumulated_views = accumulate_views(views)
         save_file_name = f"{view_config_id}--{aggregation_pattern_id}"
         sinker.sink(accumulated_views, save_file_name)

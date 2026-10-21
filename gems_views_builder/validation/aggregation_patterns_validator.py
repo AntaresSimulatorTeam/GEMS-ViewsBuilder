@@ -35,6 +35,7 @@ def validate_patterns(view_config: ViewConfig) -> None:
             raise ValueError(f"Pattern ({pattern.time_granularity}, {pattern.scenario}) is already defined")
         pattern_combinations.add((pattern.time_granularity, pattern.scenario))
 
+
 def validate_unique_ids(view_config: ViewConfig) -> None:
     pattern_ids: set[str] = set()
     for pattern in view_config.aggregation_patterns:
