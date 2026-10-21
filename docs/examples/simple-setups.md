@@ -162,9 +162,7 @@ GVB writes three Views in `views/`: one for `area_hourly`, and one for each patt
 
 ## The Views
 
-### Hourly, scenario 2
-
-`PRODUCTION` for the first 5 hours:
+Read the hourly View with polars, and print `PRODUCTION` of scenario 2 for the first 5 hours:
 
 ```python
 import polars as pl
@@ -174,7 +172,6 @@ print(view.filter(pl.col("metric_id") == "PRODUCTION", pl.col("scenario_id") == 
 ```
 
 ```text
-shape: (5, 8)
 ┌────────────┬────────────┬────────────┬───────────┬───────────┬───────────┬───────────┬───────────┐
 │ metric_id  ┆ metric_loc ┆ breakdown_ ┆ view_date ┆ scenario_ ┆ metric_va ┆ scenario_ ┆ scenario_ │
 │ ---        ┆ ation      ┆ properties ┆ ---       ┆ id        ┆ lue       ┆ aggregati ┆ stat      │
