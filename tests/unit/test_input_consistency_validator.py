@@ -10,7 +10,7 @@ from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.validation.input_consistency_validator import (
     InputConsistencyValidator,
-    group_catalogs_by_view_configs,
+    associated_catalogs,
 )
 
 
@@ -68,16 +68,15 @@ def test_groups_each_catalog_once_under_the_view_config_that_references_it() -> 
     catalog = make_catalog("catalog", "balance", ["LOAD", "PROD"])
     catalog2 = make_catalog("catalog2", "consumption", ["CONSUMPTION"])
     catalog3 = make_catalog("catalog3", "avg_consumption", ["AVG_CONSUMPTION"])
-    raw_input_data = make_raw_input_data([view_config_one, view_config_two], [catalog, catalog2, catalog3])
+    catalogs_by_ids = {catalog.id: catalog, catalog2.id: catalog2, catalog3.id: catalog3}
 
     # Act
-    grouped = group_catalogs_by_view_configs(
-        raw_input_data, {catalog.id: catalog, catalog2.id: catalog2, catalog3.id: catalog3}
-    )
+    catalogs_for_one = associated_catalogs(view_config_one, catalogs_by_ids)
+    catalogs_for_two = associated_catalogs(view_config_two, catalogs_by_ids)
 
     # Assert
-    assert [item.id for item in grouped["view_config_one"]] == ["catalog"]
-    assert [item.id for item in grouped["view_config_two"]] == ["catalog2", "catalog3"]
+    assert [item.id for item in catalogs_for_one] == ["catalog"]
+    assert [item.id for item in catalogs_for_two] == ["catalog2", "catalog3"]
 
 
 def test_validates_view_configs_with_different_location_categories() -> None:
