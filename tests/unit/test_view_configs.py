@@ -10,8 +10,11 @@ import yaml
 from gems_views_builder import load_view_config
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.input.view_config import ViewConfig
-from gems_views_builder.validation.aggregation_patterns_validator import ViewConfigsAggregationPatternsValidator
-from gems_views_builder.validation.view_config import validate_unique_ids, validate_view_configs_full_metric_ids
+from gems_views_builder.validation.view_config import (
+    validate_unique_ids,
+    validate_view_configs_aggregation_patterns,
+    validate_view_configs_full_metric_ids,
+)
 
 VIEW_CONFIG_YAML = """
 id: view
@@ -125,7 +128,7 @@ def test_view_config_raises_when_ids_are_not_unique(view_config: ViewConfig) -> 
 
 def test_view_config_aggregation_patterns_validator(view_config: ViewConfig) -> None:
     # Act + Assert
-    ViewConfigsAggregationPatternsValidator([view_config]).validate()
+    validate_view_configs_aggregation_patterns([view_config])
 
 
 def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
@@ -170,7 +173,7 @@ def test_view_config_aggregation_patterns_validator_raises_when_patterns_are_not
 
     # Act
     with pytest.raises(ValueError) as error:
-        ViewConfigsAggregationPatternsValidator([view_config]).validate()
+        validate_view_configs_aggregation_patterns([view_config])
 
     # Assert
     assert str(error.value) == "Pattern (TimeGranularity.HOUR, False) is already defined"

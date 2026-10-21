@@ -31,7 +31,7 @@ def write_minimal_input_data_set(root: Path) -> InputPaths:
     return InputPaths(
         Namespace(
             libraries_dir=libraries_dir,
-            catalogs=str(catalogs_dir / "catalog.yml"),
+            catalogs_dir=catalogs_dir,
             system=system,
             calendar=calendar,
             taxonomy=taxonomy,
@@ -65,28 +65,23 @@ def test_validate_passes_with_arbitrarily_named_model_library_file(tmp_path: Pat
     InputPathsValidator(input_paths).validate()
 
 
-def test_validate_raises_when_catalog_is_not_yml(tmp_path: Path) -> None:
+def test_validate_raises_when_catalogs_contain_non_yml(tmp_path: Path) -> None:
     input_paths = write_minimal_input_data_set(tmp_path)
-    catalog_txt = tmp_path / "notes.txt"
-    catalog_txt.touch()
-    input_paths.catalogs.append(catalog_txt)
-    with pytest.raises(ValueError, match="Catalog files must have extension"):
+    (input_paths.catalogs_dir / "notes.txt").touch()
+    with pytest.raises(ValueError, match=r"should have \.yml extension"):
         InputPathsValidator(input_paths).validate()
 
 
-def test_validate_ignores_unmatched_files_in_catalogs_directory(tmp_path: Path) -> None:
+def test_validate_passes_with_multiple_catalogs(tmp_path: Path) -> None:
     input_paths = write_minimal_input_data_set(tmp_path)
-    (tmp_path / "catalogs" / "notes.txt").touch()
+    (input_paths.catalogs_dir / "other.yml").touch()
     InputPathsValidator(input_paths).validate()
 
 
-def test_validate_passes_with_multiple_catalogs(tmp_path: Path) -> None:
-    # Arrange
-    catalogs_dir = tmp_path / "catalogs"
+def test_validate_passes_with_arbitrarily_named_catalog_file(tmp_path: Path) -> None:
     input_paths = write_minimal_input_data_set(tmp_path)
-    (catalogs_dir / "other.yml").touch()
-    input_paths.catalogs = [catalogs_dir / "other.yml"]
-    # Act & Assert
+    (input_paths.catalogs_dir / "catalog.yml").unlink()
+    (input_paths.catalogs_dir / "any_name.yml").touch()
     InputPathsValidator(input_paths).validate()
 
 

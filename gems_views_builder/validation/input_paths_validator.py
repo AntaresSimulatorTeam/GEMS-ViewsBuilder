@@ -23,18 +23,6 @@ class InputPathsValidator:
 
     input_paths: InputPaths
 
-    def _check_libraries_directory(self) -> None:
-        """Strictly reject any entry in the libraries directory that is not a .yml file."""
-        logging.info(f"Validating directory {self.input_paths.libraries_dir}")
-        for path in self.input_paths.libraries_dir.iterdir():
-            if not (path.is_file() and path.suffix.lower() == YAML_SUFFIX):
-                raise ValueError(f"File {path} should have {YAML_SUFFIX} extension")
-
-    def _check_catalog_files(self) -> None:
-        logging.info(f"Validating {len(self.input_paths.catalogs)} catalog file(s)")
-        for catalog_path in self.input_paths.catalogs:
-            require_suffix(catalog_path, {YAML_SUFFIX}, "Catalog files")
-
     def _check_system_file(self) -> None:
         require_suffix(self.input_paths.system, {YAML_SUFFIX}, "System file")
 
@@ -62,14 +50,22 @@ class InputPathsValidator:
 
     def validate(self) -> None:
         logging.info("Starting input paths validation")
-        self._check_libraries_directory()
-        self._check_catalog_files()
+        require_yml_directory(self.input_paths.libraries_dir)
+        require_yml_directory(self.input_paths.catalogs_dir)
         self._check_system_file()
         self._check_taxonomy_file()
         self._check_calendar_file()
         self._check_view_configs_files()
         self._check_simulation_table_files()
         logging.info("Input paths validation completed successfully")
+
+
+def require_yml_directory(directory: Path) -> None:
+    """Reject any entry in the directory that is not a .yml file."""
+    logging.info(f"Validating directory {directory}")
+    for path in directory.iterdir():
+        if not (path.is_file() and path.suffix.lower() == YAML_SUFFIX):
+            raise ValueError(f"File {path} should have {YAML_SUFFIX} extension")
 
 
 def require_suffix(path: Path, allowed: set[str], label: str) -> None:

@@ -128,3 +128,8 @@ def load_view_configs(view_configs_paths: list[Path]) -> list[ViewConfig]:
     for path in view_configs_paths:
         view_configs.append(load_view_config(path))
     return view_configs
+
+
+def populate_view_configs_with_metrics(view_configs: list[ViewConfig], catalogs: list[Catalog]) -> None:
+    for view_config in view_configs:
+        view_config.populate_with_metrics(catalogs)
