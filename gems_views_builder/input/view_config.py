@@ -88,7 +88,7 @@ class ViewConfig:
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
-    raw_view_config = load_view_config_from_yaml(config_file_path)
+    raw_view_config = load_raw_view_config_file(config_file_path)
 
     view_config = ViewConfig(
         id=raw_view_config.id,
@@ -106,7 +106,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
     return view_config
 
 
-def load_view_config_from_yaml(view_file_path: Path) -> RawViewConfig:
+def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
     logging.info(f"Parsing view config YAML from {view_file_path}")
     with open(view_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
