@@ -31,16 +31,20 @@ simple_study/
     └── area_summary.yml
 ```
 
-The commands on this page run from the example folder, with the tools of the GVB repository environment: `uv run` uses the GemsPy version GVB is pinned to, so the SimulationTable matches what GVB expects.
-
-GemsPy simulates the study and writes the SimulationTable to `output/<run id>/simulation_table_<run id>.csv`:
+From the root of the GVB repository, install the environment, then run the simulation of the simple study with GemsPy:
 
 ```bash
+uv sync
 cd docs/examples/simple_study
 uv run gemspy --study .
 ```
 
-Each row of the SimulationTable is one output of one component, at one time step, for one scenario. For this study the outputs are `generation` (both generators), `load` (the load), `spillage` and `unsupplied_energy` (the area), and `level`, `p_injection` and `p_withdrawal` (the storage). The SimulationTable also has one `objective-value` row per block, with no component, which GVB does not use.
+Outputs in the SimulationTable:
+
+- `area_1`: `spillage`, `unsupplied_energy`
+- `load_1`: `load`
+- `gen_base`, `gen_peak`: `generation`
+- `storage_1`: `level`, `p_injection`, `p_withdrawal`
 
 ## How GVB builds the Views
 
