@@ -22,17 +22,15 @@ from gems_views_builder.input.view_building_input import (
 from gems_views_builder.input.view_config import populate_view_configs_with_metrics
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
-from gems_views_builder.validation.catalogs import validate_catalog_ids
 from gems_views_builder.validation.input_consistency_validator import InputConsistencyValidator
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
-from gems_views_builder.validation.view_config import validate_view_configs
+from gems_views_builder.validation.input_validation import validate_input_data
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
 
 
 def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     raw_input_data = Loader(input_paths).load()
-    validate_view_configs(raw_input_data.view_configs)
-    validate_catalog_ids(raw_input_data.catalogs)
+    validate_input_data(raw_input_data)
     InputConsistencyValidator(raw_input_data).validate()
     return raw_input_data
 

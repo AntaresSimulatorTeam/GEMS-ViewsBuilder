@@ -33,14 +33,17 @@ metrics:
   - id: catalog.LOAD
 """
 
+
 def write_view_config(tmp_path: Path, view: dict[str, Any]) -> Path:
     path = tmp_path / "view_config.yml"
     path.write_text(yaml.dump({"view": view}))
     return path
 
+
 @pytest.fixture
 def view_config_yaml() -> dict[str, Any]:
     return cast(dict[str, Any], yaml.safe_load(VIEW_CONFIG_YAML))
+
 
 @pytest.fixture
 def view_config(tmp_path: Path, view_config_yaml: dict[str, Any]) -> ViewConfig:
@@ -58,7 +61,9 @@ def view_config(tmp_path: Path, view_config_yaml: dict[str, Any]) -> ViewConfig:
         ".catalogINVALID_METRIC",
     ],
 )
-def test_raises_on_invalid_metric_id_format(full_metric_id: str, view_config_yaml: dict[str, Any], tmp_path: Path) -> None:
+def test_raises_on_invalid_metric_id_format(
+    full_metric_id: str, view_config_yaml: dict[str, Any], tmp_path: Path
+) -> None:
     view_config_yaml["metrics"] = [{"id": full_metric_id}]
 
     # Act
