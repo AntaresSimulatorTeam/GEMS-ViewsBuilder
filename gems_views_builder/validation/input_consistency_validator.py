@@ -28,19 +28,17 @@ class InputConsistencyValidator:
             view_config_catalogs = associated_catalogs(view_config, catalogs_by_ids)
 
             ViewConfigTaxonomyValidator(self.raw_input_data.taxonomy, view_config).validate()
-            validateExistenceOfViewConfigCatalogs(view_config, view_config_catalogs)
             ViewConfigCatalogsValidator(view_config_catalogs, view_config).validate()
             ViewConfigMetricsAgainstCatalogsValidator(view_config_catalogs, view_config).validate()
 
-def validateExistenceOfViewConfigCatalogs(view_config: ViewConfig, catalogs: list[Catalog]) -> None:
-    for full_metric_id in view_config.full_metric_ids:
-        catalog_id, _ = full_metric_id.split(".", 1)
-        if not any(catalog.id == catalog_id for catalog in catalogs):
-            raise ValueError(f"Catalog {catalog_id!r} referenced by view config {view_config.id!r} does not exist")
-
 def associated_catalogs(view_config: ViewConfig, catalogs_by_ids: defaultdict[str, Catalog]) -> list[Catalog]:
     catalogs: list[Catalog] = []
+    catalogs_already_added: set[str] = set()
     for full_metric_id in view_config.full_metric_ids:
         catalog_id, _ = full_metric_id.split(".", 1)
-        catalogs.append(catalogs_by_ids[catalog_id])
+        if catalog_id not in catalogs_by_ids:
+            raise ValueError(f"Catalog {catalog_id!r} referenced by view config {view_config.id!r} does not exist")
+        if catalog_id not in catalogs_already_added:
+            catalogs.append(catalogs_by_ids[catalog_id])
+            catalogs_already_added.add(catalog_id)
     return catalogs

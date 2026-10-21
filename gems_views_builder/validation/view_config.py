@@ -10,7 +10,6 @@ ALLOWED_PATTERN_COUNT = 10
 def validate_view_configs(view_configs: list[ViewConfig]) -> None:
     validate_unique_ids(view_configs)
     validate_view_configs_aggregation_patterns(view_configs)
-    validate_catalogs_are_unique(view_configs)
 
 def validate_unique_ids(view_configs: list[ViewConfig]) -> None:
     view_config_ids = set()
@@ -35,12 +34,3 @@ def _validate_aggregation_patterns(aggregation_patterns: tuple[AggregationPatter
         if combination in pattern_combinations:
             raise ValueError(f"Pattern ({pattern.time_granularity}, {pattern.scenario}) is already defined")
         pattern_combinations.add(combination)
-
-def validate_catalogs_are_unique(view_configs: list[ViewConfig]) -> None:
-    for view_config in view_configs:
-        catalog_ids = set()
-        for full_metric_id in view_config.full_metric_ids:
-            catalog_id, _ = full_metric_id.split(".", 1)
-            if catalog_id in catalog_ids:
-                raise ValueError(f"Catalog {catalog_id!r} is referenced multiple times in view config {view_config.id!r}")
-            catalog_ids.add(catalog_id)
