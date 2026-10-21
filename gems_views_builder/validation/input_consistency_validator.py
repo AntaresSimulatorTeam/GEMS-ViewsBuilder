@@ -3,7 +3,6 @@
 
 """Orchestrate cross-artifact validation between the loaded catalogs, taxonomy and view config."""
 
-from collections import defaultdict
 from dataclasses import dataclass
 
 from gems_views_builder.input.catalog import Catalog
