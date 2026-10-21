@@ -49,7 +49,9 @@ def write_view_config(tmp_path: Path, view: dict[str, Any]) -> Path:
         ".catalogINVALID_METRIC",
     ],
 )
-def test_raises_on_invalid_metric_id_format(tmp_path: Path, full_metric_id: str, view_config_yaml: dict[str, Any]) -> None:
+def test_raises_on_invalid_metric_id_format(
+    tmp_path: Path, full_metric_id: str, view_config_yaml: dict[str, Any]
+) -> None:
     # Arrange
     path_to_yml = write_view_config(tmp_path, view_config_yaml)
     view_config = load_view_config(path_to_yml)
