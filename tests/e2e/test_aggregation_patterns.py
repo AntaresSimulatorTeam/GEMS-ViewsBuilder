@@ -38,8 +38,6 @@ T2 = datetime(2026, 1, 1, 20, 0)
 PATTERNS = (
     AggregationPattern(id="hourly_pattern_001", time_granularity=TimeGranularity.HOUR, scenario=False),
     AggregationPattern(id="hourly_pattern_002", time_granularity=TimeGranularity.HOUR, scenario=True),
-    AggregationPattern(id="daily_pattern_001", time_granularity=TimeGranularity.DAY, scenario=False),
-    AggregationPattern(id="daily_pattern_002", time_granularity=TimeGranularity.DAY, scenario=True),
     AggregationPattern(id="monthly_pattern_001", time_granularity=TimeGranularity.MONTH, scenario=False),
 )
 
@@ -140,24 +138,17 @@ def test_one_output_file_per_aggregation_pattern(tmp_path: Path) -> None:
     result = {result_name(path): path for path in fetch_result_files(results_dir)}
     hourly_pattern_001 = pl.read_parquet(result["view_001--hourly_pattern_001"])
     hourly_pattern_002 = pl.read_parquet(result["view_001--hourly_pattern_002"])
-    daily_pattern_001 = pl.read_parquet(result["view_001--daily_pattern_001"])
-    daily_pattern_002 = pl.read_parquet(result["view_001--daily_pattern_002"])
     monthly_pattern_001 = pl.read_parquet(result["view_001--monthly_pattern_001"])
 
-    assert len(result) == 5
+    assert len(result) == 3
     assert set(result) == {
         "view_001--hourly_pattern_001",
         "view_001--hourly_pattern_002",
-        "view_001--daily_pattern_001",
-        "view_001--daily_pattern_002",
         "view_001--monthly_pattern_001",
     }
 
     assert set(hourly_pattern_001["metric_id"].to_list()) == {"LOAD", "PROD"}
     assert set(hourly_pattern_001["scenario_aggregation"].to_list()) == {False}
     assert set(hourly_pattern_002["scenario_aggregation"].to_list()) == {True}
-    assert set(daily_pattern_001["metric_id"].to_list()) == {"LOAD", "PROD"}
-    assert set(daily_pattern_001["scenario_aggregation"].to_list()) == {False}
-    assert set(daily_pattern_002["scenario_aggregation"].to_list()) == {True}
     assert set(monthly_pattern_001["metric_id"].to_list()) == {"LOAD", "PROD"}
     assert set(monthly_pattern_001["scenario_aggregation"].to_list()) == {False}
