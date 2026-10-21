@@ -8,8 +8,8 @@ import pytest
 import yaml
 
 from gems_views_builder import load_view_config
-from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
+from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.validation.aggregation_patterns_validator import ViewConfigsAggregationPatternsValidator
 from gems_views_builder.validation.view_config import validate_unique_ids, validate_view_configs_full_metric_ids
 
@@ -39,12 +39,12 @@ def write_view_config(tmp_path: Path, view: dict[str, Any]) -> Path:
     path.write_text(yaml.dump({"view": view}))
     return path
 
+
 @pytest.fixture
-def view_config(
-    tmp_path: Path, view_config_yaml: dict[str, Any]
-) -> ViewConfig:
+def view_config(tmp_path: Path, view_config_yaml: dict[str, Any]) -> ViewConfig:
     path_to_yml = write_view_config(tmp_path, view_config_yaml)
     return load_view_config(path_to_yml)
+
 
 @pytest.mark.parametrize(
     "full_metric_id",
@@ -163,7 +163,9 @@ def test_populate_with_metrics_raises_when_metric_is_missing(view_config: ViewCo
     assert str(error.value) == "Metric 'LOAD' used in view config 'view' doesn't exist in catalog 'catalog'"
 
 
-def test_view_config_aggregation_patterns_validator_raises_when_patterns_are_not_unique(view_config: ViewConfig) -> None:
+def test_view_config_aggregation_patterns_validator_raises_when_patterns_are_not_unique(
+    view_config: ViewConfig,
+) -> None:
     view_config.aggregation_patterns = view_config.aggregation_patterns * 2
 
     # Act
