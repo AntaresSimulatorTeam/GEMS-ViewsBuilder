@@ -30,6 +30,7 @@ class InputConsistencyValidator:
             ViewConfigCatalogsValidator(view_config_catalogs, view_config).validate()
             ViewConfigMetricsAgainstCatalogsValidator(view_config_catalogs, view_config).validate()
 
+
 def associated_catalogs(view_config: ViewConfig, catalogs_by_ids: dict[str, Catalog]) -> list[Catalog]:
     catalogs: list[Catalog] = []
     catalogs_already_added: set[str] = set()

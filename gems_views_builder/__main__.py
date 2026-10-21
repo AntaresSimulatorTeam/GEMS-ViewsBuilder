@@ -73,7 +73,6 @@ def main(argv: list[str] | None = None) -> None:
         view_sinker = ViewSinkerFactory(args.output, args.output_format).make()
         run_view_building_process(input_paths, view_sinker)
     except Exception as e:
-        # from e will keep upper level exception message
         raise ValueError(f"View building failed: {e}") from e
 
     logging.info(f"View successfully written to {view_sinker.output_path}")

@@ -11,6 +11,7 @@ def validate_view_configs(view_configs: list[ViewConfig]) -> None:
     validate_unique_ids(view_configs)
     validate_view_configs_aggregation_patterns(view_configs)
 
+
 def validate_unique_ids(view_configs: list[ViewConfig]) -> None:
     view_config_ids = set()
     for view_config in view_configs:
