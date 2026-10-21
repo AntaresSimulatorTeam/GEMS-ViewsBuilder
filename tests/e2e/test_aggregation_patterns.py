@@ -5,7 +5,7 @@
 E2E test for scenario aggregation through the view-building process.
 
 Each aggregation pattern produces its own result file, named
-{view_config_id}_{aggregation_pattern_id}_{time_granularity}_{scenario}_{timestamp}.parquet.
+{view_config_id}--{aggregation_pattern_id}--{timestamp}.parquet.
 """
 
 from datetime import datetime
@@ -36,11 +36,11 @@ T1 = datetime(2026, 1, 1, 3, 0)
 T2 = datetime(2026, 1, 1, 20, 0)
 
 PATTERNS = (
-    AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),
-    AggregationPattern(id="hourly2", time_granularity=TimeGranularity.HOUR, scenario=True),
-    AggregationPattern(id="daily", time_granularity=TimeGranularity.DAY, scenario=False),
-    AggregationPattern(id="daily2", time_granularity=TimeGranularity.DAY, scenario=True),
-    AggregationPattern(id="monthly", time_granularity=TimeGranularity.MONTH, scenario=False),
+    AggregationPattern(id="hourly_pattern_001", time_granularity=TimeGranularity.HOUR, scenario=False),
+    AggregationPattern(id="hourly_pattern_002", time_granularity=TimeGranularity.HOUR, scenario=True),
+    AggregationPattern(id="daily_pattern_001", time_granularity=TimeGranularity.DAY, scenario=False),
+    AggregationPattern(id="daily_pattern_002", time_granularity=TimeGranularity.DAY, scenario=True),
+    AggregationPattern(id="monthly_pattern_001", time_granularity=TimeGranularity.MONTH, scenario=False),
 )
 
 
@@ -72,7 +72,7 @@ def make_metrics() -> list[Metric]:
 
 def make_view_config() -> ViewConfig:
     return ViewConfig(
-        id="view_area",
+        id="view_001",
         calendar_id="calendar",
         location_taxonomy_category="balance",
         taxonomy_id="taxonomy",
@@ -119,8 +119,8 @@ def fetch_result_files(results_dir: Path) -> list[Path]:
 
 
 def result_name(path: Path) -> str:
-    # Timestamp is appended as a final _{timestamp} segment with no underscore inside it.
-    return path.stem.rsplit("_", 1)[0]
+    # Timestamp is appended as a final --{timestamp} segment.
+    return path.stem.rsplit("--", 1)[0]
 
 
 def test_one_output_file_per_aggregation_pattern(tmp_path: Path) -> None:
@@ -138,21 +138,26 @@ def test_one_output_file_per_aggregation_pattern(tmp_path: Path) -> None:
 
     # Assert
     result = {result_name(path): path for path in fetch_result_files(results_dir)}
-    hourly = pl.read_parquet(result["view_area_hourly_hour_false"])
-    hourly_aggregated = pl.read_parquet(result["view_area_hourly2_hour_true"])
-    daily = pl.read_parquet(result["view_area_daily_day_false"])
-    daily_aggregated = pl.read_parquet(result["view_area_daily2_day_true"])
+    hourly_pattern_001 = pl.read_parquet(result["view_001--hourly_pattern_001"])
+    hourly_pattern_002 = pl.read_parquet(result["view_001--hourly_pattern_002"])
+    daily_pattern_001 = pl.read_parquet(result["view_001--daily_pattern_001"])
+    daily_pattern_002 = pl.read_parquet(result["view_001--daily_pattern_002"])
+    monthly_pattern_001 = pl.read_parquet(result["view_001--monthly_pattern_001"])
 
+    assert len(result) == 5
     assert set(result) == {
-        "view_area_hourly_hour_false",
-        "view_area_hourly2_hour_true",
-        "view_area_daily_day_false",
-        "view_area_daily2_day_true",
-        "view_area_monthly_month_false",
+        "view_001--hourly_pattern_001",
+        "view_001--hourly_pattern_002",
+        "view_001--daily_pattern_001",
+        "view_001--daily_pattern_002",
+        "view_001--monthly_pattern_001",
     }
-    assert set(hourly["metric_id"].to_list()) == {"LOAD", "PROD"}
-    assert set(hourly["scenario_aggregation"].to_list()) == {False}
-    assert set(hourly_aggregated["scenario_aggregation"].to_list()) == {True}
-    assert set(daily["metric_id"].to_list()) == {"LOAD", "PROD"}
-    assert set(daily["scenario_aggregation"].to_list()) == {False}
-    assert set(daily_aggregated["scenario_aggregation"].to_list()) == {True}
+
+    assert set(hourly_pattern_001["metric_id"].to_list()) == {"LOAD", "PROD"}
+    assert set(hourly_pattern_001["scenario_aggregation"].to_list()) == {False}
+    assert set(hourly_pattern_002["scenario_aggregation"].to_list()) == {True}
+    assert set(daily_pattern_001["metric_id"].to_list()) == {"LOAD", "PROD"}
+    assert set(daily_pattern_001["scenario_aggregation"].to_list()) == {False}
+    assert set(daily_pattern_002["scenario_aggregation"].to_list()) == {True}
+    assert set(monthly_pattern_001["metric_id"].to_list()) == {"LOAD", "PROD"}
+    assert set(monthly_pattern_001["scenario_aggregation"].to_list()) == {False}

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from gems_views_builder.input.view_config import AggregationPattern, ViewConfig
+    from gems_views_builder.input.view_config import ViewConfig
 
 # Basic combinatorial formula 5 * 2 = 10 at maximum
 # 5 time granularities
@@ -21,18 +21,23 @@ class ViewConfigsAggregationPatternsValidator:
 
     def validate(self) -> None:
         for view_config in self.view_configs:
-            self._validate_patterns(view_config.aggregation_patterns)
+            validate_patterns(view_config)
+            validate_unique_ids(view_config)
 
-    def _validate_patterns(self, aggregation_patterns: tuple[AggregationPattern, ...]) -> None:
-        if len(aggregation_patterns) > ALLOWED_PATTERN_COUNT:
-            raise ValueError(f"At most {ALLOWED_PATTERN_COUNT} patterns are allowed")
 
-        pattern_ids: set[str] = set()
-        pattern_combinations = set()
-        for pattern in aggregation_patterns:
-            if pattern.id in pattern_ids:
-                raise ValueError(f"Aggregation pattern {pattern.id!r} is defined multiple times")
-            pattern_ids.add(pattern.id)
-            if (pattern.time_granularity, pattern.scenario) in pattern_combinations:
-                raise ValueError(f"Pattern ({pattern.time_granularity}, {pattern.scenario}) is already defined")
-            pattern_combinations.add((pattern.time_granularity, pattern.scenario))
+def validate_patterns(view_config: ViewConfig) -> None:
+    if len(view_config.aggregation_patterns) > ALLOWED_PATTERN_COUNT:
+        raise ValueError(f"At most {ALLOWED_PATTERN_COUNT} patterns are allowed")
+
+    pattern_combinations = set()
+    for pattern in view_config.aggregation_patterns:
+        if (pattern.time_granularity, pattern.scenario) in pattern_combinations:
+            raise ValueError(f"Pattern ({pattern.time_granularity}, {pattern.scenario}) is already defined")
+        pattern_combinations.add((pattern.time_granularity, pattern.scenario))
+
+def validate_unique_ids(view_config: ViewConfig) -> None:
+    pattern_ids: set[str] = set()
+    for pattern in view_config.aggregation_patterns:
+        if pattern.id in pattern_ids:
+            raise ValueError(f"Aggregation pattern {pattern.id!r} is defined multiple times")
+        pattern_ids.add(pattern.id)

@@ -38,7 +38,7 @@ class Scope(ViewBuilderBasedModel):
 
 
 class AggregationPattern(ViewBuilderBasedModel):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_]+$")
     time_granularity: TimeGranularity
     scenario: bool
     spatial_filter: list[str] | None = Field(default=None)
@@ -49,7 +49,7 @@ class MetricId(ViewBuilderBasedModel, frozen=True):
 
 
 class RawViewConfig(ViewBuilderBasedModel):
-    id: str = Field(pattern=r"^[A-Za-z0-9_-]+$")
+    id: str = Field(pattern=r"^[A-Za-z0-9_]+$")
     scope: Scope
     taxonomy: str
     aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
