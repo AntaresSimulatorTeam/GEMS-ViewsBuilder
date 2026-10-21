@@ -162,21 +162,43 @@ GVB writes three Views in `views/`: one for `area_hourly`, and one for each patt
 
 ## The Views
 
-The tables below show `metric_value` for a few rows, with one column per metric.
-
 ### Hourly, scenario 2
 
-| view_date | LOAD | PRODUCTION | UNSUPPLIED_ENERGY | STORAGE_LEVEL |
-|---|---|---|---|---|
-| 2030-01-07 00:00 | 277.9 | 350.0 | 0.0 | 200.0 |
-| 2030-01-07 01:00 | 274.0 | 350.0 | 0.0 | 264.9 |
-| 2030-01-07 02:00 | 279.5 | 350.0 | 0.0 | 333.3 |
-| … | | | | |
-| 2030-01-07 11:00 | 574.1 | 490.0 | 84.1 | 260.8 |
-| 2030-01-07 12:00 | 598.3 | 490.0 | 18.8 | 260.8 |
+`PRODUCTION` for the first 5 hours:
 
-- At night, production is above the load and the difference charges the storage: its level rises from its initial 200 MWh.
-- From 11:00, `PRODUCTION` is 490 MW: both generators at full power, added by the `terms-operator`. With the 400 MWh of the storage, that is still not enough for the whole peak, so some load is not supplied whatever the order. The solver leaves the storage idle at 11:00 and discharges it in the next hours.
+```python
+import polars as pl
+
+view = pl.read_parquet("views/area_hourly*.parquet")
+print(view.filter(pl.col("metric_id") == "PRODUCTION", pl.col("scenario_id") == 2).sort("view_date").head())
+```
+
+```text
+shape: (5, 8)
+┌────────────┬────────────┬────────────┬───────────┬───────────┬───────────┬───────────┬───────────┐
+│ metric_id  ┆ metric_loc ┆ breakdown_ ┆ view_date ┆ scenario_ ┆ metric_va ┆ scenario_ ┆ scenario_ │
+│ ---        ┆ ation      ┆ properties ┆ ---       ┆ id        ┆ lue       ┆ aggregati ┆ stat      │
+│ str        ┆ ---        ┆ ---        ┆ datetime[ ┆ ---       ┆ ---       ┆ on        ┆ ---       │
+│            ┆ str        ┆ str        ┆ μs]       ┆ i64       ┆ f64       ┆ ---       ┆ str       │
+│            ┆            ┆            ┆           ┆           ┆           ┆ bool      ┆           │
+╞════════════╪════════════╪════════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╡
+│ PRODUCTION ┆ area_1     ┆ {}         ┆ 2030-01-0 ┆ 2         ┆ 350.0     ┆ false     ┆ null      │
+│            ┆            ┆            ┆ 7         ┆           ┆           ┆           ┆           │
+│            ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
+│ PRODUCTION ┆ area_1     ┆ {}         ┆ 2030-01-0 ┆ 2         ┆ 350.0     ┆ false     ┆ null      │
+│            ┆            ┆            ┆ 7         ┆           ┆           ┆           ┆           │
+│            ┆            ┆            ┆ 01:00:00  ┆           ┆           ┆           ┆           │
+│ PRODUCTION ┆ area_1     ┆ {}         ┆ 2030-01-0 ┆ 2         ┆ 350.0     ┆ false     ┆ null      │
+│            ┆            ┆            ┆ 7         ┆           ┆           ┆           ┆           │
+│            ┆            ┆            ┆ 02:00:00  ┆           ┆           ┆           ┆           │
+│ PRODUCTION ┆ area_1     ┆ {}         ┆ 2030-01-0 ┆ 2         ┆ 318.42222 ┆ false     ┆ null      │
+│            ┆            ┆            ┆ 7         ┆           ┆ 2         ┆           ┆           │
+│            ┆            ┆            ┆ 03:00:00  ┆           ┆           ┆           ┆           │
+│ PRODUCTION ┆ area_1     ┆ {}         ┆ 2030-01-0 ┆ 2         ┆ 350.0     ┆ false     ┆ null      │
+│            ┆            ┆            ┆ 7         ┆           ┆           ┆           ┆           │
+│            ┆            ┆            ┆ 04:00:00  ┆           ┆           ┆           ┆           │
+└────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
+```
 
 ### Weekly statistics over the scenarios
 
