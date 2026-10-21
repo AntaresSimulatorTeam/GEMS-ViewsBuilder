@@ -38,12 +38,13 @@ graph LR
     library_1 -.- library_join
     library_dots -.- library_join
     library_n -.- library_join
+    library_join -- "• each model matches its taxonomy category" --- taxonomy
     library_join -. "checked by gemspy" .- system
     view_config -.- calendar
 
     classDef unvalidated stroke-dasharray: 4 4;
     classDef plain stroke: none, fill: none;
-    class library_1,library_n,system,simulation_table,calendar unvalidated;
+    class system,simulation_table,calendar unvalidated;
     class library_dots,library_join plain;
 ```
 [Input validation](docs/input_validation_diagram.md) for the detailed rules behind each check.

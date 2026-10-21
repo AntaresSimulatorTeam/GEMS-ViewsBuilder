@@ -24,12 +24,13 @@ graph LR
     library_1 -.- library_join
     library_dots -.- library_join
     library_n -.- library_join
+    library_join -- "• each model matches its taxonomy category" --- taxonomy
     library_join -. "checked by gemspy" .- system
     view_config -.- calendar
 
     classDef unvalidated stroke-dasharray: 4 4;
     classDef plain stroke: none, fill: none;
-    class library_1,library_n,system,simulation_table,calendar unvalidated;
+    class system,simulation_table,calendar unvalidated;
     class library_dots,library_join plain;
 ```
 
@@ -40,6 +41,13 @@ which only checks that these files are *present*, not their contents).
 
 ## Edge details
 
+### `library_*.yml` → `taxonomy.yml`
+[`LibrariesTaxonomyValidator`](../gems_views_builder/validation/library_taxonomy_validator.py)
+
+| Check | Rule |
+|---|---|
+| Model matches its taxonomy category | every model that declares a `taxonomy-category` exposes the variables, parameters, ports, port-field-definitions, constraints, binding-constraints, extra-outputs and properties required by that category. Delegated to GemsPy `check_library_against_taxonomy`. |
+
 ### `catalog.yml` → `taxonomy.yml`
 [`CatalogsTaxonomyValidator`](../gems_views_builder/validation/catalogs_taxonomy_validator.py)
 
@@ -47,7 +55,7 @@ which only checks that these files are *present*, not their contents).
 |---|---|
 | Taxonomy id match | `catalog.taxonomy == taxonomy.id` |
 | Taxonomy category exists | every term's `taxonomy-category` is a category defined in `taxonomy.yml` |
-| Output id declared | every term's `output-id` is declared as a `variable` or `extra-output` on that category |
+| Output id declared | every term's `output-id` is declared as a `variable`, `extra-output`, or `port-field-definition` on that category |
 | Location port declared | every term's `location-port` is declared as a `port` on that category |
 
 ### `view_config.yml` → `taxonomy.yml`
@@ -77,7 +85,8 @@ which only checks that these files are *present*, not their contents).
 [`InputConsistencyValidator`](../gems_views_builder/validation/input_consistency_validator.py)
 runs the validators above, in this order:
 
-1. `ViewConfigTaxonomyValidator` (view_config ↔ taxonomy)
-2. `CatalogsTaxonomyValidator` (catalog ↔ taxonomy)
-3. `ViewConfigCatalogsValidator` (catalog ↔ view_config)
-4. `ViewConfigMetricsAgainstCatalogsValidator` (view_config metrics ↔ catalogs)
+1. `LibrariesTaxonomyValidator` (libraries ↔ taxonomy)
+2. `ViewConfigTaxonomyValidator` (view_config ↔ taxonomy)
+3. `CatalogsTaxonomyValidator` (catalog ↔ taxonomy)
+4. `ViewConfigCatalogsValidator` (catalog ↔ view_config)
+5. `ViewConfigMetricsAgainstCatalogsValidator` (view_config metrics ↔ catalogs)

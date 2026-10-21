@@ -3,12 +3,24 @@
 import logging
 from dataclasses import dataclass
 
+from gems_craft.model.taxonomy import Taxonomy, TaxonomyCategory  # type: ignore
+
 from gems_views_builder.input.catalog import Catalog, Metric, Term
-from gems_views_builder.input.taxonomy import (
-    Taxonomy,
-    TaxonomyCategory,
-    allowed_output,
-)
+
+
+def _allowed_output(category: TaxonomyCategory) -> set[str]:
+    return (
+        {variable.id for variable in category.variables}
+        | {extra_output.id for extra_output in category.extra_outputs}
+        | {item.id for item in category.port_field_definitions}
+    )
+
+
+def match_taxonomy_category(taxonomy: Taxonomy, category_id: str) -> TaxonomyCategory | None:
+    for category in taxonomy.categories:
+        if category.id == category_id:
+            return category
+    return None
 
 
 @dataclass
@@ -42,7 +54,7 @@ class CatalogsTaxonomyValidator:
 
     def _validate_metric_terms(self, metric: Metric) -> None:
         for term in metric.terms:
-            category = self.taxonomy.categories.get(term.taxonomy_category)
+            category = match_taxonomy_category(self.taxonomy, term.taxonomy_category)
             if category is None:
                 raise ValueError(
                     f"uses taxonomy-category {term.taxonomy_category!r}, which is not defined "
@@ -52,16 +64,17 @@ class CatalogsTaxonomyValidator:
             self._validate_term_location_port(term, category)
 
     def _validate_term_output(self, term: Term, category: TaxonomyCategory) -> None:
-        if term.output_id in allowed_output(category):
+        if term.output_id in _allowed_output(category):
             return
         raise ValueError(
-            f"uses output-id {term.output_id!r}, which is not declared as a variable or "
-            f"extra-output on taxonomy category {term.taxonomy_category!r} in taxonomy {self.taxonomy.id!r}"
+            f"uses output-id {term.output_id!r}, which is not declared as a variable, "
+            f"extra-output, or port-field-definition on taxonomy category {term.taxonomy_category!r} "
+            f"in taxonomy {self.taxonomy.id!r}"
         )
 
     def _validate_term_location_port(self, term: Term, category: TaxonomyCategory) -> None:
         if term.location_port is not None:
-            if term.location_port not in category.port_ids:
+            if term.location_port not in {port.id for port in category.ports}:
                 raise ValueError(
                     f"uses location-port {term.location_port!r}, which is not defined on "
                     f"taxonomy category {term.taxonomy_category!r} in taxonomy {self.taxonomy.id!r}"

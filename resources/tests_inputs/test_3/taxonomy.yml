@@ -23,7 +23,7 @@ taxonomy:
         - id: p_balance_port
       variables:
         - id: p
-        - id: pnom
+        - id: p_nom
 
     - id: storage
       ports:
@@ -33,7 +33,7 @@ taxonomy:
       ports:
         - id: p0_port
         - id: p1_port
-      variables:
+      port-field-definitions:
         - id: p0_port.flow
         - id: p1_port.flow
 

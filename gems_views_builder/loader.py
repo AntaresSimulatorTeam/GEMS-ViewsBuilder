@@ -4,13 +4,14 @@
 import logging
 from dataclasses import dataclass
 
+from gems_craft.model.taxonomy import load_taxonomy  # type: ignore
+
 from gems_views_builder.input.calendar import load_calendar
 from gems_views_builder.input.catalog import load_catalogs
 from gems_views_builder.input.library import create_lib_from_yml, load_yml_libs
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import load_simulation_tables
 from gems_views_builder.input.system import load_system
-from gems_views_builder.input.taxonomy import load_taxonomy
 from gems_views_builder.input.view_config import ViewConfig, load_view_config
 from gems_views_builder.input_paths import InputPaths
 
@@ -29,6 +30,7 @@ class Loader:
             taxonomy=load_taxonomy(self.input_paths.taxonomy),
             view_config=view_config,
             libraries={yml_lib.id: create_lib_from_yml(yml_lib) for yml_lib in yml_libs},
+            library_schemas=yml_libs,
             system=load_system(self.input_paths.system, yml_libs),
             simulation_tables=load_simulation_tables(self.input_paths.simulation_tables),
             calendar=load_calendar(self.input_paths.calendar),
