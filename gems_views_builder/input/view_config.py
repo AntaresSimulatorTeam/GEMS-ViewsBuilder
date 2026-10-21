@@ -72,15 +72,7 @@ class ViewConfig:
         catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for full_metric_id in self.full_metric_ids:
             catalog_id, metric_id = full_metric_id.split(".", 1)
-            catalog = catalogs_by_id.get(catalog_id)
-            if catalog is None:
-                raise ValueError(f"Catalog {catalog_id!r} used in view config {self.id!r} doesn't exist!")
-            metric = catalog.metrics.get(metric_id)
-            if metric is None:
-                raise ValueError(
-                    f"Metric {metric_id!r} used in view config {self.id!r} doesn't exist in catalog {catalog_id!r}"
-                )
-            self.metrics.append(metric)
+            self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
