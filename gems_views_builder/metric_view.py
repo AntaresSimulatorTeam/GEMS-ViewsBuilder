@@ -20,7 +20,3 @@ class MetricView:
 class TemporalMetricView(MetricView):
     view_config_id: str
     aggregation_pattern_id: str
-
-    def set_temp_metric_view_data(self, view_config_id: str, aggregation_pattern_id: str) -> None:
-        self.view_config_id = view_config_id
-        self.aggregation_pattern_id = aggregation_pattern_id

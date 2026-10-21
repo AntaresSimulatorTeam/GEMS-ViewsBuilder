@@ -21,8 +21,8 @@ class ViewConfigsAggregationPatternsValidator:
 
     def validate(self) -> None:
         for view_config in self.view_configs:
-            validate_patterns(view_config)
             validate_unique_ids(view_config)
+            validate_patterns(view_config)
 
 
 def validate_patterns(view_config: ViewConfig) -> None:

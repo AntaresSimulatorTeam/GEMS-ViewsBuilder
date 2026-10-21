@@ -171,9 +171,7 @@ def test_populate_with_metrics_raises_when_metric_is_missing(tmp_path: Path) -> 
 def test_view_config_aggregation_patterns_validator_raises_when_pattern_ids_are_not_unique(tmp_path: Path) -> None:
     # Arrange
     view = make_view_config()
-    duplicate = dict(view["aggregations-patterns"][0])
-    duplicate["time_granularity"] = "day"
-    view["aggregations-patterns"].append(duplicate)
+    view["aggregations-patterns"] = view["aggregations-patterns"] * 2
     view_config = load_view_config(write_view_config(tmp_path, view))
 
     # Act
@@ -187,9 +185,7 @@ def test_view_config_aggregation_patterns_validator_raises_when_pattern_ids_are_
 def test_view_config_aggregation_patterns_validator_raises_when_time_and_scenario_match(tmp_path: Path) -> None:
     # Arrange
     view = make_view_config()
-    duplicate = dict(view["aggregations-patterns"][0])
-    duplicate["id"] = "hourly_again"
-    view["aggregations-patterns"].append(duplicate)
+    view["aggregations-patterns"] = view["aggregations-patterns"] * 2
     view_config = load_view_config(write_view_config(tmp_path, view))
 
     # Act
@@ -197,4 +193,4 @@ def test_view_config_aggregation_patterns_validator_raises_when_time_and_scenari
         ViewConfigsAggregationPatternsValidator([view_config]).validate()
 
     # Assert
-    assert str(error.value) == "Pattern (TimeGranularity.HOUR, False) is already defined"
+    assert str(error.value) == "Aggregation pattern 'hourly' is defined multiple times"
