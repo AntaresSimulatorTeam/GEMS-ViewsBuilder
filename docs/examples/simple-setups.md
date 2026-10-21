@@ -40,7 +40,7 @@ cd docs/examples/simple_study
 uv run gemspy --study .
 ```
 
-Each row of the SimulationTable is one output of one component, at one time step, for one scenario. For this study the outputs are `generation` (both generators), `load` (the load), `spillage` and `unsupplied_energy` (the area), and `level`, `p_injection` and `p_withdrawal` (the storage).
+Each row of the SimulationTable is one output of one component, at one time step, for one scenario. For this study the outputs are `generation` (both generators), `load` (the load), `spillage` and `unsupplied_energy` (the area), and `level`, `p_injection` and `p_withdrawal` (the storage). The SimulationTable also has one `objective-value` row per block, with no component, which GVB does not use.
 
 ## How GVB builds the Views
 
@@ -56,7 +56,7 @@ The sections below show which file drives each step.
 
 ## The library: taxonomy categories
 
-The library is a copy of the basic models library, with two additions:
+The library is a copy of the basic models library, version 1.0.1, with two additions:
 
 - each model used in the system declares a `taxonomy-category`: `bus` → `balance`, `generator` → `production`, `load` → `consumption`, `storage` → `storage` (step 1). Without it, GVB cannot use the component;
 - the `load` model gets an extra-output `load`. In the basic library, `load` is only a parameter, and metrics can only read variables and extra-outputs.

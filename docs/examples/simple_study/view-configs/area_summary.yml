@@ -7,10 +7,10 @@ view:
     calendar: calendar
   aggregations-patterns:
     - id: daily
-      time_granularity: day
+      time-granularity: day
       scenario: false
     - id: weekly_stats
-      time_granularity: week
+      time-granularity: week
       scenario: true
   metrics:
     - id: catalog.LOAD
