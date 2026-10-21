@@ -7,7 +7,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from gems_views_builder import Calendar, FilteredSimulationTable, load_calendar
+from gems_views_builder import Calendar, PersistentSimulationTable, load_calendar
 from gems_views_builder.input.simulation_table import (
     SimulationTable,
     filter_simulation_table,
@@ -26,7 +26,7 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     simulation_table = load_simulation_table(simulation_table_file)
 
     filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
-    assert isinstance(filtered_table, FilteredSimulationTable)
+    assert isinstance(filtered_table, PersistentSimulationTable)
     filtered = pl.read_parquet(filtered_table.file_path)
 
     # Time-dependent rows must have (absolute_time_index, block) in the calendar.
@@ -67,7 +67,7 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     simulation_table = load_simulation_table(sim_path_block2)
 
     filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
-    assert isinstance(filtered_table, FilteredSimulationTable)
+    assert isinstance(filtered_table, PersistentSimulationTable)
     filtered = pl.read_parquet(filtered_table.file_path)
     # Time-dependent rows with block=2 are all dropped; only non-time-dependent
     # rows (null absolute_time_index) are preserved regardless of block.
@@ -85,7 +85,7 @@ def test_filter_simulation_table_writes_parquet(
     simulation_table = load_simulation_table(simulation_table_file)
 
     filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
-    assert isinstance(filtered_table, FilteredSimulationTable)
+    assert isinstance(filtered_table, PersistentSimulationTable)
 
     assert filtered_table.file_path.exists(), "Output parquet should be created"
     written = filtered_table.dataframe.collect()
