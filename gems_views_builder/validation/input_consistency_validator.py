@@ -7,8 +7,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from gems_views_builder.input.catalog import Catalog
-from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTaxonomyValidator
 from gems_views_builder.validation.catalogs_view_config_validator import ViewConfigCatalogsValidator
 from gems_views_builder.validation.view_config_metrics_against_catalogs_validator import (
