@@ -32,7 +32,7 @@ def make_filtered_simulation_table(raw_input_data: RawInputData) -> FilteredSimu
     return filter_simulation_table(concatenated_st, raw_input_data.calendar)
 
 
-def create_view_building_inputs(
+def create_view_building_input(
     filtered_st: FilteredSimulationTable,
     view_config: ViewConfig,
     components_by_taxon: dict[str, list[Component]],

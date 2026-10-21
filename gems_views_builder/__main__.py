@@ -16,7 +16,7 @@ from gems_views_builder.input.component import (
 )
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input import (
-    create_view_building_inputs,
+    create_view_building_input,
     make_filtered_simulation_table,
 )
 from gems_views_builder.input.view_config import populate_view_configs_with_metrics
@@ -49,7 +49,7 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     for view_config in raw_input_data.view_configs:
         supply_components_with_locations(components_by_taxon, view_config)
         filtered_st = make_filtered_simulation_table(raw_input_data)
-        view_building_input = create_view_building_inputs(filtered_st, view_config, components_by_taxon)
+        view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)
         view_builder = ViewBuilder(view_building_input)
         metric_views = view_builder.build()
         accumulate_on_disk(metric_views, view_sinker)
