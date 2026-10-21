@@ -1,0 +1,40 @@
+catalog:
+  id: catalog
+  taxonomy: basic_taxonomy
+
+  location:
+    taxonomy-category: balance
+
+  metrics-definition:
+
+    - id: LOAD
+      terms:
+        - taxonomy-category: consumption
+          output-id: load
+          location-port: balance_port
+      terms-operator: sum
+      time-operator: sum
+
+    - id: PRODUCTION
+      terms:
+        - taxonomy-category: production
+          output-id: generation
+          location-port: balance_port
+      terms-operator: sum
+      time-operator: sum
+
+    - id: UNSUPPLIED_ENERGY
+      terms:
+        - taxonomy-category: balance
+          output-id: unsupplied_energy
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+    - id: STORAGE_LEVEL
+      terms:
+        - taxonomy-category: storage
+          output-id: level
+          location-port: injection_port
+      terms-operator: sum
+      time-operator: avg

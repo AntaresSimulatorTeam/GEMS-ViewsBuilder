@@ -9,7 +9,7 @@ gems-views-builder --libraries-dir DIR --catalogs-dir DIR
                    -o DIR [-f {parquet,csv}] [-l DIR] [-v]
 ```
 
-`python -m gems_views_builder` runs the same command.
+`python3 -m gems_views_builder` runs the same command (`python -m` on Windows, or inside a virtual environment). If you installed GVB from the repository with uv, prefix the command with `uv run`.
 
 ## Example
 
@@ -39,7 +39,7 @@ All input options are required.
 | `--taxonomy` | file | [Taxonomy](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/taxonomy/) file (`.yml`). |
 | `--calendar` | file | Calendar file (`.csv`). |
 | `--view-configs` | pattern | One [view config](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) file (`.yml`), or a pattern matching several, for example `"views/*.yml"`. All of them are built in the same run. |
-| `--simulation-tables` | pattern | Pattern for the [SimulationTable](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/) files (all `.parquet` or all `.csv`), for example `"output/st-x-mc-*.parquet"`. |
+| `--simulation-tables` | pattern | Pattern for the [SimulationTable](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/) files (all `.parquet` or all `.csv`), for example `"output/st-x-mc-*.parquet"`. All matching files are read together as one table. |
 
 ### Output and logs
 
@@ -55,7 +55,7 @@ Options must be written in full: `--catalogs` is not read as `--catalogs-dir`.
 
 ## How inputs are passed
 
-Each kind of input is passed in one way:
+Each kind of input is passed in one way. All paths can be absolute or relative to the folder you run GVB from.
 
 | Input | Passed as | Example |
 |---|---|---|
@@ -67,7 +67,7 @@ A pattern picks files out of one folder that may also hold other files, such as 
 
 - the wildcards go in the **file name** only: `*` matches any characters, `?` matches one character. The folder part is read as it is written, so `"output/*/st-*.parquet"` is rejected;
 - the pattern ends with a file name or a file name pattern, never with a folder: `"output/"` is rejected;
-- its folder part must exist. It may be the current folder, as in `"st-*.parquet"`;
+- its folder part must exist. It may be relative to the folder you run GVB from, as in `"../output/st-*.parquet"`, or be the current folder, as in `"st-*.parquet"`;
 - at least one file must match, otherwise the run stops with `No files matched global pattern: …`;
 - a plain file name is a pattern that matches one file: `--view-configs study/view_config.yml`.
 
