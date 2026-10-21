@@ -47,11 +47,7 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     components_by_taxon = build_components_by_taxon(raw_input_data)
 
     for view_config in raw_input_data.view_configs:
-        supply_components_with_locations(
-            components_by_taxon,
-            view_config.get_metrics(),
-            view_config.location_taxonomy_category,
-        )
+        supply_components_with_locations(components_by_taxon, view_config)
         filtered_st = make_filtered_simulation_table(raw_input_data)
         view_building_input = create_view_building_inputs(filtered_st, view_config, components_by_taxon)
         view_builder = ViewBuilder(view_building_input)

@@ -183,11 +183,7 @@ def test_extra_locations_values_in_final_metric_views() -> None:
     # Act
     views = []
     for view_config in input_data.view_configs:
-        supply_components_with_locations(
-            components_by_taxon,
-            view_config.get_metrics(),
-            view_config.location_taxonomy_category,
-        )
+        supply_components_with_locations(components_by_taxon, view_config)
         filtered_st = make_filtered_simulation_table(input_data)
         view_building_input = create_view_building_inputs(filtered_st, view_config, components_by_taxon)
         views.extend(ViewBuilder(view_building_input).build())
