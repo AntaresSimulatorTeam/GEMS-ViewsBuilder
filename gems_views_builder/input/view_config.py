@@ -68,11 +68,13 @@ class ViewConfig:
     metrics: list[Metric] = field(default_factory=list)
 
     def populate_with_metrics(self, catalogs: list[Catalog]) -> None:
-        logging.debug(f"Fetching {len(self.full_metric_ids)} metric(s) from catalogs")
+        logging.debug(f"Fetching {len(self.full_metric_ids)} metrics for view config={self.id!r}")
         catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for full_metric_id in self.full_metric_ids:
             catalog_id, metric_id = full_metric_id.split(".")
             self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
+        if not self.metrics:
+            logging.warning(f"No metrics found for view config={self.id!r}")
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
