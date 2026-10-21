@@ -199,13 +199,3 @@ shape: (5, 8)
 │            ┆            ┆            ┆ 04:00:00  ┆           ┆           ┆           ┆           │
 └────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
 ```
-
-### Weekly statistics over the scenarios
-
-| metric_id | exp | std | min | max |
-|---|---|---|---|---|
-| LOAD | 67863.2 | 3517.1 | 63866.4 | 72425.7 |
-| PRODUCTION | 67676.2 | 2884.6 | 64177.5 | 71242.4 |
-| UNSUPPLIED_ENERGY | 498.1 | 704.5 | 0.0 | 1494.4 |
-
-Only scenario 2 has unsupplied energy: the `min` is 0 and the `max` is 1494.4 MWh. `STORAGE_LEVEL` is not in this view config.
