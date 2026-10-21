@@ -16,12 +16,13 @@ from gems_views_builder.input.component import (
 )
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input import (
-    create_view_building_inputs,
+    create_view_building_input,
     make_filtered_simulation_table,
 )
 from gems_views_builder.input.view_config import populate_view_configs_with_metrics
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
+from gems_views_builder.validation.catalogs import validate_catalog_ids
 from gems_views_builder.validation.input_consistency_validator import InputConsistencyValidator
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.validation.view_config import validate_view_configs
@@ -31,6 +32,7 @@ from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, 
 def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     raw_input_data = Loader(input_paths).load()
     validate_view_configs(raw_input_data.view_configs)
+    validate_catalog_ids(raw_input_data.catalogs)
     InputConsistencyValidator(raw_input_data).validate()
     return raw_input_data
 
@@ -49,7 +51,7 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     for view_config in raw_input_data.view_configs:
         supply_components_with_locations(components_by_taxon, view_config)
         filtered_st = make_filtered_simulation_table(raw_input_data)
-        view_building_input = create_view_building_inputs(filtered_st, view_config, components_by_taxon)
+        view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)
         view_builder = ViewBuilder(view_building_input)
         metric_views = view_builder.build()
         accumulate_on_disk(metric_views, view_sinker)

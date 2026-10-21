@@ -25,7 +25,7 @@ from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric
 from gems_views_builder.input.component import supply_components_with_locations
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_building_input import (
-    create_view_building_inputs,
+    create_view_building_input,
     make_filtered_simulation_table,
 )
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
@@ -185,7 +185,7 @@ def test_extra_locations_values_in_final_metric_views() -> None:
     for view_config in input_data.view_configs:
         supply_components_with_locations(components_by_taxon, view_config)
         filtered_st = make_filtered_simulation_table(input_data)
-        view_building_input = create_view_building_inputs(filtered_st, view_config, components_by_taxon)
+        view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)
         views.extend(ViewBuilder(view_building_input).build())
     views_by_metric = views_grouped_by_metric_id(views)
 

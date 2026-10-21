@@ -13,7 +13,9 @@ from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.validation.view_config import (
     validate_unique_ids,
     validate_view_configs_aggregation_patterns,
-    validate_view_configs_full_metric_ids,
+)
+from gems_views_builder.validation.view_config_metrics_against_catalogs_validator import (
+    ViewConfigMetricsAgainstCatalogsValidator,
 )
 
 VIEW_CONFIG_YAML = """
@@ -31,17 +33,14 @@ metrics:
   - id: catalog.LOAD
 """
 
-
-@pytest.fixture
-def view_config_yaml() -> dict[str, Any]:
-    return cast(dict[str, Any], yaml.safe_load(VIEW_CONFIG_YAML))
-
-
 def write_view_config(tmp_path: Path, view: dict[str, Any]) -> Path:
     path = tmp_path / "view_config.yml"
     path.write_text(yaml.dump({"view": view}))
     return path
 
+@pytest.fixture
+def view_config_yaml() -> dict[str, Any]:
+    return cast(dict[str, Any], yaml.safe_load(VIEW_CONFIG_YAML))
 
 @pytest.fixture
 def view_config(tmp_path: Path, view_config_yaml: dict[str, Any]) -> ViewConfig:
@@ -59,19 +58,16 @@ def view_config(tmp_path: Path, view_config_yaml: dict[str, Any]) -> ViewConfig:
         ".catalogINVALID_METRIC",
     ],
 )
-def test_raises_on_invalid_metric_id_format(full_metric_id: str, view_config: ViewConfig) -> None:
-    # Arrange
-    view_config.full_metric_ids = [full_metric_id]
+def test_raises_on_invalid_metric_id_format(full_metric_id: str, view_config_yaml: dict[str, Any], tmp_path: Path) -> None:
+    view_config_yaml["metrics"] = [{"id": full_metric_id}]
 
     # Act
     with pytest.raises(ValueError) as error:
-        validate_view_configs_full_metric_ids([view_config])
+        load_view_config(write_view_config(tmp_path, view_config_yaml))
 
     # Assert
-    assert (
-        str(error.value)
-        == f"Invalid metric id reference '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'"
-    )
+    assert full_metric_id in str(error.value)
+    assert "String should match pattern" in str(error.value)
 
 
 def test_raises_when_aggregation_key_is_missing(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
@@ -151,7 +147,7 @@ def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
 def test_populate_with_metrics_raises_when_catalog_is_missing(view_config: ViewConfig) -> None:
     # Act
     with pytest.raises(ValueError) as error:
-        view_config.populate_with_metrics([make_catalog("catalogX", ["LOAD"])])
+        ViewConfigMetricsAgainstCatalogsValidator([make_catalog("catalogX", ["LOAD"])], view_config).validate()
 
     # Assert
     assert str(error.value) == "Catalog 'catalog' used in view config 'view' doesn't exist!"
@@ -160,7 +156,7 @@ def test_populate_with_metrics_raises_when_catalog_is_missing(view_config: ViewC
 def test_populate_with_metrics_raises_when_metric_is_missing(view_config: ViewConfig) -> None:
     # Act
     with pytest.raises(ValueError) as error:
-        view_config.populate_with_metrics([make_catalog("catalog", ["PROD"])])
+        ViewConfigMetricsAgainstCatalogsValidator([make_catalog("catalog", ["PROD"])], view_config).validate()
 
     # Assert
     assert str(error.value) == "Metric 'LOAD' used in view config 'view' doesn't exist in catalog 'catalog'"
