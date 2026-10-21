@@ -37,22 +37,17 @@ The command prints the list of options. If your shell does not find `gems-views-
 
 ### 1. Prepare your inputs
 
-GVB reads a GEMS study and the results of its simulation. Put them in one folder, for example:
+GVB reads a GEMS study and the results of its simulation. It does not expect any folder structure: each input is given by its own option and can be anywhere.
 
-```text
-my_study/
-├── system.yml            # the GEMS system
-├── taxonomy.yml          # the taxonomy of the models
-├── calendar.csv          # time index → date
-├── libraries/            # the model libraries used by the system (.yml)
-├── catalogs/             # the catalogs, which define the metrics (.yml)
-├── views/                # the view configs (.yml)
-└── output/               # the simulation results
-    ├── st-x-mc-1.parquet
-    └── st-x-mc-2.parquet
-```
-
-The formats of these files are described in the GEMS documentation: [system](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/), [taxonomy](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/taxonomy/), [library](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/), [catalog](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/catalog/), [view config](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) and [SimulationTable](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/).
+| Input | Option | Format |
+|---|---|---|
+| System | `--system` | [System file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/) (`.yml`) |
+| Model libraries used by the system | `--libraries-dir` | Folder of [library files](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/) (`.yml`) |
+| Taxonomy | `--taxonomy` | [Taxonomy file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/taxonomy/) (`.yml`) |
+| Catalogs | `--catalogs-dir` | Folder of [catalog files](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/catalog/) (`.yml`) |
+| View configs | `--view-configs` | One [view config file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) (`.yml`) or a pattern matching several |
+| Calendar | `--calendar` | `.csv` file |
+| SimulationTables | `--simulation-tables` | Pattern matching one or more [SimulationTable](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/) files (`.parquet` or `.csv`) |
 
 The view configs say which Views to build. An example is given on the GEMS [view config](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) page. In this page, the view config has the id `view_area` and one aggregation pattern, `hourly`.
 
@@ -64,20 +59,20 @@ Create an output folder, then run:
 mkdir -p views_out
 
 gems-views-builder \
-  --system            my_study/system.yml \
-  --libraries-dir     my_study/libraries \
-  --taxonomy          my_study/taxonomy.yml \
-  --catalogs-dir      my_study/catalogs \
-  --view-configs      "my_study/views/*.yml" \
-  --calendar          my_study/calendar.csv \
-  --simulation-tables "my_study/output/st-x-mc-*.parquet" \
+  --system            path/to/system.yml \
+  --libraries-dir     path/to/libraries \
+  --taxonomy          path/to/taxonomy.yml \
+  --catalogs-dir      path/to/catalogs \
+  --view-configs      "path/to/view_configs/*.yml" \
+  --calendar          path/to/calendar.csv \
+  --simulation-tables "path/to/results/st-x-mc-*.parquet" \
   --output-dir        views_out
 ```
 
-Each option points to one file, folder or pattern of the study. All options are described on the [Command line](user-guide/command-line.md) page.
+Replace each `path/to/...` with the location of that input. All options are described on the [Command line](user-guide/command-line.md) page.
 
 !!! tip "Quote the patterns"
-    Write patterns such as `"my_study/output/st-x-mc-*.parquet"` in quotes, so that GVB expands them and not your shell.
+    Write patterns such as `"path/to/results/st-x-mc-*.parquet"` in quotes, so that GVB expands them and not your shell.
 
 The run ends with:
 
