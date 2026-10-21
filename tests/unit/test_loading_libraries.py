@@ -6,7 +6,8 @@ from pathlib import Path
 import pytest
 from gems_craft.model.parsing import ModelSchema  # type: ignore
 
-from gems_views_builder.input.library import collect_lib_files, create_lib_from_yml, load_yml_libs
+from gems_views_builder.input.library import create_lib_from_yml, load_yml_libs
+from gems_views_builder.multiple_files_collector import collect_files
 
 LIBRARY_YAML_1 = """\
 library:
@@ -25,15 +26,15 @@ library:
 """
 
 
-def test_collect_lib_files_raises_when_no_yml_files(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="No model libraries found"):
-        collect_lib_files(tmp_path)
+def test_collect_files_raises_when_no_yml_files(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError, match="No files matched global pattern"):
+        collect_files(str(tmp_path / "*.yml"))
 
 
 def test_collect_libraries(tmp_path: Path) -> None:
     (tmp_path / "library_1.yml").write_text(LIBRARY_YAML_1)
     (tmp_path / "library_2.yml").write_text(LIBRARY_YAML_2)
-    lib_files = collect_lib_files(tmp_path)
+    lib_files = collect_files(str(tmp_path / "*.yml"))
     assert len(lib_files) == 2
     assert {path.name for path in lib_files} == {"library_1.yml", "library_2.yml"}
 
@@ -44,7 +45,7 @@ def test_load_multiple_libs(tmp_path: Path) -> None:
     (tmp_path / "library_2.yml").write_text(LIBRARY_YAML_2)
 
     # Act
-    yml_libs = load_yml_libs(tmp_path)
+    yml_libs = load_yml_libs(collect_files(str(tmp_path / "*.yml")))
     libs = [create_lib_from_yml(yml_lib) for yml_lib in yml_libs]
 
     # Assert
@@ -57,7 +58,7 @@ def test_library_fully_loaded(tmp_path: Path) -> None:
     (tmp_path / "test.yml").write_text(LIBRARY_YAML_1)
 
     # Act
-    yml_lib = load_yml_libs(tmp_path)[0]
+    yml_lib = load_yml_libs(collect_files(str(tmp_path / "*.yml")))[0]
     lib = create_lib_from_yml(yml_lib)
 
     # Assert

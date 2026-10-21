@@ -32,6 +32,10 @@ class InputPathsValidator:
     def _check_calendar_file(self) -> None:
         require_suffix(self.input_paths.calendar, {CSV_SUFFIX}, "Calendar file")
 
+    def _check_yml_files(self, paths: list[Path], label: str) -> None:
+        for path in paths:
+            require_suffix(path, {YAML_SUFFIX}, label)
+
     def _check_view_configs_files(self) -> None:
         for view_config in self.input_paths.view_configs:
             require_suffix(view_config, {YAML_SUFFIX}, "View config file")
@@ -50,22 +54,14 @@ class InputPathsValidator:
 
     def validate(self) -> None:
         logging.info("Starting input paths validation")
-        require_yml_directory(self.input_paths.libraries_dir)
-        require_yml_directory(self.input_paths.catalogs_dir)
+        self._check_yml_files(self.input_paths.libraries, "Library file")
+        self._check_yml_files(self.input_paths.catalogs, "Catalog file")
         self._check_system_file()
         self._check_taxonomy_file()
         self._check_calendar_file()
         self._check_view_configs_files()
         self._check_simulation_table_files()
         logging.info("Input paths validation completed successfully")
-
-
-def require_yml_directory(directory: Path) -> None:
-    """Reject any entry in the directory that is not a .yml file."""
-    logging.info(f"Validating directory {directory}")
-    for path in directory.iterdir():
-        if not (path.is_file() and path.suffix.lower() == YAML_SUFFIX):
-            raise ValueError(f"File {path} should have {YAML_SUFFIX} extension")
 
 
 def require_suffix(path: Path, allowed: set[str], label: str) -> None:

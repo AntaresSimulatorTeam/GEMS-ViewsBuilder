@@ -23,7 +23,7 @@ class Loader:
         """Perform all input data I/O and return the loaded raw input data."""
 
         logging.info("Loading inputs from explicit input paths")
-        yml_libs = load_yml_libs(self.input_paths.libraries_dir)
+        yml_libs = load_yml_libs(self.input_paths.libraries)
 
         raw_input_data = RawInputData(
             taxonomy=load_taxonomy(self.input_paths.taxonomy),
@@ -32,7 +32,7 @@ class Loader:
             system=load_system(self.input_paths.system, yml_libs),
             simulation_tables=load_simulation_tables(self.input_paths.simulation_tables),
             calendar=load_calendar(self.input_paths.calendar),
-            catalogs=load_catalogs(self.input_paths.catalogs_dir),
+            catalogs=load_catalogs(self.input_paths.catalogs),
         )
 
         logging.info("All inputs loaded successfully")

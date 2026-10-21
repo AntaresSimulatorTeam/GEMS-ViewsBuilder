@@ -11,8 +11,8 @@ from gems_views_builder.multiple_files_collector import collect_files
 
 class InputPaths:
     def __init__(self, args: Namespace) -> None:
-        self.libraries_dir: Path = Path(args.libraries_dir)
-        self.catalogs_dir: Path = Path(args.catalogs_dir)
+        self.libraries: list[Path] = collect_files(str(args.libraries_dir / "*.yml"))
+        self.catalogs: list[Path] = collect_files(str(args.catalogs_dir / "*.yml"))
         self.system: Path = Path(args.system)
         self.calendar: Path = Path(args.calendar)
         self.taxonomy: Path = Path(args.taxonomy)

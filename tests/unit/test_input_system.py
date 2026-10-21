@@ -8,6 +8,7 @@ from gems_craft.study.parsing import SystemSchema, parse_yaml_system  # type: ig
 
 from gems_views_builder.input.library import load_yml_libs
 from gems_views_builder.input.system import load_system
+from gems_views_builder.multiple_files_collector import collect_files
 
 
 def test_input_system_using(test_dataset_dir: Path) -> None:
@@ -21,7 +22,7 @@ def test_input_system_using(test_dataset_dir: Path) -> None:
 
 def test_system_exposes_components_and_connections(test_dataset_dir: Path) -> None:
     library_dir = test_dataset_dir / "libraries"
-    system = load_system(test_dataset_dir / "system.yml", load_yml_libs(library_dir))
+    system = load_system(test_dataset_dir / "system.yml", load_yml_libs(collect_files(str(library_dir / "*.yml"))))
     assert len(system.components) > 0
     assert isinstance(system.connections, list)
 
@@ -35,7 +36,7 @@ def make_system_with_no_param(src: Path, dest: Path) -> Path:
 
 
 def test_load_system_tolerates_missing_component_parameters(test_dataset_dir: Path, tmp_path: Path) -> None:
-    yml_libs = load_yml_libs(test_dataset_dir / "libraries")
+    yml_libs = load_yml_libs(collect_files(str(test_dataset_dir / "libraries" / "*.yml")))
     system = load_system(test_dataset_dir / "system.yml", yml_libs)
 
     system_no_params_file = make_system_with_no_param(

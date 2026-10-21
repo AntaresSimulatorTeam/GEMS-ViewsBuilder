@@ -128,20 +128,9 @@ def to_metric(metric_data: MetricData) -> Metric:
     )
 
 
-def load_catalogs(catalogs_dir: Path) -> list[Catalog]:
-    logging.info(f"Loading catalogs from {catalogs_dir}")
-    catalogs: list[Catalog] = []
-    for catalog_file_path in collect_catalog_files(catalogs_dir):
-        catalog = load_catalog(catalog_file_path)
-        catalogs.append(catalog)
-    return catalogs
-
-
-def collect_catalog_files(catalogs_dir: Path) -> list[Path]:
-    collected_catalogs = list(catalogs_dir.glob("*.yml"))
-    if not collected_catalogs:
-        raise ValueError(f"No catalogs found in {catalogs_dir}")
-    return collected_catalogs
+def load_catalogs(catalog_files: list[Path]) -> list[Catalog]:
+    logging.info(f"Loading {len(catalog_files)} catalog file(s)")
+    return [load_catalog(catalog_file_path) for catalog_file_path in catalog_files]
 
 
 def load_catalog(catalog_file_path: Path) -> Catalog:

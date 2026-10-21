@@ -34,6 +34,7 @@ from gems_views_builder.input.library import (
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig, load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
+from gems_views_builder.multiple_files_collector import collect_files
 
 
 def make_view_config(metrics: list[Metric], location_taxonomy_category: str) -> ViewConfig:
@@ -66,7 +67,7 @@ def build_components_by_taxonomy_category(
 def test_3_components(test_files_root: Path) -> dict[str, Any]:
     test_3 = test_files_root / "test_3"
     library_dir = test_3 / "libraries"
-    system = load_system(test_3 / "system.yml", load_yml_libs(library_dir))
+    system = load_system(test_3 / "system.yml", load_yml_libs(collect_files(str(library_dir / "*.yml"))))
     taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
     library = create_lib_from_yml(load_lib_file(library_dir / "library.yml"))
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
