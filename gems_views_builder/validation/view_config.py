@@ -9,7 +9,6 @@ ALLOWED_PATTERN_COUNT = 10
 
 def validate_view_configs(view_configs: list[ViewConfig]) -> None:
     validate_unique_ids(view_configs)
-    validate_view_configs_full_metric_ids(view_configs)
     validate_view_configs_aggregation_patterns(view_configs)
 
 
@@ -19,11 +18,6 @@ def validate_unique_ids(view_configs: list[ViewConfig]) -> None:
         if view_config.id in view_config_ids:
             raise ValueError(f"View config {view_config.id!r} is defined multiple times")
         view_config_ids.add(view_config.id)
-
-
-def validate_view_configs_full_metric_ids(view_configs: list[ViewConfig]) -> None:
-    for view_config in view_configs:
-        view_config.validate_full_metric_ids()
 
 
 def validate_view_configs_aggregation_patterns(view_configs: list[ViewConfig]) -> None:

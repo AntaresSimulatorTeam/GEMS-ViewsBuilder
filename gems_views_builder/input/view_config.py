@@ -45,7 +45,7 @@ class AggregationPattern(ViewBuilderBasedModel):
 
 
 class MetricId(ViewBuilderBasedModel, frozen=True):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$")
 
 
 class RawViewConfig(ViewBuilderBasedModel):
@@ -84,13 +84,6 @@ class ViewConfig:
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
-
-    def validate_full_metric_ids(self) -> None:
-        for full_metric_id in self.full_metric_ids:
-            if full_metric_id.count(".") != 1 or full_metric_id.startswith(".") or full_metric_id.endswith("."):
-                raise ValueError(
-                    f"Invalid metric id reference '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'"
-                )
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
