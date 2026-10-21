@@ -1,0 +1,14 @@
+time-scope:
+  first-time-step: 0
+  last-time-step: 335
+
+scenario-scope:
+  include:
+    - 0
+
+resolution:
+  mode: parallel-subproblems
+  block-length: 168
+
+solver-options:
+  name: highs

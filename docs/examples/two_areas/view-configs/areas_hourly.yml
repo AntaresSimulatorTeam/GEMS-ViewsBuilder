@@ -1,0 +1,23 @@
+view:
+  id: areas_hourly
+  taxonomy: antares_legacy_taxonomy
+
+  scope:
+    location:
+      taxonomy-category: balance
+    calendar: calendar
+    extra-locations:
+      - id: country
+
+  aggregations-patterns:
+    - id: hourly
+      time-granularity: hour
+      scenario: false
+
+  metrics:
+    - id: area_catalog.LOAD
+    - id: area_catalog.GENERATION
+    - id: area_catalog.NET_IMPORT
+    - id: area_catalog.UNSUPPLIED_ENERGY
+    - id: area_catalog.SPILLED_ENERGY
+    - id: area_catalog.PRICE

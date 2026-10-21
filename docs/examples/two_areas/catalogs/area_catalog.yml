@@ -1,0 +1,102 @@
+catalog:
+  id: area_catalog
+  taxonomy: antares_legacy_taxonomy
+
+  location:
+    taxonomy-category: balance
+
+  metrics-definition:
+
+    - id: LOAD
+      terms:
+        - taxonomy-category: fatal_consumption
+          output-id: actual_load
+          location-port: balance_port
+      terms-operator: sum
+      time-operator: sum
+
+    - id: GENERATION
+      terms:
+        - taxonomy-category: dispatchable_generation
+          output-id: generation_power
+          location-port: balance_port
+        - taxonomy-category: renewable_fatal_generation
+          output-id: generation_power
+          location-port: balance_port
+      terms-operator: sum
+      time-operator: sum
+
+    - id: GENERATION_BY_TECHNOLOGY
+      terms:
+        - taxonomy-category: dispatchable_generation
+          output-id: generation_power
+          location-port: balance_port
+        - taxonomy-category: renewable_fatal_generation
+          output-id: generation_power
+          location-port: balance_port
+      terms-operator: sum
+      time-operator: sum
+      breakdown:
+        - key: technology
+
+    - id: THERMAL_GENERATION
+      terms:
+        - taxonomy-category: dispatchable_generation
+          output-id: generation_power
+          location-port: balance_port
+      terms-operator: sum
+      time-operator: sum
+
+    - id: GAS_GENERATION
+      terms:
+        - taxonomy-category: dispatchable_generation
+          output-id: generation_power
+          location-port: balance_port
+      terms-operator: sum
+      time-operator: sum
+      filter:
+        key: technology
+        value: gas
+
+    - id: NET_IMPORT
+      terms:
+        - taxonomy-category: link
+          output-id: flow
+          location-port: out_port
+        - taxonomy-category: link
+          output-id: minus_flow
+          location-port: in_port
+      terms-operator: sum
+      time-operator: sum
+
+    - id: UNSUPPLIED_ENERGY
+      terms:
+        - taxonomy-category: balance
+          output-id: unsupplied_energy
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+    - id: SPILLED_ENERGY
+      terms:
+        - taxonomy-category: balance
+          output-id: spilled_energy
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+    - id: PRICE
+      terms:
+        - taxonomy-category: balance
+          output-id: price
+          location-port: null
+      terms-operator: avg
+      time-operator: avg
+
+    - id: CO2_EMISSIONS
+      terms:
+        - taxonomy-category: dispatchable_generation
+          output-id: co2_emissions
+          location-port: balance_port
+      terms-operator: sum
+      time-operator: sum
