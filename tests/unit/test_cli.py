@@ -236,8 +236,9 @@ def test_pass_when_catalogs_directory_is_accepted(
     parser: argparse.ArgumentParser, tmp_path: Path, options: dict[str, str]
 ) -> None:
     # Arrange
-    files = {make_file(tmp_path / "inputs" / f"catalog-{index}.yml") for index in range(1, 3)}
-    options["--catalogs-dir"] = str(tmp_path / "catalogs")
+    catalogs_dir = tmp_path / "inputs"
+    files = {make_file(catalogs_dir / f"catalog-{index}.yml") for index in range(1, 3)}
+    options["--catalogs-dir"] = str(catalogs_dir)
 
     # Act
     input_paths = parse_and_check(parser, options)
