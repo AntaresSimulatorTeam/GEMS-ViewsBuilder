@@ -272,6 +272,11 @@ library:
         #- port: q_balance_port
         #  field: flow
         #  definition: q
+      extra-outputs:
+        - id: p0_port.flow
+          expression: -p0
+        - id: p1_port.flow
+          expression: efficiency * p0
       constraints:
         - id: p0_upper
           expression: p0 <= p_max_pu * p_nom

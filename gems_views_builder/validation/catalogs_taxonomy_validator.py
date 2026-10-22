@@ -64,9 +64,5 @@ class CatalogsTaxonomyValidator:
             )
 
 
-def allowed_output(category: TaxonomyCategory) -> set[str]:
-    return (
-        {variable.id for variable in category.variables}
-        | {extra_output.id for extra_output in category.extra_outputs}
-        | {item.id for item in category.port_field_definitions}
-    )
+def allowed_output(taxon: TaxonomyCategory) -> set[str]:
+    return {var.id for var in taxon.variables} | {extra_output.id for extra_output in taxon.extra_outputs}

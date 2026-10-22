@@ -33,7 +33,7 @@ taxonomy:
       ports:
         - id: p0_port
         - id: p1_port
-      port-field-definitions:
+      extra-outputs:
         - id: p0_port.flow
         - id: p1_port.flow
 
