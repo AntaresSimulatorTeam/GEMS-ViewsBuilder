@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from gems_craft.model.parsing import LibrarySchema, ModelSchema, parse_yaml_library  # type: ignore
+from gems_craft.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema, parse_yaml_library  # type: ignore
 
 
 @dataclass
@@ -19,6 +19,7 @@ class Library:
     """
 
     id: str
+    port_types: list[PortTypeSchema]  # unused: kept from the library YAML, not read by the view builder
     models: dict[str, ModelSchema]
     models_by_taxonomy_category: dict[str, list[str]]
     taxon_by_model: dict[str, str]
@@ -42,6 +43,7 @@ class Library:
 def create_lib_from_yml(yml_lib: LibrarySchema) -> Library:
     return Library(
         id=yml_lib.id,
+        port_types=yml_lib.port_types,
         models={m.id: m for m in yml_lib.models},
         models_by_taxonomy_category={
             cat: [m.id for m in yml_lib.models if m.taxonomy_category == cat]
