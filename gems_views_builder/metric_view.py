@@ -5,6 +5,8 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
+from pydantic import Field
+
 
 @dataclass
 class MetricView:
@@ -19,7 +21,5 @@ class MetricView:
 
 @dataclass
 class TemporalMetricView(MetricView):
-    """Temporal view tagged with the view config and aggregation pattern that produced it."""
-
-    view_config_id: str = ""
-    aggregation_pattern_id: str = ""
+    view_config_id: str = Field(init=False)
+    aggregation_pattern_id: str = Field(init=False)
