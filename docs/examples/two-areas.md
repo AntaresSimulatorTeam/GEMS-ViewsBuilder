@@ -204,8 +204,6 @@ uv run gems-views-builder \
 
 ## 4. Read the Views
 
-Energies are in MWh.
-
 ### Hourly values and country total
 
 Read the hourly View with polars, and print `LOAD` and `NET_IMPORT` of scenario 0 at 13:00 on 5 January, for the two areas and the country:
