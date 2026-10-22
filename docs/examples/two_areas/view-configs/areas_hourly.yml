@@ -20,4 +20,3 @@ view:
     - id: area_catalog.NET_IMPORT
     - id: area_catalog.UNSUPPLIED_ENERGY
     - id: area_catalog.SPILLED_ENERGY
-    - id: area_catalog.PRICE

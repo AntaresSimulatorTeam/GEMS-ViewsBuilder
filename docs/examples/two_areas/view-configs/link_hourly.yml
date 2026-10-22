@@ -17,5 +17,4 @@ view:
 
   metrics:
     - id: link_catalog.FLOW
-    - id: link_catalog.CONGESTION_RENT
     - id: link_catalog.CONGESTED_HOURS

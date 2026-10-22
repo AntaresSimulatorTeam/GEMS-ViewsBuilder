@@ -15,14 +15,6 @@ catalog:
       terms-operator: sum
       time-operator: sum
 
-    - id: CONGESTION_RENT
-      terms:
-        - taxonomy-category: link
-          output-id: alg_congestion_fee
-          location-port: null
-      terms-operator: sum
-      time-operator: sum
-
     - id: CONGESTED_HOURS
       terms:
         - taxonomy-category: link

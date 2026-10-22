@@ -4,11 +4,10 @@ time-scope:
 
 scenario-scope:
   include:
-    - 2
+    - "0-3"
 
 resolution:
-  mode: parallel-subproblems
-  block-length: 168
+  mode: frontal
 
 solver-options:
   name: highs

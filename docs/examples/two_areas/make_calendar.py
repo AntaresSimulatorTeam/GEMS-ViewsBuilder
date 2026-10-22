@@ -5,7 +5,7 @@
 
 import polars as pl
 
-st = pl.read_csv("simulation-tables/st-mc-0.csv")
+st = pl.read_csv("output/*/simulation_table_*.csv")
 calendar = (
     st.filter(pl.col("absolute_time_index").is_not_null())
     .select("absolute_time_index", "block")

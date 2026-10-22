@@ -85,14 +85,6 @@ catalog:
       terms-operator: sum
       time-operator: sum
 
-    - id: PRICE
-      terms:
-        - taxonomy-category: balance
-          output-id: price
-          location-port: null
-      terms-operator: avg
-      time-operator: avg
-
     - id: CO2_EMISSIONS
       terms:
         - taxonomy-category: dispatchable_generation
