@@ -5,11 +5,11 @@ from gems_views_builder.input.catalog import Catalog
 
 
 def validate_catalogs(catalogs: list[Catalog]) -> None:
-    validate_catalog_ids(catalogs)
+    validate_catalogs_are_unique(catalogs)
     validate_catalogs_metrics(catalogs)
 
 
-def validate_catalog_ids(catalogs: list[Catalog]) -> None:
+def validate_catalogs_are_unique(catalogs: list[Catalog]) -> None:
     catalog_ids = set()
     for catalog in catalogs:
         if catalog.id in catalog_ids:
