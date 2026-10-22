@@ -50,8 +50,8 @@ class CatalogsTaxonomyValidator:
     def _validate_term_output(self, term: Term, category: TaxonomyCategory) -> None:
         if term.output_id not in allowed_output(category):
             raise ValueError(
-                f"uses output-id {term.output_id!r}, which is not declared as a variable, "
-                f"extra-output, or port-field-definition on taxonomy category {term.taxonomy_category!r} "
+                f"uses output-id {term.output_id!r}, which is not declared as a variable "
+                f"or extra-output on taxonomy category {term.taxonomy_category!r} "
                 f"in taxonomy {self.taxon_id!r}"
             )
 

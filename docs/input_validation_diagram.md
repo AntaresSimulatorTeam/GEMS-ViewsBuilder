@@ -16,7 +16,7 @@ graph LR
     simulation_table(("simulation_table.parquet/csv"))
     calendar(("calendar.csv"))
 
-    catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --- taxonomy
+    catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id is a variable or extra-output<br/>• location ports declared" --- taxonomy
     view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --- taxonomy
     view_config -- "• taxonomy id matches<br/>• location taxonomy category matches" --- catalog
     view_config -- "• selected metrics exist in catalogs" --- catalog
@@ -55,7 +55,7 @@ which only checks that these files are *present*, not their contents).
 |---|---|
 | Taxonomy id match | `catalog.taxonomy == taxonomy.id` |
 | Taxonomy category exists | every term's `taxonomy-category` is a category defined in `taxonomy.yml` |
-| Output id declared | every term's `output-id` is declared as a `variable`, `extra-output`, or `port-field-definition` on that category |
+| Output id declared | every term's `output-id` is declared as a `variable` or `extra-output` on that category |
 | Location port declared | every term's `location-port` is declared as a `port` on that category |
 
 ### `view_config.yml` → `taxonomy.yml`
