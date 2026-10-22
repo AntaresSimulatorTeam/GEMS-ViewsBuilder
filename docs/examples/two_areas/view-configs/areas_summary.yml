@@ -25,6 +25,7 @@ view:
   metrics:
     - id: area_catalog.LOAD
     - id: area_catalog.GENERATION_BY_TECHNOLOGY
+    - id: area_catalog.THERMAL_GENERATION
     - id: area_catalog.GAS_GENERATION
     - id: area_catalog.NET_IMPORT
     - id: area_catalog.UNSUPPLIED_ENERGY

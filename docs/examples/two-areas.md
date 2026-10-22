@@ -124,7 +124,7 @@ Two [catalogs](https://gems-energy.readthedocs.io/en/latest/user-guide/input-fil
 | `GENERATION_BY_TECHNOLOGY` | same as `GENERATION` | `breakdown` on `technology` |
 | `THERMAL_GENERATION` | `generation_power` of thermal units | |
 | `GAS_GENERATION` | `generation_power` of thermal units | `filter` on `technology: gas` |
-| `NET_IMPORT` | `flow` on `out_port`, `minus_flow` on `in_port` | one term per port of the link; positive when the area imports |
+| `NET_IMPORT` | `flow` on `out_port`, `minus_flow` on `in_port` | one term per port of the link, read for the area on that port; positive when the area imports |
 | `UNSUPPLIED_ENERGY`, `SPILLED_ENERGY` | variables of the areas | `location-port: null` |
 | `CO2_EMISSIONS` | `co2_emissions` of thermal units | t of CO₂ |
 
@@ -141,6 +141,8 @@ LOAD = GENERATION + NET_IMPORT + UNSUPPLIED_ENERGY − SPILLED_ENERGY
     ```yaml
     --8<-- "docs/examples/two_areas/catalogs/link_catalog.yml"
     ```
+
+The link has two ports: `out_port` injects `flow` into the area connected to it (`south`), and `in_port` injects `-flow` (into `north`). A positive `flow` therefore goes from north to south.
 
 | Metric | Reads | Notes |
 |---|---|---|
@@ -204,7 +206,7 @@ uv run gems-views-builder \
 
 Energies are in MWh.
 
-### Hourly balance and country total
+### Hourly values and country total
 
 Read the hourly View with polars, and print `LOAD` and `NET_IMPORT` of scenario 0 at 13:00 on 5 January, for the two areas and the country:
 
@@ -373,5 +375,36 @@ print(view.filter(
 
 One row per statistic, in `scenario_stat`; `scenario_id` is empty and `scenario_aggregation` is `true`.
 
+### Weekly statistics for the country
+
+Expected load of `country_1` per week, from the `weekly_country_stats` pattern (`location-filter` keeps `country_1` only):
+
+```python
+import polars as pl
+
+view = pl.read_parquet("views/areas_summary*week*.parquet")
+print(view.filter(
+    pl.col("metric_id") == "LOAD",
+    pl.col("scenario_stat") == "exp",
+).sort("view_date"))
+```
+
+```text
+┌───────────┬────────────┬────────────┬────────────┬───────────┬───────────┬───────────┬───────────┐
+│ metric_id ┆ metric_loc ┆ breakdown_ ┆ view_date  ┆ scenario_ ┆ metric_va ┆ scenario_ ┆ scenario_ │
+│ ---       ┆ ation      ┆ properties ┆ ---        ┆ stat      ┆ lue       ┆ id        ┆ aggregati │
+│ str       ┆ ---        ┆ ---        ┆ datetime[μ ┆ ---       ┆ ---       ┆ ---       ┆ on        │
+│           ┆ str        ┆ str        ┆ s]         ┆ str       ┆ f64       ┆ i64       ┆ ---       │
+│           ┆            ┆            ┆            ┆           ┆           ┆           ┆ bool      │
+╞═══════════╪════════════╪════════════╪════════════╪═══════════╪═══════════╪═══════════╪═══════════╡
+│ LOAD      ┆ country_1  ┆ {}         ┆ 2029-12-31 ┆ exp       ┆ 655704.52 ┆ null      ┆ true      │
+│           ┆            ┆            ┆ 00:00:00   ┆           ┆ 5         ┆           ┆           │
+│ LOAD      ┆ country_1  ┆ {}         ┆ 2030-01-07 ┆ exp       ┆ 773642.87 ┆ null      ┆ true      │
+│           ┆            ┆            ┆ 00:00:00   ┆           ┆ 5         ┆           ┆           │
+│ LOAD      ┆ country_1  ┆ {}         ┆ 2030-01-14 ┆ exp       ┆ 114142.07 ┆ null      ┆ true      │
+│           ┆            ┆            ┆ 00:00:00   ┆           ┆ 5         ┆           ┆           │
+└───────────┴────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┘
+```
+
 !!! note "`view_date` is the start of the period"
-    Monthly and yearly values are dated `2030-01-01`, and cover the 14 days of the calendar (1 to 14 January). Weekly values are dated the Monday of their week, even when the calendar covers only part of it: `2029-12-31` (1 to 6 January), `2030-01-07` and `2030-01-14` (14 January only).
+    Monthly and yearly values are dated `2030-01-01` and cover the 14 days of the calendar. Weekly values are dated the Monday of their week, even when the calendar covers only part of it: `2029-12-31` holds 1 to 6 January, `2030-01-07` a full week, and `2030-01-14` only 14 January.
