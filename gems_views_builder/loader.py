@@ -4,13 +4,14 @@
 import logging
 from dataclasses import dataclass
 
+from gems_craft.model.taxonomy import load_taxonomy  # type: ignore
+
 from gems_views_builder.input.calendar import load_calendar
 from gems_views_builder.input.catalog import load_catalogs
 from gems_views_builder.input.library import create_lib_from_yml, load_yml_libs
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import load_simulation_tables
 from gems_views_builder.input.system import load_system
-from gems_views_builder.input.taxonomy import load_taxonomy
 from gems_views_builder.input.view_config import load_view_configs
 from gems_views_builder.input_paths import InputPaths
 

@@ -3,12 +3,13 @@
 
 from dataclasses import dataclass, field
 
+from gems_craft.model.taxonomy import Taxonomy  # type: ignore
+
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.simulation_table import SimulationTable
 from gems_views_builder.input.system import System
-from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
 
 
