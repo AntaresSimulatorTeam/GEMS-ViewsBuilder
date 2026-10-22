@@ -21,7 +21,7 @@ The main outputs are Views.
 graph LR
     catalog(("catalog.yml<br/>(one or more)"))
     taxonomy(("taxonomy.yml"))
-    view_config(("view_config.yml"))
+    view_config(("view_config.yml<br/>(one or more)"))
     library_1(("library_1.yml"))
     library_dots["⋮"]
     library_n(("library_N.yml"))
