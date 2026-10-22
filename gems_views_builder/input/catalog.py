@@ -128,8 +128,9 @@ def to_metric(metric_data: MetricData) -> Metric:
     )
 
 
-def load_catalogs(catalogs: list[Path]) -> list[Catalog]:
-    return [load_catalog(catalog) for catalog in catalogs]
+def load_catalogs(catalog_files: list[Path]) -> list[Catalog]:
+    logging.info(f"Loading {len(catalog_files)} catalog file(s)")
+    return [load_catalog(catalog_file_path) for catalog_file_path in catalog_files]
 
 
 def load_catalog(catalog_file_path: Path) -> Catalog:

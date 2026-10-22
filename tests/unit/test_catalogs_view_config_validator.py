@@ -7,12 +7,13 @@ import pytest
 
 from gems_views_builder.input.catalog import load_catalog, load_catalogs
 from gems_views_builder.input.view_config import load_view_config
+from gems_views_builder.multiple_files_collector import collect_files
 from gems_views_builder.validation.catalogs_view_config_validator import ViewConfigCatalogsValidator
 
 
 def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
     view_config = load_view_config(test_dataset_dir / "view_config.yml")
-    catalogs = load_catalogs(list((test_dataset_dir / "catalogs").glob("catalog.yml")))
+    catalogs = load_catalogs(collect_files(str(test_dataset_dir / "catalogs" / "*.yml")))
 
     # Act & Assert
     ViewConfigCatalogsValidator(catalogs, view_config).validate()

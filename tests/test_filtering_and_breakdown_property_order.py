@@ -33,6 +33,7 @@ from gems_views_builder.input.library import (
 )
 from gems_views_builder.input.system import load_system
 from gems_views_builder.input.view_config import load_view_config
+from gems_views_builder.multiple_files_collector import collect_files
 from gems_views_builder.view import ParquetViewSinker
 from tests.conftest import paths_from_dataset
 
@@ -114,7 +115,7 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     root = test_files_root / "filtering_and_breakdown_property_order"
     library_dir = root / "libraries"
     library = create_lib_from_yml(load_lib_file(library_dir / "library.yml"))
-    system = load_system(root / "system.yml", load_yml_libs(library_dir))
+    system = load_system(root / "system.yml", load_yml_libs(collect_files(str(library_dir / "*.yml"))))
     catalog = load_catalog(root / "catalogs" / "catalog.yml")
     view_config = load_view_config(root / "view_config.yml")
     metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")
@@ -124,7 +125,8 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
     supply_components_with_port_connections(components, component_port_connections)
-    supply_components_with_locations(components_by_taxon, [metric], view_config.location_taxonomy_category)
+    view_config.metrics = [metric]
+    supply_components_with_locations(components_by_taxon, view_config)
 
     table = MetricStructureTableBuilder(
         view_config,

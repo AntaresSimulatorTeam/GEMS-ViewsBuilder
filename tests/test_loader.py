@@ -21,20 +21,25 @@ from tests.conftest import paths_from_dataset
 def test_loader_init_has_no_io(tmp_path: Path) -> None:
     """
     Constructor should not read yaml or parquet.
-    Catalog and view-config paths are resolved from globs when InputPaths is built.
+    Multi-file inputs are resolved to paths when InputPaths is built.
     """
-    catalogs_dir = tmp_path / "catalogs"
-    catalogs_dir.mkdir()
-    (catalogs_dir / "catalog.yml").touch()
     missing = Path("/this/path/should-not-exist")
+    libraries_dir = tmp_path / "libraries"
+    catalogs_dir = tmp_path / "catalogs"
+    libraries_dir.mkdir()
+    catalogs_dir.mkdir()
+    library_file = libraries_dir / "library.yml"
+    catalog_file = catalogs_dir / "catalog.yml"
+    library_file.touch()
+    catalog_file.touch()
     simulation_table = tmp_path / "simulation_table.parquet"
     simulation_table.touch()
     view_config = tmp_path / "view_config.yml"
     view_config.touch()
     paths = InputPaths(
         Namespace(
-            libraries_dir=missing / "libraries",
-            catalogs=str(catalogs_dir / "catalog.yml"),
+            libraries_dir=libraries_dir,
+            catalogs_dir=catalogs_dir,
             system=missing / "system.yml",
             calendar=missing / "calendar.csv",
             taxonomy=missing / "taxonomy.yml",
@@ -44,8 +49,9 @@ def test_loader_init_has_no_io(tmp_path: Path) -> None:
     )
     loader = Loader(paths)
     assert loader.input_paths is paths
-    assert loader.input_paths.libraries_dir == missing / "libraries"
-    assert loader.input_paths.catalogs == [catalogs_dir / "catalog.yml"]
+    assert loader.input_paths.libraries == [library_file]
+    assert loader.input_paths.catalogs == [catalog_file]
+    assert loader.input_paths.system == missing / "system.yml"
 
 
 def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:

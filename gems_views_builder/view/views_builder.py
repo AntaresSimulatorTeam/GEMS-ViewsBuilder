@@ -1,12 +1,10 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-from gems_views_builder.aggregators.aggregations_processor import AggregationProcessor
 from gems_views_builder.input.simulation_table import join
-from gems_views_builder.input.view_building_input_data import ViewBuildingInputData
+from gems_views_builder.input.view_building_input import ViewBuildingInput
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_view import TemporalMetricView
-from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
 
 
 def give_views_a_config_id(metric_views: list[TemporalMetricView], view_config: ViewConfig) -> None:
@@ -15,16 +13,11 @@ def give_views_a_config_id(metric_views: list[TemporalMetricView], view_config: 
 
 
 class ViewBuilder:
-    def __init__(
-        self,
-        input_data: ViewBuildingInputData,
-        metric_structure_table_builder: MetricStructureTableBuilder,
-        aggregation_processor: AggregationProcessor,
-    ) -> None:
+    def __init__(self, input_data: ViewBuildingInput) -> None:
         self.filtered_st = input_data.filtered_st
         self.view_config = input_data.view_config
-        self.metric_structure_table_builder = metric_structure_table_builder
-        self.aggregation_processor = aggregation_processor
+        self.metric_structure_table_builder = input_data.metric_structure_table_builder
+        self.aggregation_processor = input_data.aggregation_processor
 
     def build(self) -> list[TemporalMetricView]:
         metric_views: list[TemporalMetricView] = []

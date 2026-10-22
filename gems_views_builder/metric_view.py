@@ -5,6 +5,8 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
+from pydantic import Field
+
 from gems_views_builder.input.view_config import TimeGranularity
 
 
@@ -19,6 +21,7 @@ class MetricView:
         self.persistence_path.unlink(missing_ok=True)
 
 
+@dataclass
 class TemporalMetricView(MetricView):
     time_granularity: TimeGranularity
-    view_config_id: str
+    view_config_id: str = Field(init=False)

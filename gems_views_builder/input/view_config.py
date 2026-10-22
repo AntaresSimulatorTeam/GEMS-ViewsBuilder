@@ -41,11 +41,11 @@ class AggregationPattern(ViewBuilderBasedModel):
     id: str
     time_granularity: TimeGranularity
     scenario: bool
-    spatial_filter: list[str] | None = Field(default=None)
+    location_filter: list[str] | None = Field(default=None)
 
 
 class MetricId(ViewBuilderBasedModel, frozen=True):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$")
 
 
 class RawViewConfig(ViewBuilderBasedModel):
@@ -68,34 +68,21 @@ class ViewConfig:
     metrics: list[Metric] = field(default_factory=list)
 
     def populate_with_metrics(self, catalogs: list[Catalog]) -> None:
-        logging.debug(f"Fetching {len(self.full_metric_ids)} metric(s) from catalogs")
+        logging.debug(f"Fetching {len(self.full_metric_ids)} metrics for view config={self.id!r}")
         catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for full_metric_id in self.full_metric_ids:
-            catalog_id, metric_id = full_metric_id.split(".", 1)
-            catalog = catalogs_by_id.get(catalog_id)
-            if catalog is None:
-                raise ValueError(f"Catalog {catalog_id!r} used in view config {self.id!r} doesn't exist!")
-            metric = catalog.metrics.get(metric_id)
-            if metric is None:
-                raise ValueError(
-                    f"Metric {metric_id!r} used in view config {self.id!r} doesn't exist in catalog {catalog_id!r}"
-                )
-            self.metrics.append(metric)
+            catalog_id, metric_id = full_metric_id.split(".")
+            self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
+        if not self.metrics:
+            logging.warning(f"No metrics found for view config={self.id!r}")
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
 
-    def validate_full_metric_ids(self) -> None:
-        for full_metric_id in self.full_metric_ids:
-            if full_metric_id.count(".") != 1 or full_metric_id.startswith(".") or full_metric_id.endswith("."):
-                raise ValueError(
-                    f"Invalid metric id reference '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'"
-                )
-
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
-    raw_view_config = load_view_config_from_yaml(config_file_path)
+    raw_view_config = load_raw_view_config_file(config_file_path)
 
     view_config = ViewConfig(
         id=raw_view_config.id,
@@ -113,7 +100,7 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
     return view_config
 
 
-def load_view_config_from_yaml(view_file_path: Path) -> RawViewConfig:
+def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
     logging.info(f"Parsing view config YAML from {view_file_path}")
     with open(view_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)

@@ -55,26 +55,20 @@ def create_lib_from_yml(yml_lib: LibrarySchema) -> Library:
     )
 
 
-def load_yml_libs(library_dir: Path) -> list[LibrarySchema]:
-    logging.info(f"Loading model libraries from {library_dir}")
+def load_yml_libs(library_files: list[Path]) -> list[LibrarySchema]:
+    logging.info(f"Loading {len(library_files)} model library file(s)")
     yml_libs: list[LibrarySchema] = []
     already_loaded_libs: set[str] = set()
-    for library_file_path in collect_lib_files(library_dir):
+    for library_file_path in library_files:
         yml_lib = load_lib_file(library_file_path)
         if yml_lib.id in already_loaded_libs:
             raise ValueError(
-                f"Library id {yml_lib.id!r} defined more than once in {library_dir} (also found in a different file)"
+                f"Library id {yml_lib.id!r} defined more than once in {library_file_path.parent}"
+                " (also found in a different file)"
             )
         already_loaded_libs.add(yml_lib.id)
         yml_libs.append(yml_lib)
     return yml_libs
-
-
-def collect_lib_files(library_dir: Path) -> list[Path]:
-    collected_libs = list(library_dir.glob("*.yml"))
-    if not collected_libs:
-        raise ValueError(f"No model libraries found in {library_dir}")
-    return collected_libs
 
 
 def associate_models_with_a_taxon(libraries: dict[str, Library]) -> dict[str, str]:

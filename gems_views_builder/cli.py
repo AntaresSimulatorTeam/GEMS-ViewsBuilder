@@ -36,6 +36,7 @@ def parent_is_dir(path: Path) -> bool:
 
 REQUIRED_PATHS_OPTIONS: list[PathOption] = [
     PathOption("libraries-dir", SystemType.DIRECTORY, Path.is_dir),
+    PathOption("catalogs-dir", SystemType.DIRECTORY, Path.is_dir),
     PathOption("system", SystemType.FILE, Path.is_file),
     PathOption("calendar", SystemType.FILE, Path.is_file),
     PathOption("taxonomy", SystemType.FILE, Path.is_file),
@@ -44,7 +45,6 @@ REQUIRED_PATHS_OPTIONS: list[PathOption] = [
 MULTIPLE_FILE_PATH_OPTIONS: list[PathOption] = [
     PathOption("simulation-tables", SystemType.DIRECTORY, parent_is_dir),
     PathOption("view-configs", SystemType.DIRECTORY, parent_is_dir),
-    PathOption("catalogs", SystemType.DIRECTORY, parent_is_dir),
 ]
 
 
@@ -58,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_multiple_file_path_options(parser, MULTIPLE_FILE_PATH_OPTIONS)
     parser.add_argument(
         "-o",
-        "--output",
+        "--output-dir",
         type=Path,
         required=True,
         help="Existing directory where the timestamped view result file will be written.",
@@ -115,17 +115,21 @@ def check_paths_options(args: argparse.Namespace) -> None:
 
 def check_multiple_file_path_options(args: argparse.Namespace) -> None:
     for option in MULTIPLE_FILE_PATH_OPTIONS:
-        option_value = Path(getattr(args, option.args_attribute))
+        pattern = getattr(args, option.args_attribute)
+        option_value = Path(pattern)
         if not option.system_check(option_value):
-            raise OSError(f"--{option.name} : {option_value.parent} is not a {option.system_type.value}")
+            raise OSError(
+                f"--{option.name} : folder {str(option_value.parent)!r} of glob pattern {pattern!r} "
+                f"is not an existing folder"
+            )
 
 
 def check_options(args: argparse.Namespace) -> None:
     check_paths_options(args)
     check_multiple_file_path_options(args)
 
-    if not args.output.is_dir():
-        raise NotADirectoryError(f"--output is not a directory: {args.output}")
+    if not args.output_dir.is_dir():
+        raise NotADirectoryError(f"--output-dir is not a directory: {args.output_dir}")
 
     if args.log_dir is not None and not args.log_dir.is_dir():
         raise NotADirectoryError(f"Log directory does not exist: {args.log_dir}")
