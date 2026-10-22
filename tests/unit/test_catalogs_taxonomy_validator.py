@@ -7,14 +7,14 @@ import pytest
 
 from gems_views_builder.input.catalog import load_catalog, load_catalogs
 from gems_views_builder.input.taxonomy import load_taxonomy
-from gems_views_builder.multiple_files_collector import collect_files
+from gems_views_builder.multiple_files_collector import collect_yml_from_dir
 from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTaxonomyValidator
 
 
 def test_passes_for_loaded_catalogs(test_dataset_dir: Path) -> None:
     # Arrange
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
-    catalogs = load_catalogs(collect_files(str(test_dataset_dir / "catalogs" / "*.yml")))
+    catalogs = load_catalogs(collect_yml_from_dir(test_dataset_dir / "catalogs"))
 
     # Act & Assert
     CatalogsTaxonomyValidator(catalogs, taxonomy).validate()
