@@ -87,4 +87,5 @@ class ScenarioAggregator:
         view = apply_location_filter(view, self.location_filter)
         sink_to_parquet(view, new_path)
         logging.info(f"Scenario view written to {new_path}")
-        return TemporalMetricView(new_path, metric_view.time_granularity)
+        scenario_view = TemporalMetricView(persistence_path=new_path, time_granularity=metric_view.time_granularity)
+        return scenario_view

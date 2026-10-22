@@ -20,11 +20,17 @@ from typing import Any
 import polars as pl
 from pytest import approx
 
-from gems_views_builder.__main__ import build_metric_views
+from gems_views_builder.__main__ import build_components_by_taxon
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, PropertySchema, Term
+from gems_views_builder.input.component import supply_components_with_locations
 from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.view_building_input import (
+    create_view_building_input,
+    make_filtered_simulation_table,
+)
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.metric_view import TemporalMetricView
+from gems_views_builder.view import ViewBuilder
 from tests.e2e.utils import (
     build_raw_input_data,
     make_calendar,
@@ -129,7 +135,7 @@ def extract_values_from_view(view: TemporalMetricView) -> dict[tuple[str, dateti
     )
 
 
-def views_by_metric_id(metric_views: list[TemporalMetricView]) -> dict[str, TemporalMetricView]:
+def views_grouped_by_metric_id(metric_views: list[TemporalMetricView]) -> dict[str, TemporalMetricView]:
     by_metric_id: dict[str, TemporalMetricView] = {}
     for view in metric_views:
         metric_id = pl.read_parquet(view.persistence_path, columns=["metric_id"])["metric_id"][0]
@@ -172,10 +178,17 @@ EXPECTED_PROD = {
 def test_extra_locations_values_in_final_metric_views() -> None:
     # Arrange
     input_data = build_input()
+    components_by_taxon = build_components_by_taxon(input_data)
 
     # Act
-    views = views_by_metric_id(build_metric_views(input_data))
+    views = []
+    for view_config in input_data.view_configs:
+        supply_components_with_locations(components_by_taxon, view_config)
+        filtered_st = make_filtered_simulation_table(input_data)
+        view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)
+        views.extend(ViewBuilder(view_building_input).build())
+    views_by_metric = views_grouped_by_metric_id(views)
 
     # Assert
-    assert extract_values_from_view(views["LOAD"]) == approx(EXPECTED_LOAD)
-    assert extract_values_from_view(views["PROD"]) == approx(EXPECTED_PROD)
+    assert extract_values_from_view(views_by_metric["LOAD"]) == approx(EXPECTED_LOAD)
+    assert extract_values_from_view(views_by_metric["PROD"]) == approx(EXPECTED_PROD)
