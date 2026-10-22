@@ -12,7 +12,7 @@ from gems_views_builder.view.view_sinker import ViewSinker
 def group_views(
     metric_views: list[TemporalMetricView],
 ) -> dict[tuple[str, str], list[TemporalMetricView]]:
-    """Group metric views by view config, aggregation pattern."""
+    """Group metric views by view config and aggregation pattern."""
     grouped_views: dict[tuple[str, str], list[TemporalMetricView]] = defaultdict(list)
     for view in metric_views:
         grouped_views[(view.view_config_id, view.aggregation_pattern_id)].append(view)

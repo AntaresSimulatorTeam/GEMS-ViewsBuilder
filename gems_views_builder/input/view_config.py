@@ -41,11 +41,11 @@ class AggregationPattern(ViewBuilderBasedModel):
     id: str = Field(pattern=r"^[A-Za-z0-9_]+$")
     time_granularity: TimeGranularity
     scenario: bool
-    spatial_filter: list[str] | None = Field(default=None)
+    location_filter: list[str] | None = Field(default=None)
 
 
 class MetricId(ViewBuilderBasedModel, frozen=True):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$")
 
 
 class RawViewConfig(ViewBuilderBasedModel):
@@ -68,7 +68,7 @@ class ViewConfig:
     metrics: list[Metric] = field(default_factory=list)
 
     def populate_with_metrics(self, catalogs: list[Catalog]) -> None:
-        logging.debug(f"Fetching {len(self.full_metric_ids)} metric(s) from catalogs")
+        logging.debug(f"Fetching {len(self.full_metric_ids)} metric(s) for view config={self.id!r}")
         catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for full_metric_id in self.full_metric_ids:
             catalog_id, metric_id = full_metric_id.split(".", 1)
@@ -81,16 +81,11 @@ class ViewConfig:
                     f"Metric {metric_id!r} used in view config {self.id!r} doesn't exist in catalog {catalog_id!r}"
                 )
             self.metrics.append(metric)
+        if not self.metrics:
+            logging.warning(f"No metrics found for view config={self.id!r}")
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
-
-    def validate_full_metric_ids(self) -> None:
-        for full_metric_id in self.full_metric_ids:
-            if full_metric_id.count(".") != 1 or full_metric_id.startswith(".") or full_metric_id.endswith("."):
-                raise ValueError(
-                    f"Invalid metric id reference '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'"
-                )
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
@@ -128,3 +123,8 @@ def load_view_configs(view_configs_paths: list[Path]) -> list[ViewConfig]:
     for path in view_configs_paths:
         view_configs.append(load_view_config(path))
     return view_configs
+
+
+def populate_view_configs_with_metrics(view_configs: list[ViewConfig], catalogs: list[Catalog]) -> None:
+    for view_config in view_configs:
+        view_config.populate_with_metrics(catalogs)

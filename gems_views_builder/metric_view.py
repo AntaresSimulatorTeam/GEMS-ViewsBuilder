@@ -17,6 +17,9 @@ class MetricView:
         self.persistence_path.unlink(missing_ok=True)
 
 
+@dataclass
 class TemporalMetricView(MetricView):
-    view_config_id: str
-    aggregation_pattern_id: str
+    """Temporal view tagged with the view config and aggregation pattern that produced it."""
+
+    view_config_id: str = ""
+    aggregation_pattern_id: str = ""
