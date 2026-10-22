@@ -111,9 +111,11 @@ Two [catalogs](https://gems-energy.readthedocs.io/en/latest/user-guide/input-fil
 
 #### `area_catalog`: metrics located on the areas
 
-```yaml
---8<-- "docs/examples/two_areas/catalogs/area_catalog.yml"
-```
+??? example "area_catalog.yml"
+
+    ```yaml
+    --8<-- "docs/examples/two_areas/catalogs/area_catalog.yml"
+    ```
 
 | Metric | Reads | Notes |
 |---|---|---|
@@ -134,9 +136,11 @@ LOAD = GENERATION + NET_IMPORT + UNSUPPLIED_ENERGY − SPILLED_ENERGY
 
 #### `link_catalog`: metrics located on the link
 
-```yaml
---8<-- "docs/examples/two_areas/catalogs/link_catalog.yml"
-```
+??? example "link_catalog.yml"
+
+    ```yaml
+    --8<-- "docs/examples/two_areas/catalogs/link_catalog.yml"
+    ```
 
 | Metric | Reads | Notes |
 |---|---|---|
