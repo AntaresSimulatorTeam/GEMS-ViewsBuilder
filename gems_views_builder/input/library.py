@@ -24,7 +24,6 @@ class Library:
     models: dict[str, ModelSchema]
     models_by_taxonomy_category: dict[str, list[str]]
     taxon_by_model: dict[str, str]
-    schema: LibrarySchema
 
     def get_model(self, model_id: str) -> ModelSchema:
         try:
@@ -53,7 +52,6 @@ def create_lib_from_yml(yml_lib: LibrarySchema) -> Library:
             for cat in {m.taxonomy_category for m in yml_lib.models if m.taxonomy_category}
         },
         taxon_by_model={m.id: m.taxonomy_category for m in yml_lib.models if m.taxonomy_category},
-        schema=yml_lib,
     )
 
 

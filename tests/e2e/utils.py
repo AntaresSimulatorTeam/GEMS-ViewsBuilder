@@ -7,7 +7,7 @@ from typing import Any
 
 import polars as pl
 
-from gems_views_builder import LibrarySchema, Taxonomy
+from gems_views_builder import Taxonomy
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.library import Library
@@ -95,7 +95,6 @@ def build_raw_input_data(
                 models={},
                 models_by_taxonomy_category={},
                 taxon_by_model=taxon_by_model,
-                schema=LibrarySchema(id="lib"),
             )
         },
         system=system,
