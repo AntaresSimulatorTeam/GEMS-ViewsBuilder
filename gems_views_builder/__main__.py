@@ -68,7 +68,7 @@ def main(argv: list[str] | None = None) -> None:
         logging.info("Starting view building process")
         input_paths = InputPaths(args)
         InputPathsValidator(input_paths).validate()
-        view_sinker = ViewSinkerFactory(args.output, args.output_format).make()
+        view_sinker = ViewSinkerFactory(args.output_dir, args.output_format).make()
         run_view_building_process(input_paths, view_sinker)
     except Exception as e:
         raise ValueError(f"View building failed: {e}") from e
