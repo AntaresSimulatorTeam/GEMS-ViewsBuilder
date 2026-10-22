@@ -1,0 +1,31 @@
+view:
+  id: areas_summary
+  taxonomy: antares_legacy_taxonomy
+
+  scope:
+    location:
+      taxonomy-category: balance
+    calendar: calendar
+    extra-locations:
+      - id: country
+
+  aggregations-patterns:
+    - id: monthly
+      time-granularity: month
+      scenario: false
+    - id: yearly_stats
+      time-granularity: year
+      scenario: true
+    - id: weekly_country_stats
+      time-granularity: week
+      scenario: true
+      location-filter:
+        - country_1
+
+  metrics:
+    - id: area_catalog.LOAD
+    - id: area_catalog.GENERATION_BY_TECHNOLOGY
+    - id: area_catalog.GAS_GENERATION
+    - id: area_catalog.NET_IMPORT
+    - id: area_catalog.UNSUPPLIED_ENERGY
+    - id: area_catalog.CO2_EMISSIONS

@@ -1,0 +1,324 @@
+# Two-area example of the GVB documentation (docs/examples/two-areas.md)
+system:
+  id: two_areas
+  model-libraries: antares_legacy_models
+  components:
+  # --8<-- [start:area]
+  - id: north
+    model: antares_legacy_models.area
+    parameters:
+    - id: spillage_cost
+      value: 0
+    - id: unsupplied_energy_cost
+      value: 5000
+    properties:
+    - id: carrier
+      value: electricity
+    - id: country
+      value: country_1
+  # --8<-- [end:area]
+  - id: load_north
+    model: antares_legacy_models.load
+    parameters:
+    - id: load
+      time-dependent: true
+      scenario-dependent: true
+      value: load_north
+    properties:
+    - id: carrier
+      value: electricity
+  # --8<-- [start:thermal]
+  - id: nuclear_north
+    model: antares_legacy_models.thermal
+    parameters:
+    - id: cluster_max_generation
+      value: 2700
+    - id: cluster_min_gen_modulation
+      value: 0
+    - id: min_power_per_unit
+      value: 300
+    - id: max_power_per_unit
+      value: 900
+    - id: num_units
+      value: 3
+    - id: spinning
+      value: 0
+    - id: generation_cost
+      value: 10
+    - id: market_bid_cost
+      value: 10
+    - id: startup_cost
+      value: 0
+    - id: fixed_cost
+      value: 0
+    - id: min_up_duration
+      value: 1
+    - id: min_down_duration
+      value: 1
+    - id: co2_emissions_rate
+      value: 0
+    - id: nh3_emissions_rate
+      value: 0
+    - id: so2_emissions_rate
+      value: 0
+    - id: nox_emissions_rate
+      value: 0
+    - id: pm2_5_emissions_rate
+      value: 0
+    - id: pm5_emissions_rate
+      value: 0
+    - id: pm10_emissions_rate
+      value: 0
+    - id: nmvoc_emissions_rate
+      value: 0
+    - id: op1_emissions_rate
+      value: 0
+    - id: op2_emissions_rate
+      value: 0
+    - id: op3_emissions_rate
+      value: 0
+    - id: op4_emissions_rate
+      value: 0
+    - id: op5_emissions_rate
+      value: 0
+    properties:
+    - id: carrier
+      value: electricity
+    - id: technology
+      value: nuclear
+    - id: name
+      value: nuclear_north
+  # --8<-- [end:thermal]
+  # --8<-- [start:renewable]
+  - id: wind_north
+    model: antares_legacy_models.renewable
+    parameters:
+    - id: nominal_capacity
+      value: 1500
+    - id: num_units
+      value: 1
+    - id: available_power
+      time-dependent: true
+      scenario-dependent: true
+      value: wind_north
+    properties:
+    - id: carrier
+      value: electricity
+    - id: technology
+      value: wind
+  # --8<-- [end:renewable]
+  - id: south
+    model: antares_legacy_models.area
+    parameters:
+    - id: spillage_cost
+      value: 0
+    - id: unsupplied_energy_cost
+      value: 5000
+    properties:
+    - id: carrier
+      value: electricity
+    - id: country
+      value: country_1
+  - id: load_south
+    model: antares_legacy_models.load
+    parameters:
+    - id: load
+      time-dependent: true
+      scenario-dependent: true
+      value: load_south
+    properties:
+    - id: carrier
+      value: electricity
+  - id: gas_south
+    model: antares_legacy_models.thermal
+    parameters:
+    - id: cluster_max_generation
+      value: 2400
+    - id: cluster_min_gen_modulation
+      value: 0
+    - id: min_power_per_unit
+      value: 100
+    - id: max_power_per_unit
+      value: 400
+    - id: num_units
+      value: 6
+    - id: spinning
+      value: 0
+    - id: generation_cost
+      value: 70
+    - id: market_bid_cost
+      value: 70
+    - id: startup_cost
+      value: 0
+    - id: fixed_cost
+      value: 0
+    - id: min_up_duration
+      value: 1
+    - id: min_down_duration
+      value: 1
+    - id: co2_emissions_rate
+      value: 0.37
+    - id: nh3_emissions_rate
+      value: 0
+    - id: so2_emissions_rate
+      value: 0
+    - id: nox_emissions_rate
+      value: 0
+    - id: pm2_5_emissions_rate
+      value: 0
+    - id: pm5_emissions_rate
+      value: 0
+    - id: pm10_emissions_rate
+      value: 0
+    - id: nmvoc_emissions_rate
+      value: 0
+    - id: op1_emissions_rate
+      value: 0
+    - id: op2_emissions_rate
+      value: 0
+    - id: op3_emissions_rate
+      value: 0
+    - id: op4_emissions_rate
+      value: 0
+    - id: op5_emissions_rate
+      value: 0
+    properties:
+    - id: carrier
+      value: electricity
+    - id: technology
+      value: gas
+    - id: name
+      value: gas_south
+  - id: oil_south
+    model: antares_legacy_models.thermal
+    parameters:
+    - id: cluster_max_generation
+      value: 300
+    - id: cluster_min_gen_modulation
+      value: 0
+    - id: min_power_per_unit
+      value: 0
+    - id: max_power_per_unit
+      value: 150
+    - id: num_units
+      value: 2
+    - id: spinning
+      value: 0
+    - id: generation_cost
+      value: 150
+    - id: market_bid_cost
+      value: 150
+    - id: startup_cost
+      value: 0
+    - id: fixed_cost
+      value: 0
+    - id: min_up_duration
+      value: 1
+    - id: min_down_duration
+      value: 1
+    - id: co2_emissions_rate
+      value: 0.8
+    - id: nh3_emissions_rate
+      value: 0
+    - id: so2_emissions_rate
+      value: 0
+    - id: nox_emissions_rate
+      value: 0
+    - id: pm2_5_emissions_rate
+      value: 0
+    - id: pm5_emissions_rate
+      value: 0
+    - id: pm10_emissions_rate
+      value: 0
+    - id: nmvoc_emissions_rate
+      value: 0
+    - id: op1_emissions_rate
+      value: 0
+    - id: op2_emissions_rate
+      value: 0
+    - id: op3_emissions_rate
+      value: 0
+    - id: op4_emissions_rate
+      value: 0
+    - id: op5_emissions_rate
+      value: 0
+    properties:
+    - id: carrier
+      value: electricity
+    - id: technology
+      value: oil
+    - id: name
+      value: oil_south
+  - id: solar_south
+    model: antares_legacy_models.renewable
+    parameters:
+    - id: nominal_capacity
+      value: 1200
+    - id: num_units
+      value: 1
+    - id: available_power
+      time-dependent: true
+      scenario-dependent: true
+      value: solar_south
+    properties:
+    - id: carrier
+      value: electricity
+    - id: technology
+      value: solar
+  # --8<-- [start:link]
+  - id: north_south
+    model: antares_legacy_models.link
+    parameters:
+    - id: direct_capacity
+      value: 800
+    - id: indirect_capacity
+      value: 800
+    - id: direct_hurdle_cost
+      value: 0.5
+    - id: indirect_hurdle_cost
+      value: 0.5
+    - id: loop_flow
+      value: 0
+    properties:
+    - id: carrier
+      value: electricity
+  # --8<-- [end:link]
+  connections:
+  - component1: north
+    port1: balance_port
+    component2: load_north
+    port2: balance_port
+  - component1: north
+    port1: balance_port
+    component2: nuclear_north
+    port2: balance_port
+  - component1: north
+    port1: balance_port
+    component2: wind_north
+    port2: balance_port
+  - component1: south
+    port1: balance_port
+    component2: load_south
+    port2: balance_port
+  - component1: south
+    port1: balance_port
+    component2: gas_south
+    port2: balance_port
+  - component1: south
+    port1: balance_port
+    component2: oil_south
+    port2: balance_port
+  - component1: south
+    port1: balance_port
+    component2: solar_south
+    port2: balance_port
+  # --8<-- [start:link-connections]
+  - component1: north
+    port1: balance_port
+    component2: north_south
+    port2: in_port
+  - component1: south
+    port1: balance_port
+    component2: north_south
+    port2: out_port
+  # --8<-- [end:link-connections]
