@@ -27,7 +27,6 @@ system:
     properties:
     - id: carrier
       value: electricity
-  # --8<-- [start:thermal]
   - id: nuclear_north
     model: antares_legacy_models.thermal
     parameters:
@@ -88,7 +87,6 @@ system:
       value: nuclear
     - id: name
       value: nuclear_north
-  # --8<-- [end:thermal]
   # --8<-- [start:renewable]
   - id: wind_north
     model: antares_legacy_models.renewable
@@ -265,7 +263,6 @@ system:
       value: electricity
     - id: technology
       value: solar
-  # --8<-- [start:link]
   - id: north_south
     model: antares_legacy_models.link
     parameters:
@@ -282,7 +279,6 @@ system:
     properties:
     - id: carrier
       value: electricity
-  # --8<-- [end:link]
   connections:
   - component1: north
     port1: balance_port
