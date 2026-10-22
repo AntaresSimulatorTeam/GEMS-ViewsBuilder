@@ -19,7 +19,6 @@ class Library:
     """
 
     id: str
-    description: str
     models: dict[str, ModelSchema]
     models_by_taxonomy_category: dict[str, list[str]]
     taxon_by_model: dict[str, str]
@@ -43,7 +42,6 @@ class Library:
 def create_lib_from_yml(yml_lib: LibrarySchema) -> Library:
     return Library(
         id=yml_lib.id,
-        description=yml_lib.description or "",
         models={m.id: m for m in yml_lib.models},
         models_by_taxonomy_category={
             cat: [m.id for m in yml_lib.models if m.taxonomy_category == cat]

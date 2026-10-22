@@ -90,7 +90,6 @@ def build_raw_input_data(
         libraries={
             "lib": Library(
                 id="lib",
-                description="",
                 models={},
                 models_by_taxonomy_category={},
                 taxon_by_model=taxon_by_model,
