@@ -3,7 +3,6 @@
 
 from dataclasses import dataclass, field
 
-from gems_craft.model.parsing import LibrarySchema  # type: ignore
 from gems_craft.model.taxonomy import Taxonomy  # type: ignore
 
 from gems_views_builder.input.calendar import Calendar
@@ -25,4 +24,3 @@ class RawInputData:
     simulation_tables: list[SimulationTable]
     calendar: Calendar
     catalogs: list[Catalog] = field(default_factory=list)
-    library_schemas: list[LibrarySchema] = field(default_factory=list)
