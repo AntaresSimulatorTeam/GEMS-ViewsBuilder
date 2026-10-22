@@ -9,12 +9,14 @@ def validate_catalogs(catalogs: list[Catalog]) -> None:
     for catalog in catalogs:
         validate_catalog_metrics_are_unique(catalog)
 
+
 def validate_catalogs_are_unique(catalogs: list[Catalog]) -> None:
     catalog_ids = set()
     for catalog in catalogs:
         if catalog.id in catalog_ids:
             raise ValueError(f"Catalog {catalog.id!r} is defined multiple times")
         catalog_ids.add(catalog.id)
+
 
 def validate_catalog_metrics_are_unique(catalog: Catalog) -> None:
     unique_metric_ids = set()
