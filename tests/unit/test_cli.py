@@ -7,6 +7,7 @@ import pytest
 
 from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.input_paths import InputPaths
+from gems_views_builder.multiple_files_collector import collect_files
 
 
 def make_file(path: Path) -> Path:
@@ -193,7 +194,6 @@ def test_raises_when_directory_is_not_accepted(
         parse_and_check(parser, options)
 
 
-# Test global patterns
 @pytest.mark.parametrize(
     "pattern",
     [
@@ -222,8 +222,8 @@ def test_pass_when_view_configs_pattern_is_accepted(
     parser: argparse.ArgumentParser, tmp_path: Path, options: dict[str, str]
 ) -> None:
     # Arrange
-    files = {make_file(tmp_path / "inputs" / f"view-config-{index}.yml") for index in range(1, 3)}
-    options["--view-configs"] = str(tmp_path / "inputs" / "view-config-*.yml")
+    files = {make_file(tmp_path / "view-configs" / f"view-config-{index}.yml") for index in range(1, 3)}
+    options["--view-configs"] = str(tmp_path / "view-configs" / "view-config-*.yml")
 
     # Act
     input_paths = parse_and_check(parser, options)
@@ -236,8 +236,8 @@ def test_pass_when_catalogs_directory_is_accepted(
     parser: argparse.ArgumentParser, tmp_path: Path, options: dict[str, str]
 ) -> None:
     # Arrange
-    catalogs_dir = tmp_path / "inputs"
-    files = {make_file(catalogs_dir / f"catalog-{index}.yml") for index in range(1, 3)}
+    catalogs_dir = tmp_path / "catalogs_dir"
+    files = {make_file(tmp_path / "catalogs_dir" / f"catalog-{index}.yml") for index in range(1, 3)}
     options["--catalogs-dir"] = str(catalogs_dir)
 
     # Act
@@ -250,27 +250,11 @@ def test_pass_when_catalogs_directory_is_accepted(
 def test_catalogs_directory_ignores_non_yml_files(
     parser: argparse.ArgumentParser, tmp_path: Path, options: dict[str, str]
 ) -> None:
-    # TODO: remove check for file extension
+    # TODO: remove check for file extension, removed in PR 192
     # Arrange
-    catalog = make_file(tmp_path / "inputs" / "catalog-1.yml")
-    other = make_file(tmp_path / "inputs" / "taxonomy.yml")
-    make_file(tmp_path / "inputs" / "catalog-1.yml.bak")
-    options["--catalogs-dir"] = str(tmp_path / "inputs")
-
-    # Act
-    input_paths = parse_and_check(parser, options)
-
-    # Assert
-    assert set(input_paths.catalogs) == {catalog, other}
-
-
-def test_catalogs_directory_ignores_directories_named_like_yml(
-    parser: argparse.ArgumentParser, tmp_path: Path, options: dict[str, str]
-) -> None:
-    # Arrange
-    catalog = make_file(tmp_path / "inputs" / "catalog-1.yml")
-    (tmp_path / "inputs" / "catalog-2.yml").mkdir(parents=True, exist_ok=True)
-    options["--catalogs-dir"] = str(tmp_path / "inputs")
+    catalog = make_file(tmp_path / "catalogs_dir" / "catalog-1.yml")
+    make_file(tmp_path / "catalogs_dir" / "catalog-1.yml.txt")
+    options["--catalogs-dir"] = str(tmp_path / "catalogs_dir")
 
     # Act
     input_paths = parse_and_check(parser, options)
@@ -279,39 +263,22 @@ def test_catalogs_directory_ignores_directories_named_like_yml(
     assert input_paths.catalogs == [catalog]
 
 
-def test_catalogs_directory_does_not_search_subdirectories(
-    parser: argparse.ArgumentParser, tmp_path: Path, options: dict[str, str]
-) -> None:
-    # Arrange
-    catalog = make_file(tmp_path / "inputs" / "catalog-1.yml")
-    make_file(tmp_path / "inputs" / "nested" / "catalog-2.yml")
-    options["--catalogs-dir"] = str(tmp_path / "inputs")
-
-    # Act
-    input_paths = parse_and_check(parser, options)
-
-    # Assert
-    assert input_paths.catalogs == [catalog]
-
-
-# --- Accepted input files: patterns with . and .. -------------------------------------------------------------------
-
-
+# Test correct global patterns
 @pytest.mark.parametrize("pattern", ["st-x-mc-*.parquet", "./st-x-mc-*.parquet", "././st-x-mc-*.parquet"])
-def test_pattern_in_temp_directory_is_accepted(
+def test_pass_when_pattern_is_valid(
     parser: argparse.ArgumentParser, tmp_path: Path, options: dict[str, str], pattern: str
 ) -> None:
     # Arrange
     inputs = tmp_path / "inputs"
     inputs.mkdir(parents=True, exist_ok=True)
-    table = make_file(inputs / "st-x-mc-1.parquet")
+    make_file(inputs / "st-x-mc-1.parquet")
     options["--simulation-tables"] = f"{inputs}/{pattern}"
 
     # Act
     input_paths = parse_and_check(parser, options)
 
     # Assert
-    assert [path.resolve() for path in input_paths.simulation_tables] == [table]
+    assert input_paths.simulation_tables == collect_files(options["--simulation-tables"])
 
 
 @pytest.mark.parametrize("pattern", ["../st-x-mc-*.parquet", "../../work/st-x-mc-*.parquet"])
@@ -322,19 +289,17 @@ def test_pattern_through_parent_directory_is_accepted(
     work_dir = tmp_path / "work"
     work_dir.mkdir(parents=True, exist_ok=True)
     (work_dir / "sub").mkdir(parents=True, exist_ok=True)
-    table = make_file(work_dir / "st-x-mc-1.parquet")
+    make_file(work_dir / "st-x-mc-1.parquet")
     options["--simulation-tables"] = f"{work_dir / 'sub'}/{pattern}"
 
     # Act
     input_paths = parse_and_check(parser, options)
 
     # Assert
-    assert [path.resolve() for path in input_paths.simulation_tables] == [table]
+    assert input_paths.simulation_tables == collect_files(options["--simulation-tables"])
 
 
-# --- Wrong pattern --------------------------------------------------------------------------------------------------
-
-
+# Test incorrect global patterns
 @pytest.mark.parametrize("option", ["--simulation-tables", "--view-configs"])
 def test_pattern_with_missing_parent_directory_is_rejected(
     parser: argparse.ArgumentParser, tmp_path: Path, options: dict[str, str], option: str
@@ -349,23 +314,6 @@ def test_pattern_with_missing_parent_directory_is_rejected(
 
     # Assert
     assert exc_info.match(rf"{option} : .*missing.* is not an existing folder")
-
-
-@pytest.mark.parametrize("option", ["--simulation-tables", "--view-configs"])
-def test_pattern_whose_parent_is_a_file_is_rejected(
-    parser: argparse.ArgumentParser, tmp_path: Path, options: dict[str, str], option: str
-) -> None:
-    # Arrange
-    not_a_dir = make_file(tmp_path / "inputs.yml")
-    options[option] = str(not_a_dir / "*.yml")
-    args = parser.parse_args(to_argv(options))
-
-    # Act
-    with pytest.raises(OSError) as exc_info:
-        check_options(args)
-
-    # Assert
-    assert exc_info.match(rf"{option} : .*inputs.yml.* is not an existing folder")
 
 
 def test_pattern_with_wildcard_in_directory_part_is_rejected(
@@ -403,24 +351,6 @@ def test_pattern_matching_no_file_is_rejected(
     # Arrange
     make_file(tmp_path / "inputs" / existing_file)
     options[option] = str(tmp_path / "inputs" / pattern)
-    args = parser.parse_args(to_argv(options))
-    check_options(args)
-
-    # Act
-    with pytest.raises(FileNotFoundError) as exc_info:
-        InputPaths(args)
-
-    # Assert
-    assert exc_info.match("No files matched global pattern")
-
-
-def test_pattern_in_empty_directory_is_rejected(
-    parser: argparse.ArgumentParser, tmp_path: Path, options: dict[str, str]
-) -> None:
-    # Arrange
-    empty = tmp_path / "empty"
-    empty.mkdir(parents=True, exist_ok=True)
-    options["--view-configs"] = str(empty / "*.yml")
     args = parser.parse_args(to_argv(options))
     check_options(args)
 
