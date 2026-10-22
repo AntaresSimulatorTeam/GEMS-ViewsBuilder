@@ -15,3 +15,7 @@ def collect_files(global_pattern: str) -> list[Path]:
     if not collected_paths:
         raise FileNotFoundError(f"No files matched global pattern: {global_pattern_path}")
     return collected_paths
+
+def collect_yml_from_dir(dir: Path) -> list[Path]:
+    pattern = str(dir / "*.yml")
+    return collect_files(pattern)

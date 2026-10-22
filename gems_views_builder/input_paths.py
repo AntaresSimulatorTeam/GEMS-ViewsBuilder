@@ -6,13 +6,13 @@
 from argparse import Namespace
 from pathlib import Path
 
-from gems_views_builder.multiple_files_collector import collect_files
+from gems_views_builder.multiple_files_collector import collect_files, collect_yml_from_dir
 
 
 class InputPaths:
     def __init__(self, args: Namespace) -> None:
-        self.libraries: list[Path] = collect_files(str(args.libraries_dir / "*.yml"))
-        self.catalogs: list[Path] = collect_files(str(args.catalogs_dir / "*.yml"))
+        self.libraries: list[Path] = collect_yml_from_dir(args.libraries_dir)
+        self.catalogs: list[Path] = collect_yml_from_dir(args.catalogs_dir)
         self.system: Path = Path(args.system)
         self.calendar: Path = Path(args.calendar)
         self.taxonomy: Path = Path(args.taxonomy)
