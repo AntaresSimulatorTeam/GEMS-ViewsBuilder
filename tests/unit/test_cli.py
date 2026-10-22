@@ -21,26 +21,35 @@ def options(tmp_path: Path) -> dict[str, str]:
     The CLI only checks paths and patterns, never file contents, so empty files are enough.
     """
     libraries = tmp_path / "libraries"
+    catalogs = tmp_path / "catalogs"
     output = tmp_path / "output"
     libraries.mkdir()
+    catalogs.mkdir()
     output.mkdir()
     system = tmp_path / "system.yml"
     calendar = tmp_path / "calendar.csv"
     taxonomy = tmp_path / "taxonomy.yml"
     simulation_tables = tmp_path / "simulation_table.parquet"
     view_configs = tmp_path / "view_config.yml"
-    catalogs = tmp_path / "catalog.yml"
-    for path in (system, calendar, taxonomy, simulation_tables, view_configs, catalogs):
+    for path in (
+        libraries / "library.yml",
+        catalogs / "catalog.yml",
+        system,
+        calendar,
+        taxonomy,
+        simulation_tables,
+        view_configs,
+    ):
         path.touch()
     return {
         "--libraries-dir": str(libraries),
+        "--catalogs-dir": str(catalogs),
         "--system": str(system),
         "--calendar": str(calendar),
         "--taxonomy": str(taxonomy),
         "--simulation-tables": str(simulation_tables),
         "--view-configs": str(view_configs),
-        "--catalogs": str(catalogs),
-        "--output": str(output),
+        "--output-dir": str(output),
     }
 
 
@@ -76,14 +85,14 @@ def test_parser_accepts_short_flags(tmp_path: Path, options: dict[str, str]) -> 
     log_dir = tmp_path / "logs"
     output_dir.mkdir(parents=True, exist_ok=True)
     log_dir.mkdir(parents=True, exist_ok=True)
-    del options["--output"]
+    del options["--output-dir"]
     argv = to_argv(options) + ["-o", str(output_dir), "-f", "csv", "-l", str(log_dir), "-v"]
 
     # Act
     args = build_parser().parse_args(argv)
 
     # Assert
-    assert args.output == output_dir
+    assert args.output_dir == output_dir
     assert args.output_format == "csv"
     assert args.log_dir == log_dir
     assert args.verbose is True
@@ -109,8 +118,8 @@ def test_parser_keeps_glob_patterns_as_raw_strings(options: dict[str, str]) -> N
         "--taxonomy",
         "--simulation-tables",
         "--view-configs",
-        "--catalogs",
-        "--output",
+        "--catalogs-dir",
+        "--output-dir",
     ],
 )
 def test_parser_exits_when_required_option_is_missing(
@@ -167,14 +176,14 @@ def test_existing_file_is_accepted(tmp_path: Path, options: dict[str, str], opti
 def test_existing_libraries_directory_is_accepted(tmp_path: Path, options: dict[str, str]) -> None:
     # Arrange
     libraries_dir = tmp_path / "inputs" / "my-libraries"
-    libraries_dir.mkdir(parents=True, exist_ok=True)
+    library = make_file(libraries_dir / "library.yml")
     options["--libraries-dir"] = str(libraries_dir)
 
     # Act
     input_paths = parse_and_check(options)
 
     # Assert
-    assert input_paths.libraries_dir == libraries_dir
+    assert input_paths.libraries == [library]
 
 
 # --- Accepted input files: patterns ---------------------------------------------------------------------------------
@@ -217,40 +226,49 @@ def test_simulation_tables_pattern_collects_several_monte_carlo_files(tmp_path: 
     assert set(input_paths.simulation_tables) == tables
 
 
-@pytest.mark.parametrize(("option", "attribute"), [("--catalogs", "catalogs"), ("--view-configs", "view_configs")])
-def test_yaml_pattern_collects_several_files(
-    tmp_path: Path, options: dict[str, str], option: str, attribute: str
-) -> None:
+def test_view_configs_pattern_collects_several_files(tmp_path: Path, options: dict[str, str]) -> None:
     # Arrange
     files = {make_file(tmp_path / "inputs" / f"file-{index}.yml") for index in range(1, 3)}
-    options[option] = str(tmp_path / "inputs" / "file-*.yml")
+    options["--view-configs"] = str(tmp_path / "inputs" / "file-*.yml")
 
     # Act
     input_paths = parse_and_check(options)
 
     # Assert
-    assert set(getattr(input_paths, attribute)) == files
+    assert set(input_paths.view_configs) == files
 
 
-def test_pattern_ignores_files_that_do_not_match(tmp_path: Path, options: dict[str, str]) -> None:
+def test_catalogs_directory_loads_every_yml(tmp_path: Path, options: dict[str, str]) -> None:
+    # Arrange
+    files = {make_file(tmp_path / "inputs" / f"file-{index}.yml") for index in range(1, 3)}
+    options["--catalogs-dir"] = str(tmp_path / "inputs")
+
+    # Act
+    input_paths = parse_and_check(options)
+
+    # Assert
+    assert set(input_paths.catalogs) == files
+
+
+def test_catalogs_directory_ignores_non_yml_files(tmp_path: Path, options: dict[str, str]) -> None:
     # Arrange
     catalog = make_file(tmp_path / "inputs" / "catalog-1.yml")
+    other = make_file(tmp_path / "inputs" / "taxonomy.yml")
     make_file(tmp_path / "inputs" / "catalog-1.yml.bak")
-    make_file(tmp_path / "inputs" / "taxonomy.yml")
-    options["--catalogs"] = str(tmp_path / "inputs" / "catalog-*.yml")
+    options["--catalogs-dir"] = str(tmp_path / "inputs")
 
     # Act
     input_paths = parse_and_check(options)
 
     # Assert
-    assert input_paths.catalogs == [catalog]
+    assert set(input_paths.catalogs) == {catalog, other}
 
 
-def test_pattern_ignores_matching_directories(tmp_path: Path, options: dict[str, str]) -> None:
+def test_catalogs_directory_ignores_directories_named_like_yml(tmp_path: Path, options: dict[str, str]) -> None:
     # Arrange
     catalog = make_file(tmp_path / "inputs" / "catalog-1.yml")
     (tmp_path / "inputs" / "catalog-2.yml").mkdir(parents=True, exist_ok=True)
-    options["--catalogs"] = str(tmp_path / "inputs" / "catalog-*.yml")
+    options["--catalogs-dir"] = str(tmp_path / "inputs")
 
     # Act
     input_paths = parse_and_check(options)
@@ -259,11 +277,11 @@ def test_pattern_ignores_matching_directories(tmp_path: Path, options: dict[str,
     assert input_paths.catalogs == [catalog]
 
 
-def test_pattern_does_not_search_subdirectories(tmp_path: Path, options: dict[str, str]) -> None:
+def test_catalogs_directory_does_not_search_subdirectories(tmp_path: Path, options: dict[str, str]) -> None:
     # Arrange
     catalog = make_file(tmp_path / "inputs" / "catalog-1.yml")
     make_file(tmp_path / "inputs" / "nested" / "catalog-2.yml")
-    options["--catalogs"] = str(tmp_path / "inputs" / "catalog-*.yml")
+    options["--catalogs-dir"] = str(tmp_path / "inputs")
 
     # Act
     input_paths = parse_and_check(options)
@@ -309,7 +327,7 @@ def test_pattern_through_parent_directory_is_accepted(tmp_path: Path, options: d
 # --- Wrong pattern --------------------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("option", ["--simulation-tables", "--view-configs", "--catalogs"])
+@pytest.mark.parametrize("option", ["--simulation-tables", "--view-configs"])
 def test_pattern_with_missing_parent_directory_is_rejected(
     tmp_path: Path, options: dict[str, str], option: str
 ) -> None:
@@ -322,10 +340,10 @@ def test_pattern_with_missing_parent_directory_is_rejected(
         check_options(args)
 
     # Assert
-    assert exc_info.match(rf"{option} : .*missing is not a directory")
+    assert exc_info.match(rf"{option} : .*missing.* is not an existing folder")
 
 
-@pytest.mark.parametrize("option", ["--simulation-tables", "--view-configs", "--catalogs"])
+@pytest.mark.parametrize("option", ["--simulation-tables", "--view-configs"])
 def test_pattern_whose_parent_is_a_file_is_rejected(tmp_path: Path, options: dict[str, str], option: str) -> None:
     # Arrange
     not_a_dir = make_file(tmp_path / "inputs.yml")
@@ -337,7 +355,7 @@ def test_pattern_whose_parent_is_a_file_is_rejected(tmp_path: Path, options: dic
         check_options(args)
 
     # Assert
-    assert exc_info.match(rf"{option} : .*inputs.yml is not a directory")
+    assert exc_info.match(rf"{option} : .*inputs.yml.* is not an existing folder")
 
 
 def test_pattern_with_wildcard_in_directory_part_is_rejected(tmp_path: Path, options: dict[str, str]) -> None:
@@ -351,7 +369,7 @@ def test_pattern_with_wildcard_in_directory_part_is_rejected(tmp_path: Path, opt
         check_options(args)
 
     # Assert
-    assert exc_info.match(r"--simulation-tables : .*output-\* is not a directory")
+    assert exc_info.match(r"--simulation-tables : .*output-\*.* is not an existing folder")
 
 
 @pytest.mark.parametrize(
@@ -360,7 +378,6 @@ def test_pattern_with_wildcard_in_directory_part_is_rejected(tmp_path: Path, opt
         ("--simulation-tables", "st-x-mc-1.csv", "st-x-mc-*.parquet"),
         ("--simulation-tables", "simulation_table.parquet", "st-x-mc-*.parquet"),
         ("--view-configs", "view_config.yaml", "view_config*.yml"),
-        ("--catalogs", "catalog.yml", "catalogs-*.yml"),
     ],
 )
 def test_pattern_matching_no_file_is_rejected(
@@ -422,16 +439,12 @@ def test_raises_when_is_directory_given_instead_of_file(tmp_path: Path, options:
     ("option", "attribute"),
     [
         ("--libraries-dir", "libraries_dir"),
-        ("--output", "output"),
+        ("--catalogs-dir", "catalogs_dir"),
+        ("--output-dir", "output_dir"),
         ("--log-dir", "log_dir"),
-        ("--view-configs", "view_configs"),
-        ("--catalogs", "catalogs"),
-        ("--simulation-tables", "simulation_tables"),
     ],
 )
-def test_directory_option_is_accepted(
-    tmp_path: Path, options: dict[str, str], option: str, attribute: str
-) -> None:
+def test_directory_option_is_accepted(tmp_path: Path, options: dict[str, str], option: str, attribute: str) -> None:
     directory = tmp_path / "checked"
     directory.mkdir()
     options[option] = str(directory)
@@ -446,10 +459,8 @@ def test_directory_option_is_accepted(
     ("option", "error", "message"),
     [
         ("--libraries-dir", OSError, "--libraries-dir is not a directory"),
-        ("--view-configs", NotADirectoryError, "--view-configs is not a directory"),
-        ("--catalogs", NotADirectoryError, "--catalogs is not a directory"),
-        ("--simulation-tables", NotADirectoryError, "--simulation-tables is not a directory"),
-        ("--output", NotADirectoryError, "--output is not a directory"),
+        ("--catalogs-dir", OSError, "--catalogs-dir is not a directory"),
+        ("--output-dir", NotADirectoryError, "--output-dir is not a directory"),
         ("--log-dir", NotADirectoryError, "Log directory does not exist"),
     ],
 )
