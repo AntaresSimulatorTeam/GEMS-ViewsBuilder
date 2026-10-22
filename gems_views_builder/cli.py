@@ -58,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_multiple_file_path_options(parser, MULTIPLE_FILE_PATH_OPTIONS)
     parser.add_argument(
         "-o",
-        "--output",
+        "--output-dir",
         type=Path,
         required=True,
         help="Existing directory where the timestamped view result file will be written.",
