@@ -1,56 +1,28 @@
 # Two areas, from simulation to Views
 
-This example goes through the whole chain on a study closer to a real one than [Simple setups](simple-setups.md): two areas joined by a link, built with the GEMS [Antares legacy library](https://github.com/AntaresSimulatorTeam/GEMS/blob/main/libraries/antares_legacy_models.yml), simulated with [GemsPy](https://github.com/AntaresSimulatorTeam/GemsPy), and turned into Views by GVB.
-
-Compared with Simple setups, it shows:
+This example uses GVB on a study with two areas and a link, and shows the GVB features that [Simple setups](simple-setups.md) does not use:
 
 | Feature | Where |
 |---|---|
 | A location that groups several areas (the country), with `extra-locations` | [View configs](#view-configs) |
-| The flow on a link, and the net import of each area through it | [Catalogs](#catalogs) |
+| The net import of each area through a link | [Catalogs](#catalogs) |
 | Generation split by technology, with `breakdown`, and a single technology, with `filter` | [Catalogs](#catalogs) |
 | Metrics located on the link instead of the areas | [Catalogs](#catalogs) |
 | Monthly, weekly and yearly patterns, and a `location-filter` | [View configs](#view-configs) |
-| Four Monte Carlo scenarios simulated in one GemsPy run | [Simulate the study](#1-simulate-the-study) |
-| A calendar built from the SimulationTable | [Calendar](#calendar) |
-| A check of the Views: energy balance, and country total equal to the sum of the areas | [Check the Views](#check-the-views) |
 
-All the files are in [`docs/examples/two_areas`](https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/tree/main/docs/examples/two_areas) in the repository. Their formats are described in the [GEMS documentation](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/overview/). The time series are synthetic.
+All the files are in [`docs/examples/two_areas`](https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/tree/main/docs/examples/two_areas) in the repository. Their formats are described in the [GEMS documentation](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/overview/).
 
 ## The study
 
-Two areas of one country, `country_1`, simulated hour by hour for two weeks, from 25 January to 7 February 2030 (336 hours), for 4 Monte Carlo scenarios.
+Two areas, `north` and `south`, of one country, `country_1`, joined by the link `north_south`. The study is built with the GEMS [Antares legacy library](https://github.com/AntaresSimulatorTeam/GEMS/blob/main/libraries/antares_legacy_models.yml) and simulated with [GemsPy](https://github.com/AntaresSimulatorTeam/GemsPy): two weeks (336 hours), 4 scenarios, synthetic data.
 
-```mermaid
-flowchart LR
-    subgraph country_1
-        direction LR
-        subgraph north
-            nuclear_north["nuclear_north<br/>3 × 900 MW, 10 €/MWh"]
-            wind_north["wind_north<br/>1 500 MW"]
-            load_north["load_north"]
-        end
-        subgraph south
-            gas_south["gas_south<br/>6 × 400 MW, 70 €/MWh"]
-            oil_south["oil_south<br/>2 × 150 MW, 150 €/MWh"]
-            solar_south["solar_south<br/>1 200 MW"]
-            load_south["load_south"]
-        end
-        north <-- "north_south<br/>800 MW each way" --> south
-    end
-```
-
-| Component | Model | Role |
+| Component | Model | Taxonomy category |
 |---|---|---|
-| `north`, `south` | `area` | the two areas; unsupplied energy costs 5 000 €/MWh |
-| `load_north`, `load_south` | `load` | hourly load, different in each scenario |
-| `nuclear_north` | `thermal` | cheap base load, in the north |
-| `gas_south`, `oil_south` | `thermal` | mid-merit and peak units, in the south |
-| `wind_north`, `solar_south` | `renewable` | available power, different in each scenario |
-| `north_south` | `link` | 800 MW in each direction, 0.5 €/MWh hurdle cost |
-
-- Power flows mostly from north to south, often up to the link capacity.
-- Scenario 3 is a cold spell with little wind: in three hours, on 29 January and 1 February, part of the load is not supplied.
+| `north`, `south` | `area` | `balance` |
+| `load_north`, `load_south` | `load` | `fatal_consumption` |
+| `nuclear_north`, `gas_south`, `oil_south` | `thermal` | `dispatchable_generation` |
+| `wind_north`, `solar_south` | `renewable` | `renewable_fatal_generation` |
+| `north_south` | `link` | `link` |
 
 Files of the example (GVB does not expect any folder structure, each input is given by its own option):
 
@@ -59,38 +31,39 @@ two_areas/
 ├── input/                              # GemsPy study
 │   ├── model-libraries/antares_legacy_models.yml
 │   ├── system.yml
-│   ├── data-series/                    # load, wind and solar, one column per scenario
+│   ├── data-series/
 │   └── optim-config.yml
 ├── taxonomy.yml                        # GVB inputs
 ├── catalogs/
 │   ├── area_catalog.yml
 │   └── link_catalog.yml
 ├── calendar.csv
-├── view-configs/
-│   ├── areas_hourly.yml
-│   ├── areas_summary.yml
-│   └── link_hourly.yml
-├── make_calendar.py                    # builds calendar.csv from a SimulationTable
-└── check_views.py                      # checks the hourly View
+└── view-configs/
+    ├── areas_hourly.yml
+    ├── areas_summary.yml
+    └── link_hourly.yml
 ```
 
-## 1. Simulate the study
+## 1. Run GemsPy
 
-### Library
+From the root of the GVB repository, install the environment, then run the simulation of the two-area study with GemsPy:
 
-The GEMS Antares legacy library, version 2.2.1, unchanged. Its models already declare:
+```bash
+uv sync
+cd docs/examples/two_areas
+uv run gemspy --study .
+```
 
-- a `taxonomy-category`: `area` → `balance`, `load` → `fatal_consumption`, `thermal` → `dispatchable_generation`, `renewable` → `renewable_fatal_generation`, `link` → `link`;
-- the outputs read by the metrics, for example `actual_load` of the load;
-- the `properties` each component must give, for example `technology`.
+GemsPy writes the SimulationTable to `output/<run id>/simulation_table_<run id>.csv`.
+
+## 2. GVB inputs
 
 ### System
 
-The [system](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/) gives the components and their connections. For GVB:
+GVB reads two things from the [system](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/):
 
-- **Properties:** thermal and renewable units give their `technology`, used by `breakdown` and `filter`. Each area also gives a `country` property, not declared in the library, used by `extra-locations`.
-- **Link ports:** `out_port` injects `flow` into its area, `in_port` injects `-flow`. The north is on `in_port` and the south on `out_port`, so a positive `flow` goes from north to south.
-- **Time series:** `input/data-series`, one row per hour, one column per scenario.
+- **connections**, to find the location of each component;
+- **properties**: `technology` of thermal and renewable units, used by `breakdown` and `filter`, and `country` of the areas, used by `extra-locations`.
 
 === "Area"
 
@@ -104,68 +77,15 @@ The [system](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files
     --8<-- "docs/examples/two_areas/input/system.yml:renewable"
     ```
 
-=== "Thermal"
-
-    ```yaml
-    --8<-- "docs/examples/two_areas/input/system.yml:thermal"
-    ```
-
-=== "Link"
-
-    ```yaml
-    --8<-- "docs/examples/two_areas/input/system.yml:link"
-    ```
-
 === "Connections of the link"
 
     ```yaml
     --8<-- "docs/examples/two_areas/input/system.yml:link-connections"
     ```
 
-### Optimisation configuration
-
-The [optimisation configuration](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/optimization-configuration/) simulates the four scenarios in one problem (`frontal`):
-
-```yaml
---8<-- "docs/examples/two_areas/input/optim-config.yml"
-```
-
-!!! note "No price metrics"
-    When one GemsPy run solves several scenarios, the dual values are divided by the number of scenarios. The `price` of the areas and the link outputs built on it (such as `alg_congestion_fee`) are then not market prices, so the catalogs of this example do not use them.
-
-### Run GemsPy
-
-From the root of the GVB repository, install the environment, then run the simulation of the two-area study with GemsPy:
-
-```bash
-uv sync
-cd docs/examples/two_areas
-uv run gemspy --study .
-```
-
-GemsPy writes the SimulationTable to `output/<run id>/simulation_table_<run id>.csv`. Outputs used by this example:
-
-- `north`, `south`: `unsupplied_energy`, `spilled_energy`
-- `load_north`, `load_south`: `actual_load`
-- `nuclear_north`, `gas_south`, `oil_south`: `generation_power`, `co2_emissions`
-- `wind_north`, `solar_south`: `generation_power`
-- `north_south`: `flow`, `minus_flow`, `is_directly_congested`, `is_indirectly_congested`
-
-The SimulationTable (about 6 MB) is not stored in the repository.
-
-## 2. GVB inputs
-
 ### Taxonomy
 
-The [taxonomy](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/taxonomy/) `antares_legacy_taxonomy`, in its flattened form, from the [Antares legacy converter](https://github.com/AntaresSimulatorTeam/AntaresLegacyModels-to-GEMS-Converter). Each category lists all its outputs and ports itself, without `parent-category`.
-
-| Category | Components |
-|---|---|
-| `balance` | `north`, `south` |
-| `fatal_consumption` | `load_north`, `load_south` |
-| `dispatchable_generation` | `nuclear_north`, `gas_south`, `oil_south` |
-| `renewable_fatal_generation` | `wind_north`, `solar_south` |
-| `link` | `north_south` |
+The [taxonomy](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/taxonomy/) `antares_legacy_taxonomy`, in its flattened form, from the [Antares legacy converter](https://github.com/AntaresSimulatorTeam/AntaresLegacyModels-to-GEMS-Converter): each category lists all its outputs and ports itself, without `parent-category`. The categories of the components are given in [The study](#the-study).
 
 ??? example "taxonomy.yml"
 
@@ -175,7 +95,7 @@ The [taxonomy](https://gems-energy.readthedocs.io/en/latest/user-guide/input-fil
 
 ### Calendar
 
-The calendar gives a date to each time step, with the block of the SimulationTable (`frontal`: one block, `0`):
+The calendar gives a date to each time step. Its `block` must match the `block` of the SimulationTable:
 
 ```text
 absolute_time_index,block,granular_date
@@ -183,16 +103,6 @@ absolute_time_index,block,granular_date
 1,0,2030-01-25 01:00:00
 …
 335,0,2030-02-07 23:00:00
-```
-
-`make_calendar.py` builds it from a SimulationTable:
-
-```python
---8<-- "docs/examples/two_areas/make_calendar.py"
-```
-
-```bash
-uv run python make_calendar.py
 ```
 
 ### Catalogs
@@ -212,7 +122,7 @@ Two [catalogs](https://gems-energy.readthedocs.io/en/latest/user-guide/input-fil
 | `GENERATION_BY_TECHNOLOGY` | same as `GENERATION` | `breakdown` on `technology` |
 | `THERMAL_GENERATION` | `generation_power` of thermal units | |
 | `GAS_GENERATION` | `generation_power` of thermal units | `filter` on `technology: gas` |
-| `NET_IMPORT` | `flow` on `out_port`, `minus_flow` on `in_port` | positive when the area imports |
+| `NET_IMPORT` | `flow` on `out_port`, `minus_flow` on `in_port` | one term per port of the link; positive when the area imports |
 | `UNSUPPLIED_ENERGY`, `SPILLED_ENERGY` | variables of the areas | `location-port: null` |
 | `CO2_EMISSIONS` | `co2_emissions` of thermal units | t of CO₂ |
 
@@ -292,7 +202,7 @@ Energies are in MWh.
 
 ### Hourly balance and country total
 
-Read the hourly View with polars, and print `LOAD` and `NET_IMPORT` of scenario 0 at 13:00 on 29 January, when the link is full:
+Read the hourly View with polars, and print `LOAD` and `NET_IMPORT` of scenario 0 at 13:00 on 29 January, for the two areas and the country:
 
 ```python
 import polars as pl
@@ -335,31 +245,8 @@ print(view.filter(
 └────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
 ```
 
-- North exports 800 MW, the capacity of the link; south imports it.
-- `country_1` is the sum of the areas: `LOAD` 3002.0 + 2342.6 = 5344.6, `NET_IMPORT` 0.
-
-### Check the Views
-
-`check_views.py` checks, for every hour, scenario and location, the energy balance and that the country total equals the sum of the areas:
-
-```python
---8<-- "docs/examples/two_areas/check_views.py"
-```
-
-```bash
-uv run python check_views.py
-```
-
-```text
-largest balance gap: 1.8e-12
-┌──────┬────────────┬────────────┬───────────────────┐
-│ LOAD ┆ GENERATION ┆ NET_IMPORT ┆ UNSUPPLIED_ENERGY │
-│ ---  ┆ ---        ┆ ---        ┆ ---               │
-│ f64  ┆ f64        ┆ f64        ┆ f64               │
-╞══════╪════════════╪════════════╪═══════════════════╡
-│ 0.0  ┆ 1.8190e-12 ┆ 0.0        ┆ 0.0               │
-└──────┴────────────┴────────────┴───────────────────┘
-```
+- `country_1` comes from `extra-locations`: its value is the sum of `north` and `south`, for example `LOAD` 3002.0 + 2342.6 = 5344.6.
+- Its `NET_IMPORT` is 0: the link is inside the country.
 
 ### The link
 
@@ -393,7 +280,7 @@ print(view.filter(
 └────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
 ```
 
-The link is full: `FLOW` is 800 MW, and the hour counts in `CONGESTED_HOURS`.
+The link is its own location (`location-port: null`), so `metric_location` is `north_south`.
 
 ### Generation by technology
 
@@ -438,7 +325,7 @@ print(view.filter(
 └────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
 ```
 
-One row per technology of the components of `north` and `south`.
+`breakdown` gives one row per value of `technology`, written in `breakdown_properties`.
 
 ### Statistics over the scenarios
 
@@ -480,13 +367,13 @@ print(view.filter(
 └────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
 ```
 
-Only scenario 3 has unsupplied energy: `min` is 0, `max` is 156.2 MWh.
+One row per statistic, in `scenario_stat`; `scenario_id` is empty and `scenario_aggregation` is `true`.
 
 !!! note "Periods are cut by date"
-    `view_date` is the start of the period: `2030-01-01` for January and for the year, even though the simulation starts on 25 January. Weeks start on Monday.
+    `view_date` is the start of the period: `2030-01-01` for January and for the year, even though the calendar starts on 25 January. Weeks start on Monday.
 
 ## Next steps
 
-- Add an area in another country, with its own `country` property.
+- Add an area with another `country` value, to get a second country total.
 - Add a `breakdown` on `name` to see each thermal cluster.
 - The rules GVB checks on these files are listed on the [Validation rules](../user-guide/validation-rules.md) page.
