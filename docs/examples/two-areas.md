@@ -375,9 +375,3 @@ One row per statistic, in `scenario_stat`; `scenario_id` is empty and `scenario_
 
 !!! note "`view_date` is the start of the period"
     Monthly and yearly values are dated `2030-01-01`, and cover the 14 days of the calendar (1 to 14 January). Weekly values are dated the Monday of their week, even when the calendar covers only part of it: `2029-12-31` (1 to 6 January), `2030-01-07` and `2030-01-14` (14 January only).
-
-## Next steps
-
-- Add an area with another `country` value, to get a second country total.
-- Add a `breakdown` on `name` to see each thermal cluster.
-- The rules GVB checks on these files are listed on the [Validation rules](../user-guide/validation-rules.md) page.
