@@ -99,10 +99,10 @@ The calendar gives a date to each time step. Its `block` must match the `block` 
 
 ```text
 absolute_time_index,block,granular_date
-0,0,2030-01-25 00:00:00
-1,0,2030-01-25 01:00:00
+0,0,2030-01-01 00:00:00
+1,0,2030-01-01 01:00:00
 …
-335,0,2030-02-07 23:00:00
+335,0,2030-01-14 23:00:00
 ```
 
 ### Catalogs
@@ -206,7 +206,7 @@ Energies are in MWh.
 
 ### Hourly balance and country total
 
-Read the hourly View with polars, and print `LOAD` and `NET_IMPORT` of scenario 0 at 13:00 on 29 January, for the two areas and the country:
+Read the hourly View with polars, and print `LOAD` and `NET_IMPORT` of scenario 0 at 13:00 on 5 January, for the two areas and the country:
 
 ```python
 import polars as pl
@@ -216,7 +216,7 @@ view = pl.read_parquet("views/areas_hourly*.parquet")
 print(view.filter(
     pl.col("metric_id").is_in(["LOAD", "NET_IMPORT"]),
     pl.col("scenario_id") == 0,
-    pl.col("view_date") == datetime(2030, 1, 29, 13),
+    pl.col("view_date") == datetime(2030, 1, 5, 13),
 ).sort("metric_id", "metric_location"))
 ```
 
@@ -228,23 +228,23 @@ print(view.filter(
 │            ┆ str        ┆ str        ┆ μs]       ┆ i64       ┆ f64       ┆ ---       ┆ str       │
 │            ┆            ┆            ┆           ┆           ┆           ┆ bool      ┆           │
 ╞════════════╪════════════╪════════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╡
-│ LOAD       ┆ country_1  ┆ {}         ┆ 2030-01-2 ┆ 0         ┆ 5344.6    ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 9         ┆           ┆           ┆           ┆           │
+│ LOAD       ┆ country_1  ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 5344.6    ┆ false     ┆ null      │
+│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
 │            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ LOAD       ┆ north      ┆ {}         ┆ 2030-01-2 ┆ 0         ┆ 3002.0    ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 9         ┆           ┆           ┆           ┆           │
+│ LOAD       ┆ north      ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 3002.0    ┆ false     ┆ null      │
+│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
 │            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ LOAD       ┆ south      ┆ {}         ┆ 2030-01-2 ┆ 0         ┆ 2342.6    ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 9         ┆           ┆           ┆           ┆           │
+│ LOAD       ┆ south      ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 2342.6    ┆ false     ┆ null      │
+│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
 │            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ NET_IMPORT ┆ country_1  ┆ {}         ┆ 2030-01-2 ┆ 0         ┆ 0.0       ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 9         ┆           ┆           ┆           ┆           │
+│ NET_IMPORT ┆ country_1  ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 0.0       ┆ false     ┆ null      │
+│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
 │            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ NET_IMPORT ┆ north      ┆ {}         ┆ 2030-01-2 ┆ 0         ┆ -800.0    ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 9         ┆           ┆           ┆           ┆           │
+│ NET_IMPORT ┆ north      ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ -800.0    ┆ false     ┆ null      │
+│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
 │            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ NET_IMPORT ┆ south      ┆ {}         ┆ 2030-01-2 ┆ 0         ┆ 800.0     ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 9         ┆           ┆           ┆           ┆           │
+│ NET_IMPORT ┆ south      ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 800.0     ┆ false     ┆ null      │
+│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
 │            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
 └────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
 ```
@@ -263,7 +263,7 @@ from datetime import datetime
 view = pl.read_parquet("views/link_hourly*.parquet")
 print(view.filter(
     pl.col("scenario_id") == 0,
-    pl.col("view_date") == datetime(2030, 1, 29, 13),
+    pl.col("view_date") == datetime(2030, 1, 5, 13),
 ).sort("metric_id"))
 ```
 
@@ -275,11 +275,11 @@ print(view.filter(
 │            ┆ str        ┆ str        ┆ μs]       ┆ i64       ┆ f64       ┆ ---       ┆ str       │
 │            ┆            ┆            ┆           ┆           ┆           ┆ bool      ┆           │
 ╞════════════╪════════════╪════════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╡
-│ CONGESTED_ ┆ north_sout ┆ {}         ┆ 2030-01-2 ┆ 0         ┆ 1.0       ┆ false     ┆ null      │
-│ HOURS      ┆ h          ┆            ┆ 9         ┆           ┆           ┆           ┆           │
+│ CONGESTED_ ┆ north_sout ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 1.0       ┆ false     ┆ null      │
+│ HOURS      ┆ h          ┆            ┆ 5         ┆           ┆           ┆           ┆           │
 │            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ FLOW       ┆ north_sout ┆ {}         ┆ 2030-01-2 ┆ 0         ┆ 800.0     ┆ false     ┆ null      │
-│            ┆ h          ┆            ┆ 9         ┆           ┆           ┆           ┆           │
+│ FLOW       ┆ north_sout ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 800.0     ┆ false     ┆ null      │
+│            ┆ h          ┆            ┆ 5         ┆           ┆           ┆           ┆           │
 │            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
 └────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
 ```
@@ -288,7 +288,7 @@ The link is its own location (`location-port: null`), so `metric_location` is `n
 
 ### Generation by technology
 
-February, scenario 3, `country_1`, from the `monthly` pattern:
+January, scenario 3, `country_1`, from the `monthly` pattern:
 
 ```python
 import polars as pl
@@ -299,7 +299,7 @@ print(view.filter(
     pl.col("metric_id") == "GENERATION_BY_TECHNOLOGY",
     pl.col("metric_location") == "country_1",
     pl.col("scenario_id") == 3,
-    pl.col("view_date") == datetime(2030, 2, 1),
+    pl.col("view_date") == datetime(2030, 1, 1),
 ).sort("breakdown_properties"))
 ```
 
@@ -311,19 +311,19 @@ print(view.filter(
 │            ┆ str        ┆ str        ┆ μs]       ┆ i64       ┆ f64       ┆ ---       ┆ str       │
 │            ┆            ┆            ┆           ┆           ┆           ┆ bool      ┆           │
 ╞════════════╪════════════╪════════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╡
-│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-02-0 ┆ 3         ┆ 286195.6  ┆ false     ┆ null      │
+│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-01-0 ┆ 3         ┆ 548061.4  ┆ false     ┆ null      │
 │ _BY_TECHNO ┆            ┆ gy,gas)}   ┆ 1         ┆           ┆           ┆           ┆           │
 │ LOGY       ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-02-0 ┆ 3         ┆ 450039.5  ┆ false     ┆ null      │
+│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-01-0 ┆ 3         ┆ 885981.5  ┆ false     ┆ null      │
 │ _BY_TECHNO ┆            ┆ gy,nuclear ┆ 1         ┆           ┆           ┆           ┆           │
 │ LOGY       ┆            ┆ )}         ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-02-0 ┆ 3         ┆ 2385.0    ┆ false     ┆ null      │
+│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-01-0 ┆ 3         ┆ 4071.3    ┆ false     ┆ null      │
 │ _BY_TECHNO ┆            ┆ gy,oil)}   ┆ 1         ┆           ┆           ┆           ┆           │
 │ LOGY       ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-02-0 ┆ 3         ┆ 14586.8   ┆ false     ┆ null      │
+│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-01-0 ┆ 3         ┆ 29280.5   ┆ false     ┆ null      │
 │ _BY_TECHNO ┆            ┆ gy,solar)} ┆ 1         ┆           ┆           ┆           ┆           │
 │ LOGY       ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-02-0 ┆ 3         ┆ 61929.8   ┆ false     ┆ null      │
+│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-01-0 ┆ 3         ┆ 139308.0  ┆ false     ┆ null      │
 │ _BY_TECHNO ┆            ┆ gy,wind)}  ┆ 1         ┆           ┆           ┆           ┆           │
 │ LOGY       ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
 └────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
@@ -373,8 +373,8 @@ print(view.filter(
 
 One row per statistic, in `scenario_stat`; `scenario_id` is empty and `scenario_aggregation` is `true`.
 
-!!! note "Periods are cut by date"
-    `view_date` is the start of the period: `2030-01-01` for January and for the year, even though the calendar starts on 25 January. Weeks start on Monday.
+!!! note "`view_date` is the start of the period"
+    Monthly and yearly values are dated `2030-01-01`, and cover the 14 days of the calendar (1 to 14 January). Weekly values are dated the Monday of their week, even when the calendar covers only part of it: `2029-12-31` (1 to 6 January), `2030-01-07` and `2030-01-14` (14 January only).
 
 ## Next steps
 
