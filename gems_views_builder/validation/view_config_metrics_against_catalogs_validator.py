@@ -16,7 +16,7 @@ class ViewConfigMetricsAgainstCatalogsValidator:
             f"Validating view config {self.view_config.id!r} metrics against {len(self.ids_to_catalogs)} catalog(s)"
         )
         for full_metric_id in self.view_config.full_metric_ids:
-            catalog_id, metric_id = full_metric_id.split(".", 1)
+            catalog_id, metric_id = full_metric_id.split(".")
             self._match_catalog_id(catalog_id)
             self._match_metric_id(catalog_id, metric_id)
         logging.info("All metrics are present in the catalogs")
