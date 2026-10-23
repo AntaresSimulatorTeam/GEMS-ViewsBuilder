@@ -78,6 +78,7 @@ def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
 
 class ScenarioAggregator:
     def __init__(self, aggregation_pattern: AggregationPattern):
+        self.aggregation_pattern_id = aggregation_pattern.id
         self.scenario_operator = make_scenario_operator(aggregation_pattern.scenario)
         self.location_filter = LocationFilter(aggregation_pattern.location_filter)
 
@@ -87,5 +88,4 @@ class ScenarioAggregator:
         view = apply_location_filter(view, self.location_filter)
         sink_to_parquet(view, new_path)
         logging.info(f"Scenario view written to {new_path}")
-        scenario_view = TemporalMetricView(persistence_path=new_path, time_granularity=metric_view.time_granularity)
-        return scenario_view
+        return TemporalMetricView(persistence_path=new_path, aggregation_pattern_id=self.aggregation_pattern_id)

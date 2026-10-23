@@ -28,7 +28,7 @@ class ViewSinker(ABC):
 
 class ParquetViewSinker(ViewSinker):
     def sink(self, frame: pl.LazyFrame, file_name: str) -> View:
-        file_path = self.output_path / f"{file_name}_{self.timestamp}.parquet"
+        file_path = self.output_path / f"{file_name}--{self.timestamp}.parquet"
         sink_to_parquet(frame, file_path)
         logging.info("Results merged into parquet file")
         return View(dataframe=pl.scan_parquet(file_path))
@@ -36,7 +36,7 @@ class ParquetViewSinker(ViewSinker):
 
 class CsvViewSinker(ViewSinker):
     def sink(self, frame: pl.LazyFrame, file_name: str) -> View:
-        file_path = self.output_path / f"{file_name}_{self.timestamp}.csv"
+        file_path = self.output_path / f"{file_name}--{self.timestamp}.csv"
         frame.sink_csv(file_path)
         logging.info("Results merged into csv file")
         return View(dataframe=pl.scan_csv(file_path))
