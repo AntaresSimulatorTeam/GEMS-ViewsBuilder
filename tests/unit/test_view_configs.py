@@ -11,6 +11,8 @@ from gems_views_builder import load_view_config
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.validation.view_config import (
+    validate_aggregation_pattern_combinations,
+    validate_unique_aggregation_pattern_ids,
     validate_unique_ids,
     validate_view_configs_aggregation_patterns,
 )
@@ -173,7 +175,7 @@ def test_view_config_aggregation_patterns_validator_raises_when_pattern_ids_are_
 
     # Act
     with pytest.raises(ValueError) as error:
-        validate_view_configs_aggregation_patterns([view_config])
+        validate_unique_aggregation_pattern_ids([view_config])
 
     # Assert
     assert str(error.value) == "Aggregation pattern 'hourly' is defined multiple times"
@@ -190,7 +192,7 @@ def test_view_config_aggregation_patterns_validator_raises_when_time_and_scenari
 
     # Act
     with pytest.raises(ValueError) as error:
-        validate_view_configs_aggregation_patterns([view_config])
+        validate_aggregation_pattern_combinations([view_config])
 
     # Assert
     assert str(error.value) == "Pattern (TimeGranularity.HOUR, False) is already defined"

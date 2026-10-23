@@ -1,7 +1,7 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-from gems_views_builder.input.view_config import AggregationPattern, ViewConfig
+from gems_views_builder.input.view_config import ViewConfig
 
 # 5 time granularities and 2 scenario types.
 ALLOWED_PATTERN_COUNT = 10
@@ -21,22 +21,28 @@ def validate_unique_ids(view_configs: list[ViewConfig]) -> None:
 
 
 def validate_view_configs_aggregation_patterns(view_configs: list[ViewConfig]) -> None:
+    validate_unique_aggregation_pattern_ids(view_configs)
+    validate_aggregation_pattern_combinations(view_configs)
+
+
+def validate_unique_aggregation_pattern_ids(view_configs: list[ViewConfig]) -> None:
     for view_config in view_configs:
-        _validate_aggregation_patterns(view_config.aggregation_patterns)
+        pattern_ids: set[str] = set()
+        for pattern in view_config.aggregation_patterns:
+            if pattern.id in pattern_ids:
+                raise ValueError(f"Aggregation pattern {pattern.id!r} is defined multiple times")
+            pattern_ids.add(pattern.id)
 
 
-def _validate_aggregation_patterns(aggregation_patterns: tuple[AggregationPattern, ...]) -> None:
-    if len(aggregation_patterns) > ALLOWED_PATTERN_COUNT:
-        raise ValueError(f"At most {ALLOWED_PATTERN_COUNT} patterns are allowed")
+def validate_aggregation_pattern_combinations(view_configs: list[ViewConfig]) -> None:
+    for view_config in view_configs:
+        aggregation_patterns = view_config.aggregation_patterns
+        if len(aggregation_patterns) > ALLOWED_PATTERN_COUNT:
+            raise ValueError(f"At most {ALLOWED_PATTERN_COUNT} patterns are allowed")
 
-    pattern_ids: set[str] = set()
-    pattern_combinations = set()
-    for pattern in aggregation_patterns:
-        if pattern.id in pattern_ids:
-            raise ValueError(f"Aggregation pattern {pattern.id!r} is defined multiple times")
-        pattern_ids.add(pattern.id)
-
-        combination = (pattern.time_granularity, pattern.scenario)
-        if combination in pattern_combinations:
-            raise ValueError(f"Pattern ({pattern.time_granularity}, {pattern.scenario}) is already defined")
-        pattern_combinations.add(combination)
+        pattern_combinations = set()
+        for pattern in aggregation_patterns:
+            combination = (pattern.time_granularity, pattern.scenario)
+            if combination in pattern_combinations:
+                raise ValueError(f"Pattern ({pattern.time_granularity}, {pattern.scenario}) is already defined")
+            pattern_combinations.add(combination)
