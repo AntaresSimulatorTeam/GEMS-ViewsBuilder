@@ -14,6 +14,9 @@ from gems_views_builder.validation.view_config import (
     validate_unique_ids,
     validate_view_configs_aggregation_patterns,
 )
+from gems_views_builder.validation.view_config_metrics_against_catalogs_validator import (
+    ViewConfigMetricsAgainstCatalogsValidator,
+)
 
 VIEW_CONFIG_YAML = """
 id: view
@@ -145,19 +148,19 @@ def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
     )
 
 
-def test_populate_with_metrics_raises_when_catalog_is_missing(view_config: ViewConfig) -> None:
+def test_metrics_validator_raises_when_catalog_is_missing(view_config: ViewConfig) -> None:
     # Act
     with pytest.raises(ValueError) as error:
-        view_config.populate_with_metrics([make_catalog("catalogX", ["LOAD"])])
+        ViewConfigMetricsAgainstCatalogsValidator([make_catalog("catalogX", ["LOAD"])], view_config).validate()
 
     # Assert
     assert str(error.value) == "Catalog 'catalog' used in view config 'view' doesn't exist!"
 
 
-def test_populate_with_metrics_raises_when_metric_is_missing(view_config: ViewConfig) -> None:
+def test_metrics_validator_raises_when_metric_is_missing(view_config: ViewConfig) -> None:
     # Act
     with pytest.raises(ValueError) as error:
-        view_config.populate_with_metrics([make_catalog("catalog", ["PROD"])])
+        ViewConfigMetricsAgainstCatalogsValidator([make_catalog("catalog", ["PROD"])], view_config).validate()
 
     # Assert
     assert str(error.value) == "Metric 'LOAD' used in view config 'view' doesn't exist in catalog 'catalog'"

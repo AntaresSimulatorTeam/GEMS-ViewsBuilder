@@ -66,7 +66,7 @@ which only checks that these files are *present*, not their contents).
 | Taxonomy id match | `catalog.taxonomy == view_config.taxonomy_id` |
 | Location taxonomy category match | `catalog.location_taxonomy_category == view_config.location_taxonomy_category` |
 
-[`ViewConfigMetricsAgainstCatalogsValidator`](../gems_views_builder/validation/view_config_metrics_against_catalogs_validator.py) checks that every `<catalog_id>.<metric_id>` names a loaded catalog and a metric in that catalog. [`ViewConfig.populate_with_metrics`](../gems_views_builder/input/view_config.py) repeats that check when it attaches the metric objects.
+[`ViewConfigMetricsAgainstCatalogsValidator`](../gems_views_builder/validation/view_config_metrics_against_catalogs_validator.py) checks that every `<catalog_id>.<metric_id>` names a loaded catalog and a metric in that catalog. [`ViewConfig.populate_with_metrics`](../gems_views_builder/input/view_config.py) then attaches those metric objects.
 
 ## Orchestration
 
