@@ -175,7 +175,7 @@ def test_view_config_aggregation_patterns_validator_raises_when_pattern_ids_are_
 
     # Act
     with pytest.raises(ValueError) as error:
-        validate_unique_aggregation_pattern_ids([view_config])
+        validate_unique_aggregation_pattern_ids(view_config.aggregation_patterns)
 
     # Assert
     assert str(error.value) == "Aggregation pattern 'hourly' is defined multiple times"
@@ -192,7 +192,7 @@ def test_view_config_aggregation_patterns_validator_raises_when_time_and_scenari
 
     # Act
     with pytest.raises(ValueError) as error:
-        validate_aggregation_pattern_combinations([view_config])
+        validate_aggregation_pattern_combinations(view_config.aggregation_patterns)
 
     # Assert
     assert str(error.value) == "Pattern (TimeGranularity.HOUR, False) is already defined"
