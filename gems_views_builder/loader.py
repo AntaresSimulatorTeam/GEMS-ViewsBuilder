@@ -29,7 +29,7 @@ class Loader:
         raw_input_data = RawInputData(
             taxonomy=load_taxonomy(self.input_paths.taxonomy),
             view_configs=load_view_configs(self.input_paths.view_configs),
-            libraries={yml_lib.id: create_lib_from_yml(yml_lib) for yml_lib in yml_libs},
+            libraries=[create_lib_from_yml(yml_lib) for yml_lib in yml_libs],
             system=load_system(self.input_paths.system, yml_libs),
             simulation_tables=load_simulation_tables(self.input_paths.simulation_tables),
             calendar=load_calendar(self.input_paths.calendar),

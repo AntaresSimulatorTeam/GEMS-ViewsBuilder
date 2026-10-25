@@ -69,11 +69,11 @@ def load_yml_libs(library_files: list[Path]) -> list[LibrarySchema]:
     return yml_libs
 
 
-def associate_models_with_a_taxon(libraries: dict[str, Library]) -> dict[str, str]:
+def associate_models_with_a_taxon(libraries: list[Library]) -> dict[str, str]:
     taxon_by_model: dict[str, str] = {}
-    for library_id, library in libraries.items():
+    for library in libraries:
         for model_id, taxon in library.taxon_by_model.items():
-            taxon_by_model[f"{library_id}.{model_id}"] = taxon
+            taxon_by_model[f"{library.id}.{model_id}"] = taxon
     return taxon_by_model
 
 

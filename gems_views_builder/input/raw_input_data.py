@@ -19,7 +19,7 @@ class RawInputData:
 
     taxonomy: Taxonomy
     view_configs: list[ViewConfig]
-    libraries: dict[str, Library]
+    libraries: list[Library]
     system: System
     simulation_tables: list[SimulationTable]
     calendar: Calendar

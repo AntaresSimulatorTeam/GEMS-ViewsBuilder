@@ -16,7 +16,7 @@ def test_passes_for_test_dataset(test_dataset_dir: Path) -> None:
     # Arrange
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
     yml_libs = [load_lib_file(path) for path in (test_dataset_dir / "libraries").glob("*.yml")]
-    libraries = {yml_lib.id: create_lib_from_yml(yml_lib) for yml_lib in yml_libs}
+    libraries = [create_lib_from_yml(yml_lib) for yml_lib in yml_libs]
 
     # Act & Assert
     validate_libraries_against_taxonomy(libraries, taxonomy)
@@ -40,4 +40,4 @@ library:
 
     # Act & Assert
     with pytest.raises(ValueError, match="Model 'area'"):
-        validate_libraries_against_taxonomy({library.id: create_lib_from_yml(library)}, taxonomy)
+        validate_libraries_against_taxonomy([create_lib_from_yml(library)], taxonomy)

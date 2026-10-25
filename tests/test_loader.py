@@ -62,9 +62,9 @@ def test_loader_load_populates_raw_input_data(test_dataset_dir: Path) -> None:
     assert isinstance(raw_input_data.view_configs, list)
     assert raw_input_data.view_configs
     assert all(isinstance(view_config, ViewConfig) for view_config in raw_input_data.view_configs)
-    assert isinstance(raw_input_data.libraries, dict)
+    assert isinstance(raw_input_data.libraries, list)
     assert raw_input_data.libraries
-    assert all(isinstance(library, Library) for library in raw_input_data.libraries.values())
+    assert all(isinstance(library, Library) for library in raw_input_data.libraries)
     assert isinstance(raw_input_data.system, System)
     assert isinstance(raw_input_data.simulation_tables, list)
     assert raw_input_data.simulation_tables
@@ -97,9 +97,9 @@ def test_loader_classmethod_load_populates_raw_input_data(test_dataset_dir: Path
     assert isinstance(raw_input_data.view_configs, list)
     assert raw_input_data.view_configs
     assert all(isinstance(view_config, ViewConfig) for view_config in raw_input_data.view_configs)
-    assert isinstance(raw_input_data.libraries, dict)
+    assert isinstance(raw_input_data.libraries, list)
     assert raw_input_data.libraries
-    assert all(isinstance(library, Library) for library in raw_input_data.libraries.values())
+    assert all(isinstance(library, Library) for library in raw_input_data.libraries)
     assert isinstance(raw_input_data.system, System)
     assert isinstance(raw_input_data.simulation_tables, list)
     assert raw_input_data.simulation_tables

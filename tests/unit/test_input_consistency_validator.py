@@ -54,7 +54,7 @@ def make_raw_input_data(view_configs: list[ViewConfig], catalogs: list[Catalog])
                 ],
             ),
             view_configs=view_configs,
-            libraries={},
+            libraries=[],
             catalogs=catalogs,
         ),
     )

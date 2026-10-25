@@ -6,8 +6,8 @@ from gems_craft.model.taxonomy import Taxonomy, check_library_against_taxonomy  
 from gems_views_builder.input.library import Library
 
 
-def validate_libraries_against_taxonomy(libraries: dict[str, Library], taxonomy: Taxonomy) -> None:
-    for library in libraries.values():
+def validate_libraries_against_taxonomy(libraries: list[Library], taxonomy: Taxonomy) -> None:
+    for library in libraries:
         check_library_against_taxonomy(to_library_schema(library), taxonomy)
 
 

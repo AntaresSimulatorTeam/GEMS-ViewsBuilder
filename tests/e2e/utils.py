@@ -89,15 +89,15 @@ def build_raw_input_data(
     view_config.populate_with_metrics(catalogs)
     return RawInputData(
         taxonomy=Taxonomy(id="taxonomy"),
-        libraries={
-            "lib": Library(
+        libraries=[
+            Library(
                 id="lib",
                 port_types=[],
                 models={},
                 models_by_taxonomy_category={},
                 taxon_by_model=taxon_by_model,
             )
-        },
+        ],
         system=system,
         view_configs=[view_config],
         simulation_tables=simulation_tables,
