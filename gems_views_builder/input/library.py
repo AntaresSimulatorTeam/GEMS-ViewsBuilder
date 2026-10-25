@@ -6,7 +6,6 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
 
 from gems_craft.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema, parse_yaml_library  # type: ignore
 
@@ -23,21 +22,6 @@ class Library:
     models: dict[str, ModelSchema]
     models_by_taxonomy_category: dict[str, list[str]]
     taxon_by_model: dict[str, str]
-
-    def get_model(self, model_id: str) -> ModelSchema:
-        try:
-            return self.models[model_id]
-        except KeyError:
-            raise ValueError(f"Model {model_id} not found in library")
-
-    def get_model_taxon(self, model_id: str) -> str:
-        model = self.get_model(model_id)
-        if model.taxonomy_category is None:
-            raise ValueError(f"Model {model_id} has no taxonomy category in library")
-        return cast(str, model.taxonomy_category)
-
-    def get_models_in_taxonomy_category(self, taxonomy_category: str) -> list[str]:
-        return self.models_by_taxonomy_category.get(taxonomy_category, [])
 
 
 def create_lib_from_yml(yml_lib: LibrarySchema) -> Library:

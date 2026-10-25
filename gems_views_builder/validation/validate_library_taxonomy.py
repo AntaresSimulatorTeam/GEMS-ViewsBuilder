@@ -12,4 +12,4 @@ def validate_libraries_against_taxonomy(libraries: list[Library], taxonomy: Taxo
 
 
 def to_library_schema(library: Library) -> LibrarySchema:
-    return LibrarySchema(id=library.id, models=list(library.models.values()))
+    return LibrarySchema(id=library.id, port_types=library.port_types, models=list(library.models.values()))
