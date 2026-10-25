@@ -92,8 +92,6 @@ def build_raw_input_data(
         libraries=[
             Library(
                 id="lib",
-                port_types=[],
-                models={},
                 taxon_by_model=taxon_by_model,
             )
         ],

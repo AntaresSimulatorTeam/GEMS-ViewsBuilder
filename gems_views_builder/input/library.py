@@ -4,31 +4,32 @@
 """Model library YAML with explicit local models"""
 
 import logging
-from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
-from gems_craft.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema, parse_yaml_library  # type: ignore
+from gems_craft.model.parsing import LibrarySchema, parse_yaml_library  # type: ignore
 
 
-@dataclass
-class Library:
+class Library(LibrarySchema):  # type: ignore[misc]
     """
     library .yml representation with taxonomy indexes.
     Loads via GemsPy parsing types; builds taxonomy indexes for metric structure tables.
     """
 
-    id: str
-    port_types: list[PortTypeSchema]  # unused: kept from the library YAML, not read by the view builder
-    models: dict[str, ModelSchema]
     taxon_by_model: dict[str, str]
 
 
 def create_lib_from_yml(yml_lib: LibrarySchema) -> Library:
-    return Library(
-        id=yml_lib.id,
-        port_types=yml_lib.port_types,
-        models={m.id: m for m in yml_lib.models},
-        taxon_by_model={m.id: m.taxonomy_category for m in yml_lib.models if m.taxonomy_category},
+    return cast(
+        Library,
+        Library.model_validate(
+            {
+                **yml_lib.model_dump(),
+                "taxon_by_model": {
+                    model.id: model.taxonomy_category for model in yml_lib.models if model.taxonomy_category
+                },
+            }
+        ),
     )
 
 
