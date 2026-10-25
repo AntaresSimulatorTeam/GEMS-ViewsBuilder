@@ -27,8 +27,8 @@ class ViewConfigTaxonomyValidator:
             )
 
     def _validate_location_taxonomy_category(self) -> None:
-        category_ids = {category.id for category in self.taxonomy.categories}
-        if self.view_config.location_taxonomy_category not in category_ids:
+        taxonomy_category_ids = {category.id for category in self.taxonomy.categories}
+        if self.view_config.location_taxonomy_category not in taxonomy_category_ids:
             raise ValueError(
                 f"View config {self.view_config.id!r} scope location taxonomy category "
                 f"{self.view_config.location_taxonomy_category!r} is not a category of taxonomy {self.taxonomy.id!r}"
