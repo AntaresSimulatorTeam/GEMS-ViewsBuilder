@@ -10,7 +10,7 @@ from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTaxonomyValidator
 from gems_views_builder.validation.catalogs_view_config_validator import ViewConfigCatalogsValidator
-from gems_views_builder.validation.library_taxonomy_validator import validate_libraries_against_taxonomy
+from gems_views_builder.validation.validate_library_taxonomy import validate_libraries_against_taxonomy
 from gems_views_builder.validation.view_config_metrics_against_catalogs_validator import (
     ViewConfigMetricsAgainstCatalogsValidator,
 )

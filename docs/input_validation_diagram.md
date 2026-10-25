@@ -49,7 +49,7 @@ each library against the system when the system is loaded.
 ## Edge details
 
 ### `library_*.yml` → `taxonomy.yml`
-[`validate_libraries_against_taxonomy`](../gems_views_builder/validation/library_taxonomy_validator.py)
+[`validate_libraries_against_taxonomy`](../gems_views_builder/validation/validate_library_taxonomy.py)
 
 | Check | Rule |
 |---|---|

@@ -9,7 +9,7 @@ from gems_craft.model.parsing import parse_yaml_library  # type: ignore
 
 from gems_views_builder import load_taxonomy
 from gems_views_builder.input.library import create_lib_from_yml, load_lib_file
-from gems_views_builder.validation.library_taxonomy_validator import validate_libraries_against_taxonomy
+from gems_views_builder.validation.validate_library_taxonomy import validate_libraries_against_taxonomy
 
 
 def test_passes_for_test_dataset(test_dataset_dir: Path) -> None:
