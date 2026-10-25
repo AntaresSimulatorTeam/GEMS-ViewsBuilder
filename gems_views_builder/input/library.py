@@ -20,7 +20,6 @@ class Library:
     id: str
     port_types: list[PortTypeSchema]  # unused: kept from the library YAML, not read by the view builder
     models: dict[str, ModelSchema]
-    models_by_taxonomy_category: dict[str, list[str]]
     taxon_by_model: dict[str, str]
 
 
@@ -29,10 +28,6 @@ def create_lib_from_yml(yml_lib: LibrarySchema) -> Library:
         id=yml_lib.id,
         port_types=yml_lib.port_types,
         models={m.id: m for m in yml_lib.models},
-        models_by_taxonomy_category={
-            cat: [m.id for m in yml_lib.models if m.taxonomy_category == cat]
-            for cat in {m.taxonomy_category for m in yml_lib.models if m.taxonomy_category}
-        },
         taxon_by_model={m.id: m.taxonomy_category for m in yml_lib.models if m.taxonomy_category},
     )
 
