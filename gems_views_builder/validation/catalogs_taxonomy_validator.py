@@ -1,17 +1,17 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 import logging
-from dataclasses import dataclass
 
 from gems_craft.model.taxonomy import Taxonomy, TaxonomyCategory  # type: ignore
 
 from gems_views_builder.input.catalog import Catalog, Metric, Term
 
 
-@dataclass
 class CatalogsTaxonomyValidator:
-    catalogs: list[Catalog]
-    taxonomy: Taxonomy
+    def __init__(self, catalogs: list[Catalog], taxonomy: Taxonomy):
+        self.catalogs = catalogs
+        self.taxonomy = taxonomy
+        self.taxonomy_categories = {category.id: category for category in self.taxonomy.categories}
 
     def validate(self) -> None:
         logging.info(f"Validating {len(self.catalogs)} catalog(s) against taxonomy {self.taxonomy.id!r}")
@@ -38,14 +38,13 @@ class CatalogsTaxonomyValidator:
             )
 
     def _validate_metric_terms(self, metric: Metric) -> None:
-        taxonomy_categories = {category.id: category for category in self.taxonomy.categories}
         for term in metric.terms:
-            if term.taxonomy_category not in taxonomy_categories:
+            if term.taxonomy_category not in self.taxonomy_categories:
                 raise ValueError(
                     f"uses taxonomy-category {term.taxonomy_category!r}, which is not defined "
                     f"in taxonomy {self.taxonomy.id!r}"
                 )
-            taxonomy_category = taxonomy_categories[term.taxonomy_category]
+            taxonomy_category = self.taxonomy_categories[term.taxonomy_category]
             self._validate_term_output(term, taxonomy_category)
             self._validate_term_location_port(term, taxonomy_category)
 
