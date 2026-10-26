@@ -11,8 +11,26 @@ from gems_views_builder import load_taxonomy
 from gems_views_builder.input.library import create_lib_from_yml, load_lib_file
 from gems_views_builder.validation.validate_library_taxonomy import validate_libraries_against_taxonomy
 
+# Category "balance" requires one port. The library model declares that category and exposes none.
+TAXONOMY_MISSING_PORT = """\
+taxonomy:
+  id: my_taxonomy
+  categories:
+    - id: balance
+      ports:
+        - id: p_balance_port
+"""
 
-def test_passes_for_test_dataset(test_dataset_dir: Path) -> None:
+LIBRARY_MISSING_PORT = """\
+library:
+  id: lib
+  models:
+    - id: area
+      taxonomy-category: balance
+"""
+
+
+def test__load_all_datasets__validating_libraries_taxonomy__no_issue(test_dataset_dir: Path) -> None:
     # Arrange
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
     yml_libs = [load_lib_file(path) for path in (test_dataset_dir / "libraries").glob("*.yml")]
@@ -22,22 +40,18 @@ def test_passes_for_test_dataset(test_dataset_dir: Path) -> None:
     validate_libraries_against_taxonomy(libraries, taxonomy)
 
 
-def test_raises_gemspy_message_when_model_misses_a_required_item(test_dataset_dir: Path) -> None:
+def test__library_model_misses_required_port__validating_libraries_taxonomy__raises(tmp_path: Path) -> None:
     # Arrange
-    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
-    library = parse_yaml_library(
-        StringIO(
-            """
-library:
-  id: lib
-  description: incomplete
-  models:
-    - id: area
-      taxonomy-category: balance
-"""
-        )
-    )
+    taxonomy_path = tmp_path / "taxonomy.yml"
+    taxonomy_path.write_text(TAXONOMY_MISSING_PORT)
+    taxonomy = load_taxonomy(taxonomy_path)
+    library = parse_yaml_library(StringIO(LIBRARY_MISSING_PORT))
 
-    # Act & Assert
-    with pytest.raises(ValueError, match="Model 'area'"):
+    # Act
+    with pytest.raises(ValueError) as error:
         validate_libraries_against_taxonomy([create_lib_from_yml(library)], taxonomy)
+
+    # Assert
+    assert str(error.value) == (
+        "Model 'area' (taxonomy-category: 'balance') is missing port(s) required by the taxonomy: ['p_balance_port']."
+    )
