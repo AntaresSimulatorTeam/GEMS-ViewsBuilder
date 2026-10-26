@@ -39,12 +39,12 @@ class CatalogsTaxonomyValidator:
 
     def _validate_metric_terms(self, metric: Metric) -> None:
         for term in metric.terms:
-            if term.taxonomy_category not in self.taxonomy_categories:
+            taxonomy_category = self.taxonomy_categories.get(term.taxonomy_category)
+            if taxonomy_category is None:
                 raise ValueError(
                     f"uses taxonomy-category {term.taxonomy_category!r}, which is not defined "
                     f"in taxonomy {self.taxonomy.id!r}"
                 )
-            taxonomy_category = self.taxonomy_categories[term.taxonomy_category]
             self._validate_term_output(term, taxonomy_category)
             self._validate_term_location_port(term, taxonomy_category)
 
