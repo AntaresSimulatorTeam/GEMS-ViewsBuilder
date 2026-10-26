@@ -45,8 +45,9 @@ class CatalogsTaxonomyValidator:
                     f"uses taxonomy-category {term.taxonomy_category!r}, which is not defined "
                     f"in taxonomy {self.taxonomy.id!r}"
                 )
-            self._validate_term_output(term, taxonomy_categories[term.taxonomy_category])
-            self._validate_term_location_port(term, taxonomy_categories[term.taxonomy_category])
+            taxonomy_category = taxonomy_categories[term.taxonomy_category]
+            self._validate_term_output(term, taxonomy_category)
+            self._validate_term_location_port(term, taxonomy_category)
 
     def _validate_term_output(self, term: Term, category: TaxonomyCategory) -> None:
         if term.output_id not in allowed_output(category):
