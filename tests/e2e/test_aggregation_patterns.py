@@ -125,7 +125,7 @@ def result_name(path: Path) -> str:
     return path.stem.rsplit("--", 1)[0]
 
 
-def test_one_output_file_per_aggregation_pattern(tmp_path: Path) -> None:
+def test_run_view_building_leads_to_generate_one_view_per_aggregation_pattern(tmp_path: Path) -> None:
     # Arrange
     input_data = build_input()
     results_dir = create_results_dir(tmp_path)
@@ -142,11 +142,7 @@ def test_one_output_file_per_aggregation_pattern(tmp_path: Path) -> None:
         del metric_views
 
     # Assert
-    result = {result_name(path): path for path in fetch_result_files(results_dir)}
-    hourly_pattern_001 = pl.read_parquet(result["view_001--hourly_pattern_001"])
-    hourly_pattern_002 = pl.read_parquet(result["view_001--hourly_pattern_002"])
-    monthly_pattern_001 = pl.read_parquet(result["view_001--monthly_pattern_001"])
-
+    result = {result_name(path): pl.read_parquet(path) for path in fetch_result_files(results_dir)}
     assert len(result) == 3
     assert set(result) == {
         "view_001--hourly_pattern_001",
@@ -154,8 +150,7 @@ def test_one_output_file_per_aggregation_pattern(tmp_path: Path) -> None:
         "view_001--monthly_pattern_001",
     }
 
-    assert set(hourly_pattern_001["metric_id"].to_list()) == {"LOAD", "PROD"}
-    assert set(hourly_pattern_001["scenario_aggregation"].to_list()) == {False}
-    assert set(hourly_pattern_002["scenario_aggregation"].to_list()) == {True}
-    assert set(monthly_pattern_001["metric_id"].to_list()) == {"LOAD", "PROD"}
-    assert set(monthly_pattern_001["scenario_aggregation"].to_list()) == {False}
+    assert set(result["view_001--hourly_pattern_001"]["metric_id"].to_list()) == {"LOAD", "PROD"}
+    assert set(result["view_001--hourly_pattern_002"]["scenario_aggregation"].to_list()) == {True}
+    assert set(result["view_001--monthly_pattern_001"]["metric_id"].to_list()) == {"LOAD", "PROD"}
+    assert set(result["view_001--monthly_pattern_001"]["scenario_aggregation"].to_list()) == {False}

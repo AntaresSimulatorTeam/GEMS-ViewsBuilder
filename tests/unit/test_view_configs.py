@@ -11,7 +11,7 @@ from gems_views_builder import load_view_config
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.validation.view_config import (
-    validate_aggregation_pattern_combinations,
+    validate_aggregation_pattern_content_uniqueness,
     validate_unique_aggregation_pattern_ids,
     validate_unique_ids,
     validate_view_configs_aggregation_patterns,
@@ -192,7 +192,7 @@ def test_view_config_aggregation_patterns_validator_raises_when_time_and_scenari
 
     # Act
     with pytest.raises(ValueError) as error:
-        validate_aggregation_pattern_combinations(view_config.aggregation_patterns)
+        validate_aggregation_pattern_content_uniqueness(view_config.aggregation_patterns)
 
     # Assert
     assert str(error.value) == "Pattern (TimeGranularity.HOUR, False) is already defined"

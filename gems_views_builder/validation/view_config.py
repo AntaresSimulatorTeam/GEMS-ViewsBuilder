@@ -23,7 +23,7 @@ def validate_unique_ids(view_configs: list[ViewConfig]) -> None:
 def validate_view_configs_aggregation_patterns(view_configs: list[ViewConfig]) -> None:
     for view_config in view_configs:
         validate_unique_aggregation_pattern_ids(view_config.aggregation_patterns)
-        validate_aggregation_pattern_combinations(view_config.aggregation_patterns)
+        validate_aggregation_pattern_content_uniqueness(view_config.aggregation_patterns)
 
 
 def validate_unique_aggregation_pattern_ids(aggregation_patterns: tuple[AggregationPattern, ...]) -> None:
@@ -34,7 +34,7 @@ def validate_unique_aggregation_pattern_ids(aggregation_patterns: tuple[Aggregat
         pattern_ids.add(pattern.id)
 
 
-def validate_aggregation_pattern_combinations(aggregation_patterns: tuple[AggregationPattern, ...]) -> None:
+def validate_aggregation_pattern_content_uniqueness(aggregation_patterns: tuple[AggregationPattern, ...]) -> None:
     if len(aggregation_patterns) > ALLOWED_PATTERN_COUNT:
         raise ValueError(f"At most {ALLOWED_PATTERN_COUNT} patterns are allowed")
 
