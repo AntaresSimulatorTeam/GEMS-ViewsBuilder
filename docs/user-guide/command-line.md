@@ -82,7 +82,9 @@ Each run writes one log file, except when an option is missing, unknown or has n
 
 The log folder is the one given with `--log-dir`, or `logs` in the current folder. It is created if it does not exist. The same messages are printed in the terminal, on standard error.
 
-By default the log holds the steps of the run: files loaded, checks passed, Views written. With `--verbose` it also holds debug messages, for example each metric and term being processed. When a run fails, the log stops at the last step that ran; the error itself is printed in the terminal only (see below).
+By default the log holds the steps of the run: files loaded, checks passed, Views written. With `--verbose` it also holds debug messages, for example each metric and term being processed.
+
+When a run fails, the log stops at the last step that ran. The error itself is printed in the terminal only (see below).
 
 ## Errors
 
