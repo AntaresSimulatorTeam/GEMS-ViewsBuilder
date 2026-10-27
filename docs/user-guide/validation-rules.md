@@ -56,13 +56,15 @@ For each view config:
 
 ## 5. Consistency between files
 
-All catalogs are first checked against the taxonomy (row 1). Rows 2 and 3 then run for **every view config** given with `--view-configs`.
+The model libraries are first checked against the taxonomy (row 1), then all catalogs (row 2). Rows 3 and 4 then run for **every view config** given with `--view-configs`.
 
 ```mermaid
 graph LR
+    libraries(("model libraries"))
     catalog(("catalogs"))
     taxonomy(("taxonomy"))
     view_config(("view config"))
+    libraries -- "each model matches its category" --- taxonomy
     catalog -- "taxonomy id · categories · outputs · ports" --- taxonomy
     view_config -- "taxonomy id · location category" --- taxonomy
     view_config -- "taxonomy id · location category" --- catalog
@@ -70,9 +72,10 @@ graph LR
 
 | # | Between | Rule |
 |---|---|---|
-| 1 | catalogs and taxonomy | `catalog.taxonomy` is the taxonomy id; every term's `taxonomy-category` exists in the taxonomy; every `output-id` is declared as a variable or extra-output of that category; every `location-port` is declared as a port of that category |
-| 2 | view config and taxonomy | `view.taxonomy` is the taxonomy id; the location `taxonomy-category` is a category of the taxonomy |
-| 3 | catalogs and view config | every catalog **used by the view config** (named in its metrics) uses the same taxonomy and the same location taxonomy category as the view config |
+| 1 | model libraries and taxonomy | every model that declares a `taxonomy-category` exposes the variables, parameters, ports, port-field-definitions, constraints, binding-constraints, extra-outputs and properties that its category requires. This check is done by GemsPy. |
+| 2 | catalogs and taxonomy | `catalog.taxonomy` is the taxonomy id; every term's `taxonomy-category` exists in the taxonomy; every `output-id` is declared as a variable or extra-output of that category; every `location-port` is declared as a port of that category |
+| 3 | view config and taxonomy | `view.taxonomy` is the taxonomy id; the location `taxonomy-category` is a category of the taxonomy |
+| 4 | catalogs and view config | every catalog **used by the view config** (named in its metrics) uses the same taxonomy and the same location taxonomy category as the view config |
 
 ## 6. Selected metrics
 
