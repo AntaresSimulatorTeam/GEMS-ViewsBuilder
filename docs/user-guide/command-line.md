@@ -68,7 +68,7 @@ A pattern picks files out of one folder that may also hold other files, such as 
 - the wildcards go in the **file name** only: `*` matches any characters, `?` matches one character. The folder part is read as it is written, so `"output/*/st-*.parquet"` is rejected
 - the pattern ends with a file name or a file name pattern, never with a folder: `"output/"` is rejected
 - its folder part must exist. It may be the current folder, as in `"st-*.parquet"`
-- at least one file must match, otherwise the run stops with `No files matched global pattern: …`;
+- at least one file must match, otherwise the run stops with `No files matched global pattern: …`
 - a plain file name is a pattern that matches one file: `--view-configs study/view_config.yml`.
 
 !!! tip "Quote the patterns"
