@@ -50,4 +50,4 @@ class CreatePersistingView(ABC):
 
         out_path = self._save_dir / f"{aggregation_pattern_id}_{metric.id}_{uuid.uuid4()}.parquet"
         logging.info(f"[{metric.id}] {type(self).__name__} view written to {out_path}")
-        return PersistentMetricView(aggregation_pattern_id, lazyframe=lazy_frame, persistence_path=out_path)
+        return PersistentMetricView(aggregation_pattern_id=aggregation_pattern_id, lazyframe=lazy_frame, persistence_path=out_path)

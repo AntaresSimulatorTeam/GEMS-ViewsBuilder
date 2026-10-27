@@ -13,12 +13,12 @@ class PatternAggregator:
     def __init__(self, pattern: AggregationPattern) -> None:
         self.time_aggregator = TimeAggregatorDecorator(pattern.time_granularity)
         self.scenario_aggregator = ScenarioAggregator(pattern)
-        self.spatial_filtering = LocationFiltering(pattern)
+        self.location_filtering = LocationFiltering(pattern)
 
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         time_metric_view = self.time_aggregator.run(metric_view, metric)
         scenario_metric_view = self.scenario_aggregator.run(time_metric_view)
-        return self.spatial_filtering.run(scenario_metric_view, metric)
+        return self.location_filtering.run(scenario_metric_view, metric)
 
 
 class AggregationPatternList:

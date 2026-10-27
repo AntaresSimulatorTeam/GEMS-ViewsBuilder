@@ -35,6 +35,9 @@ class ScenarioOperator(ABC):
 
 
 class ScenarioAggregation(ScenarioOperator):
+    def __init__(self, aggregation_pattern: AggregationPattern):
+        self.aggregation_pattern_id: str = aggregation_pattern.id
+
     def run(self, metric_view: MetricView) -> MetricView:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
@@ -59,6 +62,9 @@ class ScenarioAggregation(ScenarioOperator):
 
 
 class ScenarioColumnsAddition(ScenarioOperator):
+    def __init__(self, aggregation_pattern: AggregationPattern):
+        self.aggregation_pattern_id: str = aggregation_pattern.id
+
     def run(self, metric_view: MetricView) -> MetricView:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
         lazyframe = metric_view.lazy_data_frame().with_columns(
@@ -70,14 +76,16 @@ class ScenarioColumnsAddition(ScenarioOperator):
         return MetricView(lazyframe=lazyframe, aggregation_pattern_id=self.aggregation_pattern_id)
 
 
-def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
-    return ScenarioAggregation() if scenario_aggregation else ScenarioColumnsAddition()
+def make_scenario_operator(aggregation_pattern: AggregationPattern) -> ScenarioOperator:
+    if aggregation_pattern.scenario:
+        return ScenarioAggregation(aggregation_pattern)
+    return ScenarioColumnsAddition(aggregation_pattern)
 
 
 class ScenarioAggregator:
     def __init__(self, aggregation_pattern: AggregationPattern):
         self.aggregation_pattern_id = aggregation_pattern.id
-        self.scenario_operator = make_scenario_operator(aggregation_pattern.scenario)
+        self.scenario_operator = make_scenario_operator(aggregation_pattern)
 
     def run(self, metric_view: MetricView) -> MetricView:
         return self.scenario_operator.run(metric_view)
