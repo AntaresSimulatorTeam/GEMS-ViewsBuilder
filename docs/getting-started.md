@@ -114,7 +114,7 @@ To get CSV instead of Parquet, add `--output-format csv`.
 
 ## When a run fails
 
-GVB stops at the first problem it finds. The error, printed in the terminal, names the file and the rule that failed; the log file in `logs/` shows the steps that ran before it. The exit codes are listed on the [Command line](user-guide/command-line.md) page.
+GVB stops at the first problem it finds. The error, printed in the terminal, names the file and the rule that failed. The log file in `logs/` shows the steps that ran before it. How errors are shown is described on the [Command line](user-guide/command-line.md#errors) page.
 
 Add `--verbose` to get debug messages. The rules GVB checks are listed on the [Validation rules](user-guide/validation-rules.md) page.
 
