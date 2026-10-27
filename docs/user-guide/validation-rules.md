@@ -21,7 +21,7 @@ The checks run in the order of the sections below.
 |---|---|
 | System, taxonomy | `.yml` file |
 | Libraries folder | contains only `.yml` files, and at least one |
-| Catalogs folder | contains only `.yml` files, and at least one; any other file or sub-folder is an error |
+| Catalogs folder | contains only `.yml` files, and at least one, any other file or sub-folder is an error |
 | View configs | every matched file is `.yml` |
 | Calendar | `.csv` file |
 | View configs, SimulationTables | at least one file matches the pattern, for example `No files matched global pattern: output/st-*.parquet`. A pattern that ends with a folder name, such as `output/`, matches no file. |
