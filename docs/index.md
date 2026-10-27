@@ -30,7 +30,7 @@ GVB runs **after** the simulation and does not simulate anything itself. It read
 | **Calendar** | Maps the simulation time indices to dates. | CSV file |
 | **View** | The result: one table per view config and aggregation pattern, with one row per metric, location, date and scenario (or scenario statistic). | [Views](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/views/) |
 
-The study itself, the [system](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/) and its [model libraries](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/), and the [SimulationTable](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/) are the same files the simulation used and produced.
+The study itself, the [system](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/) and its [model libraries](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/), and the [Simulation Table](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/) are the same files the simulation used and produced.
 
 ## What GVB does in a run
 
