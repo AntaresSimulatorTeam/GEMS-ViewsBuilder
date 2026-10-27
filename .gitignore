@@ -100,3 +100,5 @@ __pypackages__/
 
 # Ignore pipeline logs
 logs/
+# MkDocs
+site/

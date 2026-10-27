@@ -1,0 +1,56 @@
+site_name: GEMS ViewsBuilder
+site_description: Build aggregated Views on GEMS simulation tables
+repo_url: https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder
+nav:
+  - 'Home': 'index.md'
+  - 'Input validation': 'input_validation_diagram.md'
+
+theme:
+  name: material
+  prev_next_buttons_location: none
+  features:
+    - navigation.instant
+    - navigation.top
+    - content.tabs.link
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: antares
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+
+plugins:
+  - search
+  - macros
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [.]
+          options:
+            show_bases: false
+            show_source: false
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
