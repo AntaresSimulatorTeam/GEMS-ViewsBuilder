@@ -11,7 +11,7 @@ A View answers a business question on top of it, for example *"hourly production
 ```mermaid
 flowchart LR
     study["GEMS study<br/>system + model libraries"] --> sim["Simulation<br/>GemsPy or Antares Simulator<br/>(Antares Simulator modeler)"]
-    sim --> st[("SimulationTable")]
+    sim --> st[("Simulation Table")]
     st --> gvb["GEMS-ViewsBuilder"]
     study --> gvb
     inputs["taxonomy · catalogs<br/>view config · calendar"] --> gvb
