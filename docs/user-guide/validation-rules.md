@@ -109,5 +109,4 @@ Some inputs are matched rather than checked. When they do not match, GVB gives f
 | SimulationTable rows and calendar | A time-dependent row is kept only if its `absolute_time_index` is in the calendar **and** its `block` is the `block` of that calendar row. Other rows are left out. Rows that do not depend on time (no `absolute_time_index`) are always kept. |
 | `location-filter` of an aggregation pattern | A location id that does not exist matches no row. |
 | `extra-locations` of the view config scope | A location component that does not have the named property gets no extra location. |
-| `scope.calendar` of the view config | Not compared with anything: the calendar given with `--calendar` is always used. |
 | Components without SimulationTable rows | A component of the system with no rows in the SimulationTables gives empty values in the View. |
