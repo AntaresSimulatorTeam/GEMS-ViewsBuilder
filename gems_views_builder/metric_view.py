@@ -7,8 +7,6 @@ from pathlib import Path
 
 from pydantic import Field
 
-from gems_views_builder.input.view_config import TimeGranularity
-
 
 @dataclass
 class MetricView:
@@ -23,5 +21,5 @@ class MetricView:
 
 @dataclass
 class TemporalMetricView(MetricView):
-    time_granularity: TimeGranularity
     view_config_id: str = Field(init=False)
+    aggregation_pattern_id: str = Field(init=False)

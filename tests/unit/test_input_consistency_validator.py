@@ -4,9 +4,9 @@
 from types import SimpleNamespace
 from typing import cast
 
+from gems_views_builder import Taxonomy, TaxonomyCategory
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.validation.input_consistency_validator import (
     InputConsistencyValidator,
@@ -34,7 +34,6 @@ def make_catalog(catalog_id: str, location_category: str, metric_ids: list[str])
 def make_view_config(view_config_id: str, location_category: str, full_metric_ids: list[str]) -> ViewConfig:
     return ViewConfig(
         id=view_config_id,
-        calendar_id="calendar_file",
         location_taxonomy_category=location_category,
         taxonomy_id="my_taxonomy",
         aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
@@ -48,12 +47,13 @@ def make_raw_input_data(view_configs: list[ViewConfig], catalogs: list[Catalog])
         SimpleNamespace(
             taxonomy=Taxonomy(
                 id="my_taxonomy",
-                categories={
-                    "balance": TaxonomyCategory(id="balance"),
-                    "consumption": TaxonomyCategory(id="consumption"),
-                },
+                categories=[
+                    TaxonomyCategory(id="balance"),
+                    TaxonomyCategory(id="consumption"),
+                ],
             ),
             view_configs=view_configs,
+            libraries=[],
             catalogs=catalogs,
         ),
     )

@@ -78,11 +78,7 @@ class TimeAggregator:
         )
         sink_to_parquet(view, file_path)
         logg_write(metric, file_path)
-
-        temporal_aggregation_view = TemporalMetricView(
-            persistence_path=file_path, time_granularity=self._time_granularity
-        )
-        return temporal_aggregation_view
+        return TemporalMetricView(persistence_path=file_path)
 
 
 # This class is a Decorator (for TimeAggregator) : it adds functionality to TimeAggregator without

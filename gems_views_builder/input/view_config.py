@@ -33,12 +33,11 @@ class Location(ViewBuilderBasedModel):
 
 class Scope(ViewBuilderBasedModel):
     location: Location
-    calendar: str
     extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
 class AggregationPattern(ViewBuilderBasedModel):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_]+$")
     time_granularity: TimeGranularity
     scenario: bool
     location_filter: list[str] | None = Field(default=None)
@@ -49,7 +48,7 @@ class MetricId(ViewBuilderBasedModel, frozen=True):
 
 
 class RawViewConfig(ViewBuilderBasedModel):
-    id: str = Field(pattern=r"^[A-Za-z0-9_-]+$")
+    id: str = Field(pattern=r"^[A-Za-z0-9_]+$")
     scope: Scope
     taxonomy: str
     aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
@@ -59,7 +58,6 @@ class RawViewConfig(ViewBuilderBasedModel):
 @dataclass
 class ViewConfig:
     id: str
-    calendar_id: str
     location_taxonomy_category: str
     taxonomy_id: str
     aggregation_patterns: tuple[AggregationPattern, ...]
@@ -82,25 +80,21 @@ class ViewConfig:
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
-    raw_view_config = load_raw_view_config_file(config_file_path)
+    raw_view_config = load_view_config_from_yaml(config_file_path)
 
     view_config = ViewConfig(
         id=raw_view_config.id,
-        calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         taxonomy_id=raw_view_config.taxonomy,
         aggregation_patterns=raw_view_config.aggregations_patterns,
         full_metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )
-    logging.info(
-        f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
-        f"metrics={len(view_config.full_metric_ids)}"
-    )
+    logging.info(f"View config {view_config.id!r} loaded: metrics={len(view_config.full_metric_ids)}")
     return view_config
 
 
-def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
+def load_view_config_from_yaml(view_file_path: Path) -> RawViewConfig:
     logging.info(f"Parsing view config YAML from {view_file_path}")
     with open(view_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)

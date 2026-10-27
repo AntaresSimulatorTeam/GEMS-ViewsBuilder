@@ -7,12 +7,12 @@ from typing import Any
 
 import polars as pl
 
+from gems_views_builder import Taxonomy
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import SimulationTable
-from gems_views_builder.input.taxonomy import Taxonomy
 from gems_views_builder.input.view_config import ViewConfig
 
 
@@ -89,16 +89,12 @@ def build_raw_input_data(
     view_config.populate_with_metrics(catalogs)
     return RawInputData(
         taxonomy=Taxonomy(id="taxonomy"),
-        libraries={
-            "lib": Library(
+        libraries=[
+            Library(
                 id="lib",
-                description="",
-                port_types=[],
-                models={},
-                models_by_taxonomy_category={},
                 taxon_by_model=taxon_by_model,
             )
-        },
+        ],
         system=system,
         view_configs=[view_config],
         simulation_tables=simulation_tables,

@@ -10,6 +10,7 @@ from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.validation.catalogs_taxonomy_validator import CatalogsTaxonomyValidator
 from gems_views_builder.validation.catalogs_view_config_validator import ViewConfigCatalogsValidator
+from gems_views_builder.validation.validate_library_taxonomy import validate_libraries_against_taxonomy
 from gems_views_builder.validation.view_config_metrics_against_catalogs_validator import (
     ViewConfigMetricsAgainstCatalogsValidator,
 )
@@ -21,6 +22,7 @@ class InputConsistencyValidator:
     raw_input_data: RawInputData
 
     def validate(self) -> None:
+        validate_libraries_against_taxonomy(self.raw_input_data.libraries, self.raw_input_data.taxonomy)
         CatalogsTaxonomyValidator(self.raw_input_data.catalogs, self.raw_input_data.taxonomy).validate()
         catalogs_by_ids = {catalog.id: catalog for catalog in self.raw_input_data.catalogs}
         for view_config in self.raw_input_data.view_configs:

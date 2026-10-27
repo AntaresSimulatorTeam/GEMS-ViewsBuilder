@@ -63,7 +63,5 @@ def test_library_fully_loaded(tmp_path: Path) -> None:
 
     # Assert
     assert lib.id == "library_1"
-    assert lib.port_types == []
-    assert lib.models["generator"] == ModelSchema(id="generator", taxonomy_category="production")
-    assert lib.models_by_taxonomy_category == {"production": ["generator"]}
+    assert lib.models == [ModelSchema(id="generator", taxonomy_category="production")]
     assert lib.taxon_by_model == {"generator": "production"}
