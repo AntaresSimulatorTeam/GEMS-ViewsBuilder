@@ -44,9 +44,11 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     populate_view_configs_with_metrics(raw_input_data.view_configs, raw_input_data.catalogs)
     components_by_taxon = build_components_by_taxon(raw_input_data)
 
+    # Since we have only one calendar, we can filter the simulation table once and for all.
+    filtered_st = make_filtered_simulation_table(raw_input_data)
+
     for view_config in raw_input_data.view_configs:
         supply_components_with_locations(components_by_taxon, view_config)
-        filtered_st = make_filtered_simulation_table(raw_input_data)
         view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)
         view_builder = ViewBuilder(view_building_input)
         metric_views = view_builder.build()
