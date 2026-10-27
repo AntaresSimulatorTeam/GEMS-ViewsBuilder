@@ -19,7 +19,7 @@ graph LR
     catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --- taxonomy
     view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --- taxonomy
     view_config -- "• taxonomy id matches<br/>• location taxonomy category matches" --- catalog
-    view_config -- "• selected metrics exist in catalogs" --- catalog
+    view_config -- "• selected metrics exist in catalogs<br/>(resolved while loading)" --- catalog
 
     library_1 -.- library_join
     library_dots -.- library_join
@@ -66,18 +66,13 @@ which only checks that these files are *present*, not their contents).
 | Taxonomy id match | `catalog.taxonomy == view_config.taxonomy_id` |
 | Location taxonomy category match | `catalog.location_taxonomy_category == view_config.location_taxonomy_category` |
 
-[`ViewConfigMetricsAgainstCatalogsValidator`](../gems_views_builder/validation/view_config_metrics_against_catalogs_validator.py)
-
-| Check | Rule |
-|---|---|
-| Selected metrics exist | every `view_config` metric ref `<catalog_id>.<metric_id>` is defined in that catalog |
+Selected metrics are resolved while loading, in [`ViewConfig.populate_with_metrics`](../gems_views_builder/input/view_config.py). Every `<catalog_id>.<metric_id>` must name a loaded catalog and a metric in that catalog.
 
 ## Orchestration
 
 [`InputConsistencyValidator`](../gems_views_builder/validation/input_consistency_validator.py)
 runs the validators above, in this order:
 
-1. `ViewConfigTaxonomyValidator` (view_config ↔ taxonomy)
-2. `CatalogsTaxonomyValidator` (catalog ↔ taxonomy)
+1. `CatalogsTaxonomyValidator` (catalog ↔ taxonomy)
+2. `ViewConfigTaxonomyValidator` (view_config ↔ taxonomy)
 3. `ViewConfigCatalogsValidator` (catalog ↔ view_config)
-4. `ViewConfigMetricsAgainstCatalogsValidator` (view_config metrics ↔ catalogs)

@@ -20,12 +20,12 @@ from gems_views_builder.input.view_config import AggregationPattern, TimeGranula
 from gems_views_builder.metric_view import TemporalMetricView
 
 
-def make_pattern(scenario: bool = False, spatial_filter: list[str] | None = None) -> AggregationPattern:
+def make_pattern(scenario: bool = False, location_filter: list[str] | None = None) -> AggregationPattern:
     return AggregationPattern(
         id="p",
         time_granularity=TimeGranularity.HOUR,
         scenario=scenario,
-        spatial_filter=spatial_filter,
+        location_filter=location_filter,
     )
 
 
@@ -52,7 +52,8 @@ def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -
     )
     path = tmp_path / "temporal.parquet"
     dataframe.write_parquet(path)
-    return TemporalMetricView(path, TimeGranularity.HOUR)
+    time_metric_view = TemporalMetricView(persistence_path=path, time_granularity=TimeGranularity.HOUR)
+    return time_metric_view
 
 
 def temporal_metric_view(tmp_path: Path, values: list[float]) -> TemporalMetricView:
@@ -126,12 +127,12 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
         (False, None, {"busA", "busB", "busC"}),
     ],
 )
-def test_spatial_filter(
+def test_location_filter(
     tmp_path: Path, scenario: bool, locations: list[str] | None, expected_locations: set[str]
 ) -> None:
     # Arrange
     metric_view = make_metric_view(tmp_path, [("busA", 100.0), ("busB", 50.0), ("busC", 999.0)])
-    scenario_aggregator = ScenarioAggregator(make_pattern(scenario=scenario, spatial_filter=locations))
+    scenario_aggregator = ScenarioAggregator(make_pattern(scenario=scenario, location_filter=locations))
 
     # Act
     result = scenario_aggregator.run(metric_view)

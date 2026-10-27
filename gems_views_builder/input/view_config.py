@@ -41,15 +41,15 @@ class AggregationPattern(ViewBuilderBasedModel):
     id: str
     time_granularity: TimeGranularity
     scenario: bool
-    spatial_filter: list[str] | None = Field(default=None)
+    location_filter: list[str] | None = Field(default=None)
 
 
 class MetricId(ViewBuilderBasedModel, frozen=True):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$")
 
 
 class RawViewConfig(ViewBuilderBasedModel):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]+$")
     scope: Scope
     taxonomy: str
     aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
@@ -67,12 +67,14 @@ class ViewConfig:
     full_metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
-    def fetch_metrics(self, catalogs: list[Catalog]) -> None:
-        logging.debug(f"Fetching {len(self.full_metric_ids)} metric(s) from catalogs")
+    def populate_with_metrics(self, catalogs: list[Catalog]) -> None:
+        logging.debug(f"Fetching {len(self.full_metric_ids)} metrics for view config={self.id!r}")
         catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for full_metric_id in self.full_metric_ids:
             catalog_id, metric_id = full_metric_id.split(".")
             self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
+        if not self.metrics:
+            logging.warning(f"No metrics found for view config={self.id!r}")
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
@@ -106,3 +108,15 @@ def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
         raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
     logging.info(f"View config YAML parsed successfully from {view_file_path}")
     return RawViewConfig.model_validate(raw["view"])
+
+
+def load_view_configs(view_configs_paths: list[Path]) -> list[ViewConfig]:
+    view_configs: list[ViewConfig] = []
+    for path in view_configs_paths:
+        view_configs.append(load_view_config(path))
+    return view_configs
+
+
+def populate_view_configs_with_metrics(view_configs: list[ViewConfig], catalogs: list[Catalog]) -> None:
+    for view_config in view_configs:
+        view_config.populate_with_metrics(catalogs)
