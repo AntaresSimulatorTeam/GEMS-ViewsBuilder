@@ -52,8 +52,7 @@ def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -
     )
     path = tmp_path / "temporal.parquet"
     dataframe.write_parquet(path)
-    time_metric_view = TemporalMetricView(persistence_path=path, time_granularity=TimeGranularity.HOUR)
-    return time_metric_view
+    return TemporalMetricView(persistence_path=path)
 
 
 def temporal_metric_view(tmp_path: Path, values: list[float]) -> TemporalMetricView:
