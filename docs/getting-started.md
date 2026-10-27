@@ -44,9 +44,9 @@ GVB reads a GEMS study and the results of its simulation. It does not expect any
 | Model libraries used by the system | `--libraries-dir` | Folder of [library files](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/) (`.yml`) |
 | Taxonomy | `--taxonomy` | [Taxonomy file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/taxonomy/) (`.yml`) |
 | Catalogs | `--catalogs-dir` | Folder of [catalog files](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/catalog/) (`.yml`) |
-| View configs | `--view-configs` | One [view config file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) (`.yml`) or a pattern matching several |
+| View configs | `--view-configs` | One [view config file](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) (`.yml`) or a [pattern](user-guide/command-line.md#how-inputs-are-passed) matching several |
 | Calendar | `--calendar` | `.csv` file |
-| SimulationTables | `--simulation-tables` | Pattern matching one or more [SimulationTable](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/) files (`.parquet` or `.csv`) |
+| SimulationTables | `--simulation-tables` | [Pattern](user-guide/command-line.md#how-inputs-are-passed) matching one or more [SimulationTable](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/) files (`.parquet` or `.csv`) |
 
 The view configs say which Views to build. An example is given on the GEMS [view config](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/) page. In this page, the view config has the id `view_area` and one aggregation pattern, `hourly`.
 
