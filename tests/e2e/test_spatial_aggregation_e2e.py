@@ -133,7 +133,7 @@ def extract_values_from_view(view: MetricView) -> dict[tuple[str, datetime], flo
     )
 
 
-def views_by_metric_id(metric_views: list[MetricView]) -> dict[str, MetricView]:
+def views_grouped_by_metric_id(metric_views: list[MetricView]) -> dict[str, MetricView]:
     by_metric_id: dict[str, MetricView] = {}
     for view in metric_views:
         metric_id = view.lazy_data_frame().select("metric_id").limit(1).collect()["metric_id"][0]
