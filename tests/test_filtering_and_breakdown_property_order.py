@@ -121,7 +121,7 @@ def test_breakdown_missing_property_keys_use_none_literal(test_files_root: Path)
     metric = catalog.get_metric("PRODUCTION_BY_COUNTRY_COMPANY_TECH")
 
     components = [Component(component) for component in system.components]
-    supply_components_with_taxon(components, associate_models_with_a_taxon({library.id: library}))
+    supply_components_with_taxon(components, associate_models_with_a_taxon([library]))
     components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
     supply_components_with_port_connections(components, component_port_connections)
