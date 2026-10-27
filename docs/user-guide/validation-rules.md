@@ -51,7 +51,7 @@ Across all view configs given with `--view-configs`:
 For each view config:
 
 - each aggregation pattern `id` is used **only once**, for example `Aggregation pattern 'hourly' is defined multiple times`;
-- at most **10** aggregation patterns (5 time granularities × with or without scenario aggregation);
+- at most **10** aggregation patterns (5 time granularities × with or without scenario aggregation)
 - each combination of time granularity and scenario aggregation appears **only once**.
 
 ## 5. Consistency between files
