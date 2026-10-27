@@ -67,7 +67,30 @@ A pattern picks files out of one folder that may also hold other files, such as 
 - the pattern ends with a file name or a file name pattern, never with a folder: `"output/"` is rejected
 - its folder part must exist. It may be the current folder, as in `"st-*.parquet"`
 - at least one file must match, otherwise the run stops with `No files matched global pattern: …`
-- a plain file name is a pattern that matches one file: `--view-configs study/view_config.yml`.
+- a plain file name is a pattern that matches one file: `--view-configs study/view_config.yml`
+
+For example, with these files:
+
+```text
+study/
+└── view-configs/
+    ├── view-config-area.yml
+    ├── view-config-link.yml
+    └── notes.txt
+output/
+└── output-20261027/
+    ├── st-x-mc-1.parquet
+    ├── st-x-mc-2.parquet
+    └── st-x-mc-1.log
+```
+
+| Pattern | Files selected |
+|---|---|
+| `--view-configs "study/view-configs/view-config-*.yml"` | `view-config-area.yml`, `view-config-link.yml` |
+| `--view-configs "study/view-configs/*"` | rejected: `notes.txt` is not a `.yml` file |
+| `--simulation-tables "output/output-20261027/st-x-mc-*.parquet"` | `st-x-mc-1.parquet`, `st-x-mc-2.parquet` |
+| `--simulation-tables "output/output-20261027/*.parquet"` | the same two files: every `.parquet` file of the folder |
+| `--simulation-tables "output/*/st-x-mc-*.parquet"` | rejected: the wildcard is in the folder part |
 
 !!! tip "Quote the patterns"
     Write patterns in quotes, as in `"output/st-*.parquet"`. Without quotes, your shell replaces the pattern by the list of matching files before GVB starts. As soon as more than one file matches, the run stops with `unrecognized arguments`.
