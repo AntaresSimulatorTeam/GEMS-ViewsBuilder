@@ -7,13 +7,13 @@ checks performed between them, labeled with the checks themselves.
 graph LR
     catalog(("catalog.yml<br/>(one or more)"))
     taxonomy(("taxonomy.yml"))
-    view_config(("view_config.yml"))
+    view_config(("view_config.yml<br/>(one or more)"))
     library_1(("library_1.yml"))
     library_dots["⋮"]
     library_n(("library_N.yml"))
     library_join((" "))
     system(("system.yml"))
-    simulation_table(("simulation_table.parquet/csv"))
+    simulation_table(("simulation_table.parquet/csv<br/>(one or more)"))
     calendar(("calendar.csv"))
 
     catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --- taxonomy
