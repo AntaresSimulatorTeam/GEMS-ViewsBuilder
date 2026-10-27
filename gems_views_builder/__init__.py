@@ -16,6 +16,7 @@ from gems_craft.model.parsing import (  # type: ignore
     PortTypeSchema,
     VariableSchema,
 )
+from gems_craft.model.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy  # type: ignore
 
 from gems_views_builder.input.calendar import Calendar, load_calendar
 from gems_views_builder.input.catalog import (
@@ -30,14 +31,13 @@ from gems_views_builder.input.catalog import (
 from gems_views_builder.input.library import Library, associate_models_with_a_taxon
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import (
-    FilteredSimulationTable,
+    PersistentSimulationTable,
     SimulationTable,
     filter_simulation_table,
     load_simulation_table,
 )
 from gems_views_builder.input.system import System
-from gems_views_builder.input.taxonomy import Taxonomy, TaxonomyCategory, TaxonomyItem, load_taxonomy
-from gems_views_builder.input.view_building_input_data import ViewBuildingInputData, create_view_building_input
+from gems_views_builder.input.view_building_input import ViewBuildingInput, create_view_building_input
 from gems_views_builder.input.view_config import TimeGranularity, ViewConfig, load_view_config
 from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
@@ -47,7 +47,7 @@ from gems_views_builder.view import ViewBuilder
 __all__ = [
     "Calendar",
     "load_calendar",
-    "FilteredSimulationTable",
+    "PersistentSimulationTable",
     "SimulationTable",
     "load_simulation_table",
     "filter_simulation_table",
@@ -55,7 +55,7 @@ __all__ = [
     "load_catalog",
     "load_catalogs",
     "RawInputData",
-    "ViewBuildingInputData",
+    "ViewBuildingInput",
     "create_view_building_input",
     "Metric",
     "PropertySchema",

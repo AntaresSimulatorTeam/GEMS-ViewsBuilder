@@ -32,7 +32,6 @@ def make_metric() -> Metric:
 def make_view_config(extra_locations: list[str] | None = None) -> ViewConfig:
     return ViewConfig(
         id="view_area",
-        calendar_id="calendar_file",
         location_taxonomy_category="balance",
         taxonomy_id="my_taxonomy",
         aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
@@ -51,7 +50,6 @@ view:
   scope:
     location:
       taxonomy-category: balance
-    calendar: calendar_file
     extra-locations:
       - id: country
       - id: district
@@ -60,8 +58,6 @@ view:
     - id: hourly
       time_granularity: hour
       scenario: false
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()
@@ -85,13 +81,10 @@ view:
   scope:
     location:
       taxonomy-category: balance
-    calendar: calendar_file
   aggregations-patterns:
     - id: hourly
       time_granularity: hour
       scenario: false
-  catalogs:
-    - id: catalog
   metrics:
     - id: catalog.LOAD
 """.strip()

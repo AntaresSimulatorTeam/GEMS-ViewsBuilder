@@ -8,11 +8,11 @@ from pytest import approx
 
 from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
-from gems_views_builder.input.simulation_table import FilteredSimulationTable, join
+from gems_views_builder.input.simulation_table import PersistentSimulationTable, join
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
 
-def create_filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulationTable:
+def create_filtered_st(values: list[float], tmp_path: Path) -> PersistentSimulationTable:
     n = len(values)
     dataframe = pl.DataFrame(
         {
@@ -27,7 +27,7 @@ def create_filtered_st(values: list[float], tmp_path: Path) -> FilteredSimulatio
             "basis_status": ["B"] * n,
         }
     ).lazy()
-    return FilteredSimulationTable(tmp_path / "dummy.parquet", dataframe)
+    return PersistentSimulationTable(dataframe=dataframe, file_path=tmp_path / "dummy.parquet")
 
 
 def create_metric_structure_table() -> MetricStructureTable:

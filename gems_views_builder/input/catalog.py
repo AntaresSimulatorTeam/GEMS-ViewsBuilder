@@ -3,6 +3,8 @@
 
 """Catalog .yml parsing models and typed representation."""
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
@@ -126,8 +128,9 @@ def to_metric(metric_data: MetricData) -> Metric:
     )
 
 
-def load_catalogs(catalogs_dir: Path, catalog_ids: set[str]) -> list[Catalog]:
-    return [load_catalog(catalogs_dir / f"{catalog_id}.yml") for catalog_id in catalog_ids]
+def load_catalogs(catalog_files: list[Path]) -> list[Catalog]:
+    logging.info(f"Loading {len(catalog_files)} catalog file(s)")
+    return [load_catalog(catalog_file_path) for catalog_file_path in catalog_files]
 
 
 def load_catalog(catalog_file_path: Path) -> Catalog:

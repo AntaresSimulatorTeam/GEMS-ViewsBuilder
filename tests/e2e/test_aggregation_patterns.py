@@ -4,9 +4,8 @@
 """
 E2E test for scenario aggregation through the view-building process.
 
-PatternRunner emits one temporal view per (time, scenario) pattern.
-accumulate_on_disk then writes one result file per time granularity, merging
-every pattern that shares that time.
+Each aggregation pattern produces its own result file, named
+{view_config_id}--{aggregation_pattern_id}--{timestamp}.parquet.
 """
 
 from datetime import datetime
@@ -16,11 +15,16 @@ from typing import Any
 
 import polars as pl
 
-from gems_views_builder.__main__ import build_metric_views
+from gems_views_builder.__main__ import build_components_by_taxon
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
+from gems_views_builder.input.component import supply_components_with_locations
 from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.view_building_input import (
+    create_view_building_input,
+    make_filtered_simulation_table,
+)
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
-from gems_views_builder.view import ParquetViewSinker, accumulate_on_disk
+from gems_views_builder.view import ParquetViewSinker, ViewBuilder, accumulate_on_disk
 from tests.e2e.utils import (
     build_raw_input_data,
     create_results_dir,
@@ -36,11 +40,9 @@ T1 = datetime(2026, 1, 1, 3, 0)
 T2 = datetime(2026, 1, 1, 20, 0)
 
 PATTERNS = (
-    AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),
-    AggregationPattern(id="hourly2", time_granularity=TimeGranularity.HOUR, scenario=True),
-    AggregationPattern(id="daily", time_granularity=TimeGranularity.DAY, scenario=False),
-    AggregationPattern(id="daily2", time_granularity=TimeGranularity.DAY, scenario=True),
-    AggregationPattern(id="monthly", time_granularity=TimeGranularity.MONTH, scenario=False),
+    AggregationPattern(id="hourly_pattern_001", time_granularity=TimeGranularity.HOUR, scenario=False),
+    AggregationPattern(id="hourly_pattern_002", time_granularity=TimeGranularity.HOUR, scenario=True),
+    AggregationPattern(id="monthly_pattern_001", time_granularity=TimeGranularity.MONTH, scenario=False),
 )
 
 
@@ -72,13 +74,11 @@ def make_metrics() -> list[Metric]:
 
 def make_view_config() -> ViewConfig:
     return ViewConfig(
-        id="view_area",
-        calendar_id="calendar",
+        id="view_001",
         location_taxonomy_category="balance",
         taxonomy_id="taxonomy",
-        catalog_ids={"catalog"},
         aggregation_patterns=PATTERNS,
-        metric_ids=["catalog.LOAD", "catalog.PROD"],
+        full_metric_ids=["catalog.LOAD", "catalog.PROD"],
     )
 
 
@@ -116,30 +116,40 @@ def build_input() -> RawInputData:
 
 
 def fetch_result_files(results_dir: Path) -> list[Path]:
-    return [path for path in results_dir.glob("view_*.parquet")]
+    return list(results_dir.glob("*.parquet"))
 
 
-def sort_by_time_granularity(result_files: list[Path]) -> dict[str, Path]:
-    # Output files are named view_{time}_{timestamp}.parquet
-    return {path.stem.split("_")[1]: path for path in result_files}
+def result_name(path: Path) -> str:
+    # Timestamp is appended as a final --{timestamp} segment.
+    return path.stem.rsplit("--", 1)[0]
 
 
-def test_one_output_file_per_time_granularity_merges_all_scenarios(tmp_path: Path) -> None:
+def test_run_view_building_leads_to_generate_one_view_per_aggregation_pattern(tmp_path: Path) -> None:
     # Arrange
     input_data = build_input()
     results_dir = create_results_dir(tmp_path)
+    components_by_taxon = build_components_by_taxon(input_data)
+    sinker = ParquetViewSinker(results_dir)
 
     # Act
-    accumulate_on_disk(build_metric_views(input_data), ParquetViewSinker(results_dir))
+    for view_config in input_data.view_configs:
+        supply_components_with_locations(components_by_taxon, view_config)
+        filtered_st = make_filtered_simulation_table(input_data)
+        view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)
+        metric_views = ViewBuilder(view_building_input).build()
+        accumulate_on_disk(metric_views, sinker)
+        del metric_views
 
     # Assert
-    result = sort_by_time_granularity(fetch_result_files(results_dir))
-    hour_view = pl.read_parquet(result["hour"])
-    day_view = pl.read_parquet(result["day"])
-
-    assert set(result) == {"hour", "day", "month"}
+    result = {result_name(path): pl.read_parquet(path) for path in fetch_result_files(results_dir)}
     assert len(result) == 3
-    assert set(hour_view["metric_id"].to_list()) == {"LOAD", "PROD"}
-    assert set(hour_view["scenario_aggregation"].to_list()) == {True, False}
-    assert set(day_view["metric_id"].to_list()) == {"LOAD", "PROD"}
-    assert set(day_view["scenario_aggregation"].to_list()) == {True, False}
+    assert set(result) == {
+        "view_001--hourly_pattern_001",
+        "view_001--hourly_pattern_002",
+        "view_001--monthly_pattern_001",
+    }
+
+    assert set(result["view_001--hourly_pattern_001"]["metric_id"].to_list()) == {"LOAD", "PROD"}
+    assert set(result["view_001--hourly_pattern_002"]["scenario_aggregation"].to_list()) == {True}
+    assert set(result["view_001--monthly_pattern_001"]["metric_id"].to_list()) == {"LOAD", "PROD"}
+    assert set(result["view_001--monthly_pattern_001"]["scenario_aggregation"].to_list()) == {False}

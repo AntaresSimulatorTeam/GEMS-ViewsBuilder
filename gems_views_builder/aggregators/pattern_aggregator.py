@@ -1,8 +1,8 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
+from gems_views_builder.aggregators.location_filtering import LocationFiltering
 from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator
-from gems_views_builder.aggregators.spatial_filter import SpatialFiltering
 from gems_views_builder.aggregators.time_aggregator import TimeAggregator
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import AggregationPattern, ViewConfig
@@ -13,12 +13,12 @@ class PatternAggregator:
     def __init__(self, pattern: AggregationPattern) -> None:
         self.time_aggregator = TimeAggregator(pattern.time_granularity)
         self.scenario_aggregator = ScenarioAggregator(pattern)
-        self.spatial_filtering = SpatialFiltering(pattern)
+        self.location_filtering = LocationFiltering(pattern)
 
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         time_metric_view = self.time_aggregator.run(metric_view, metric)
         scenario_metric_view = self.scenario_aggregator.run(time_metric_view)
-        return self.spatial_filtering.run(scenario_metric_view, metric)
+        return self.location_filtering.run(scenario_metric_view, metric)
 
 
 class AggregationPatternList:
