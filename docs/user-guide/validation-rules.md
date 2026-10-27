@@ -1,6 +1,6 @@
 # Validation rules
 
-GVB checks the command line and all input files before building any View. Components are located while each view config is built (section 7). GVB stops at the **first** rule that fails, with an error that names the file and the rule. How errors are reported and which exit code is returned is described on the [Command line](command-line.md) page.
+GVB checks the command line and all input files before building any View. Components are located while each view config is built (section 7). GVB stops at the **first** rule that fails, with an error that names the file and the rule. How errors are reported is described on the [Command line](command-line.md#errors) page.
 
 The checks run in the order of the sections below.
 
