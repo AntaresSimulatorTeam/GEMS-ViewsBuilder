@@ -2,7 +2,7 @@
 
 **GEMS-ViewsBuilder (GVB)** turns the results of a GEMS simulation into **Views**: tables of metrics aggregated per location, time granularity and scenario, ready to analyse or plot.
 
-A **SimulationTable** is the output of a GEMS interpreter, GemsPy or the GEMS modeler of Antares Simulator, after it has solved a study. Its format is defined by GEMS: one row per output of a component (variable, port field or extra-output), at one time step, for one scenario. For GVB, the SimulationTable is an input that it reads and never changes. GVB works with any SimulationTable that follows the GEMS format, whichever interpreter wrote it.
+A **Simulation Table** is the output of a GEMS interpreter, GemsPy or the GEMS modeler of Antares Simulator, after it has solved a study. Its format is defined by GEMS: one row per output of a component (variable, port field or extra-output), at one time step, for one scenario. For GVB, the SimulationTable is an input that it reads and never changes. GVB works with any Simulation Table that follows the GEMS format, whichever interpreter wrote it.
 
 A View answers a business question on top of it, for example *"hourly production per area"* or *"yearly unsupplied energy per country, averaged over scenarios"*.
 
