@@ -10,7 +10,7 @@ The *main inputs* are
 - *GEMS Taxonomy* 
 - One or several *Simulation Tables* *consistent* with the *GEMS System*
 - One or several *Catalogs* defining *Metrics*
-- One or several *configurations of views*
+- One or several *View Configurations*
 - *Calendar*
 
 ## Outputs

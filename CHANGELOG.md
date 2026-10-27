@@ -7,13 +7,15 @@ All notable changes to this project are documented in this file.
 ### Added
 
 - One run can load several view configs and write a view for each of them.
-- Catalogs, libraries, and view configs are collected from directories. Simulation tables are collected from a glob, and every table in that glob must use the same extension.
+- Catalogs, libraries are collected from directories. Simulation tables are collected from a glob, and every table in that glob must use the same extension.
 - Each simulation table is checked for the expected columns before views are built.
 
 ### Changed
 
-- A view config no longer lists its catalogs. The catalogs it uses are the ones named by its metrics (`<catalog_id>.<metric_id>`).
+- A view config no longer lists its catalogs. The catalogs it uses are the ones named by its metrics (`<catalog_id>.<metric_id>`). Catalogs remain CLI args.
+- A view config no longer has a `calendar` field. Calendar remains a CLI arg.
 - `--output` is now `--output-dir`.
+- Parquet/CSV files are exported one per view config and aggregation pattern (`<view_config_id>--<aggregation_pattern_id>--<timestamp>.parquet`).
 - `spatial_filter` in a view config is now `location_filter`.
 - Time aggregation is computed once per granularity, including when both scenario settings use that granularity.
 
