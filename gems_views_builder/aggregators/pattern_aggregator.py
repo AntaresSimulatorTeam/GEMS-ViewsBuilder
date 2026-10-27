@@ -1,8 +1,8 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator
 from gems_views_builder.aggregators.location_filtering import LocationFiltering
+from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator
 from gems_views_builder.aggregators.time_aggregator import TimeAggregatorDecorator
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import AggregationPattern, ViewConfig

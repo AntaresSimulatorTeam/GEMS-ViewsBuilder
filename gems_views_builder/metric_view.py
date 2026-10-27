@@ -5,8 +5,8 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from pydantic import Field
 import polars as pl
+from pydantic import Field
 
 from gems_views_builder.common import sink_to_parquet
 
