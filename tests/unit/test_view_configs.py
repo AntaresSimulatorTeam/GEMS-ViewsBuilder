@@ -26,7 +26,6 @@ taxonomy: my_taxonomy
 scope:
   location:
     taxonomy-category: balance
-  calendar: calendar_file
 aggregations-patterns:
   - id: hourly
     time_granularity: hour

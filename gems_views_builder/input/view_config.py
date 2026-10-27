@@ -33,7 +33,6 @@ class Location(ViewBuilderBasedModel):
 
 class Scope(ViewBuilderBasedModel):
     location: Location
-    calendar: str
     extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
@@ -59,7 +58,6 @@ class RawViewConfig(ViewBuilderBasedModel):
 @dataclass
 class ViewConfig:
     id: str
-    calendar_id: str
     location_taxonomy_category: str
     taxonomy_id: str
     aggregation_patterns: tuple[AggregationPattern, ...]
@@ -86,17 +84,13 @@ def load_view_config(config_file_path: Path) -> ViewConfig:
 
     view_config = ViewConfig(
         id=raw_view_config.id,
-        calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         taxonomy_id=raw_view_config.taxonomy,
         aggregation_patterns=raw_view_config.aggregations_patterns,
         full_metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )
-    logging.info(
-        f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
-        f"metrics={len(view_config.full_metric_ids)}"
-    )
+    logging.info(f"View config {view_config.id!r} loaded: metrics={len(view_config.full_metric_ids)}")
     return view_config
 
 

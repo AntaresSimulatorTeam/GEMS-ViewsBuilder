@@ -75,7 +75,6 @@ def make_metrics() -> list[Metric]:
 def make_view_config() -> ViewConfig:
     return ViewConfig(
         id="view_001",
-        calendar_id="calendar",
         location_taxonomy_category="balance",
         taxonomy_id="taxonomy",
         aggregation_patterns=PATTERNS,

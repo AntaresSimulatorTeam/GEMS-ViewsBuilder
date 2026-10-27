@@ -32,7 +32,6 @@ graph LR
     library_n -.- library_join
     library_join -- "• each model matches its taxonomy category" --- taxonomy
     library_join -. "checked by gemspy" .- system
-    view_config_join -.- calendar
 
     classDef unvalidated stroke-dasharray: 4 4;
     classDef plain stroke: none, fill: none;
