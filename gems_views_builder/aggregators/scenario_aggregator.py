@@ -76,6 +76,7 @@ def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
 
 class ScenarioAggregator:
     def __init__(self, aggregation_pattern: AggregationPattern):
+        self.aggregation_pattern_id = aggregation_pattern.id
         self.scenario_operator = make_scenario_operator(aggregation_pattern.scenario)
 
     def run(self, metric_view: MetricView) -> MetricView:

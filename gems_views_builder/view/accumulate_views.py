@@ -5,18 +5,18 @@ from collections import defaultdict
 
 import polars as pl
 
-from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
-from gems_views_builder.view.view_sinker import ViewSinker  # noqa: E402
+from gems_views_builder.view.view_sinker import ViewSinker
 
 
-def group_by_time_granularity(
+def group_views(
     metric_views: list[MetricView],
-) -> dict[TimeGranularity, list[MetricView]]:
-    views_by_time_granularity: dict[TimeGranularity, list[MetricView]] = defaultdict(list)
+) -> dict[tuple[str, str], list[MetricView]]:
+    """Group metric views by view config and aggregation pattern."""
+    grouped_views: dict[tuple[str, str], list[MetricView]] = defaultdict(list)
     for view in metric_views:
-        views_by_time_granularity[view.time_granularity].append(view)
-    return views_by_time_granularity
+        grouped_views[(view.view_config_id, view.aggregation_pattern_id)].append(view)
+    return grouped_views
 
 
 def cast_into_persistent_views(views: list[MetricView]) -> list[PersistentMetricView]:
@@ -35,5 +35,7 @@ def accumulate_views(views: list[MetricView]) -> pl.LazyFrame:
 
 
 def accumulate_on_disk(metric_views: list[MetricView], sinker: ViewSinker) -> None:
-    for time_granularity, views in group_by_time_granularity(metric_views).items():
-        sinker.sink(accumulate_views(views), time_granularity)
+    for (view_config_id, aggregation_pattern_id), views in group_views(metric_views).items():
+        accumulated_views = accumulate_views(views)
+        save_file_name = f"{view_config_id}--{aggregation_pattern_id}"
+        sinker.sink(accumulated_views, save_file_name)

@@ -22,12 +22,12 @@ from gems_views_builder.input.view_config import AggregationPattern, TimeGranula
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
 
-def make_pattern(scenario: bool = False, spatial_filter: list[str] | None = None) -> AggregationPattern:
+def make_pattern(scenario: bool = False, location_filter: list[str] | None = None) -> AggregationPattern:
     return AggregationPattern(
         id="p",
         time_granularity=TimeGranularity.HOUR,
         scenario=scenario,
-        spatial_filter=spatial_filter,
+        location_filter=location_filter,
     )
 
 
@@ -121,7 +121,7 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
         (False, None, {"busA", "busB", "busC"}),
     ],
 )
-def test_spatial_filter(
+def test_location_filter(
     tmp_path: Path, scenario: bool, locations: list[str] | None, expected_locations: set[str]
 ) -> None:
     # Arrange

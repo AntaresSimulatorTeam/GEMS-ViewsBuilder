@@ -5,15 +5,16 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from pydantic import Field
 import polars as pl
 
 from gems_views_builder.common import sink_to_parquet
-from gems_views_builder.input.view_config import TimeGranularity
 
 
 @dataclass
 class MetricView:
-    time_granularity: TimeGranularity = TimeGranularity.HOUR
+    view_config_id: str = Field(init=False)
+    aggregation_pattern_id: str = Field(init=False)
     lazyframe: pl.LazyFrame = field(kw_only=True)
 
     def lazy_data_frame(self) -> pl.LazyFrame:

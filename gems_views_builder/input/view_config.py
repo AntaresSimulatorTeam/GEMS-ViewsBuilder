@@ -33,97 +33,68 @@ class Location(ViewBuilderBasedModel):
 
 class Scope(ViewBuilderBasedModel):
     location: Location
-    calendar: str
     extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
 class AggregationPattern(ViewBuilderBasedModel):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_]+$")
     time_granularity: TimeGranularity
     scenario: bool
-    spatial_filter: list[str] | None = Field(default=None)
-
-
-class CatalogId(ViewBuilderBasedModel):
-    id: str
+    location_filter: list[str] | None = Field(default=None)
 
 
 class MetricId(ViewBuilderBasedModel, frozen=True):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$")
 
 
 class RawViewConfig(ViewBuilderBasedModel):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_]+$")
     scope: Scope
     taxonomy: str
     aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
-    catalogs: list[CatalogId] = Field(min_length=1)
     metrics: list[MetricId] = Field(min_length=1)
 
 
 @dataclass
 class ViewConfig:
     id: str
-    calendar_id: str
     location_taxonomy_category: str
     taxonomy_id: str
     aggregation_patterns: tuple[AggregationPattern, ...]
-    catalog_ids: set[str] = field(default_factory=set)
     extra_locations: list[str] = field(default_factory=list)
-    metric_ids: list[str] = field(default_factory=list)
+    full_metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
-    def fetch_metrics(self, catalogs: list[Catalog]) -> None:
-        logging.debug(f"Fetching {len(self.metric_ids)} metric(s) from catalogs")
+    def populate_with_metrics(self, catalogs: list[Catalog]) -> None:
+        logging.debug(f"Fetching {len(self.full_metric_ids)} metrics for view config={self.id!r}")
         catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
-        for metric_ref in self.metric_ids:
-            if "." not in metric_ref or metric_ref.startswith(".") or metric_ref.endswith("."):
-                raise ValueError(
-                    f"Invalid metric id '{metric_ref}'. "
-                    f"Expected format '<catalog_id>.<metric_id>' for catalog {self.catalog_ids}"
-                )
-            catalog_id, metric_id = metric_ref.split(".", 1)
-
-            if catalog_id not in self.catalog_ids:
-                raise ValueError(f"Catalog {catalog_id!r} not found in view config")
-
-            logging.debug(f"Mapped metric {metric_id!r} to catalog {catalog_id!r}")
-
+        for full_metric_id in self.full_metric_ids:
+            catalog_id, metric_id = full_metric_id.split(".")
             self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
+        if not self.metrics:
+            logging.warning(f"No metrics found for view config={self.id!r}")
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
 
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
-    from gems_views_builder.validation.aggregation_patterns_validator import AggregationPatternsValidator
-
     logging.info(f"Loading view config from {config_file_path}")
-    raw_view_config = load_raw_view_config_file(config_file_path)
-    AggregationPatternsValidator(raw_view_config.aggregations_patterns).validate()
+    raw_view_config = load_view_config_from_yaml(config_file_path)
 
     view_config = ViewConfig(
         id=raw_view_config.id,
-        calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         taxonomy_id=raw_view_config.taxonomy,
-        catalog_ids={c.id for c in raw_view_config.catalogs},
         aggregation_patterns=raw_view_config.aggregations_patterns,
-        metric_ids=[metric.id for metric in raw_view_config.metrics],
+        full_metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )
-    logg_loaded_view_config(view_config)
+    logging.info(f"View config {view_config.id!r} loaded: metrics={len(view_config.full_metric_ids)}")
     return view_config
 
 
-def logg_loaded_view_config(view_config: ViewConfig) -> None:
-    logging.info(
-        f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
-        f"catalogs={len(view_config.catalog_ids)}, metrics={len(view_config.metrics)}"
-    )
-
-
-def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
+def load_view_config_from_yaml(view_file_path: Path) -> RawViewConfig:
     logging.info(f"Parsing view config YAML from {view_file_path}")
     with open(view_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
@@ -131,3 +102,15 @@ def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
         raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
     logging.info(f"View config YAML parsed successfully from {view_file_path}")
     return RawViewConfig.model_validate(raw["view"])
+
+
+def load_view_configs(view_configs_paths: list[Path]) -> list[ViewConfig]:
+    view_configs: list[ViewConfig] = []
+    for path in view_configs_paths:
+        view_configs.append(load_view_config(path))
+    return view_configs
+
+
+def populate_view_configs_with_metrics(view_configs: list[ViewConfig], catalogs: list[Catalog]) -> None:
+    for view_config in view_configs:
+        view_config.populate_with_metrics(catalogs)
