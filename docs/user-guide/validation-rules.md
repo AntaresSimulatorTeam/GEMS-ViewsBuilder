@@ -25,7 +25,7 @@ The checks run in the order of the sections below.
 | View configs | every matched file is `.yml` |
 | Calendar | `.csv` file |
 | View configs, SimulationTables | at least one file matches the pattern, for example `No files matched global pattern: output/st-*.parquet`. A pattern that ends with a folder name, such as `output/`, matches no file. |
-| SimulationTables | every file is `.parquet` or `.csv`; all files use the **same** extension |
+| Simulation Tables | every file is `.parquet` or `.csv`, all files use the **same** extension |
 
 ## 3. Content of each file
 
