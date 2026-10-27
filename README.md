@@ -21,7 +21,10 @@ The main outputs are Views.
 graph LR
     catalog(("catalog.yml<br/>(one or more)"))
     taxonomy(("taxonomy.yml"))
-    view_config(("view_config.yml"))
+    view_config_1(("view_config_1.yml"))
+    view_config_dots["⋮"]
+    view_config_n(("view_config_N.yml"))
+    view_config_join((" "))
     library_1(("library_1.yml"))
     library_dots["⋮"]
     library_n(("library_N.yml"))
@@ -30,21 +33,24 @@ graph LR
     simulation_table(("simulation_table.parquet/csv"))
     calendar(("calendar.csv"))
 
-    catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --- taxonomy
-    view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --- taxonomy
-    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches" --- catalog
-    view_config -- "• selected metrics exist in catalogs" --- catalog
+    catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id is a variable or extra-output<br/>• location ports declared" --- taxonomy
+    view_config_1 -.- view_config_join
+    view_config_dots -.- view_config_join
+    view_config_n -.- view_config_join
+    view_config_join -- "• taxonomy id matches<br/>• location taxonomy category exists" --- taxonomy
+    view_config_join -- "• taxonomy id matches<br/>• location taxonomy category matches" --- catalog
+    view_config_join -- "• selected metrics exist in catalogs" --- catalog
 
     library_1 -.- library_join
     library_dots -.- library_join
     library_n -.- library_join
+    library_join -- "• each model matches its taxonomy category" --- taxonomy
     library_join -. "checked by gemspy" .- system
-    view_config -.- calendar
 
     classDef unvalidated stroke-dasharray: 4 4;
     classDef plain stroke: none, fill: none;
-    class library_1,library_n,system,simulation_table,calendar unvalidated;
-    class library_dots,library_join plain;
+    class system,simulation_table,calendar unvalidated;
+    class library_dots,library_join,view_config_dots,view_config_join plain;
 ```
 [Input validation](docs/user-guide/validation-rules.md) for the detailed rules behind each check.
 

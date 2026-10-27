@@ -33,23 +33,22 @@ class Location(ViewBuilderBasedModel):
 
 class Scope(ViewBuilderBasedModel):
     location: Location
-    calendar: str
     extra_locations: list[ExtraLocation] | None = Field(default=None, min_length=0)
 
 
 class AggregationPattern(ViewBuilderBasedModel):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_]+$")
     time_granularity: TimeGranularity
     scenario: bool
     location_filter: list[str] | None = Field(default=None)
 
 
 class MetricId(ViewBuilderBasedModel, frozen=True):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$")
 
 
 class RawViewConfig(ViewBuilderBasedModel):
-    id: str
+    id: str = Field(pattern=r"^[A-Za-z0-9_]+$")
     scope: Scope
     taxonomy: str
     aggregations_patterns: tuple[AggregationPattern, ...] = Field(min_length=1)
@@ -59,7 +58,6 @@ class RawViewConfig(ViewBuilderBasedModel):
 @dataclass
 class ViewConfig:
     id: str
-    calendar_id: str
     location_taxonomy_category: str
     taxonomy_id: str
     aggregation_patterns: tuple[AggregationPattern, ...]
@@ -67,12 +65,14 @@ class ViewConfig:
     full_metric_ids: list[str] = field(default_factory=list)
     metrics: list[Metric] = field(default_factory=list)
 
-    def fetch_metrics(self, catalogs: list[Catalog]) -> None:
-        logging.debug(f"Fetching {len(self.full_metric_ids)} metric(s) from catalogs")
+    def populate_with_metrics(self, catalogs: list[Catalog]) -> None:
+        logging.debug(f"Fetching {len(self.full_metric_ids)} metrics for view config={self.id!r}")
         catalogs_by_id = {catalog.id: catalog for catalog in catalogs}
         for full_metric_id in self.full_metric_ids:
             catalog_id, metric_id = full_metric_id.split(".")
             self.metrics.append(catalogs_by_id[catalog_id].get_metric(metric_id))
+        if not self.metrics:
+            logging.warning(f"No metrics found for view config={self.id!r}")
 
     def get_metrics(self) -> list[Metric]:
         return self.metrics
@@ -80,25 +80,21 @@ class ViewConfig:
 
 def load_view_config(config_file_path: Path) -> ViewConfig:
     logging.info(f"Loading view config from {config_file_path}")
-    raw_view_config = load_raw_view_config_file(config_file_path)
+    raw_view_config = load_view_config_from_yaml(config_file_path)
 
     view_config = ViewConfig(
         id=raw_view_config.id,
-        calendar_id=raw_view_config.scope.calendar,
         location_taxonomy_category=raw_view_config.scope.location.taxonomy_category,
         taxonomy_id=raw_view_config.taxonomy,
         aggregation_patterns=raw_view_config.aggregations_patterns,
         full_metric_ids=[metric.id for metric in raw_view_config.metrics],
         extra_locations=[loc.id for loc in (raw_view_config.scope.extra_locations or [])],
     )
-    logging.info(
-        f"View config {view_config.id!r} loaded: calendar={view_config.calendar_id!r}, "
-        f"metrics={len(view_config.full_metric_ids)}"
-    )
+    logging.info(f"View config {view_config.id!r} loaded: metrics={len(view_config.full_metric_ids)}")
     return view_config
 
 
-def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
+def load_view_config_from_yaml(view_file_path: Path) -> RawViewConfig:
     logging.info(f"Parsing view config YAML from {view_file_path}")
     with open(view_file_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f)
@@ -106,3 +102,15 @@ def load_raw_view_config_file(view_file_path: Path) -> RawViewConfig:
         raise ValueError(f"view_config.yml file {view_file_path} is missing the 'view' key at the root")
     logging.info(f"View config YAML parsed successfully from {view_file_path}")
     return RawViewConfig.model_validate(raw["view"])
+
+
+def load_view_configs(view_configs_paths: list[Path]) -> list[ViewConfig]:
+    view_configs: list[ViewConfig] = []
+    for path in view_configs_paths:
+        view_configs.append(load_view_config(path))
+    return view_configs
+
+
+def populate_view_configs_with_metrics(view_configs: list[ViewConfig], catalogs: list[Catalog]) -> None:
+    for view_config in view_configs:
+        view_config.populate_with_metrics(catalogs)
