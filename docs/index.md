@@ -18,7 +18,7 @@ flowchart LR
     gvb --> views[("Views")]
 ```
 
-GVB runs **after** the simulation and does not simulate anything itself. It reads the SimulationTable together with the study it comes from, and aggregates it into the metrics you select.
+GVB runs **after** the simulation and does not simulate anything itself. It reads the Simulation Table together with the study it comes from, and aggregates it into the metrics you select.
 
 ## Key concepts
 
