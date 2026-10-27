@@ -11,13 +11,13 @@ import pytest
 from pytest import approx
 
 from gems_views_builder import Metric
+from gems_views_builder.aggregators.location_filtering import LocationFiltering
 from gems_views_builder.aggregators.scenario_aggregator import (
     ScenarioAggregation,
     ScenarioAggregator,
     ScenarioColumnsAddition,
     make_scenario_operator,
 )
-from gems_views_builder.aggregators.location_filtering import LocationFiltering
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
