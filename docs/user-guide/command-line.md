@@ -51,8 +51,6 @@ All input options are required.
 | `-v`, `--verbose` | — | off | Adds debug messages to the terminal and the log file. |
 | `-h`, `--help` | — | — | Prints the list of options and exits. |
 
-Options must be written in full: `--catalogs` is not read as `--catalogs-dir`.
-
 ## How inputs are passed
 
 Each kind of input is passed in one way:
