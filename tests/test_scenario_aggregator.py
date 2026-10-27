@@ -53,10 +53,10 @@ def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -
         },
     )
     path = tmp_path / "temporal.parquet"
-    return PersistentMetricView(TimeGranularity.HOUR, lazyframe=dataframe.lazy(), persistence_path=path)
+    return PersistentMetricView(lazyframe=dataframe.lazy(), persistence_path=path)
 
 
-def time_metric_view(tmp_path: Path, values: list[float]) -> MetricView:
+def persistent_metric_view(tmp_path: Path, values: list[float]) -> MetricView:
     return make_metric_view(tmp_path, [("L", value) for value in values])
 
 
@@ -73,7 +73,7 @@ def test_make_scenario_operator_returns_aggregation_when_enabled() -> None:
 def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -> None:
     # Arrange
     values = [10.0, 20.0, 30.0]
-    metric_view = time_metric_view(tmp_path, values)
+    metric_view = persistent_metric_view(tmp_path, values)
     aggregator = ScenarioAggregator(make_pattern(scenario=False))
 
     # Act
@@ -92,7 +92,7 @@ def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -
 def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path) -> None:
     # Arrange
     values = [10.0, 20.0, 30.0]
-    metric_view = time_metric_view(tmp_path, values)
+    metric_view = persistent_metric_view(tmp_path, values)
     aggregator = ScenarioAggregator(make_pattern(scenario=True))
 
     # Act
