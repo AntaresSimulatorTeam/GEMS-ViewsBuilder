@@ -40,7 +40,6 @@ from gems_views_builder.multiple_files_collector import collect_yml_from_dir
 def make_view_config(metrics: list[Metric], location_taxonomy_category: str) -> ViewConfig:
     return ViewConfig(
         id="test",
-        calendar_id="calendar",
         location_taxonomy_category=location_taxonomy_category,
         taxonomy_id="taxonomy",
         aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),

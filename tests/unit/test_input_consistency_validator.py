@@ -34,7 +34,6 @@ def make_catalog(catalog_id: str, location_category: str, metric_ids: list[str])
 def make_view_config(view_config_id: str, location_category: str, full_metric_ids: list[str]) -> ViewConfig:
     return ViewConfig(
         id=view_config_id,
-        calendar_id="calendar_file",
         location_taxonomy_category=location_category,
         taxonomy_id="my_taxonomy",
         aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
