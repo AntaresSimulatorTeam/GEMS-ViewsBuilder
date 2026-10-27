@@ -4,17 +4,20 @@ This repository is a prototype for the GEMS BusinessViews builder. According to 
 
 ## Inputs
 
-The main inputs are
-- A GEMS System
-- A GEMS Library 
-- A GEMS Taxonomy 
-- A SimulationTable consistent with the GEMS System
-- One or several Catalog(s) defining Metrics
-- Configurations of Views
+The *main inputs* are
+- *GEMS System*
+- *GEMS Library* 
+- *GEMS Taxonomy* 
+- One or several *Simulation Tables* *consistent* with the *GEMS System*
+- One or several *Catalogs* defining *Metrics*
+- One or several *configurations of views*
+- *Calendar*
 
 ## Outputs
 
 The main outputs are Views.
 
-[Input validation](docs/input_validation_diagram.md) for the detailed rules behind each check.
+## Input validation
+
+[Input validation](https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/blob/main/docs/input_validation_diagram.md) for the detailed rules behind each check.
 

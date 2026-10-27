@@ -5,7 +5,10 @@ checks performed between them, labeled with the checks themselves.
 
 ```mermaid
 graph LR
-    catalog(("catalog.yml<br/>(one or more)"))
+    catalog_1(("catalog_1.yml"))
+    catalog_dots["⋮"]
+    catalog_n(("catalog_N.yml"))
+    catalog_join((" "))
     taxonomy(("taxonomy.yml"))
     view_config(("view_config.yml"))
     library_1(("library_1.yml"))
@@ -13,24 +16,34 @@ graph LR
     library_n(("library_N.yml"))
     library_join((" "))
     system(("system.yml"))
-    simulation_table(("simulation_table.parquet/csv"))
+    simulation_table_1(("simulation_table_1.parquet/csv"))
+    simulation_table_dots["⋮"]
+    simulation_table_n(("simulation_table_N.parquet/csv"))
+    simulation_table_join((" "))
     calendar(("calendar.csv"))
 
-    catalog -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --- taxonomy
+    catalog_1 -.- catalog_join
+    catalog_dots -.- catalog_join
+    catalog_n -.- catalog_join
+    catalog_join -- "• taxonomy id matches<br/>• taxonomy category exists<br/>• output id declared<br/>• location ports declared" --- taxonomy
     view_config -- "• taxonomy id matches<br/>• location taxonomy category exists" --- taxonomy
-    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches" --- catalog
-    view_config -- "• selected metrics exist in catalogs<br/>(resolved while loading)" --- catalog
+    view_config -- "• taxonomy id matches<br/>• location taxonomy category matches" --- catalog_join
+    view_config -- "• selected metrics exist in catalogs<br/>(resolved while loading)" --- catalog_join
 
     library_1 -.- library_join
     library_dots -.- library_join
     library_n -.- library_join
     library_join -. "checked by gemspy" .- system
+
+    simulation_table_1 -.- simulation_table_join
+    simulation_table_dots -.- simulation_table_join
+    simulation_table_n -.- simulation_table_join
     view_config -.- calendar
 
     classDef unvalidated stroke-dasharray: 4 4;
     classDef plain stroke: none, fill: none;
-    class library_1,library_n,system,simulation_table,calendar unvalidated;
-    class library_dots,library_join plain;
+    class library_1,library_n,simulation_table_1,simulation_table_n,system,calendar unvalidated;
+    class library_dots,library_join,catalog_dots,catalog_join,simulation_table_dots,simulation_table_join plain;
 ```
 
 Solid edges = content is cross-validated. Dashed edges = files are read
