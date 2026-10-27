@@ -34,11 +34,11 @@ The study itself, the [system](https://gems-energy.readthedocs.io/en/latest/user
 
 ## What GVB does in a run
 
-1. **Loads and checks** every input: file formats, required columns, and consistency between the taxonomy, the catalogs and the view config.
+1. **Loads and checks** every input: file formats, required columns, and consistency between the libraries, the taxonomy, the catalogs and the view configs. The checks are listed on the [Validation rules](user-guide/validation-rules.md) page.
 2. **Locates** each component: finds the location (for example the area) it belongs to, through the connections of the system.
 3. **Computes** each selected metric from the SimulationTable.
 4. **Aggregates** it per location, in time (hour, day, week, month or year) and, if requested, across scenarios (mean, standard deviation, minimum, maximum).
-5. **Writes** the Views as Parquet or CSV files.
+5. **Writes** the Views as Parquet (recommended) or CSV files.
 
 ## Where to go next
 

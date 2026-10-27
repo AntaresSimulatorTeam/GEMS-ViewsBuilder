@@ -5,7 +5,6 @@ This page takes you from installation to a first View, on your own GEMS study.
 ## Requirements
 
 - **Python 3.11 or later.** The supported versions are listed on the [Compatibility](user-guide/compatibility.md) page.
-- **GemsPy** is installed automatically with GVB, at the version GVB is pinned to. You do not need to install it separately.
 
 ## Install
 
@@ -86,7 +85,7 @@ GVB writes the Views in `views_out`, and a log file in `logs`:
 
 ```text
 views_out/
-└── view_area_hourly_20261019T141953.parquet
+└── view_area--hourly--20261019T141953.parquet
 logs/
 └── gems-views-builder-pipeline-run-2026-10-19-14-19-53-072136Z.log
 ```
@@ -96,7 +95,7 @@ Open the View with any Parquet reader, for example Polars:
 ```python
 import polars as pl
 
-view = pl.read_parquet("views_out/view_area_hourly_*.parquet")
+view = pl.read_parquet("views_out/view_area--hourly--*.parquet")
 print(view.sort("metric_id", "metric_location", "view_date").head())
 ```
 
@@ -115,11 +114,11 @@ To get CSV instead of Parquet, add `--output-format csv`.
 
 ## When a run fails
 
-GVB stops at the first problem it finds. The message, printed in the terminal and written to the log file in `logs/`, names the file and the rule that failed. The exit codes are listed on the [Command line](user-guide/command-line.md) page.
+GVB stops at the first problem it finds. The error, printed in the terminal, names the file and the rule that failed; the log file in `logs/` shows the steps that ran before it. The exit codes are listed on the [Command line](user-guide/command-line.md) page.
 
 Add `--verbose` to get debug messages. The rules GVB checks are listed on the [Validation rules](user-guide/validation-rules.md) page.
 
 ## Next steps
 
 - [User guide](user-guide/command-line.md): every option, the rules GVB checks, and the supported versions.
-- [Examples](examples/simple-setups.md): more view configs, scenario statistics and several SimulationTables.
+- [Examples](examples/simple-setups.md): more view configs and scenario statistics.
