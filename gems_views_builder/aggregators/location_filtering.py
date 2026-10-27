@@ -9,11 +9,11 @@ from gems_views_builder.input.view_config import AggregationPattern
 from gems_views_builder.metric_view import MetricView
 
 
-class SpatialFiltering(CreatePersistingView):
-    _subdirectory = "spatial_filtering"
+class LocationFiltering(CreatePersistingView):
+    _subdirectory = "location_filtering"
 
     def __init__(self, aggregation_pattern: AggregationPattern) -> None:
-        self.locations = aggregation_pattern.spatial_filter
+        self.locations = aggregation_pattern.location_filter
         super().__init__()
 
     def _build_lazy_frame(self, metric_view: MetricView, metric: Metric) -> pl.LazyFrame:

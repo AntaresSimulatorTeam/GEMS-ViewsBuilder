@@ -17,7 +17,7 @@ from gems_views_builder.aggregators.scenario_aggregator import (
     ScenarioColumnsAddition,
     make_scenario_operator,
 )
-from gems_views_builder.aggregators.spatial_filter import SpatialFiltering
+from gems_views_builder.aggregators.location_filtering import LocationFiltering
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
@@ -127,14 +127,14 @@ def test_location_filter(
     # Arrange
     metric_view = make_metric_view(tmp_path, [("busA", 100.0), ("busB", 50.0), ("busC", 999.0)])
     dummy_metric = Metric(id="my-metric", terms=[])
-    aggregation_pattern = make_pattern(scenario=scenario, spatial_filter=locations)
+    aggregation_pattern = make_pattern(scenario=scenario, location_filter=locations)
     scenario_aggregator = ScenarioAggregator(aggregation_pattern)
-    spatial_filtering = SpatialFiltering(aggregation_pattern)
+    location_filtering = LocationFiltering(aggregation_pattern)
 
     # Act
     scenario_view = scenario_aggregator.run(metric_view)
-    spatial_filtered_view = spatial_filtering.run(scenario_view, dummy_metric)
+    location_filtered_view = location_filtering.run(scenario_view, dummy_metric)
 
     # Assert
-    df = spatial_filtered_view.lazy_data_frame().collect()
+    df = location_filtered_view.lazy_data_frame().collect()
     assert set(df["metric_location"].to_list()) == expected_locations

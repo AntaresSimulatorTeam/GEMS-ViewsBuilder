@@ -7,7 +7,7 @@ from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_view import MetricView
 
 
-def give_views_a_config_id(metric_views: list[TemporalMetricView], view_config: ViewConfig) -> None:
+def give_views_a_config_id(metric_views: list[MetricView], view_config: ViewConfig) -> None:
     for view in metric_views:
         view.view_config_id = view_config.id
 

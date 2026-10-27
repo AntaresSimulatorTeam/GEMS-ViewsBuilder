@@ -12,7 +12,6 @@ from shutil import rmtree
 import polars as pl
 
 from gems_views_builder.input.catalog import Metric
-from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
 
@@ -37,18 +36,18 @@ class CreatePersistingView(ABC):
     def _build_lazy_frame(self, metric_view: MetricView, metric: Metric) -> pl.LazyFrame:
         pass
 
-    def _output_time_granularity(self, metric_view: MetricView) -> TimeGranularity:
-        """Return the time granularity to tag the persisted output with.
-        This function returns the default time granularity.
-        Caution : this function can be overridden by subclasses to return a different time granularity.
+    def _output_aggregation_pattern_id(self, metric_view: MetricView) -> str:
+        """Return the aggregation pattern id to tag the persisted output with.
+        This function returns the default aggregation pattern id.
+        Caution : this function can be overridden by subclasses to return a different aggregation pattern id.
         """
-        return metric_view.time_granularity
+        return metric_view.aggregation_pattern_id
 
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         lazy_frame = self._build_lazy_frame(metric_view, metric)
 
-        time_granularity = self._output_time_granularity(metric_view)
+        aggregation_pattern_id = self._output_aggregation_pattern_id(metric_view)
 
-        out_path = self._save_dir / f"{time_granularity.value}_{metric.id}_{uuid.uuid4()}.parquet"
+        out_path = self._save_dir / f"{aggregation_pattern_id}_{metric.id}_{uuid.uuid4()}.parquet"
         logging.info(f"[{metric.id}] {type(self).__name__} view written to {out_path}")
-        return PersistentMetricView(time_granularity, lazyframe=lazy_frame, persistence_path=out_path)
+        return PersistentMetricView(aggregation_pattern_id, lazyframe=lazy_frame, persistence_path=out_path)

@@ -13,8 +13,10 @@ from gems_views_builder.common import sink_to_parquet
 
 @dataclass
 class MetricView:
+    # id part : useful for accumulation, after view building.
     view_config_id: str = Field(init=False)
     aggregation_pattern_id: str = Field(init=False)
+
     lazyframe: pl.LazyFrame = field(kw_only=True)
 
     def lazy_data_frame(self) -> pl.LazyFrame:
