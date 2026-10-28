@@ -14,7 +14,7 @@ One area, `area_1`, simulated for one week (168 hours) and 3 scenarios:
 | `load_1` | `load` | hourly demand, different in each scenario |
 | `gen_base` | `generator` | 350 MW at 20 €/MWh |
 | `gen_peak` | `generator` | 140 MW at 80 €/MWh |
-| `storage_1` | `storage` | 400 MWh, 100 MW, 90 % charging efficiency |
+| `storage_1` | `storage` | 400 MWh, starts half full, 100 MW, 90 % charging efficiency |
 
 ```text
 simple_study/
