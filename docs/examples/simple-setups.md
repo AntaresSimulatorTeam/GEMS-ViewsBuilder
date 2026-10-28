@@ -178,32 +178,28 @@ Read the hourly View with polars, and print `PRODUCTION` of scenario 2 for the f
 ```python
 import polars as pl
 
-view = pl.read_parquet("views/area_hourly*.parquet")
-print(view.filter(pl.col("metric_id") == "PRODUCTION", pl.col("scenario_id") == 2).sort("view_date").head())
+view = pl.read_parquet("views/area_hourly--hourly--*.parquet")
+print(
+    view.filter(pl.col("metric_id") == "PRODUCTION", pl.col("scenario_id") == 2)
+    .sort("view_date")
+    .select("view_date", "scenario_id", "metric_value")
+    .head()
+)
 ```
 
 ```text
-┌────────────┬────────────┬────────────┬───────────┬───────────┬───────────┬───────────┬───────────┐
-│ metric_id  ┆ metric_loc ┆ breakdown_ ┆ view_date ┆ scenario_ ┆ metric_va ┆ scenario_ ┆ scenario_ │
-│ ---        ┆ ation      ┆ properties ┆ ---       ┆ id        ┆ lue       ┆ aggregati ┆ stat      │
-│ str        ┆ ---        ┆ ---        ┆ datetime[ ┆ ---       ┆ ---       ┆ on        ┆ ---       │
-│            ┆ str        ┆ str        ┆ μs]       ┆ i64       ┆ f64       ┆ ---       ┆ str       │
-│            ┆            ┆            ┆           ┆           ┆           ┆ bool      ┆           │
-╞════════════╪════════════╪════════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╡
-│ PRODUCTION ┆ area_1     ┆ {}         ┆ 2030-01-0 ┆ 2         ┆ 350.0     ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 7         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ PRODUCTION ┆ area_1     ┆ {}         ┆ 2030-01-0 ┆ 2         ┆ 350.0     ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 7         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 01:00:00  ┆           ┆           ┆           ┆           │
-│ PRODUCTION ┆ area_1     ┆ {}         ┆ 2030-01-0 ┆ 2         ┆ 350.0     ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 7         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 02:00:00  ┆           ┆           ┆           ┆           │
-│ PRODUCTION ┆ area_1     ┆ {}         ┆ 2030-01-0 ┆ 2         ┆ 318.42222 ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 7         ┆           ┆ 2         ┆           ┆           │
-│            ┆            ┆            ┆ 03:00:00  ┆           ┆           ┆           ┆           │
-│ PRODUCTION ┆ area_1     ┆ {}         ┆ 2030-01-0 ┆ 2         ┆ 350.0     ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 7         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 04:00:00  ┆           ┆           ┆           ┆           │
-└────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
+┌─────────────────────┬─────────────┬──────────────┐
+│ view_date           ┆ scenario_id ┆ metric_value │
+│ ---                 ┆ ---         ┆ ---          │
+│ datetime[μs]        ┆ i64         ┆ f64          │
+╞═════════════════════╪═════════════╪══════════════╡
+│ 2030-01-07 00:00:00 ┆ 2           ┆ 350.0        │
+│ 2030-01-07 01:00:00 ┆ 2           ┆ 350.0        │
+│ 2030-01-07 02:00:00 ┆ 2           ┆ 350.0        │
+│ 2030-01-07 03:00:00 ┆ 2           ┆ 318.422222   │
+│ 2030-01-07 04:00:00 ┆ 2           ┆ 350.0        │
+└─────────────────────┴─────────────┴──────────────┘
 ```
+
+!!! note "Run again"
+    Each run writes new files with a new timestamp, so after a second run the pattern above reads both and every row appears twice. Empty `views/` before running GVB again, for example with `rm -rf views/*`.
