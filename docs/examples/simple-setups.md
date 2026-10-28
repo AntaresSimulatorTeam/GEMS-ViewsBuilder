@@ -104,7 +104,7 @@ The [catalog](https://gems-energy.readthedocs.io/en/latest/user-guide/input-file
 
 ## Calendar
 
-The calendar gives a date to each time step (step 3): `absolute_time_index` 0 to 167, `block`, and `granular_date`, one hour apart from 2030-01-07 00:00.
+The calendar gives a date to each time step (step 3): `absolute_time_index` 0 to 167, `block`, and `granular_date`, one hour apart from 2030-01-07 00:00. That day is a Monday, and GVB starts weeks on Monday, so `weekly_stats` covers exactly one full week.
 
 ```text
 absolute_time_index,block,granular_date
