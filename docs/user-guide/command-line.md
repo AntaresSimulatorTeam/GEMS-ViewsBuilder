@@ -33,8 +33,8 @@ All input options are required.
 
 | Option | Value | Description |
 |---|---|---|
-| `--libraries-dir` | folder | Folder of [model library](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/) files. It must contain only `.yml` files. |
-| `--catalogs-dir` | folder | Folder of [catalog](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/catalog/) files. It must contain only `.yml` files. |
+| `--libraries-dir` | folder | Folder of [model library](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/) files. |
+| `--catalogs-dir` | folder | Folder of [catalog](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/catalog/) files. |
 | `--system` | file | [System](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/) file (`.yml`). |
 | `--taxonomy` | file | [Taxonomy](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/taxonomy/) file (`.yml`). |
 | `--calendar` | file | Calendar file (`.csv`). |
