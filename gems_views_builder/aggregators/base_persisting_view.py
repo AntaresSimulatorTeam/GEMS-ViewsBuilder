@@ -4,7 +4,6 @@
 import atexit
 import logging
 import tempfile
-import uuid
 from abc import ABC, abstractmethod
 from pathlib import Path
 from shutil import rmtree
@@ -36,9 +35,14 @@ class CreatePersistingView(ABC):
     def _build_lazy_frame(self, metric_view: MetricView, metric: Metric) -> pl.LazyFrame:
         pass
 
+    # Default method to compute the output path for the persisted view.
+    # Can be overridden by subclasses if needed.
+    def _out_path(self, metric_view: MetricView, metric: Metric) -> Path:
+        return self._save_dir / f"{metric_view.ids_as_str()}_{metric.id}.parquet"
+
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         lazy_frame = self._build_lazy_frame(metric_view, metric)
 
-        out_path = self._save_dir / f"{metric_view.ids_as_str()}_{metric.id}.parquet"
+        out_path = self._out_path(metric_view, metric)
         logging.info(f"[{metric.id}] {type(self).__name__} view written to {out_path}")
         return PersistentMetricView.from_metric_view(mv=metric_view, lazyframe=lazy_frame, path=out_path)

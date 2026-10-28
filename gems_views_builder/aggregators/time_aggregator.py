@@ -79,7 +79,12 @@ class TimeAggregatorDecorator:  # Should inherit from base common class
             view = self.time_aggregator.run(metric_view, metric)
             self.views_storage[self.time_granularity] = view  # Registering the view
             return view
-        return self.views_storage[self.time_granularity]
+
+        view = self.views_storage[self.time_granularity]
+        # We have to update the view's aggregation pattern id : this property is supposed to be conveyed
+        # from to the next view transformation.
+        view.aggregation_pattern_id = metric_view.aggregation_pattern_id
+        return view
 
 
 def date_column_into_time_granularity(time_granularity: TimeGranularity) -> pl.Expr:
