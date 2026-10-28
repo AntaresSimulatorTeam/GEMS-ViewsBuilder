@@ -4,7 +4,6 @@ view:
   scope:
     location:
       taxonomy-category: balance
-    calendar: calendar
   aggregations-patterns:
     - id: daily
       time-granularity: day
