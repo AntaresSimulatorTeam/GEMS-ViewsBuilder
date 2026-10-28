@@ -36,9 +36,10 @@ A View answers a business question on top of a Simulation Table, for example *"h
 flowchart TB
     study["GEMS Study"] --> sim["Simulation: GemsPy or Antares Simulator"]
     sim --> table[("Simulation Table")]
-    inputs["Taxonomy, Catalogs, View Configs, Calendar"] --> gvb["GEMS Views Builder"]
+    study --> study_files["Libraries and System"]
+    study_files --> gvb["GEMS Views Builder"]
+    inputs["Taxonomy, Catalogs, View Configs, Calendar"] --> gvb
     table --> gvb
-    study --> gvb
     gvb --> views[("Views")]
 ```
 
