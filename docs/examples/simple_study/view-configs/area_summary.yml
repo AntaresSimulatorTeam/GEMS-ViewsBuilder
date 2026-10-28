@@ -15,3 +15,4 @@ view:
     - id: catalog.LOAD
     - id: catalog.PRODUCTION
     - id: catalog.UNSUPPLIED_ENERGY
+    - id: catalog.STORAGE_LEVEL
