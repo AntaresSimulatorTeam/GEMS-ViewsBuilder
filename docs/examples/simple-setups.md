@@ -139,6 +139,8 @@ A [view config](https://gems-energy.readthedocs.io/en/latest/user-guide/input-fi
     - `daily`: one value per day and per scenario;
     - `weekly_stats`: one value for the week, with `scenario: true`. Instead of one row per scenario, the View gives statistics over the scenarios: expectation (`exp`), standard deviation (`std`, population formula), `min` and `max`.
 
+    In `weekly_stats`, only scenario 2 has unsupplied energy (1494.4 MWh), so `UNSUPPLIED_ENERGY` has `exp` 498.1, `min` 0 and `max` 1494.4. `STORAGE_LEVEL` is averaged over the week (`time-operator: avg`): its `exp` is 175.05 MWh, between `min` 155.97 and `max` 201.19.
+
 ## Run GVB
 
 Both view configs are built in one run. The libraries and the system are the ones GemsPy used:
