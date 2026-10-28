@@ -36,18 +36,9 @@ class CreatePersistingView(ABC):
     def _build_lazy_frame(self, metric_view: MetricView, metric: Metric) -> pl.LazyFrame:
         pass
 
-    def _output_aggregation_pattern_id(self, metric_view: MetricView) -> str:
-        """Return the aggregation pattern id to tag the persisted output with.
-        This function returns the default aggregation pattern id.
-        Caution : this function can be overridden by subclasses to return a different aggregation pattern id.
-        """
-        return metric_view.aggregation_pattern_id
-
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         lazy_frame = self._build_lazy_frame(metric_view, metric)
 
-        aggregation_pattern_id = self._output_aggregation_pattern_id(metric_view)
-
-        out_path = self._save_dir / f"{aggregation_pattern_id}_{metric.id}_{uuid.uuid4()}.parquet"
+        out_path = self._save_dir / f"{metric_view.ids_as_str()}_{metric.id}.parquet"
         logging.info(f"[{metric.id}] {type(self).__name__} view written to {out_path}")
-        return PersistentMetricView(aggregation_pattern_id=aggregation_pattern_id, lazyframe=lazy_frame, persistence_path=out_path)
+        return PersistentMetricView.from_metric_view(mv=metric_view, lazyframe=lazy_frame, path=out_path)

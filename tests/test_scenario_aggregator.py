@@ -61,20 +61,19 @@ def persistent_metric_view(tmp_path: Path, values: list[float]) -> MetricView:
 
 
 def test_make_scenario_operator_returns_columns_addition_when_disabled() -> None:
-    agg_pattern = AggregationPattern(id="whatever", scenario=False, time_granularity=TimeGranularity.HOUR)
-    assert isinstance(make_scenario_operator(agg_pattern), ScenarioColumnsAddition)
+    assert isinstance(make_scenario_operator(False), ScenarioColumnsAddition)
 
 
 def test_make_scenario_operator_returns_aggregation_when_enabled() -> None:
-    agg_pattern = AggregationPattern(id="whatever", scenario=True, time_granularity=TimeGranularity.HOUR)
-    assert isinstance(make_scenario_operator(agg_pattern), ScenarioAggregation)
+    assert isinstance(make_scenario_operator(True), ScenarioAggregation)
+
 
 
 def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -> None:
     # Arrange
     values = [10.0, 20.0, 30.0]
     metric_view = persistent_metric_view(tmp_path, values)
-    aggregator = ScenarioAggregator(make_pattern(scenario=False))
+    aggregator = ScenarioAggregator(False)
 
     # Act
     scenario_view = aggregator.run(metric_view)
@@ -93,7 +92,7 @@ def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path)
     # Arrange
     values = [10.0, 20.0, 30.0]
     metric_view = persistent_metric_view(tmp_path, values)
-    aggregator = ScenarioAggregator(make_pattern(scenario=True))
+    aggregator = ScenarioAggregator(True)
 
     # Act
     result = aggregator.run(metric_view)
@@ -130,7 +129,7 @@ def test_location_filter(
     metric_view = make_metric_view(tmp_path, [("busA", 100.0), ("busB", 50.0), ("busC", 999.0)])
     dummy_metric = Metric(id="my-metric", terms=[])
     aggregation_pattern = make_pattern(scenario=scenario, location_filter=locations)
-    scenario_aggregator = ScenarioAggregator(aggregation_pattern)
+    scenario_aggregator = ScenarioAggregator(scenario)
     location_filtering = LocationFiltering(aggregation_pattern)
 
     # Act
