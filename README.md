@@ -2,7 +2,7 @@
 
 <img src="https://raw.githubusercontent.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/main/docs/images/logo.png" alt="GEMS-ViewsBuilder logo" width="140">
 
-# GEMS-ViewsBuilder
+# GEMS Views Builder
 
 **Turn GEMS Simulation Tables into business-ready Views.**
 
@@ -27,17 +27,18 @@
 
 ---
 
-**GEMS-ViewsBuilder (GVB)** turns the results of a [GEMS](https://gems-energy.readthedocs.io/en/latest/) simulation into **Views**: tables of metrics aggregated per location, time granularity and scenario, ready to analyse or plot.
+**GEMS Views Builder** turns the results of a [GEMS](https://gems-energy.readthedocs.io/en/latest/) simulation into **Views**: tables of metrics aggregated per location, time granularity and scenario, ready to analyse or plot.
 
 A View answers a business question on top of a Simulation Table, for example *"hourly production per area"* or *"yearly unsupplied energy per country, averaged over scenarios"*.<br> GVB works with any Simulation Table that follows the GEMS format, whether it was written by [GemsPy](https://github.com/AntaresSimulatorTeam/GemsPy) or by the [Antares Simulator](https://antares-simulator.org/) Modeler.
 
 ```mermaid
-flowchart LR
-    study["GEMS study<br>system + model libraries"] --> sim["Simulation<br>GemsPy or Antares Simulator"]
-    sim --> st[("Simulation Table")]
-    st --> gvb["GEMS Views Builder"]
+%%{init: {"flowchart": {"htmlLabels": false, "wrappingWidth": 420, "padding": 14, "nodeSpacing": 36, "rankSpacing": 48}} }%%
+flowchart TB
+    study["GEMS study: system and model libraries"] --> sim["Simulation: GemsPy or Antares Simulator"]
+    sim --> table[("Simulation Table")]
+    inputs["taxonomy, catalogs, view configs, calendar"] --> gvb["GEMS Views Builder"]
+    table --> gvb
     study --> gvb
-    inputs["taxonomy, catalogs<br>view configs, calendar"] --> gvb
     gvb --> views[("Views")]
 ```
 
@@ -46,8 +47,6 @@ flowchart LR
 ```bash
 pip install gems-views-builder
 ```
-
-GVB requires Python 3.11 or later.
 
 ## 🚀 Quickstart
 
