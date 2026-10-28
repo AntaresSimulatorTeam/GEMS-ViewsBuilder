@@ -46,7 +46,7 @@ Each YAML file is read against its GEMS format. **Unknown fields are rejected**,
 **View config** ([format](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/view-config/))
 
 - root key `view:`
-- the `id` contains only letters, digits, `_` and `-`, because it is used in the View file names
+- the `id` contains only letters, digits and `_`  because it is used in the View file names
 - at least one aggregation pattern and one metric
 - the time granularity is one of `hour`, `day`, `week`, `month`, `year`
 
@@ -138,7 +138,7 @@ Some inputs are matched rather than checked. When they do not match, GVB gives f
 
 | Input | Behaviour |
 |---|---|
-| SimulationTable rows and calendar | A time-dependent row is kept only if its `absolute_time_index` is in the calendar **and** its `block` is the `block` of that calendar row. Other rows are left out. Rows that do not depend on time (no `absolute_time_index`) are always kept. |
+| Simulation Table rows and Calendar | A time-dependent row is kept only if its `absolute_time_index` is in the calendar **and** its `block` is the `block` of that calendar row. Other rows are left out. Rows that do not depend on time (no `absolute_time_index`) are always kept. |
 | `location-filter` of an aggregation pattern | A location id that does not exist matches no row. |
 | `extra-locations` of the view config scope | A location component that does not have the named property gets no extra location. |
-| Components without SimulationTable rows | A component of the system with no rows in the SimulationTables gives empty values in the View. |
+| Components without Simulation Table rows | A component of the system with no rows in the SimulationTables gives empty values in the View. |
