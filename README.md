@@ -29,25 +29,17 @@
 
 **GEMS-ViewsBuilder (GVB)** turns the results of a [GEMS](https://gems-energy.readthedocs.io/en/latest/) simulation into **Views**: tables of metrics aggregated per location, time granularity and scenario, ready to analyse or plot.
 
-A View answers a business question on top of a Simulation Table, for example *"hourly production per area"* or *"yearly unsupplied energy per country, averaged over scenarios"*. GVB works with any Simulation Table that follows the GEMS format, whether it was written by [GemsPy](https://github.com/AntaresSimulatorTeam/GemsPy) or by the GEMS modeler of [Antares Simulator](https://antares-simulator.org/).
+A View answers a business question on top of a Simulation Table, for example *"hourly production per area"* or *"yearly unsupplied energy per country, averaged over scenarios"*.<br> GVB works with any Simulation Table that follows the GEMS format, whether it was written by [GemsPy](https://github.com/AntaresSimulatorTeam/GemsPy) or by the [Antares Simulator](https://antares-simulator.org/) Modeler.
 
 ```mermaid
 flowchart LR
-    study["GEMS study<br/>system + model libraries"] --> sim["Simulation<br/>GemsPy or Antares Simulator"]
+    study["GEMS study<br>system + model libraries"] --> sim["Simulation<br>GemsPy or Antares Simulator"]
     sim --> st[("Simulation Table")]
-    st --> gvb["GEMS-ViewsBuilder"]
+    st --> gvb["GEMS Views Builder"]
     study --> gvb
-    inputs["taxonomy · catalogs<br/>view configs · calendar"] --> gvb
+    inputs["taxonomy, catalogs<br>view configs, calendar"] --> gvb
     gvb --> views[("Views")]
 ```
-
-## ✨ Features
-
-- **Validated inputs**: file formats, required columns and consistency between libraries, taxonomy, catalogs and view configs are checked before anything is computed.
-- **Topology-aware**: each component is attached to its location (for example an area) through the connections of the system.
-- **Flexible aggregation**: in time (hour, day, week, month, year) and across scenarios (mean, standard deviation, min, max).
-- **Scales to large studies**: built on [Polars](https://pola.rs/), with intermediate results kept on disk.
-- **Standard outputs**: Views are written as Parquet (recommended) or CSV.
 
 ## 📦 Installation
 
@@ -104,12 +96,10 @@ uv sync
 uv run pre-commit install
 ```
 
-Run the checks used by the CI:
+Run mypy and Ruff:
 
 ```bash
-uv run pytest tests/
-uv run ruff check gems_views_builder tests
-uv run mypy gems_views_builder tests
+uv run pre-commit run --all-files
 ```
 
 Build the documentation locally:
@@ -118,10 +108,6 @@ Build the documentation locally:
 uv sync --extra doc
 uv run mkdocs serve
 ```
-
-## 🤝 Contributing
-
-Issues and pull requests are welcome on [GitHub](https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/issues). Please run the checks above before opening a pull request.
 
 ## 📄 License
 
