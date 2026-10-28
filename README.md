@@ -17,7 +17,3 @@ The *main inputs* are
 
 The main outputs are Views.
 
-## Input validation
-
-[Input validation](https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/blob/main/docs/input_validation_diagram.md) for the detailed rules behind each check.
-
