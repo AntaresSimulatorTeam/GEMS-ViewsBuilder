@@ -160,7 +160,16 @@ uv run gems-views-builder \
 
 Replace `<run id>` with the folder GemsPy created, for example `20261021T0847`. The output folder must exist before the run.
 
-GVB writes three Views in `views/`: one for `area_hourly`, and one for each pattern of `area_summary`. The options are described on the [Command line](../user-guide/command-line.md) page, and the columns of a View on the GEMS [Views](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/views/) page.
+GVB writes three Views in `views/`: one for `area_hourly`, and one for each pattern of `area_summary`. Each file is named `<view id>--<pattern id>--<timestamp>`:
+
+```text
+views/
+├── area_hourly--hourly--20261027T091027.parquet
+├── area_summary--daily--20261027T091027.parquet
+└── area_summary--weekly_stats--20261027T091027.parquet
+```
+
+The options are described on the [Command line](../user-guide/command-line.md) page, and the columns of a View on the GEMS [Views](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/views/) page.
 
 ## The Views
 
