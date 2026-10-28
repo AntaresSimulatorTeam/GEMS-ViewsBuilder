@@ -52,12 +52,10 @@ Each YAML file is read against its GEMS format. **Unknown fields are rejected**,
 
 **Model libraries** ([format](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/library/))
 
-- read by GemsPy
 - each library id is defined only once across the folder
 
 **System** ([format](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/))
 
-- read by GemsPy, against the libraries
 - each component sets every property its model declares, and each property only once
 
 **Simulation Tables** ([format](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/))
