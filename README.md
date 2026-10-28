@@ -4,7 +4,7 @@
 
 # GEMS Views Builder
 
-**Turn GEMS Simulation Tables into business-ready Views.**
+**Turn GEMS Simulation Tables into business ready Views.**
 
 [![PyPI](https://img.shields.io/pypi/v/gems-views-builder.svg)](https://pypi.org/project/gems-views-builder/)
 [![Python versions](https://img.shields.io/pypi/pyversions/gems-views-builder.svg)](https://pypi.org/project/gems-views-builder/)
@@ -34,9 +34,9 @@ A View answers a business question on top of a Simulation Table, for example *"h
 ```mermaid
 %%{init: {"flowchart": {"htmlLabels": false, "wrappingWidth": 420, "padding": 14, "nodeSpacing": 36, "rankSpacing": 48}} }%%
 flowchart TB
-    study["GEMS study: system and model libraries"] --> sim["Simulation: GemsPy or Antares Simulator"]
+    study["GEMS Study"] --> sim["Simulation: GemsPy or Antares Simulator"]
     sim --> table[("Simulation Table")]
-    inputs["taxonomy, catalogs, view configs, calendar"] --> gvb["GEMS Views Builder"]
+    inputs["Taxonomy, Catalogs, View Configs, Calendar"] --> gvb["GEMS Views Builder"]
     table --> gvb
     study --> gvb
     gvb --> views[("Views")]
@@ -90,6 +90,8 @@ The output is one [View](https://gems-energy.readthedocs.io/en/latest/user-guide
 
 ```bash
 git clone https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder.git
+```
+```bash
 cd GEMS-ViewsBuilder
 uv sync
 uv run pre-commit install
