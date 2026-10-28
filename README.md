@@ -52,5 +52,5 @@ graph LR
     class system,simulation_table,calendar unvalidated;
     class library_dots,library_join,view_config_dots,view_config_join plain;
 ```
-[Input validation](docs/input_validation_diagram.md) for the detailed rules behind each check.
+[Input validation](docs/user-guide/validation-rules.md) for the detailed rules behind each check.
 
