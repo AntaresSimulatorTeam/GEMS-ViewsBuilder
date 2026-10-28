@@ -60,7 +60,7 @@ Each YAML file is read against its GEMS format. **Unknown fields are rejected**,
 - read by GemsPy, against the libraries
 - each component sets every property its model declares, and each property only once
 
-**SimulationTables** ([format](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/))
+**Simulation Tables** ([format](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/simulation-table/))
 
 - exactly these columns, none missing and none extra: `block`, `component`, `output`, `absolute_time_index`, `block_time_index`, `scenario_index`, `value`, `basis_status`
 
