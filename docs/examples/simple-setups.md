@@ -62,7 +62,7 @@ The sections below show which file drives each step.
 
 The library is a copy of the basic models library, version 1.0.1, with two additions:
 
-- each model used in the system declares a `taxonomy-category`: `bus` → `balance`, `generator` → `production`, `load` → `consumption`, `storage` → `storage` (step 1). Without it, GVB cannot use the component;
+- each model used in the system declares a `taxonomy-category`: `bus` → `balance`, `generator` → `production`, `load` → `consumption`, `storage` → `storage` (step 1). Without it, GVB stops with an error;
 - the `load` model gets an extra-output `load`. In the basic library, `load` is only a parameter, and metrics can only read variables and extra-outputs.
 
 ```yaml
