@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gems-views-builder"
-version = "0.0.1"
+version = "0.1.0"
 readme = "README.md"
 license = {file = "LICENSE"}
 dependencies = [
@@ -35,6 +35,12 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
+]
+
+[project.optional-dependencies]
+doc = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
 ]
 
 [project.scripts]
