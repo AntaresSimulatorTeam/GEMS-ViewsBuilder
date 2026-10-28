@@ -85,7 +85,7 @@ For each view config:
 
 ## 5. Consistency between files
 
-The model libraries are first checked against the taxonomy (row 1), then all catalogs (row 2). Rows 3 and 4 then run for **every view config** given with `--view-configs`.
+The system is checked against the model libraries when it is loaded (row 1). The model libraries are then checked against the taxonomy (row 2), then all catalogs (row 3). Rows 4 and 5 then run for **every view config** given with `--view-configs`.
 
 ```mermaid
 graph LR
@@ -93,6 +93,8 @@ graph LR
     catalog(("catalogs"))
     taxonomy(("taxonomy"))
     view_config(("view config"))
+    system(("system"))
+    libraries -- "component models · properties" --- system
     libraries -- "each model matches its category" --- taxonomy
     catalog -- "taxonomy id · categories · outputs · ports" --- taxonomy
     view_config -- "taxonomy id · location category" --- taxonomy
@@ -101,10 +103,11 @@ graph LR
 
 | # | Between | Rule |
 |---|---|---|
-| 1 | model libraries and taxonomy | every model that declares a `taxonomy-category` exposes the variables, parameters, ports, port-field-definitions, constraints, binding-constraints, extra-outputs and properties that its category requires. This check is done by GemsPy. |
-| 2 | catalogs and taxonomy | `catalog.taxonomy` is the taxonomy id. Every term's `taxonomy-category` exists in the taxonomy. Its `output-id` is a variable or extra-output of that category, and its `location-port` is a port of that category. |
-| 3 | view config and taxonomy | `view.taxonomy` is the taxonomy id. The location `taxonomy-category` is a category of the taxonomy. |
-| 4 | catalogs and view config | every catalog **used by the view config** (named in its metrics) uses the same taxonomy and the same location taxonomy category as the view config |
+| 1 | model libraries and system | each component's model comes from the libraries. The component sets every property that model declares, and each property only once. |
+| 2 | model libraries and taxonomy | every model that declares a `taxonomy-category` exposes the variables, parameters, ports, port-field-definitions, constraints, binding-constraints, extra-outputs and properties that its category requires. This check is done by GemsPy. |
+| 3 | catalogs and taxonomy | `catalog.taxonomy` is the taxonomy id. Every term's `taxonomy-category` exists in the taxonomy. Its `output-id` is a variable or extra-output of that category, and its `location-port` is a port of that category. |
+| 4 | view config and taxonomy | `view.taxonomy` is the taxonomy id. The location `taxonomy-category` is a category of the taxonomy. |
+| 5 | catalogs and view config | every catalog **used by the view config** (named in its metrics) uses the same taxonomy and the same location taxonomy category as the view config |
 
 ## 6. Selected metrics
 

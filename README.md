@@ -45,11 +45,11 @@ graph LR
     library_dots -.- library_join
     library_n -.- library_join
     library_join -- "• each model matches its taxonomy category" --- taxonomy
-    library_join -. "checked by gemspy" .- system
+    library_join -- "• components use library models<br/>• each component sets every model property, once" --- system
 
     classDef unvalidated stroke-dasharray: 4 4;
     classDef plain stroke: none, fill: none;
-    class system,simulation_table,calendar unvalidated;
+    class simulation_table,calendar unvalidated;
     class library_dots,library_join,view_config_dots,view_config_join plain;
 ```
 [Input validation](docs/user-guide/validation-rules.md) for the detailed rules behind each check.
