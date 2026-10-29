@@ -1,20 +1,17 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 import logging
-from dataclasses import dataclass
+
+from gems_craft.model.taxonomy import Taxonomy, TaxonomyCategory  # type: ignore
 
 from gems_views_builder.input.catalog import Catalog, Metric, Term
-from gems_views_builder.input.taxonomy import (
-    Taxonomy,
-    TaxonomyCategory,
-    allowed_output,
-)
 
 
-@dataclass
 class CatalogsTaxonomyValidator:
-    catalogs: list[Catalog]
-    taxonomy: Taxonomy
+    def __init__(self, catalogs: list[Catalog], taxonomy: Taxonomy):
+        self.catalogs = catalogs
+        self.taxonomy = taxonomy
+        self.taxonomy_categories = {category.id: category for category in self.taxonomy.categories}
 
     def validate(self) -> None:
         logging.info(f"Validating {len(self.catalogs)} catalog(s) against taxonomy {self.taxonomy.id!r}")
@@ -42,27 +39,31 @@ class CatalogsTaxonomyValidator:
 
     def _validate_metric_terms(self, metric: Metric) -> None:
         for term in metric.terms:
-            category = self.taxonomy.categories.get(term.taxonomy_category)
-            if category is None:
+            taxonomy_category = self.taxonomy_categories.get(term.taxonomy_category)
+            if taxonomy_category is None:
                 raise ValueError(
                     f"uses taxonomy-category {term.taxonomy_category!r}, which is not defined "
                     f"in taxonomy {self.taxonomy.id!r}"
                 )
-            self._validate_term_output(term, category)
-            self._validate_term_location_port(term, category)
+            self._validate_term_output(term, taxonomy_category)
+            self._validate_term_location_port(term, taxonomy_category)
 
     def _validate_term_output(self, term: Term, category: TaxonomyCategory) -> None:
-        if term.output_id in allowed_output(category):
-            return
-        raise ValueError(
-            f"uses output-id {term.output_id!r}, which is not declared as a variable or "
-            f"extra-output on taxonomy category {term.taxonomy_category!r} in taxonomy {self.taxonomy.id!r}"
-        )
+        if term.output_id not in allowed_output(category):
+            raise ValueError(
+                f"uses output-id {term.output_id!r}, which is not declared as a variable "
+                f"or extra-output on taxonomy category {term.taxonomy_category!r} "
+                f"in taxonomy {self.taxonomy.id!r}"
+            )
 
     def _validate_term_location_port(self, term: Term, category: TaxonomyCategory) -> None:
-        if term.location_port is not None:
-            if term.location_port not in category.port_ids:
-                raise ValueError(
-                    f"uses location-port {term.location_port!r}, which is not defined on "
-                    f"taxonomy category {term.taxonomy_category!r} in taxonomy {self.taxonomy.id!r}"
-                )
+        category_ports = {port.id for port in category.ports}
+        if term.location_port is not None and term.location_port not in category_ports:
+            raise ValueError(
+                f"uses location-port {term.location_port!r}, which is not defined on "
+                f"taxonomy category {term.taxonomy_category!r} in taxonomy {self.taxonomy.id!r}"
+            )
+
+
+def allowed_output(taxon: TaxonomyCategory) -> set[str]:
+    return {var.id for var in taxon.variables} | {extra_output.id for extra_output in taxon.extra_outputs}
