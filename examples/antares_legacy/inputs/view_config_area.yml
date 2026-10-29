@@ -4,7 +4,6 @@ view:
   scope:
     location:
       taxonomy-category: balance  # one location per area node
-    calendar: calendar
 
   taxonomy: antares_legacy_taxonomy
 
@@ -15,9 +14,6 @@ view:
     - id: daily_all_scenario
       time-granularity: day
       scenario: true
-
-  catalogs:
-    - id: antares_legacy_area_catalog
 
   metrics:
     - id: antares_legacy_area_catalog.LOAD
