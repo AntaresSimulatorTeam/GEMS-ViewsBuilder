@@ -40,7 +40,12 @@ def cache_view_by_time_granularity(cls: type[T]) -> type[T]:
 
             if self._time_granularity not in self.views_storage:
                 self.views_storage[self._time_granularity] = super().run(metric_view, metric)
-            return self.views_storage[self._time_granularity]
+
+            view = self.views_storage[self._time_granularity]
+            # We have to update the view's aggregation pattern id : this property is supposed to be conveyed
+            # from to the next view transformation.
+            view.aggregation_pattern_id = metric_view.aggregation_pattern_id
+            return view
 
     return CachingTimeAggregator
 

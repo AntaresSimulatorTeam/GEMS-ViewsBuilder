@@ -4,7 +4,6 @@
 import atexit
 import logging
 import tempfile
-import uuid
 from abc import ABC, abstractmethod
 from pathlib import Path
 from shutil import rmtree
@@ -36,18 +35,17 @@ class CreatePersistingView(ABC):
     def _build_lazy_frame(self, metric_view: MetricView, metric: Metric) -> pl.LazyFrame:
         pass
 
-    def _output_aggregation_pattern_id(self, metric_view: MetricView) -> str:
-        """Return the aggregation pattern id to tag the persisted output with.
-        This function returns the default aggregation pattern id.
-        Caution : this function can be overridden by subclasses to return a different aggregation pattern id.
-        """
-        return metric_view.aggregation_pattern_id
+    # Default method to compute the output path for the persisted view.
+    # Can be overridden by subclasses if needed.
+    def _out_path(self, metric_view: MetricView, metric: Metric) -> Path:
+        return self._save_dir / f"{metric_view.ids_as_str()}_{metric.id}.parquet"
 
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         lazy_frame = self._build_lazy_frame(metric_view, metric)
 
-        aggregation_pattern_id = self._output_aggregation_pattern_id(metric_view)
-
-        out_path = self._save_dir / f"{aggregation_pattern_id}_{metric.id}_{uuid.uuid4()}.parquet"
+        out_path = self._out_path(metric_view, metric)
         logging.info(f"[{metric.id}] {type(self).__name__} view written to {out_path}")
-        return PersistentMetricView(aggregation_pattern_id=aggregation_pattern_id, lazyframe=lazy_frame, persistence_path=out_path)
+        return PersistentMetricView(lazyframe=lazy_frame,
+                                    path=out_path,
+                                    view_config_id=metric_view.view_config_id,
+                                    aggregation_pattern_id=metric_view.aggregation_pattern_id)

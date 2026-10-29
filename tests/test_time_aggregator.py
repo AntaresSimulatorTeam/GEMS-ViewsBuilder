@@ -34,8 +34,8 @@ def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> Metr
         },
         schema_overrides={"granular_date": pl.Datetime},
     )
-    path = tmp_path / "granular.parquet"
-    return PersistentMetricView(lazyframe=dataframe.lazy(), persistence_path=path)
+    save_path = tmp_path / "granular.parquet"
+    return PersistentMetricView(lazyframe=dataframe.lazy(), path=save_path)
 
 
 def make_metric(time_operator: AggregOperatorType) -> Metric:

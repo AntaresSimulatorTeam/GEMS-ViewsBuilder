@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
+from pathlib import Path
 
 import polars as pl
 
@@ -49,3 +50,7 @@ class TermsAggregator(CreatePersistingView):
                 ]
             )
         )
+
+    # Overrides parent class method.
+    def _out_path(self, metric_view: MetricView, metric: Metric) -> Path:
+        return self._save_dir / f"{metric_view.view_config_id}_{metric.id}.parquet"
