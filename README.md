@@ -29,7 +29,7 @@
 
 **GEMS Views Builder** turns the results of a [GEMS](https://gems-energy.readthedocs.io/en/latest/) simulation into **Views**: tables of metrics aggregated per location, time granularity and scenario, ready to analyse or plot.
 
-A View answers a business question on top of a Simulation Table, for example *"hourly production per area"* or *"yearly unsupplied energy per country, averaged over scenarios"*.<br> GVB works with any Simulation Table that follows the GEMS format, whether it was written by [GemsPy](https://github.com/AntaresSimulatorTeam/GemsPy) or by the [Antares Simulator](https://antares-simulator.org/) Modeler.
+A View answers a business question on top of a Simulation Table, for example *"hourly production per area"* or *"yearly unsupplied energy per country, averaged over scenarios"*.<br> GVB works with any Simulation Table that follows the GEMS format, whether it was written by [GemsPy](https://github.com/AntaresSimulatorTeam/GemsPy) or by [Antares Simulator](https://antares-simulator.org/).
 
 ```mermaid
 %%{init: {"flowchart": {"htmlLabels": false, "wrappingWidth": 420, "padding": 14, "nodeSpacing": 36, "rankSpacing": 48}} }%%
