@@ -23,7 +23,7 @@ class PatternAggregator:
 
 class AggregationPatternList:
     def __init__(self, view_config: ViewConfig) -> None:
-        self.aggregation_patterns: dict(str, PatternAggregator) = {}
+        self.aggregation_patterns: dict[str, PatternAggregator] = {}
         for pattern in view_config.aggregation_patterns:
             self.aggregation_patterns[pattern.id] = PatternAggregator(pattern)
 

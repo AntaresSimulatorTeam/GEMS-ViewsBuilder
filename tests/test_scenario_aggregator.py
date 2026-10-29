@@ -52,8 +52,8 @@ def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -
             "metric_value": pl.Float64,
         },
     )
-    path = tmp_path / "temporal.parquet"
-    return PersistentMetricView(lazyframe=dataframe.lazy(), persistence_path=path)
+    save_path = tmp_path / "temporal.parquet"
+    return PersistentMetricView(lazyframe=dataframe.lazy(), path=save_path)
 
 
 def persistent_metric_view(tmp_path: Path, values: list[float]) -> MetricView:

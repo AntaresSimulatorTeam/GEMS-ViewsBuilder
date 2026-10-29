@@ -45,4 +45,7 @@ class CreatePersistingView(ABC):
 
         out_path = self._out_path(metric_view, metric)
         logging.info(f"[{metric.id}] {type(self).__name__} view written to {out_path}")
-        return PersistentMetricView.from_metric_view(mv=metric_view, lazyframe=lazy_frame, path=out_path)
+        return PersistentMetricView(lazyframe=lazy_frame,
+                                    path=out_path,
+                                    view_config_id=metric_view.view_config_id,
+                                    aggregation_pattern_id=metric_view.aggregation_pattern_id)

@@ -54,7 +54,9 @@ class ScenarioAggregation(ScenarioOperator):
                 ]
             )
         )
-        return MetricView.from_metric_view(mv=metric_view, lazyframe=lazyframe)
+        return MetricView(lazyframe=lazyframe,
+                          view_config_id=metric_view.view_config_id,
+                          aggregation_pattern_id=metric_view.aggregation_pattern_id)
 
 
 class ScenarioColumnsAddition(ScenarioOperator):
@@ -66,7 +68,9 @@ class ScenarioColumnsAddition(ScenarioOperator):
                 pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
             ]
         )
-        return MetricView.from_metric_view(mv=metric_view, lazyframe=lazyframe)
+        return MetricView(lazyframe=lazyframe,
+                          view_config_id=metric_view.view_config_id,
+                          aggregation_pattern_id=metric_view.aggregation_pattern_id)
 
 
 def make_scenario_operator(scenario: bool) -> ScenarioOperator:
