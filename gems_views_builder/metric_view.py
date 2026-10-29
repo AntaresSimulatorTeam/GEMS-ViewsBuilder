@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import polars as pl
-from typing_extensions import Self
 
 from gems_views_builder.common import sink_to_parquet
 
