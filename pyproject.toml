@@ -48,6 +48,7 @@ gems-views-builder = "gems_views_builder.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
+Documentation = "https://gems-viewsbuilder.readthedocs.io/en/latest/"
 Repository = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
 "Bug Tracker" = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/issues"
 
