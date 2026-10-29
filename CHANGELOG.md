@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- `check_library_against_taxonomy` is imported from `gems_craft.model.validation` when GemsPy has it there (GemsPy after 0.2.0), and from `gems_craft.model.taxonomy` otherwise. The import failed with GemsPy `main` ([#207](https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/issues/207)).
+
 ## [0.1.0] - 2026-10-27
 
 ### Added
