@@ -425,7 +425,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "gemspy", git = "https://github.com/AntaresSimulatorTeam/GemsPy.git?rev=main" },
+    { name = "gemspy", specifier = "==0.3.0" },
     { name = "mkdocs", marker = "extra == 'doc'", specifier = ">=1.6" },
     { name = "mkdocs-material", marker = "extra == 'doc'", specifier = ">=9.5" },
     { name = "polars", extras = ["rt64"], specifier = ">=1.39.2" },
@@ -448,8 +448,8 @@ dev = [
 
 [[package]]
 name = "gemspy"
-version = "0.2.0"
-source = { git = "https://github.com/AntaresSimulatorTeam/GemsPy.git?rev=main#f371582b8e87cfb41b9f99fc70b7627c2aac55c7" }
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "antlr4-python3-runtime" },
     { name = "anytree" },
@@ -462,6 +462,10 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
     { name = "xarray" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/35/a7/ce19623452136264adc004bdf343a1795b550907387e1c4b8876a20030d5/gemspy-0.3.0.tar.gz", hash = "sha256:576fcf7a63bfd684b85dd9d3eeb67629944783957015e5afed0a83403290ed61", size = 122707, upload-time = "2026-10-30T09:01:41.127Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/78/e4a8596884e3768c7f91716dbe404ad6e2a7c3d551cab58beaf055c71b89/gemspy-0.3.0-py3-none-any.whl", hash = "sha256:4143e56ec648dc415dfb66bc9dd8b3dcf5d1beba090a9217bd855b83279c06a6", size = 158555, upload-time = "2026-10-30T09:01:39.622Z" },
 ]
 
 [[package]]
