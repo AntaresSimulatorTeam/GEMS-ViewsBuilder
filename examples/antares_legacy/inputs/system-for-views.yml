@@ -21,6 +21,8 @@ system:
           value: electricity
         - id: technology
           value: wind
+        - id: name
+          value: wind
     - id: be_solar
       model: antares_legacy_models.renewable
       parameters: []
@@ -29,6 +31,8 @@ system:
           value: electricity
         - id: technology
           value: solar
+        - id: name
+          value: solar
     - id: be_run_of_river
       model: antares_legacy_models.renewable
       parameters: []
@@ -36,6 +40,8 @@ system:
         - id: carrier
           value: electricity
         - id: technology
+          value: run_of_river
+        - id: name
           value: run_of_river
     - id: be_combined_heat_power
       model: antares_legacy_models.miscellaneous_generation
@@ -125,6 +131,8 @@ system:
           value: electricity
         - id: technology
           value: gas
+        - id: name
+          value: ccgt
     - id: be_thermal_oil_peaker
       model: antares_legacy_models.thermal
       parameters: []
@@ -133,6 +141,8 @@ system:
           value: electricity
         - id: technology
           value: oil
+        - id: name
+          value: oil_peaker
     - id: be_renewable_solar_pv
       model: antares_legacy_models.renewable
       parameters: []
@@ -141,6 +151,8 @@ system:
           value: electricity
         - id: technology
           value: solar pv
+        - id: name
+          value: solar_pv
     - id: be_renewable_wind_offshore
       model: antares_legacy_models.renewable
       parameters: []
@@ -149,13 +161,17 @@ system:
           value: electricity
         - id: technology
           value: wind offshore
+        - id: name
+          value: wind_offshore
     - id: be_short_term_storage_battery
       model: antares_legacy_models.short_term_storage
       parameters: []
       properties:
         - id: carrier
           value: electricity
-        - id: group
+        - id: technology
+          value: battery
+        - id: name
           value: battery
     - id: be_hydro_storage
       model: antares_legacy_models.long_term_storage
@@ -189,6 +205,8 @@ system:
           value: electricity
         - id: technology
           value: wind
+        - id: name
+          value: wind
     - id: fr_solar
       model: antares_legacy_models.renewable
       parameters: []
@@ -197,6 +215,8 @@ system:
           value: electricity
         - id: technology
           value: solar
+        - id: name
+          value: solar
     - id: fr_run_of_river
       model: antares_legacy_models.renewable
       parameters: []
@@ -204,6 +224,8 @@ system:
         - id: carrier
           value: electricity
         - id: technology
+          value: run_of_river
+        - id: name
           value: run_of_river
     - id: fr_combined_heat_power
       model: antares_legacy_models.miscellaneous_generation
@@ -293,6 +315,8 @@ system:
           value: electricity
         - id: technology
           value: gas
+        - id: name
+          value: ccgt
     - id: fr_thermal_nuclear
       model: antares_legacy_models.thermal
       parameters: []
@@ -300,6 +324,8 @@ system:
         - id: carrier
           value: electricity
         - id: technology
+          value: nuclear
+        - id: name
           value: nuclear
     - id: fr_renewable_solar_pv
       model: antares_legacy_models.renewable
@@ -309,6 +335,8 @@ system:
           value: electricity
         - id: technology
           value: solar pv
+        - id: name
+          value: solar_pv
     - id: fr_renewable_wind_onshore
       model: antares_legacy_models.renewable
       parameters: []
@@ -317,6 +345,8 @@ system:
           value: electricity
         - id: technology
           value: wind onshore
+        - id: name
+          value: wind_onshore
     - id: fr_hydro_storage
       model: antares_legacy_models.long_term_storage
       parameters: []
