@@ -47,36 +47,22 @@ class ScenarioAggregation(ScenarioOperator):
                 variable_name="scenario_stat",
                 value_name="metric_value",
             )
-            .with_columns(
-                [
-                    pl.lit(None, dtype=pl.Int64).alias("scenario_id"),
-                    pl.lit(True, dtype=pl.Boolean).alias("scenario_aggregation"),
-                ]
-            )
         )
         return MetricView(lazyframe=lazyframe,
                           view_config_id=metric_view.view_config_id,
                           aggregation_pattern_id=metric_view.aggregation_pattern_id)
 
 
-class ScenarioColumnsAddition(ScenarioOperator):
+class NullScenarioAggregation(ScenarioOperator):
     def run(self, metric_view: MetricView) -> MetricView:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
-        lazyframe = metric_view.lazy_data_frame().with_columns(
-            [
-                pl.lit(False, dtype=pl.Boolean).alias("scenario_aggregation"),
-                pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
-            ]
-        )
-        return MetricView(lazyframe=lazyframe,
-                          view_config_id=metric_view.view_config_id,
-                          aggregation_pattern_id=metric_view.aggregation_pattern_id)
+        return metric_view
 
 
 def make_scenario_operator(scenario: bool) -> ScenarioOperator:
     if scenario:
         return ScenarioAggregation()
-    return ScenarioColumnsAddition()
+    return NullScenarioAggregation()
 
 
 class ScenarioAggregator:
