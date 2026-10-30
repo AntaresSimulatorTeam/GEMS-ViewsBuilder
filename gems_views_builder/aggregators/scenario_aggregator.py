@@ -5,14 +5,10 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from uuid import uuid4
 
 import polars as pl
 
-from gems_views_builder.common import sink_to_parquet
-from gems_views_builder.input.view_config import AggregationPattern
-from gems_views_builder.location_filter import LocationFilter, apply_location_filter
-from gems_views_builder.metric_view import TemporalMetricView
+from gems_views_builder.metric_view import MetricView
 
 
 class Operator(Enum):
@@ -30,20 +26,19 @@ AGGREGATION_OPERATORS = [
     pl.col("metric_value").max().alias(Operator.MAX.value),
 ]
 
-
 @dataclass
 class ScenarioOperator(ABC):
     @abstractmethod
-    def run(self, temporal_metric_view: TemporalMetricView) -> pl.LazyFrame:
+    def run(self, metric_view: MetricView) -> MetricView:
         pass
 
 
 class ScenarioAggregation(ScenarioOperator):
-    def run(self, temporal_metric_view: TemporalMetricView) -> pl.LazyFrame:
+    def run(self, metric_view: MetricView) -> MetricView:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
-        return (
-            pl.scan_parquet(temporal_metric_view.persistence_path)
+        lazyframe = (
+            metric_view.lazy_data_frame()
             .group_by(index_columns)
             .agg(AGGREGATION_OPERATORS)
             .unpivot(
@@ -52,40 +47,27 @@ class ScenarioAggregation(ScenarioOperator):
                 variable_name="scenario_stat",
                 value_name="metric_value",
             )
-            .with_columns(
-                [
-                    pl.lit(None, dtype=pl.Int64).alias("scenario_id"),
-                    pl.lit(True, dtype=pl.Boolean).alias("scenario_aggregation"),
-                ]
-            )
         )
+        return MetricView(lazyframe=lazyframe,
+                          view_config_id=metric_view.view_config_id,
+                          aggregation_pattern_id=metric_view.aggregation_pattern_id)
 
 
-class ScenarioColumnsAddition(ScenarioOperator):
-    def run(self, temporal_metric_view: TemporalMetricView) -> pl.LazyFrame:
+class NullScenarioAggregation(ScenarioOperator):
+    def run(self, metric_view: MetricView) -> MetricView:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
-        return pl.scan_parquet(temporal_metric_view.persistence_path).with_columns(
-            [
-                pl.lit(False, dtype=pl.Boolean).alias("scenario_aggregation"),
-                pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
-            ]
-        )
+        return metric_view
 
 
-def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
-    return ScenarioAggregation() if scenario_aggregation else ScenarioColumnsAddition()
+def make_scenario_operator(scenario: bool) -> ScenarioOperator:
+    if scenario:
+        return ScenarioAggregation()
+    return NullScenarioAggregation()
 
 
 class ScenarioAggregator:
-    def __init__(self, aggregation_pattern: AggregationPattern):
-        self.aggregation_pattern_id = aggregation_pattern.id
-        self.scenario_operator = make_scenario_operator(aggregation_pattern.scenario)
-        self.location_filter = LocationFilter(aggregation_pattern.location_filter)
+    def __init__(self, scenario: bool):
+        self.scenario_operator = make_scenario_operator(scenario)
 
-    def run(self, metric_view: TemporalMetricView) -> TemporalMetricView:
-        new_path = metric_view.persistence_path.parent / f"{uuid4()}.parquet"
-        view = self.scenario_operator.run(metric_view)
-        view = apply_location_filter(view, self.location_filter)
-        sink_to_parquet(view, new_path)
-        logging.info(f"Scenario view written to {new_path}")
-        return TemporalMetricView(persistence_path=new_path, aggregation_pattern_id=self.aggregation_pattern_id)
+    def run(self, metric_view: MetricView) -> MetricView:
+        return self.scenario_operator.run(metric_view)
