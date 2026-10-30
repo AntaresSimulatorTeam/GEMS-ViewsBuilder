@@ -12,7 +12,7 @@ dependencies = [
     "pyarrow>=14.0.0",
     "pyyaml>=6.0.2",
     "pydantic>=2.11.7",
-    "gemspy==0.2.0",
+    "gemspy @ git+https://github.com/AntaresSimulatorTeam/GemsPy.git@main",
 ]
 authors = [
     { name = "Antoine Oustry" },
