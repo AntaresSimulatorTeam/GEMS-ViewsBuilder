@@ -1,6 +1,7 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
+from gems_views_builder.aggregators.columns_additioner import ColumnsAdditioner
 from gems_views_builder.aggregators.location_filtering import LocationFiltering
 from gems_views_builder.aggregators.scenario_aggregator import ScenarioAggregator
 from gems_views_builder.aggregators.time_aggregator import TimeAggregator
@@ -13,12 +14,14 @@ class PatternAggregator:
     def __init__(self, pattern: AggregationPattern) -> None:
         self.time_aggregator = TimeAggregator(pattern.time_granularity)
         self.scenario_aggregator = ScenarioAggregator(pattern.scenario)
+        self.columns_additioner = ColumnsAdditioner(pattern.scenario)
         self.location_filtering = LocationFiltering(pattern)
 
     def run(self, metric_view: MetricView, metric: Metric) -> MetricView:
         time_metric_view = self.time_aggregator.run(metric_view, metric)
         scenario_metric_view = self.scenario_aggregator.run(time_metric_view)
-        return self.location_filtering.run(scenario_metric_view, metric)
+        columns_added_view = self.columns_additioner.run(scenario_metric_view)
+        return self.location_filtering.run(columns_added_view, metric)
 
 
 class AggregationPatternList:
