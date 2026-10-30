@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.1.1] - 2026-10-30
+
+### Changed
+
+- GemsPy 0.3.0 is now required.
+
+### Fixed
+
+- Library checks against the taxonomy import `check_library_against_taxonomy` from `gems_craft.model.validation`, where GemsPy 0.3.0 moved it.
+
 ## [0.1.0] - 2026-10-27
 
 ### Added
@@ -25,5 +35,6 @@ All notable changes to this project are documented in this file.
 
 - First release of the GEMS Views builder.
 
+[0.1.1]: https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/releases/tag/v0.0.1
