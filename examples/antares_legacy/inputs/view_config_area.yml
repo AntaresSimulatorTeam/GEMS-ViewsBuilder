@@ -1,0 +1,28 @@
+view:
+  id: view_area
+
+  scope:
+    location:
+      taxonomy-category: balance  # one location per area node
+
+  taxonomy: antares_legacy_taxonomy
+
+  aggregations-patterns:
+    - id: hourly_per_scenario
+      time-granularity: hour
+      scenario: false
+    - id: daily_all_scenario
+      time-granularity: day
+      scenario: true
+
+  metrics:
+    - id: antares_legacy_area_catalog.LOAD
+    - id: antares_legacy_area_catalog.DTG_BY_TECHNOLOGY
+    - id: antares_legacy_area_catalog.RES_GENERATION
+    - id: antares_legacy_area_catalog.STS_INJECTION
+    - id: antares_legacy_area_catalog.BALANCE
+    - id: antares_legacy_area_catalog.UNSP_ENRG
+    - id: antares_legacy_area_catalog.LOLD
+    - id: antares_legacy_area_catalog.MRG_PRICE
+    - id: antares_legacy_area_catalog.OV_COST
+    - id: antares_legacy_area_catalog.CO2_EMIS
