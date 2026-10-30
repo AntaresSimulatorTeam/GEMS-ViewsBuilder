@@ -2,9 +2,9 @@
 
 <img src="https://raw.githubusercontent.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/main/docs/images/logo.png" alt="GEMS-ViewsBuilder logo" width="140">
 
-# GEMS-ViewsBuilder
+# GEMS Views Builder
 
-**Turn GEMS Simulation Tables into business-ready Views.**
+**Turn GEMS Simulation Tables into business ready Views.**
 
 [![PyPI](https://img.shields.io/pypi/v/gems-views-builder.svg)](https://pypi.org/project/gems-views-builder/)
 [![Python versions](https://img.shields.io/pypi/pyversions/gems-views-builder.svg)](https://pypi.org/project/gems-views-builder/)
@@ -27,35 +27,27 @@
 
 ---
 
-**GEMS-ViewsBuilder (GVB)** turns the results of a [GEMS](https://gems-energy.readthedocs.io/en/latest/) simulation into **Views**: tables of metrics aggregated per location, time granularity and scenario, ready to analyse or plot.
+**GEMS Views Builder** turns the results of a [GEMS](https://gems-energy.readthedocs.io/en/latest/) simulation into **Views**: tables of metrics aggregated per location, time granularity and scenario, ready to analyse or plot.
 
-A View answers a business question on top of a Simulation Table, for example *"hourly production per area"* or *"yearly unsupplied energy per country, averaged over scenarios"*. GVB works with any Simulation Table that follows the GEMS format, whether it was written by [GemsPy](https://github.com/AntaresSimulatorTeam/GemsPy) or by the GEMS modeler of [Antares Simulator](https://antares-simulator.org/).
+A View answers a business question on top of a Simulation Table, for example *"hourly production per area"* or *"yearly unsupplied energy per country, averaged over scenarios"*.<br> GVB works with any Simulation Table that follows the GEMS format, whether it was written by [GemsPy](https://github.com/AntaresSimulatorTeam/GemsPy) or by [Antares Simulator](https://antares-simulator.org/).
 
 ```mermaid
-flowchart LR
-    study["GEMS study<br/>system + model libraries"] --> sim["Simulation<br/>GemsPy or Antares Simulator"]
-    sim --> st[("Simulation Table")]
-    st --> gvb["GEMS-ViewsBuilder"]
-    study --> gvb
-    inputs["taxonomy · catalogs<br/>view configs · calendar"] --> gvb
+%%{init: {"flowchart": {"htmlLabels": false, "wrappingWidth": 420, "padding": 14, "nodeSpacing": 36, "rankSpacing": 48}} }%%
+flowchart TB
+    study["GEMS Study"] --> sim["Simulation: GemsPy or Antares Simulator"]
+    sim --> table[("Simulation Table")]
+    study --> study_files["Libraries and System"]
+    study_files --> gvb["GEMS Views Builder"]
+    inputs["Taxonomy, Catalogs, View Configs, Calendar"] --> gvb
+    table --> gvb
     gvb --> views[("Views")]
 ```
-
-## ✨ Features
-
-- **Validated inputs**: file formats, required columns and consistency between libraries, taxonomy, catalogs and view configs are checked before anything is computed.
-- **Topology-aware**: each component is attached to its location (for example an area) through the connections of the system.
-- **Flexible aggregation**: in time (hour, day, week, month, year) and across scenarios (mean, standard deviation, min, max).
-- **Scales to large studies**: built on [Polars](https://pola.rs/), with intermediate results kept on disk.
-- **Standard outputs**: Views are written as Parquet (recommended) or CSV.
 
 ## 📦 Installation
 
 ```bash
 pip install gems-views-builder
 ```
-
-GVB requires Python 3.11 or later.
 
 ## 🚀 Quickstart
 
@@ -99,17 +91,17 @@ The output is one [View](https://gems-energy.readthedocs.io/en/latest/user-guide
 
 ```bash
 git clone https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder.git
+```
+```bash
 cd GEMS-ViewsBuilder
 uv sync
 uv run pre-commit install
 ```
 
-Run the checks used by the CI:
+Run mypy and Ruff:
 
 ```bash
-uv run pytest tests/
-uv run ruff check gems_views_builder tests
-uv run mypy gems_views_builder tests
+uv run pre-commit run --all-files
 ```
 
 Build the documentation locally:
@@ -118,10 +110,6 @@ Build the documentation locally:
 uv sync --extra doc
 uv run mkdocs serve
 ```
-
-## 🤝 Contributing
-
-Issues and pull requests are welcome on [GitHub](https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/issues). Please run the checks above before opening a pull request.
 
 ## 📄 License
 
