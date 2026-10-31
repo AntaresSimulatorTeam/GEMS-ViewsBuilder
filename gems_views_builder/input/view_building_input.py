@@ -9,7 +9,6 @@ from gems_views_builder.aggregators.aggregations_processor import AggregationPro
 from gems_views_builder.input.component import Component
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import (
-    PersistentSimulationTable,
     SimulationTable,
     filter_simulation_table,
 )
@@ -22,18 +21,18 @@ class ViewBuildingInput:
     """Inputs of the view-building algorithm for one view config."""
 
     view_config: ViewConfig
-    filtered_st: PersistentSimulationTable
+    filtered_st: pl.LazyFrame
     metric_structure_table_builder: MetricStructureTableBuilder
     aggregation_processor: AggregationProcessor
 
 
-def make_filtered_simulation_table(raw_input_data: RawInputData) -> PersistentSimulationTable:
+def make_filtered_simulation_table(raw_input_data: RawInputData) -> pl.LazyFrame:
     concatenated_st = concat_simulation_tables(raw_input_data.simulation_tables)
     return filter_simulation_table(concatenated_st, raw_input_data.calendar)
 
 
 def create_view_building_input(
-    filtered_st: PersistentSimulationTable,
+    filtered_st: pl.LazyFrame,
     view_config: ViewConfig,
     components_by_taxon: dict[str, list[Component]],
 ) -> ViewBuildingInput:

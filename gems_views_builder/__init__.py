@@ -31,7 +31,6 @@ from gems_views_builder.input.catalog import (
 from gems_views_builder.input.library import Library, associate_models_with_a_taxon
 from gems_views_builder.input.raw_input_data import RawInputData
 from gems_views_builder.input.simulation_table import (
-    PersistentSimulationTable,
     SimulationTable,
     filter_simulation_table,
     load_simulation_table,
@@ -47,7 +46,6 @@ from gems_views_builder.view import ViewBuilder
 __all__ = [
     "Calendar",
     "load_calendar",
-    "PersistentSimulationTable",
     "SimulationTable",
     "load_simulation_table",
     "filter_simulation_table",

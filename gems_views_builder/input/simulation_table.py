@@ -2,14 +2,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from shutil import rmtree
 
 import polars as pl
 
-from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
@@ -46,20 +43,6 @@ class SimulationTable:
     dataframe: pl.LazyFrame
 
 
-@dataclass
-class PersistentSimulationTable(SimulationTable):
-    """Lazy representation of a persistent SIMULATION_TABLE parquet file.
-
-    Has all SIMULATION_TABLE columns plus granular_date from the calendar join.
-    """
-
-    file_path: Path
-
-    def __del__(self) -> None:
-        logging.debug(f"Cleaning filtered simulation table {self.file_path.parent}")
-        rmtree(self.file_path.parent, ignore_errors=True)
-
-
 def load_simulation_tables(simulation_tables: list[Path]) -> list[SimulationTable]:
     return [load_simulation_table(simulation_table) for simulation_table in simulation_tables]
 
@@ -78,11 +61,13 @@ def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
     return SimulationTable(dataframe)
 
 
-def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) -> PersistentSimulationTable:
-    """Filter simulation tables by calendar, persist result to a private tempdir, and return it."""
+def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) -> pl.LazyFrame:
+    """Filter a simulation table by the calendar and keep the result lazy.
+
+    Time-dependent rows are kept only when their ``(absolute_time_index, block)`` is in the calendar.
+    Non-time-dependent rows are kept with a null ``granular_date``.
+    """
     logging.info("Filtering simulation table by calendar")
-    intermediates_dir = Path(tempfile.mkdtemp())
-    output_path = intermediates_dir / "filtered_simulation_table.parquet"
     # Time-dependent rows: keep only timesteps present in the calendar.
     time_dep = (
         simulation_table.join(calendar.dataframe, on="absolute_time_index", how="inner")
@@ -95,12 +80,8 @@ def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) 
         pl.lit(None).cast(granular_date_dtype).alias("granular_date")
     )
     columns = time_dep.collect_schema().names()
-    sink_to_parquet(pl.concat([time_dep.select(columns), non_time_dep.select(columns)]), output_path)
-    logging.info(f"Filtered simulation table written to {output_path}")
-
-    filtered = pl.scan_parquet(output_path)
-    return PersistentSimulationTable(dataframe=filtered, file_path=output_path)
+    return pl.concat([time_dep.select(columns), non_time_dep.select(columns)])
 
 
-def join(metric_structure_table: MetricStructureTable, filtered_st: PersistentSimulationTable) -> pl.LazyFrame:
-    return filtered_st.dataframe.join(metric_structure_table.dataframe, on=["component", "output"], how="right")
+def join(metric_structure_table: MetricStructureTable, filtered_st: pl.LazyFrame) -> pl.LazyFrame:
+    return filtered_st.join(metric_structure_table.dataframe, on=["component", "output"], how="right")

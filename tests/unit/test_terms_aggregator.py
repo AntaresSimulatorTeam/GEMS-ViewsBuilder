@@ -1,20 +1,18 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
-from pathlib import Path
-
 import polars as pl
 from pytest import approx
 
 from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
-from gems_views_builder.input.simulation_table import PersistentSimulationTable, join
+from gems_views_builder.input.simulation_table import join
 from gems_views_builder.metric_structure_table import MetricStructureTable
 
 
-def create_filtered_st(values: list[float], tmp_path: Path) -> PersistentSimulationTable:
+def create_filtered_st(values: list[float]) -> pl.LazyFrame:
     n = len(values)
-    dataframe = pl.DataFrame(
+    return pl.DataFrame(
         {
             "component": ["comp"] * n,
             "output": ["out"] * n,
@@ -27,7 +25,6 @@ def create_filtered_st(values: list[float], tmp_path: Path) -> PersistentSimulat
             "basis_status": ["B"] * n,
         }
     ).lazy()
-    return PersistentSimulationTable(dataframe=dataframe, file_path=tmp_path / "dummy.parquet")
 
 
 def create_metric_structure_table() -> MetricStructureTable:
@@ -44,9 +41,9 @@ def create_metric_structure_table() -> MetricStructureTable:
     return MetricStructureTable(rows, "M")
 
 
-def test_terms_aggregation_sum(tmp_path: Path) -> None:
+def test_terms_aggregation_sum() -> None:
     # Arrange
-    filtered_st = create_filtered_st([2.0, 3.0], tmp_path)
+    filtered_st = create_filtered_st([2.0, 3.0])
     metric_structure_table = create_metric_structure_table()
     aggregator = TermsAggregator()
 
@@ -63,9 +60,9 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
     assert df["granular_metric_value"][0] == approx(5.0)
 
 
-def test_terms_aggregation_avg(tmp_path: Path) -> None:
+def test_terms_aggregation_avg() -> None:
     # Arrange
-    filtered_st = create_filtered_st([2.0, 3.0], tmp_path)
+    filtered_st = create_filtered_st([2.0, 3.0])
     metric_structure_table = create_metric_structure_table()
     aggregator = TermsAggregator()
 
