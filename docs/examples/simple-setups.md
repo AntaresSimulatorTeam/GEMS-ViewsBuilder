@@ -154,19 +154,19 @@ uv run gems-views-builder \
   --catalogs-dir      catalogs \
   --calendar          calendar.csv \
   --view-configs      "view-configs/*.yml" \
-  --simulation-tables "output/<run id>/simulation_table_*.csv" \
+  --simulation-tables "output/<run id>/simulation_table/scenario-*.parquet" \
   --output-dir        views
 ```
 
-Replace `<run id>` with the folder GemsPy created, for example `20261021T0847`. The output folder must exist before the run.
+Replace `<run id>` with the folder GemsPy created, for example `20261031T165411-384017`. GemsPy writes the Simulation Table in its `simulation_table/` folder: one Parquet file per scenario, and `scenario-common.parquet` for the outputs that do not depend on the scenario. The output folder must exist before the run.
 
 GVB writes three Views in `views/`: one for `area_hourly`, and one for each pattern of `area_summary`. Each file is named `<view id>--<pattern id>--<timestamp>`:
 
 ```text
 views/
-├── area_hourly--hourly--20261027T091027.parquet
-├── area_summary--daily--20261027T091027.parquet
-└── area_summary--weekly_stats--20261027T091027.parquet
+├── area_hourly--hourly--20261031T155617.parquet
+├── area_summary--daily--20261031T155617.parquet
+└── area_summary--weekly_stats--20261031T155617.parquet
 ```
 
 The options are described on the [Command line](../user-guide/command-line.md) page, and the columns of a View on the GEMS [Views](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/views/) page.
@@ -202,4 +202,4 @@ print(
 ```
 
 !!! note "Run again"
-    Each run writes new files with a new timestamp, so after a second run the pattern above reads both and every row appears twice. Empty `views/` before running GVB again, for example with `rm -rf views/*`.
+    Each GVB run writes new files with a new timestamp, so after a second run the pattern above reads both and every row appears twice. Empty `views/` before running GVB again, for example with `rm -rf views/*`. In the same way, each GemsPy run creates a new `output/<run id>/` folder: use the newest one in the GVB command.
