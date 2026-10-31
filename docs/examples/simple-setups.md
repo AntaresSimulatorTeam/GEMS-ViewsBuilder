@@ -39,7 +39,7 @@ cd docs/examples/simple_study
 uv run gemspy --study .
 ```
 
-Outputs in the SimulationTable:
+Outputs in the Simulation Table:
 
 - `area_1`: `spillage`, `unsupplied_energy`
 - `load_1`: `load`
@@ -50,10 +50,10 @@ Outputs in the SimulationTable:
 
 For each view config, GVB:
 
-1. **gives each component a taxonomy category**, from the `taxonomy-category` of its model in the library;
-2. **finds the location of each component** used by a metric: the component of the location category it is connected to;
-3. **reads the outputs** named by the metric terms in the SimulationTable, and gives each time step its date from the calendar;
-4. **combines the components** of each location with the `terms-operator`;
+1. **gives each component a taxonomy category**, from the `taxonomy-category` of its model in the library.
+2. **finds the location of each component** used by a metric: the component of the location category it is connected to.
+3. **reads the outputs** named by the metric terms in the Simulation Table, and gives each time step its date from the calendar.
+4. **combines the components** of each location with the `terms-operator`.
 5. **aggregates** each metric to the time granularity of each aggregation pattern with the `time-operator`, then across scenarios if the pattern asks for it, and writes one View per pattern.
 
 The sections below show which file drives each step.
@@ -62,7 +62,7 @@ The sections below show which file drives each step.
 
 The library is a copy of the basic models library, version 1.0.1, with two additions:
 
-- each model used in the system declares a `taxonomy-category`: `bus` → `balance`, `generator` → `production`, `load` → `consumption`, `storage` → `storage` (step 1). Without it, GVB stops with an error;
+- each model used in the system declares a `taxonomy-category`: `bus` → `balance`, `generator` → `production`, `load` → `consumption`, `storage` → `storage` (step 1). Without it, GVB stops with an error.
 - the `load` model gets an extra-output `load`. In the basic library, `load` is only a parameter, and metrics can only read variables and extra-outputs.
 
 ```yaml
@@ -114,7 +114,7 @@ absolute_time_index,block,granular_date
 ...
 ```
 
-GemsPy solved the study in one block, `0`, so every calendar row has block `0`. GVB keeps a SimulationTable row only if both its time index and its block match a calendar row.
+GemsPy solved the study in one block, `0`, so every calendar row has block `0`. GVB keeps a Simulation Table row only if both its time index and its block match a calendar row.
 
 ## View configs
 
@@ -136,7 +136,7 @@ A [view config](https://gems-energy.readthedocs.io/en/latest/user-guide/input-fi
 
     Two patterns:
 
-    - `daily`: one value per day and per scenario;
+    - `daily`: one value per day and per scenario.
     - `weekly_stats`: one value for the week, with `scenario: true`. Instead of one row per scenario, the View gives statistics over the scenarios: expectation (`exp`), standard deviation (`std`, population formula), `min` and `max`.
 
     In `weekly_stats`, only scenario 2 has unsupplied energy (1494.4 MWh), so `UNSUPPLIED_ENERGY` has `exp` 498.1, `min` 0 and `max` 1494.4. `STORAGE_LEVEL` is averaged over the week (`time-operator: avg`): its `exp` is 175.05 MWh, between `min` 155.97 and `max` 201.19.
