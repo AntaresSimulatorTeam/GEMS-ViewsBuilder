@@ -12,7 +12,6 @@ nav:
       - Compatibility: user-guide/compatibility.md
   - Examples:
       - Simple setups: examples/simple-setups.md
-      - CLI calls: examples/cli-calls.md
       - Two-area case study: examples/two-areas.md
   - Developer guide: developer-guide.md
   - Changelog: CHANGELOG.md
