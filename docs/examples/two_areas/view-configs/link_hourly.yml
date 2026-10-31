@@ -1,0 +1,20 @@
+view:
+  id: link_hourly
+  taxonomy: antares_legacy_taxonomy
+
+  scope:
+    location:
+      taxonomy-category: link
+    calendar: calendar
+
+  aggregations-patterns:
+    - id: hourly
+      time-granularity: hour
+      scenario: false
+    - id: monthly_stats
+      time-granularity: month
+      scenario: true
+
+  metrics:
+    - id: link_catalog.FLOW
+    - id: link_catalog.CONGESTED_HOURS
