@@ -31,10 +31,10 @@ two_areas/
 ├── input/                              # GemsPy study
 │   ├── model-libraries/antares_legacy_models.yml
 │   ├── system.yml
+│   ├── taxonomy.yml                    # read by GemsPy and GVB
 │   ├── data-series/
 │   └── optim-config.yml
-├── taxonomy.yml                        # GVB inputs
-├── catalogs/
+├── catalogs/                           # GVB inputs
 │   ├── area_catalog.yml
 │   └── link_catalog.yml
 ├── calendar.csv
@@ -90,7 +90,7 @@ The [taxonomy](https://gems-energy.readthedocs.io/en/latest/user-guide/input-fil
 ??? example "taxonomy.yml"
 
     ```yaml
-    --8<-- "docs/examples/two_areas/taxonomy.yml"
+    --8<-- "docs/examples/two_areas/input/taxonomy.yml"
     ```
 
 ### Calendar
@@ -190,7 +190,7 @@ mkdir -p views
 uv run gems-views-builder \
   --libraries-dir     input/model-libraries \
   --system            input/system.yml \
-  --taxonomy          taxonomy.yml \
+  --taxonomy          input/taxonomy.yml \
   --catalogs-dir      catalogs \
   --calendar          calendar.csv \
   --view-configs      "view-configs/*.yml" \
