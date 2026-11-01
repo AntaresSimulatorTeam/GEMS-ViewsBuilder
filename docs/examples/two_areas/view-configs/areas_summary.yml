@@ -5,7 +5,6 @@ view:
   scope:
     location:
       taxonomy-category: balance
-    calendar: calendar
     extra-locations:
       - id: country
 
