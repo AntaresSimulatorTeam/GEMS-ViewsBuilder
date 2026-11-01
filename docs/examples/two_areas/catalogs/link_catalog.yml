@@ -1,0 +1,27 @@
+catalog:
+  id: link_catalog
+  taxonomy: antares_legacy_taxonomy
+
+  location:
+    taxonomy-category: link
+
+  metrics-definition:
+
+    - id: FLOW
+      terms:
+        - taxonomy-category: link
+          output-id: flow
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+    - id: CONGESTED_HOURS
+      terms:
+        - taxonomy-category: link
+          output-id: is_directly_congested
+          location-port: null
+        - taxonomy-category: link
+          output-id: is_indirectly_congested
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
