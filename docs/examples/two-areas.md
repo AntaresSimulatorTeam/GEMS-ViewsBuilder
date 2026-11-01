@@ -54,7 +54,7 @@ cd docs/examples/two_areas
 uv run gemspy --study .
 ```
 
-GemsPy writes the SimulationTable to `output/<run id>/simulation_table_<run id>.csv`.
+GemsPy writes the Simulation Table in `output/<run id>/simulation_table/`: one Parquet file per scenario, and `scenario-common.parquet` for the outputs that do not depend on the scenario.
 
 ## 2. GVB inputs
 
@@ -62,8 +62,8 @@ GemsPy writes the SimulationTable to `output/<run id>/simulation_table_<run id>.
 
 GVB reads two things from the [system](https://gems-energy.readthedocs.io/en/latest/user-guide/input-files/system/):
 
-- **connections**, to find the location of each component;
-- **properties**: `technology` of thermal and renewable units, used by `breakdown` and `filter`, and `country` of the areas, used by `extra-locations`.
+- **connections**, to find the location of each component
+- **properties**: `technology` of thermal and renewable units, used by `breakdown` and `filter`, and `country` of the areas, used by `extra-locations`
 
 === "Area"
 
@@ -95,7 +95,7 @@ The [taxonomy](https://gems-energy.readthedocs.io/en/latest/user-guide/input-fil
 
 ### Calendar
 
-The calendar gives a date to each time step. Its `block` must match the `block` of the SimulationTable:
+The calendar gives a date to each time step. Its `block` must match the `block` of the Simulation Table:
 
 ```text
 absolute_time_index,block,granular_date
@@ -124,7 +124,7 @@ Two [catalogs](https://gems-energy.readthedocs.io/en/latest/user-guide/input-fil
 | `GENERATION_BY_TECHNOLOGY` | same as `GENERATION` | `breakdown` on `technology` |
 | `THERMAL_GENERATION` | `generation_power` of thermal units | |
 | `GAS_GENERATION` | `generation_power` of thermal units | `filter` on `technology: gas` |
-| `NET_IMPORT` | `flow` on `out_port`, `minus_flow` on `in_port` | one term per port of the link, read for the area on that port; positive when the area imports |
+| `NET_IMPORT` | `flow` on `out_port`, `minus_flow` on `in_port` | one term per port of the link, read for the area on that port. Positive when the area imports |
 | `UNSUPPLIED_ENERGY`, `SPILLED_ENERGY` | variables of the areas | `location-port: null` |
 | `CO2_EMISSIONS` | `co2_emissions` of thermal units | t of CO₂ |
 
@@ -159,8 +159,8 @@ Three [view configs](https://gems-energy.readthedocs.io/en/latest/user-guide/inp
     --8<-- "docs/examples/two_areas/view-configs/areas_hourly.yml"
     ```
 
-    - hourly balance of each area, per scenario;
-    - `extra-locations` adds `country_1`, from the `country` property of the areas.
+    - hourly balance of each area, per scenario
+    - `extra-locations` adds `country_1`, from the `country` property of the areas
 
 === "areas_summary.yml"
 
@@ -168,9 +168,9 @@ Three [view configs](https://gems-energy.readthedocs.io/en/latest/user-guide/inp
     --8<-- "docs/examples/two_areas/view-configs/areas_summary.yml"
     ```
 
-    - `monthly`: per month and per scenario;
-    - `yearly_stats`: statistics over the scenarios (`exp`, `std`, `min`, `max`);
-    - `weekly_country_stats`: weekly statistics, `country_1` only (`location-filter`).
+    - `monthly`: per month and per scenario
+    - `yearly_stats`: statistics over the scenarios (`exp`, `std`, `min`, `max`)
+    - `weekly_country_stats`: weekly statistics, `country_1` only (`location-filter`)
 
 === "link_hourly.yml"
 
@@ -178,8 +178,8 @@ Three [view configs](https://gems-energy.readthedocs.io/en/latest/user-guide/inp
     --8<-- "docs/examples/two_areas/view-configs/link_hourly.yml"
     ```
 
-    - link metrics, hourly and as monthly statistics;
-    - location category `link`, so only the metrics of `link_catalog`.
+    - link metrics, hourly and as monthly statistics
+    - location category `link`, so only the metrics of `link_catalog`
 
 ## 3. Run GVB
 
@@ -194,13 +194,28 @@ uv run gems-views-builder \
   --catalogs-dir      catalogs \
   --calendar          calendar.csv \
   --view-configs      "view-configs/*.yml" \
-  --simulation-tables "output/<run id>/simulation_table_*.csv" \
+  --simulation-tables "output/<run id>/simulation_table/scenario-*.parquet" \
   --output-dir        views
 ```
 
-- Replace `<run id>` with the folder GemsPy created, for example `20261022T0925`.
+- Replace `<run id>` with the folder GemsPy created, for example `20261101T132927-9e71dc`.
 - Each view config uses only the catalog of its location category.
 - GVB writes six Views, one per aggregation pattern. Add `--output-format csv` for CSV files.
+
+Each file is named `<view id>--<pattern id>--<timestamp>`:
+
+```text
+views/
+├── areas_hourly--hourly--20261101T123629.parquet
+├── areas_summary--monthly--20261101T123629.parquet
+├── areas_summary--weekly_country_stats--20261101T123629.parquet
+├── areas_summary--yearly_stats--20261101T123629.parquet
+├── link_hourly--hourly--20261101T123629.parquet
+└── link_hourly--monthly_stats--20261101T123629.parquet
+```
+
+!!! note "Run again"
+    Each GVB run writes new files with a new timestamp, so after a second run the patterns below read both and every row appears twice. Empty `views/` before running GVB again, for example with `rm -rf views/*`. In the same way, each GemsPy run creates a new `output/<run id>/` folder: use the newest one in the GVB command.
 
 ## 4. Read the Views
 
@@ -212,41 +227,31 @@ Read the hourly View with polars, and print `LOAD` and `NET_IMPORT` of scenario 
 import polars as pl
 from datetime import datetime
 
-view = pl.read_parquet("views/areas_hourly*.parquet")
-print(view.filter(
-    pl.col("metric_id").is_in(["LOAD", "NET_IMPORT"]),
-    pl.col("scenario_id") == 0,
-    pl.col("view_date") == datetime(2030, 1, 5, 13),
-).sort("metric_id", "metric_location"))
+view = pl.read_parquet("views/areas_hourly--hourly--*.parquet")
+print(
+    view.filter(
+        pl.col("metric_id").is_in(["LOAD", "NET_IMPORT"]),
+        pl.col("scenario_id") == 0,
+        pl.col("view_date") == datetime(2030, 1, 5, 13),
+    )
+    .sort("metric_id", "metric_location")
+    .select("metric_id", "metric_location", "metric_value")
+)
 ```
 
 ```text
-┌────────────┬────────────┬────────────┬───────────┬───────────┬───────────┬───────────┬───────────┐
-│ metric_id  ┆ metric_loc ┆ breakdown_ ┆ view_date ┆ scenario_ ┆ metric_va ┆ scenario_ ┆ scenario_ │
-│ ---        ┆ ation      ┆ properties ┆ ---       ┆ id        ┆ lue       ┆ aggregati ┆ stat      │
-│ str        ┆ ---        ┆ ---        ┆ datetime[ ┆ ---       ┆ ---       ┆ on        ┆ ---       │
-│            ┆ str        ┆ str        ┆ μs]       ┆ i64       ┆ f64       ┆ ---       ┆ str       │
-│            ┆            ┆            ┆           ┆           ┆           ┆ bool      ┆           │
-╞════════════╪════════════╪════════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╡
-│ LOAD       ┆ country_1  ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 5344.6    ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ LOAD       ┆ north      ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 3002.0    ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ LOAD       ┆ south      ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 2342.6    ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ NET_IMPORT ┆ country_1  ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 0.0       ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ NET_IMPORT ┆ north      ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ -800.0    ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ NET_IMPORT ┆ south      ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 800.0     ┆ false     ┆ null      │
-│            ┆            ┆            ┆ 5         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-└────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
+┌────────────┬─────────────────┬──────────────┐
+│ metric_id  ┆ metric_location ┆ metric_value │
+│ ---        ┆ ---             ┆ ---          │
+│ str        ┆ str             ┆ f64          │
+╞════════════╪═════════════════╪══════════════╡
+│ LOAD       ┆ country_1       ┆ 5344.6       │
+│ LOAD       ┆ north           ┆ 3002.0       │
+│ LOAD       ┆ south           ┆ 2342.6       │
+│ NET_IMPORT ┆ country_1       ┆ 0.0          │
+│ NET_IMPORT ┆ north           ┆ -800.0       │
+│ NET_IMPORT ┆ south           ┆ 800.0        │
+└────────────┴─────────────────┴──────────────┘
 ```
 
 - `country_1` comes from `extra-locations`: its value is the sum of `north` and `south`, for example `LOAD` 3002.0 + 2342.6 = 5344.6.
@@ -260,28 +265,26 @@ Same hour, from the link View:
 import polars as pl
 from datetime import datetime
 
-view = pl.read_parquet("views/link_hourly*.parquet")
-print(view.filter(
-    pl.col("scenario_id") == 0,
-    pl.col("view_date") == datetime(2030, 1, 5, 13),
-).sort("metric_id"))
+view = pl.read_parquet("views/link_hourly--hourly--*.parquet")
+print(
+    view.filter(
+        pl.col("scenario_id") == 0,
+        pl.col("view_date") == datetime(2030, 1, 5, 13),
+    )
+    .sort("metric_id")
+    .select("metric_id", "metric_location", "metric_value")
+)
 ```
 
 ```text
-┌────────────┬────────────┬────────────┬───────────┬───────────┬───────────┬───────────┬───────────┐
-│ metric_id  ┆ metric_loc ┆ breakdown_ ┆ view_date ┆ scenario_ ┆ metric_va ┆ scenario_ ┆ scenario_ │
-│ ---        ┆ ation      ┆ properties ┆ ---       ┆ id        ┆ lue       ┆ aggregati ┆ stat      │
-│ str        ┆ ---        ┆ ---        ┆ datetime[ ┆ ---       ┆ ---       ┆ on        ┆ ---       │
-│            ┆ str        ┆ str        ┆ μs]       ┆ i64       ┆ f64       ┆ ---       ┆ str       │
-│            ┆            ┆            ┆           ┆           ┆           ┆ bool      ┆           │
-╞════════════╪════════════╪════════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╡
-│ CONGESTED_ ┆ north_sout ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 1.0       ┆ false     ┆ null      │
-│ HOURS      ┆ h          ┆            ┆ 5         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-│ FLOW       ┆ north_sout ┆ {}         ┆ 2030-01-0 ┆ 0         ┆ 800.0     ┆ false     ┆ null      │
-│            ┆ h          ┆            ┆ 5         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 13:00:00  ┆           ┆           ┆           ┆           │
-└────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
+┌─────────────────┬─────────────────┬──────────────┐
+│ metric_id       ┆ metric_location ┆ metric_value │
+│ ---             ┆ ---             ┆ ---          │
+│ str             ┆ str             ┆ f64          │
+╞═════════════════╪═════════════════╪══════════════╡
+│ CONGESTED_HOURS ┆ north_south     ┆ 1.0          │
+│ FLOW            ┆ north_south     ┆ 800.0        │
+└─────────────────┴─────────────────┴──────────────┘
 ```
 
 The link is its own location (`location-port: null`), so `metric_location` is `north_south`.
@@ -292,41 +295,31 @@ January, scenario 3, `country_1`, from the `monthly` pattern:
 
 ```python
 import polars as pl
-from datetime import datetime
 
-view = pl.read_parquet("views/areas_summary*.parquet")
-print(view.filter(
-    pl.col("metric_id") == "GENERATION_BY_TECHNOLOGY",
-    pl.col("metric_location") == "country_1",
-    pl.col("scenario_id") == 3,
-    pl.col("view_date") == datetime(2030, 1, 1),
-).sort("breakdown_properties"))
+view = pl.read_parquet("views/areas_summary--monthly--*.parquet")
+print(
+    view.filter(
+        pl.col("metric_id") == "GENERATION_BY_TECHNOLOGY",
+        pl.col("metric_location") == "country_1",
+        pl.col("scenario_id") == 3,
+    )
+    .sort("breakdown_properties")
+    .select("breakdown_properties", "metric_value")
+)
 ```
 
 ```text
-┌────────────┬────────────┬────────────┬───────────┬───────────┬───────────┬───────────┬───────────┐
-│ metric_id  ┆ metric_loc ┆ breakdown_ ┆ view_date ┆ scenario_ ┆ metric_va ┆ scenario_ ┆ scenario_ │
-│ ---        ┆ ation      ┆ properties ┆ ---       ┆ id        ┆ lue       ┆ aggregati ┆ stat      │
-│ str        ┆ ---        ┆ ---        ┆ datetime[ ┆ ---       ┆ ---       ┆ on        ┆ ---       │
-│            ┆ str        ┆ str        ┆ μs]       ┆ i64       ┆ f64       ┆ ---       ┆ str       │
-│            ┆            ┆            ┆           ┆           ┆           ┆ bool      ┆           │
-╞════════════╪════════════╪════════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╡
-│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-01-0 ┆ 3         ┆ 548061.4  ┆ false     ┆ null      │
-│ _BY_TECHNO ┆            ┆ gy,gas)}   ┆ 1         ┆           ┆           ┆           ┆           │
-│ LOGY       ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-01-0 ┆ 3         ┆ 885981.5  ┆ false     ┆ null      │
-│ _BY_TECHNO ┆            ┆ gy,nuclear ┆ 1         ┆           ┆           ┆           ┆           │
-│ LOGY       ┆            ┆ )}         ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-01-0 ┆ 3         ┆ 4071.3    ┆ false     ┆ null      │
-│ _BY_TECHNO ┆            ┆ gy,oil)}   ┆ 1         ┆           ┆           ┆           ┆           │
-│ LOGY       ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-01-0 ┆ 3         ┆ 29280.5   ┆ false     ┆ null      │
-│ _BY_TECHNO ┆            ┆ gy,solar)} ┆ 1         ┆           ┆           ┆           ┆           │
-│ LOGY       ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ GENERATION ┆ country_1  ┆ {(technolo ┆ 2030-01-0 ┆ 3         ┆ 139308.0  ┆ false     ┆ null      │
-│ _BY_TECHNO ┆            ┆ gy,wind)}  ┆ 1         ┆           ┆           ┆           ┆           │
-│ LOGY       ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-└────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
+┌────────────────────────┬──────────────┐
+│ breakdown_properties   ┆ metric_value │
+│ ---                    ┆ ---          │
+│ str                    ┆ f64          │
+╞════════════════════════╪══════════════╡
+│ {(technology,gas)}     ┆ 548061.4     │
+│ {(technology,nuclear)} ┆ 885981.5     │
+│ {(technology,oil)}     ┆ 4071.3       │
+│ {(technology,solar)}   ┆ 29280.5      │
+│ {(technology,wind)}    ┆ 139308.0     │
+└────────────────────────┴──────────────┘
 ```
 
 `breakdown` gives one row per value of `technology`, written in `breakdown_properties`.
@@ -337,41 +330,32 @@ Unsupplied energy of `country_1` over the two weeks, from the `yearly_stats` pat
 
 ```python
 import polars as pl
-from datetime import datetime
 
-view = pl.read_parquet("views/areas_summary*.parquet")
-print(view.filter(
-    pl.col("metric_id") == "UNSUPPLIED_ENERGY",
-    pl.col("metric_location") == "country_1",
-    pl.col("view_date") == datetime(2030, 1, 1),
-    pl.col("scenario_aggregation"),
-).sort("scenario_stat"))
+view = pl.read_parquet("views/areas_summary--yearly_stats--*.parquet")
+print(
+    view.filter(
+        pl.col("metric_id") == "UNSUPPLIED_ENERGY",
+        pl.col("metric_location") == "country_1",
+    )
+    .sort("scenario_stat")
+    .select("scenario_stat", "metric_value")
+)
 ```
 
 ```text
-┌────────────┬────────────┬────────────┬───────────┬───────────┬───────────┬───────────┬───────────┐
-│ metric_id  ┆ metric_loc ┆ breakdown_ ┆ view_date ┆ scenario_ ┆ metric_va ┆ scenario_ ┆ scenario_ │
-│ ---        ┆ ation      ┆ properties ┆ ---       ┆ id        ┆ lue       ┆ aggregati ┆ stat      │
-│ str        ┆ ---        ┆ ---        ┆ datetime[ ┆ ---       ┆ ---       ┆ on        ┆ ---       │
-│            ┆ str        ┆ str        ┆ μs]       ┆ i64       ┆ f64       ┆ ---       ┆ str       │
-│            ┆            ┆            ┆           ┆           ┆           ┆ bool      ┆           │
-╞════════════╪════════════╪════════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╡
-│ UNSUPPLIED ┆ country_1  ┆ {}         ┆ 2030-01-0 ┆ null      ┆ 39.05     ┆ true      ┆ exp       │
-│ _ENERGY    ┆            ┆            ┆ 1         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ UNSUPPLIED ┆ country_1  ┆ {}         ┆ 2030-01-0 ┆ null      ┆ 156.2     ┆ true      ┆ max       │
-│ _ENERGY    ┆            ┆            ┆ 1         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ UNSUPPLIED ┆ country_1  ┆ {}         ┆ 2030-01-0 ┆ null      ┆ 0.0       ┆ true      ┆ min       │
-│ _ENERGY    ┆            ┆            ┆ 1         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-│ UNSUPPLIED ┆ country_1  ┆ {}         ┆ 2030-01-0 ┆ null      ┆ 67.636584 ┆ true      ┆ std       │
-│ _ENERGY    ┆            ┆            ┆ 1         ┆           ┆           ┆           ┆           │
-│            ┆            ┆            ┆ 00:00:00  ┆           ┆           ┆           ┆           │
-└────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
+┌───────────────┬──────────────┐
+│ scenario_stat ┆ metric_value │
+│ ---           ┆ ---          │
+│ str           ┆ f64          │
+╞═══════════════╪══════════════╡
+│ exp           ┆ 39.05        │
+│ max           ┆ 156.2        │
+│ min           ┆ 0.0          │
+│ std           ┆ 67.636584    │
+└───────────────┴──────────────┘
 ```
 
-One row per statistic, in `scenario_stat`; `scenario_id` is empty and `scenario_aggregation` is `true`.
+One row per statistic, in `scenario_stat`. In these rows, `scenario_id` is empty and `scenario_aggregation` is `true`.
 
 ### Weekly statistics for the country
 
@@ -380,28 +364,24 @@ Expected load of `country_1` per week, from the `weekly_country_stats` pattern (
 ```python
 import polars as pl
 
-view = pl.read_parquet("views/areas_summary*week*.parquet")
-print(view.filter(
-    pl.col("metric_id") == "LOAD",
-    pl.col("scenario_stat") == "exp",
-).sort("view_date"))
+view = pl.read_parquet("views/areas_summary--weekly_country_stats--*.parquet")
+print(
+    view.filter(pl.col("metric_id") == "LOAD", pl.col("scenario_stat") == "exp")
+    .sort("view_date")
+    .select("view_date", "metric_location", "metric_value")
+)
 ```
 
 ```text
-┌───────────┬────────────┬────────────┬────────────┬───────────┬───────────┬───────────┬───────────┐
-│ metric_id ┆ metric_loc ┆ breakdown_ ┆ view_date  ┆ scenario_ ┆ metric_va ┆ scenario_ ┆ scenario_ │
-│ ---       ┆ ation      ┆ properties ┆ ---        ┆ stat      ┆ lue       ┆ id        ┆ aggregati │
-│ str       ┆ ---        ┆ ---        ┆ datetime[μ ┆ ---       ┆ ---       ┆ ---       ┆ on        │
-│           ┆ str        ┆ str        ┆ s]         ┆ str       ┆ f64       ┆ i64       ┆ ---       │
-│           ┆            ┆            ┆            ┆           ┆           ┆           ┆ bool      │
-╞═══════════╪════════════╪════════════╪════════════╪═══════════╪═══════════╪═══════════╪═══════════╡
-│ LOAD      ┆ country_1  ┆ {}         ┆ 2029-12-31 ┆ exp       ┆ 655704.52 ┆ null      ┆ true      │
-│           ┆            ┆            ┆ 00:00:00   ┆           ┆ 5         ┆           ┆           │
-│ LOAD      ┆ country_1  ┆ {}         ┆ 2030-01-07 ┆ exp       ┆ 773642.87 ┆ null      ┆ true      │
-│           ┆            ┆            ┆ 00:00:00   ┆           ┆ 5         ┆           ┆           │
-│ LOAD      ┆ country_1  ┆ {}         ┆ 2030-01-14 ┆ exp       ┆ 114142.07 ┆ null      ┆ true      │
-│           ┆            ┆            ┆ 00:00:00   ┆           ┆ 5         ┆           ┆           │
-└───────────┴────────────┴────────────┴────────────┴───────────┴───────────┴───────────┴───────────┘
+┌─────────────────────┬─────────────────┬──────────────┐
+│ view_date           ┆ metric_location ┆ metric_value │
+│ ---                 ┆ ---             ┆ ---          │
+│ datetime[μs]        ┆ str             ┆ f64          │
+╞═════════════════════╪═════════════════╪══════════════╡
+│ 2029-12-31 00:00:00 ┆ country_1       ┆ 655704.525   │
+│ 2030-01-07 00:00:00 ┆ country_1       ┆ 773642.875   │
+│ 2030-01-14 00:00:00 ┆ country_1       ┆ 114142.075   │
+└─────────────────────┴─────────────────┴──────────────┘
 ```
 
 !!! note "`view_date` is the start of the period"
