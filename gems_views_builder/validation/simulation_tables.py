@@ -6,7 +6,7 @@ from polars import LazyFrame
 from gems_views_builder.input.simulation_table import SIMULATION_TABLE_COLUMNS, SimulationTable
 
 
-def validate_simulation_tables_consistency(simulation_tables: list[SimulationTable]) -> None:
+def validate_simulation_tables(simulation_tables: list[SimulationTable]) -> None:
     for simulation_table in simulation_tables:
         validate_columns(simulation_table.dataframe, SIMULATION_TABLE_COLUMNS, "SimulationTable")
 

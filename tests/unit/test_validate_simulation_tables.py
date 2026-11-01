@@ -5,7 +5,7 @@ import pytest
 from polars import DataFrame
 
 from gems_views_builder.input.simulation_table import FILTERED_SIMULATION_TABLE_COLUMNS, SimulationTable
-from gems_views_builder.validation.simulation_tables import validate_columns, validate_simulation_tables_consistency
+from gems_views_builder.validation.simulation_tables import validate_columns, validate_simulation_tables
 from tests.common import SIMULATION_TABLE_ROW, make_simulation_table_row
 
 
@@ -14,7 +14,7 @@ def test_validate_simulation_tables_consistency_pass() -> None:
     simulation_table = SimulationTable(dataframe=DataFrame([SIMULATION_TABLE_ROW]).lazy())
 
     # Act + Assert
-    validate_simulation_tables_consistency([simulation_table])
+    validate_simulation_tables([simulation_table])
 
 
 def test_validate_simulation_tables_consistency_fails_when_there_are_missing_columns() -> None:
@@ -25,7 +25,7 @@ def test_validate_simulation_tables_consistency_fails_when_there_are_missing_col
 
     # Act + Assert
     with pytest.raises(ValueError, match=r"SimulationTable has invalid columns: Missing columns:.*basis_status"):
-        validate_simulation_tables_consistency([simulation_table])
+        validate_simulation_tables([simulation_table])
 
 
 def test_validate_filter_simulation_table_consistency_pass() -> None:

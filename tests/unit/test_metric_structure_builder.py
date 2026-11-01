@@ -32,25 +32,33 @@ from gems_views_builder.input.library import (
     load_yml_libs,
 )
 from gems_views_builder.input.system import load_system
-from gems_views_builder.input.view_config import load_view_config
+from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig, load_view_config
 from gems_views_builder.metrics_structure_builder import MetricStructureTableBuilder
+from gems_views_builder.multiple_files_collector import collect_yml_from_dir
+
+
+def make_view_config(metrics: list[Metric], location_taxonomy_category: str) -> ViewConfig:
+    return ViewConfig(
+        id="test",
+        location_taxonomy_category=location_taxonomy_category,
+        taxonomy_id="taxonomy",
+        aggregation_patterns=(AggregationPattern(id="hourly", time_granularity=TimeGranularity.HOUR, scenario=False),),
+        metrics=metrics,
+    )
 
 
 def build_components_by_taxonomy_category(
     system: Any,
     library: Any,
-    metrics: list[Metric] | None = None,
-    location_taxonomy_category: str | None = None,
+    view_config: ViewConfig | None = None,
 ) -> dict[str, list[Component]]:
     components = [Component(component) for component in system.components]
-    supply_components_with_taxon(components, associate_models_with_a_taxon({library.id: library}))
+    supply_components_with_taxon(components, associate_models_with_a_taxon([library]))
     components_by_taxon = group_components_by_taxon(components)
     component_port_connections = build_component_port_connections(system.connections)
     supply_components_with_port_connections(components, component_port_connections)
-    if metrics is not None:
-        if location_taxonomy_category is None:
-            raise ValueError("location_taxonomy_category is required when metrics are provided")
-        supply_components_with_locations(components_by_taxon, metrics, location_taxonomy_category)
+    if view_config is not None:
+        supply_components_with_locations(components_by_taxon, view_config)
     return components_by_taxon
 
 
@@ -58,14 +66,13 @@ def build_components_by_taxonomy_category(
 def test_3_components(test_files_root: Path) -> dict[str, Any]:
     test_3 = test_files_root / "test_3"
     library_dir = test_3 / "libraries"
-    system = load_system(test_3 / "system.yml", load_yml_libs(library_dir))
+    system = load_system(test_3 / "system.yml", load_yml_libs(collect_yml_from_dir(library_dir)))
     taxonomy = load_taxonomy(test_3 / "taxonomy.yml")
     library = create_lib_from_yml(load_lib_file(library_dir / "library.yml"))
     catalog = load_catalog(test_3 / "catalogs" / "catalog.yml")
     view_config = load_view_config(test_3 / "view_config.yml")
-    components_by_taxon = build_components_by_taxonomy_category(
-        system, library, list(catalog.metrics.values()), view_config.location_taxonomy_category
-    )
+    view_config.metrics = list(catalog.metrics.values())
+    components_by_taxon = build_components_by_taxonomy_category(system, library, view_config)
     return {
         "system": system,
         "taxonomy": taxonomy,
@@ -276,7 +283,7 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity() -> None:
 
     # Act / Assert
     with pytest.raises(ValueError, match="p0_port"):
-        supply_components_with_locations(components_by_taxon, [metric], "cat")
+        supply_components_with_locations(components_by_taxon, make_view_config([metric], "cat"))
 
 
 def test_location_returns_peer_component(test_3_components: dict[str, Any]) -> None:
@@ -311,7 +318,10 @@ def test_none_location_port_resolves_to_the_component_itself(test_3_components: 
         terms_operator=AggregOperatorType.SUM,
         time_operator=AggregOperatorType.SUM,
     )
-    supply_components_with_locations(test_3_components["components_by_taxon"], [metric], location_taxonomy_category)
+    supply_components_with_locations(
+        test_3_components["components_by_taxon"],
+        make_view_config([metric], location_taxonomy_category),
+    )
     builder = MetricStructureTableBuilder(
         test_3_components["view_config"],
         test_3_components["components_by_taxon"],

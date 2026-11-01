@@ -13,7 +13,7 @@ taxonomy:
         - id: spillage
       ports:
         - id: balance_port
-      constraints:
+      binding-constraints:
         - id: balance
       parameters:
         - id: unsupplied_energy_cost
@@ -27,9 +27,6 @@ taxonomy:
         - id: generation
       ports:
         - id: balance_port
-      properties:
-        - id: company
-        - id: technology
 
     - id: consumption
       parameters:

@@ -4,10 +4,9 @@ view:
   scope:
     location:
       taxonomy-category: balance
-    calendar: calendar
   aggregations-patterns:
     - id: hourly
-      time_granularity: hour
+      time-granularity: hour
       scenario: false
   metrics:
     - id: catalog.LOAD

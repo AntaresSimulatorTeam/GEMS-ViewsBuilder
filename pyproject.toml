@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gems-views-builder"
-version = "0.0.1"
+version = "0.1.1"
 readme = "README.md"
 license = {file = "LICENSE"}
 dependencies = [
@@ -12,7 +12,7 @@ dependencies = [
     "pyarrow>=14.0.0",
     "pyyaml>=6.0.2",
     "pydantic>=2.11.7",
-    "gemspy==0.2.0",
+    "gemspy==0.3.0",
 ]
 authors = [
     { name = "Antoine Oustry" },
@@ -48,6 +48,7 @@ gems-views-builder = "gems_views_builder.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
+Documentation = "https://gems-viewsbuilder.readthedocs.io/en/latest/"
 Repository = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder"
 "Bug Tracker" = "https://github.com/AntaresSimulatorTeam/GEMS-ViewsBuilder/issues"
 

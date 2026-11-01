@@ -14,7 +14,7 @@ One area, `area_1`, simulated for one week (168 hours) and 3 scenarios:
 | `load_1` | `load` | hourly demand, different in each scenario |
 | `gen_base` | `generator` | 350 MW at 20 €/MWh |
 | `gen_peak` | `generator` | 140 MW at 80 €/MWh |
-| `storage_1` | `storage` | 400 MWh, 100 MW, 90 % charging efficiency |
+| `storage_1` | `storage` | 400 MWh, starts half full, 100 MW, 90 % charging efficiency |
 
 ```text
 simple_study/
@@ -31,34 +31,38 @@ simple_study/
     └── area_summary.yml
 ```
 
-The commands on this page run from the example folder, with the tools of the GVB repository environment: `uv run` uses the GemsPy version GVB is pinned to, so the SimulationTable matches what GVB expects.
-
-GemsPy simulates the study and writes the SimulationTable to `output/<run id>/simulation_table_<run id>.csv`:
+From the root of the GVB repository, install the environment, then run the simulation of the simple study with GemsPy:
 
 ```bash
+uv sync
 cd docs/examples/simple_study
 uv run gemspy --study .
 ```
 
-Each row of the SimulationTable is one output of one component, at one time step, for one scenario. For this study the outputs are `generation` (both generators), `load` (the load), `spillage` and `unsupplied_energy` (the area), and `level`, `p_injection` and `p_withdrawal` (the storage).
+Outputs in the Simulation Table:
+
+- `area_1`: `spillage`, `unsupplied_energy`
+- `load_1`: `load`
+- `gen_base`, `gen_peak`: `generation`
+- `storage_1`: `level`, `p_injection`, `p_withdrawal`
 
 ## How GVB builds the Views
 
 For each view config, GVB:
 
-1. **gives each component a taxonomy category**, from the `taxonomy-category` of its model in the library;
-2. **finds the location of each component** used by a metric: the component of the location category it is connected to;
-3. **reads the outputs** named by the metric terms in the SimulationTable, and gives each time step its date from the calendar;
-4. **combines the components** of each location with the `terms-operator`;
+1. **gives each component a taxonomy category**, from the `taxonomy-category` of its model in the library.
+2. **finds the location of each component** used by a metric: the component of the location category it is connected to.
+3. **reads the outputs** named by the metric terms in the Simulation Table, and gives each time step its date from the calendar.
+4. **combines the components** of each location with the `terms-operator`.
 5. **aggregates** each metric to the time granularity of each aggregation pattern with the `time-operator`, then across scenarios if the pattern asks for it, and writes one View per pattern.
 
 The sections below show which file drives each step.
 
 ## The library: taxonomy categories
 
-The library is a copy of the basic models library, with two additions:
+The library is a copy of the basic models library, version 1.0.1, with two additions:
 
-- each model used in the system declares a `taxonomy-category`: `bus` → `balance`, `generator` → `production`, `load` → `consumption`, `storage` → `storage` (step 1). Without it, GVB cannot use the component;
+- each model used in the system declares a `taxonomy-category`: `bus` → `balance`, `generator` → `production`, `load` → `consumption`, `storage` → `storage` (step 1). Without it, GVB stops with an error.
 - the `load` model gets an extra-output `load`. In the basic library, `load` is only a parameter, and metrics can only read variables and extra-outputs.
 
 ```yaml
@@ -100,7 +104,7 @@ The [catalog](https://gems-energy.readthedocs.io/en/latest/user-guide/input-file
 
 ## Calendar
 
-The calendar gives a date to each time step (step 3): `absolute_time_index` 0 to 167, `block`, and `granular_date`, one hour apart from 2030-01-07 00:00.
+The calendar gives a date to each time step (step 3): `absolute_time_index` 0 to 167, `block`, and `granular_date`, one hour apart from 2030-01-07 00:00. That day is a Monday, and GVB starts weeks on Monday, so `weekly_stats` covers exactly one full week.
 
 ```text
 absolute_time_index,block,granular_date
@@ -110,7 +114,7 @@ absolute_time_index,block,granular_date
 ...
 ```
 
-GemsPy solved the study in one block, `0`, so every calendar row has block `0`. GVB keeps a SimulationTable row only if both its time index and its block match a calendar row.
+GemsPy solved the study in one block, `0`, so every calendar row has block `0`. GVB keeps a Simulation Table row only if both its time index and its block match a calendar row.
 
 ## View configs
 
@@ -132,8 +136,10 @@ A [view config](https://gems-energy.readthedocs.io/en/latest/user-guide/input-fi
 
     Two patterns:
 
-    - `daily`: one value per day and per scenario;
+    - `daily`: one value per day and per scenario.
     - `weekly_stats`: one value for the week, with `scenario: true`. Instead of one row per scenario, the View gives statistics over the scenarios: expectation (`exp`), standard deviation (`std`, population formula), `min` and `max`.
+
+    In `weekly_stats`, only scenario 2 has unsupplied energy (1494.4 MWh), so `UNSUPPLIED_ENERGY` has `exp` 498.1, `min` 0 and `max` 1494.4. `STORAGE_LEVEL` is averaged over the week (`time-operator: avg`): its `exp` is 175.05 MWh, between `min` 155.97 and `max` 201.19.
 
 ## Run GVB
 
@@ -148,38 +154,52 @@ uv run gems-views-builder \
   --catalogs-dir      catalogs \
   --calendar          calendar.csv \
   --view-configs      "view-configs/*.yml" \
-  --simulation-tables "output/<run id>/simulation_table_*.csv" \
+  --simulation-tables "output/<run id>/simulation_table/scenario-*.parquet" \
   --output-dir        views
 ```
 
-Replace `<run id>` with the folder GemsPy created, for example `20261021T0847`. The output folder must exist before the run.
+Replace `<run id>` with the folder GemsPy created, for example `20261031T165411-384017`. GemsPy writes the Simulation Table in its `simulation_table/` folder: one Parquet file per scenario, and `scenario-common.parquet` for the outputs that do not depend on the scenario. The output folder must exist before the run.
 
-GVB writes three Views in `views/`: one for `area_hourly`, and one for each pattern of `area_summary`. The options are described on the [Command line](../user-guide/command-line.md) page, and the columns of a View on the GEMS [Views](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/views/) page.
+GVB writes three Views in `views/`: one for `area_hourly`, and one for each pattern of `area_summary`. Each file is named `<view id>--<pattern id>--<timestamp>`:
+
+```text
+views/
+├── area_hourly--hourly--20261031T155617.parquet
+├── area_summary--daily--20261031T155617.parquet
+└── area_summary--weekly_stats--20261031T155617.parquet
+```
+
+The options are described on the [Command line](../user-guide/command-line.md) page, and the columns of a View on the GEMS [Views](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/views/) page.
 
 ## The Views
 
-The tables below show `metric_value` for a few rows, with one column per metric.
+Read the hourly View with polars, and print `PRODUCTION` of scenario 2 for the first 5 hours:
 
-### Hourly, scenario 2
+```python
+import polars as pl
 
-| view_date | LOAD | PRODUCTION | UNSUPPLIED_ENERGY | STORAGE_LEVEL |
-|---|---|---|---|---|
-| 2030-01-07 00:00 | 277.9 | 350.0 | 0.0 | 200.0 |
-| 2030-01-07 01:00 | 274.0 | 350.0 | 0.0 | 264.9 |
-| 2030-01-07 02:00 | 279.5 | 350.0 | 0.0 | 333.3 |
-| … | | | | |
-| 2030-01-07 11:00 | 574.1 | 490.0 | 84.1 | 260.8 |
-| 2030-01-07 12:00 | 598.3 | 490.0 | 18.8 | 260.8 |
+view = pl.read_parquet("views/area_hourly--hourly--*.parquet")
+print(
+    view.filter(pl.col("metric_id") == "PRODUCTION", pl.col("scenario_id") == 2)
+    .sort("view_date")
+    .select("view_date", "scenario_id", "metric_value")
+    .head()
+)
+```
 
-- At night, production is above the load and the difference charges the storage: its level rises from its initial 200 MWh.
-- From 11:00, `PRODUCTION` is 490 MW: both generators at full power, added by the `terms-operator`. With the 400 MWh of the storage, that is still not enough for the whole peak, so some load is not supplied whatever the order. The solver leaves the storage idle at 11:00 and discharges it in the next hours.
+```text
+┌─────────────────────┬─────────────┬──────────────┐
+│ view_date           ┆ scenario_id ┆ metric_value │
+│ ---                 ┆ ---         ┆ ---          │
+│ datetime[μs]        ┆ i64         ┆ f64          │
+╞═════════════════════╪═════════════╪══════════════╡
+│ 2030-01-07 00:00:00 ┆ 2           ┆ 350.0        │
+│ 2030-01-07 01:00:00 ┆ 2           ┆ 350.0        │
+│ 2030-01-07 02:00:00 ┆ 2           ┆ 350.0        │
+│ 2030-01-07 03:00:00 ┆ 2           ┆ 318.422222   │
+│ 2030-01-07 04:00:00 ┆ 2           ┆ 350.0        │
+└─────────────────────┴─────────────┴──────────────┘
+```
 
-### Weekly statistics over the scenarios
-
-| metric_id | exp | std | min | max |
-|---|---|---|---|---|
-| LOAD | 67863.2 | 3517.1 | 63866.4 | 72425.7 |
-| PRODUCTION | 67676.2 | 2884.6 | 64177.5 | 71242.4 |
-| UNSUPPLIED_ENERGY | 498.1 | 704.5 | 0.0 | 1494.4 |
-
-Only scenario 2 has unsupplied energy: the `min` is 0 and the `max` is 1494.4 MWh. `STORAGE_LEVEL` is not in this view config.
+!!! note "Run again"
+    Each GVB run writes new files with a new timestamp, so after a second run the pattern above reads both and every row appears twice. Empty `views/` before running GVB again, for example with `rm -rf views/*`. In the same way, each GemsPy run creates a new `output/<run id>/` folder: use the newest one in the GVB command.
