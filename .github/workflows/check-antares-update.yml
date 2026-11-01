@@ -1,0 +1,159 @@
+# Check once a week for a new stable Antares Simulator release, and open an issue in GVB if one is found.
+# The reference version is antares_simulator_version in dependencies.json.
+
+name: Check Antares Simulator Update
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read current version
+        id: current
+        run: |
+          VERSION=$(jq -r '.antares_simulator_version' dependencies.json)
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "ERROR: antares_simulator_version not found in dependencies.json"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Current version: $VERSION"
+
+      - name: Fetch latest stable Antares release
+        id: latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAGS=$(curl -sf \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/AntaresSimulatorTeam/Antares_Simulator/tags?per_page=100")
+
+          if [ -z "$TAGS" ]; then
+            echo "ERROR: Could not fetch tags from GitHub API"
+            exit 1
+          fi
+
+          LATEST=$(echo "$TAGS" \
+            | jq -r '.[].name' \
+            | grep -v -i -E 'rc|alpha|beta|continuous|nightly' \
+            | sed 's/^v//' \
+            | sort -V \
+            | tail -1)
+
+          if [ -z "$LATEST" ]; then
+            echo "ERROR: Could not parse latest stable version"
+            exit 1
+          fi
+
+          echo "version=$LATEST" >> "$GITHUB_OUTPUT"
+          echo "Latest stable version: $LATEST"
+
+      - name: Compare versions
+        id: compare
+        env:
+          CURRENT: ${{ steps.current.outputs.version }}
+          LATEST: ${{ steps.latest.outputs.version }}
+        run: |
+          echo "Current: $CURRENT  |  Latest: $LATEST"
+          if [ "$CURRENT" = "$LATEST" ]; then
+            echo "update=false" >> "$GITHUB_OUTPUT"
+            echo "Already up to date."
+          else
+            echo "update=true" >> "$GITHUB_OUTPUT"
+            echo "New version detected: $LATEST"
+          fi
+
+      - name: Create GitHub Issue
+        if: steps.compare.outputs.update == 'true'
+        uses: actions/github-script@v9
+        env:
+          CURRENT: ${{ steps.current.outputs.version }}
+          LATEST: ${{ steps.latest.outputs.version }}
+        with:
+          script: |
+            const latest = process.env.LATEST;
+            const current = process.env.CURRENT;
+            const { owner, repo } = context.repo;
+            const title = `[ANTARES UPDATE] New release: v${latest}`;
+
+            // Look in open and closed issues, so that a closed issue is not opened again every week.
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: 'all', per_page: 100,
+            });
+            const duplicate = issues.find(i => !i.pull_request && i.title === title);
+            if (duplicate) {
+              console.log(`Issue already exists: #${duplicate.number} — skipping.`);
+              return;
+            }
+
+            let releaseNotes = '_Could not fetch release notes._';
+            try {
+              const release = await github.rest.repos.getReleaseByTag({
+                owner: 'AntaresSimulatorTeam',
+                repo: 'Antares_Simulator',
+                tag: `v${latest}`,
+              });
+              releaseNotes = release.data.body || '_No release notes provided._';
+            } catch (e) {
+              console.log(`Could not fetch release notes: ${e.message}`);
+            }
+
+            const body = [
+              '> This issue was automatically created by the `check-antares-update` workflow.',
+              '',
+              '## New Version Detected',
+              '',
+              '| | |',
+              '|---|---|',
+              `| **Previous version** | \`${current}\` |`,
+              `| **New version** | \`${latest}\` |`,
+              `| **Release page** | https://github.com/AntaresSimulatorTeam/Antares_Simulator/releases/tag/v${latest} |`,
+              '',
+              'GVB does not run Antares Simulator, but it reads the SimulationTable written by its GEMS modeler.',
+              '',
+              '---',
+              '',
+              '## Release Notes',
+              '',
+              releaseNotes,
+              '',
+              '---',
+              '',
+              '## Triage',
+              '',
+              '> Review the release notes for changes to the SimulationTable written by the GEMS modeler.',
+              '',
+              '- [ ] Release notes reviewed',
+              '- [ ] Issue opened (if the SimulationTable format changed: columns, `block`, output names)',
+              '- [ ] No action needed (if the release has no impact on GVB)',
+              '',
+              '---',
+              '',
+              '## Decision',
+              '',
+              `- [ ] Approve version — update \`antares_simulator_version\` in \`dependencies.json\` to \`${latest}\``,
+              '- [ ] Reject version — close this issue with an explanation',
+              '',
+              '---',
+              '',
+              '## Notes',
+              '',
+              '_Add findings and observations here._',
+            ].join('\n');
+
+            const result = await github.rest.issues.create({ owner, repo, title, body });
+
+            console.log(`Issue created: #${result.data.number} — ${result.data.html_url}`);
