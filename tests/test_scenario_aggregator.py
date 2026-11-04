@@ -10,14 +10,17 @@ import polars as pl
 import pytest
 from pytest import approx
 
+from gems_views_builder import Metric
+from gems_views_builder.aggregators.columns_additioner import ColumnsAdditioner
+from gems_views_builder.aggregators.location_filtering import LocationFiltering
 from gems_views_builder.aggregators.scenario_aggregator import (
+    NullScenarioAggregation,
     ScenarioAggregation,
     ScenarioAggregator,
-    ScenarioColumnsAddition,
     make_scenario_operator,
 )
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity
-from gems_views_builder.metric_view import TemporalMetricView
+from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
 
 def make_pattern(scenario: bool = False, location_filter: list[str] | None = None) -> AggregationPattern:
@@ -29,7 +32,7 @@ def make_pattern(scenario: bool = False, location_filter: list[str] | None = Non
     )
 
 
-def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -> TemporalMetricView:
+def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -> MetricView:
     """Minimal parquet for the scenario step: metric_id, metric_location, breakdown_properties, view_date."""
     n = len(location_values)
     dataframe = pl.DataFrame(
@@ -50,37 +53,36 @@ def make_metric_view(tmp_path: Path, location_values: list[tuple[str, float]]) -
             "metric_value": pl.Float64,
         },
     )
-    path = tmp_path / "temporal.parquet"
-    dataframe.write_parquet(path)
-    return TemporalMetricView(persistence_path=path)
+    save_path = tmp_path / "temporal.parquet"
+    return PersistentMetricView(lazyframe=dataframe.lazy(), path=save_path)
 
 
-def temporal_metric_view(tmp_path: Path, values: list[float]) -> TemporalMetricView:
+def persistent_metric_view(tmp_path: Path, values: list[float]) -> MetricView:
     return make_metric_view(tmp_path, [("L", value) for value in values])
 
 
 def test_make_scenario_operator_returns_columns_addition_when_disabled() -> None:
-    assert isinstance(make_scenario_operator(False), ScenarioColumnsAddition)
+    assert isinstance(make_scenario_operator(False), NullScenarioAggregation)
 
 
 def test_make_scenario_operator_returns_aggregation_when_enabled() -> None:
     assert isinstance(make_scenario_operator(True), ScenarioAggregation)
 
 
+
 def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -> None:
     # Arrange
     values = [10.0, 20.0, 30.0]
-    metric_view = temporal_metric_view(tmp_path, values)
-    original_path = metric_view.persistence_path
-    aggregator = ScenarioAggregator(make_pattern(scenario=False))
+    metric_view = persistent_metric_view(tmp_path, values)
+    aggregator = ScenarioAggregator(False)
+    columns_additioner = ColumnsAdditioner(False)
 
     # Act
-    result = aggregator.run(metric_view)
+    scenario_view = aggregator.run(metric_view)
+    view = columns_additioner.run(scenario_view)
 
     # Assert
-    df = pl.read_parquet(result.persistence_path).sort("scenario_id")
-    assert result.persistence_path != original_path
-    assert metric_view.persistence_path == original_path
+    df = view.lazy_data_frame().sort("scenario_id").collect()
     assert "scenario_aggregation" in df.columns and "scenario_stat" in df.columns
     assert df.height == 3
     assert df["scenario_aggregation"].to_list() == [False, False, False]
@@ -92,17 +94,16 @@ def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -
 def test_to_scenario_view_with_aggregation_emits_exp_std_min_max(tmp_path: Path) -> None:
     # Arrange
     values = [10.0, 20.0, 30.0]
-    metric_view = temporal_metric_view(tmp_path, values)
-    original_path = metric_view.persistence_path
-    aggregator = ScenarioAggregator(make_pattern(scenario=True))
+    metric_view = persistent_metric_view(tmp_path, values)
+    aggregator = ScenarioAggregator(True)
+    columns_additioner = ColumnsAdditioner(True)
 
     # Act
     result = aggregator.run(metric_view)
+    view = columns_additioner.run(result)
 
     # Assert
-    df = pl.read_parquet(result.persistence_path)
-    assert result.persistence_path != original_path
-    assert metric_view.persistence_path == original_path
+    df = view.lazy_data_frame().collect()
     assert df.height == 4
     assert set(df["scenario_stat"].to_list()) == {"exp", "std", "min", "max"}
     assert df["scenario_aggregation"].to_list() == [True] * 4
@@ -131,11 +132,17 @@ def test_location_filter(
 ) -> None:
     # Arrange
     metric_view = make_metric_view(tmp_path, [("busA", 100.0), ("busB", 50.0), ("busC", 999.0)])
-    scenario_aggregator = ScenarioAggregator(make_pattern(scenario=scenario, location_filter=locations))
+    dummy_metric = Metric(id="my-metric", terms=[])
+    aggregation_pattern = make_pattern(scenario=scenario, location_filter=locations)
+    scenario_aggregator = ScenarioAggregator(scenario)
+    columns_additioner = ColumnsAdditioner(scenario)
+    location_filtering = LocationFiltering(aggregation_pattern)
 
     # Act
-    result = scenario_aggregator.run(metric_view)
+    scenario_view = scenario_aggregator.run(metric_view)
+    cols_addition_view = columns_additioner.run(scenario_view)
+    view = location_filtering.run(cols_addition_view, dummy_metric)
 
     # Assert
-    df = pl.read_parquet(result.persistence_path)
+    df = view.lazy_data_frame().collect()
     assert set(df["metric_location"].to_list()) == expected_locations

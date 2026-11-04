@@ -2,12 +2,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from gems_views_builder.view.accumulate_views import accumulate_on_disk
-from gems_views_builder.view.view_sinker import CsvViewSinker, ParquetViewSinker, View, ViewSinker
+from gems_views_builder.view.view_sinker import CsvViewSinker, ParquetViewSinker, ViewSinker
 from gems_views_builder.view.view_sinker_factory import ViewSinkerFactory
 from gems_views_builder.view.views_builder import ViewBuilder
 
 __all__ = [
-    "View",
     "accumulate_on_disk",
     "ViewSinker",
     "ParquetViewSinker",
