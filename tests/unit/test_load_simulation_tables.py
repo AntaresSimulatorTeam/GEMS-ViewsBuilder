@@ -7,6 +7,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder.input.simulation_table import (
+    SIMULATION_TABLE_SCHEMA,
     SimulationTable,
     load_simulation_table,
     load_simulation_tables,
@@ -15,7 +16,7 @@ from tests.common import SIMULATION_TABLE_ROW
 
 
 def write_simulation_table(path: Path) -> None:
-    pl.DataFrame([SIMULATION_TABLE_ROW]).write_parquet(path)
+    pl.DataFrame([SIMULATION_TABLE_ROW]).cast(pl.Schema(SIMULATION_TABLE_SCHEMA)).write_parquet(path)
 
 
 def test_load_simulation_tables_returns_one_table_per_path_in_order(tmp_path: Path) -> None:
