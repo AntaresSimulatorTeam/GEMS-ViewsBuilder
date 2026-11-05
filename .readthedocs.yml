@@ -4,12 +4,6 @@ version: 2
 
 build:
   os: ubuntu-22.04
-  tools:
-    # RTD only accepts major.minor here. The docs are actually built with the
-    # uv-managed 3.13.18 interpreter below, which includes the ssl denylist for
-    # the compromised eMudhra/emSign intermediates:
-    # https://discuss.python.org/t/109576
-    python: "3.13"
   jobs:
     create_environment:
       # uv >= 0.13.6 is required for the emSign fix; keep in sync with CI.
