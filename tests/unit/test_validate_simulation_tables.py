@@ -4,10 +4,12 @@
 import pytest
 from polars import DataFrame
 
-from gems_views_builder.input.simulation_table import FILTERED_SIMULATION_TABLE_COLUMNS, SimulationTable
+from gems_views_builder.input.simulation_table import SIMULATION_TABLE_COLUMNS, SimulationTable
 from gems_views_builder.validation.simulation_tables import validate_columns, validate_simulation_tables
 from tests.common import SIMULATION_TABLE_ROW, make_simulation_table_row
 
+# Filtered simulation table has all SIMULATION_TABLE columns plus granular_date from the calendar join
+FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {"granular_date"}
 
 def test_validate_simulation_tables_consistency_pass() -> None:
     # Arrange

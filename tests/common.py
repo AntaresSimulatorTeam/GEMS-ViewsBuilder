@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 SIMULATION_TABLE_ROW: dict[str, object] = {
-    "block": "b1",
+    "block": 1,
     "component": "comp",
     "output": "out",
     "absolute_time_index": 1,
