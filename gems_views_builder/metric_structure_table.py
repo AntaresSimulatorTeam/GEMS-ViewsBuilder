@@ -13,6 +13,7 @@ from gems_views_builder.common import (
     PARQUET_COMPRESSION_LEVEL,
     PARQUET_ROW_GROUP_SIZE,
 )
+from gems_views_builder.pair_id import make_pair_id
 
 METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
     {
@@ -24,6 +25,7 @@ METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
         "weight_output_id": pl.Utf8,
     }
 )
+# pair_id (Int64) is derived from (component, output) with MurmurHash3, see gems_views_builder.pair_id.
 
 
 class MetricStructureTable:
@@ -34,7 +36,7 @@ class MetricStructureTable:
         self._tmp_root = Path(tempfile.mkdtemp())
         logging.info(f"[{metric_id}] Metric structure table has {len(rows)} rows")
 
-        self.rows = pl.DataFrame(rows, schema=METRIC_STRUCTURE_TABLE_SCHEMA)
+        self.rows = with_pair_id(pl.DataFrame(rows, schema=METRIC_STRUCTURE_TABLE_SCHEMA))
         metric_structure_dir = self._tmp_root / "views" / "metric_structure"
         metric_structure_dir.mkdir(parents=True, exist_ok=True)
         file_path = metric_structure_dir / f"{metric_id}.parquet"
@@ -53,3 +55,8 @@ class MetricStructureTable:
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric structure {self._tmp_root}")
         shutil.rmtree(self._tmp_root, ignore_errors=True)
+
+
+def with_pair_id(rows: pl.DataFrame) -> pl.DataFrame:
+    pair_ids = [make_pair_id(c, o) for c, o in zip(rows["component"], rows["output"], strict=True)]
+    return rows.with_columns(pl.Series("pair_id", pair_ids, dtype=pl.Int64))

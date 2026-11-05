@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 from gems_views_builder.input.catalog import Metric, Term
@@ -20,17 +21,41 @@ class MetricStructureTableBuilder:
         rows: list[dict[str, object]] = []
         for term in metric.terms:
             log_term_processing(metric, term)
-            for c in self.components_by_taxon[term.taxonomy_category]:
-                if c.match(metric.filter) and c.is_located_at(
-                    term.location_port, self.view_config.location_taxonomy_category
-                ):
-                    location_component = c.location(term.location_port, self.view_config.location_taxonomy_category)
-                    locations = [location_component.id] + location_component.match_extra_locations(
-                        self.view_config.extra_locations
-                    )
-                    breakdown_prop = c.format_breakdown_properties(metric.breakdown)
-                    rows.extend(make_row(metric, term, c, location, breakdown_prop) for location in locations)
+            for c in self.matching_components(metric, term):
+                location_component = c.location(term.location_port, self.view_config.location_taxonomy_category)
+                locations = [location_component.id] + location_component.match_extra_locations(
+                    self.view_config.extra_locations
+                )
+                breakdown_prop = c.format_breakdown_properties(metric.breakdown)
+                rows.extend(make_row(metric, term, c, location, breakdown_prop) for location in locations)
         return MetricStructureTable(rows, metric.id)
+
+    def needed_pairs(self, metric: Metric) -> set[tuple[str, str]]:
+        """(component, output) pairs this metric reads from the simulation table."""
+        return {(c.id, term.output_id) for term in metric.terms for c in self.matching_components(metric, term)}
+
+    def matching_components(self, metric: Metric, term: Term) -> Iterator[Component]:
+        for c in self.components_by_taxon[term.taxonomy_category]:
+            if c.match(metric.filter) and c.is_located_at(
+                term.location_port, self.view_config.location_taxonomy_category
+            ):
+                yield c
+
+
+def collect_needed_pairs(
+    view_configs: list[ViewConfig],
+    components_by_taxon: dict[str, list[Component]],
+) -> set[tuple[str, str]]:
+    """Union of (component, output) pairs read by every metric of every view config.
+
+    Components must already be supplied with locations for all ``view_configs``.
+    """
+    pairs: set[tuple[str, str]] = set()
+    for view_config in view_configs:
+        builder = MetricStructureTableBuilder(view_config, components_by_taxon)
+        for metric in view_config.metrics:
+            pairs |= builder.needed_pairs(metric)
+    return pairs
 
 
 def log_term_processing(metric: Metric, term: Term) -> None:

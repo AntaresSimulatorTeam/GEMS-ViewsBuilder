@@ -30,7 +30,9 @@ def test_validate_simulation_tables_consistency_fails_when_there_are_missing_col
 
 def test_validate_filter_simulation_table_consistency_pass() -> None:
     # Arrange
-    dataframe = DataFrame([make_simulation_table_row(granular_date="2026-01-01")]).lazy()
+    row = make_simulation_table_row(granular_date="2026-01-01", pair_id=1, pair_bucket=1)
+    del row["component"], row["output"]
+    dataframe = DataFrame([row]).lazy()
 
     # Act + Assert
     validate_columns(dataframe, FILTERED_SIMULATION_TABLE_COLUMNS, "Filtered simulation table")

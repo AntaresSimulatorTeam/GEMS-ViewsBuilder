@@ -22,6 +22,7 @@ from gems_views_builder.input.view_building_input import (
 from gems_views_builder.input.view_config import populate_view_configs_with_metrics
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
+from gems_views_builder.metrics_structure_builder import collect_needed_pairs
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.validation.input_validation import validate_input_data
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
@@ -44,9 +45,14 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     populate_view_configs_with_metrics(raw_input_data.view_configs, raw_input_data.catalogs)
     components_by_taxon = build_components_by_taxon(raw_input_data)
 
+    # Resolve locations for every view config up front, so the exact set of (component, output)
+    # pairs read by any metric is known before the simulation table is filtered and clustered.
     for view_config in raw_input_data.view_configs:
         supply_components_with_locations(components_by_taxon, view_config)
-        filtered_st = make_filtered_simulation_table(raw_input_data)
+    needed_pairs = collect_needed_pairs(raw_input_data.view_configs, components_by_taxon)
+    filtered_st = make_filtered_simulation_table(raw_input_data, needed_pairs)
+
+    for view_config in raw_input_data.view_configs:
         view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)
         view_builder = ViewBuilder(view_building_input)
         metric_views = view_builder.build()

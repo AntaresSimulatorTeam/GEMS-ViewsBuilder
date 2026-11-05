@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
-from polars import LazyFrame
+from polars import LazyFrame, PartitionBy
 
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
@@ -16,7 +16,7 @@ PARQUET_ROW_GROUP_SIZE = 64_000
 LOG_DIR = Path.cwd() / "logs"
 
 
-def sink_to_parquet(dataframe: LazyFrame, path: Path) -> None:
+def sink_to_parquet(dataframe: LazyFrame, path: Path | PartitionBy) -> None:
     dataframe.sink_parquet(
         path,
         compression=PARQUET_COMPRESSION,

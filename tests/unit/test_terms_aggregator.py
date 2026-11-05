@@ -10,14 +10,15 @@ from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.simulation_table import PersistentSimulationTable, join
 from gems_views_builder.metric_structure_table import MetricStructureTable
+from gems_views_builder.pair_id import make_pair_id
 
 
 def create_filtered_st(values: list[float], tmp_path: Path) -> PersistentSimulationTable:
     n = len(values)
     dataframe = pl.DataFrame(
         {
-            "component": ["comp"] * n,
-            "output": ["out"] * n,
+            "pair_id": [make_pair_id("comp", "out")] * n,
+            "pair_bucket": [0] * n,
             "absolute_time_index": [1] * n,
             "block_time_index": [1] * n,
             "scenario_index": [0] * n,
@@ -27,7 +28,7 @@ def create_filtered_st(values: list[float], tmp_path: Path) -> PersistentSimulat
             "basis_status": ["B"] * n,
         }
     ).lazy()
-    return PersistentSimulationTable(dataframe=dataframe, file_path=tmp_path / "dummy.parquet")
+    return PersistentSimulationTable(dataframe=dataframe, dir_path=tmp_path, bucket_count=1)
 
 
 def create_metric_structure_table() -> MetricStructureTable:
