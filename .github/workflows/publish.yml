@@ -22,7 +22,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           version: 0.13.7
-          python-version: "3.11"
+          python-version: "3.11.18"
 
       - name: Build sdist and wheel
         run: uv build
