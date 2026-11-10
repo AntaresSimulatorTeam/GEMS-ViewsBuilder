@@ -132,6 +132,21 @@ def test_view_config_aggregation_patterns_validator(view_config: ViewConfig) -> 
     validate_view_configs_aggregation_patterns([view_config])
 
 
+def test_load_view_config_accepts_hyphenated_aggregation_id(tmp_path: Path, view_config_yaml: dict[str, Any]) -> None:
+    view_config_yaml["aggregations-patterns"] = [
+        {"id": "hour-ind", "time-granularity": "hour", "scenario": False, "location-filter": ["it"]}
+    ]
+
+    view_config = load_view_config(write_view_config(tmp_path, view_config_yaml))
+    validate_view_configs_aggregation_patterns([view_config])
+
+    aggregation_pattern = view_config.aggregation_patterns[0]
+    assert aggregation_pattern.id == "hour-ind"
+    assert aggregation_pattern.time_granularity.value == "hour"
+    assert aggregation_pattern.scenario is False
+    assert aggregation_pattern.location_filter == ["it"]
+
+
 def make_catalog(catalog_id: str, metric_ids: list[str]) -> Catalog:
     return Catalog(
         id=catalog_id,

@@ -47,6 +47,7 @@ Each YAML file is read against its GEMS format. **Unknown fields are rejected**,
 
 - root key `view:`
 - the `id` contains only letters, digits and `_`  because it is used in the View file names
+- each aggregation pattern `id` contains only letters, digits, `_` and `-`, for example `hour-ind`
 - at least one aggregation pattern and one metric
 - the time granularity is one of `hour`, `day`, `week`, `month`, `year`
 

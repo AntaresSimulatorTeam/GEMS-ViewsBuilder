@@ -37,7 +37,7 @@ class Scope(ViewBuilderBasedModel):
 
 
 class AggregationPattern(ViewBuilderBasedModel):
-    id: str = Field(pattern=r"^[A-Za-z0-9_]+$")
+    id: str = Field(pattern=r"^[A-Za-z0-9_-]+$")
     time_granularity: TimeGranularity
     scenario: bool
     location_filter: list[str] | None = Field(default=None)
