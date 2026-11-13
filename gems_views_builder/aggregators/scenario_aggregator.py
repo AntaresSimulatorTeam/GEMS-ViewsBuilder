@@ -58,9 +58,7 @@ class NullScenarioAggregation(ScenarioOperator):
 
 
 def make_scenario_operator(scenario: bool) -> ScenarioOperator:
-    if scenario:
-        return ScenarioAggregation()
-    return NullScenarioAggregation()
+    return ScenarioAggregation() if scenario else NullScenarioAggregation()
 
 
 class ScenarioAggregator:
