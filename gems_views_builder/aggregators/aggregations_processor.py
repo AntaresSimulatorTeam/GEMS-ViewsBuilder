@@ -6,6 +6,7 @@ import polars as pl
 
 from gems_views_builder.aggregators.pattern_aggregator import AggregationPatternList
 from gems_views_builder.aggregators.terms_aggregator import TermsAggregator
+from gems_views_builder.common import timed_step
 from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_view import TemporalMetricView
@@ -17,6 +18,8 @@ class AggregationProcessor:
         self.aggregation_patterns = AggregationPatternList(view_config)
 
     def run(self, structured_simulation_table: pl.LazyFrame, metric: Metric) -> list[TemporalMetricView]:
-        metric_view = self.terms_aggregator.run(structured_simulation_table, metric)
-        metric_views = self.aggregation_patterns.run(metric_view, metric)
+        with timed_step(f"[{metric.id}] join + terms aggregation"):
+            metric_view = self.terms_aggregator.run(structured_simulation_table, metric)
+        with timed_step(f"[{metric.id}] all aggregation patterns"):
+            metric_views = self.aggregation_patterns.run(metric_view, metric)
         return metric_views

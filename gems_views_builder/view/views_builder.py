@@ -1,6 +1,7 @@
 # Copyright 2007-2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 
+from gems_views_builder.common import timed_step
 from gems_views_builder.input.simulation_table import join
 from gems_views_builder.input.view_building_input import ViewBuildingInput
 from gems_views_builder.input.view_config import ViewConfig
@@ -22,7 +23,8 @@ class ViewBuilder:
     def build(self) -> list[TemporalMetricView]:
         metric_views: list[TemporalMetricView] = []
         for metric in self.view_config.metrics:
-            metric_structure_table = self.metric_structure_table_builder.build(metric)
+            with timed_step(f"[{metric.id}] metric structure table"):
+                metric_structure_table = self.metric_structure_table_builder.build(metric)
             structured_simulation_table = join(metric_structure_table, self.filtered_st)
             views = self.aggregation_processor.run(structured_simulation_table, metric)
             metric_views.extend(views)

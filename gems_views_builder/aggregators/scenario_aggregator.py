@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from uuid import uuid4
 
 import polars as pl
@@ -33,18 +35,20 @@ AGGREGATION_OPERATORS = [
 
 @dataclass
 class ScenarioOperator(ABC):
-    @abstractmethod
     def run(self, temporal_metric_view: TemporalMetricView) -> pl.LazyFrame:
+        return self.apply(pl.scan_parquet(temporal_metric_view.persistence_path))
+
+    @abstractmethod
+    def apply(self, view: pl.LazyFrame) -> pl.LazyFrame:
         pass
 
 
 class ScenarioAggregation(ScenarioOperator):
-    def run(self, temporal_metric_view: TemporalMetricView) -> pl.LazyFrame:
+    def apply(self, view: pl.LazyFrame) -> pl.LazyFrame:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
         return (
-            pl.scan_parquet(temporal_metric_view.persistence_path)
-            .group_by(index_columns)
+            view.group_by(index_columns)
             .agg(AGGREGATION_OPERATORS)
             .unpivot(
                 on=[op.value for op in Operator],
@@ -62,9 +66,9 @@ class ScenarioAggregation(ScenarioOperator):
 
 
 class ScenarioColumnsAddition(ScenarioOperator):
-    def run(self, temporal_metric_view: TemporalMetricView) -> pl.LazyFrame:
+    def apply(self, view: pl.LazyFrame) -> pl.LazyFrame:
         logging.info("Scenario aggregation disabled, preserving per-scenario rows")
-        return pl.scan_parquet(temporal_metric_view.persistence_path).with_columns(
+        return view.with_columns(
             [
                 pl.lit(False, dtype=pl.Boolean).alias("scenario_aggregation"),
                 pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
@@ -76,16 +80,28 @@ def make_scenario_operator(scenario_aggregation: bool) -> ScenarioOperator:
     return ScenarioAggregation() if scenario_aggregation else ScenarioColumnsAddition()
 
 
+def aggregate_scenarios(input_path: Path, output_path: Path, scenario: bool, locations: list[str] | None) -> float:
+    """Apply the location filter, then the scenario operator; return the elapsed seconds.
+
+    Filtering first means the scenario statistics are only computed for the kept locations.
+    Takes file paths, not metric views: a view deletes its file when garbage-collected, so worker
+    threads must not own one.
+    """
+    start = time.perf_counter()
+    view = apply_location_filter(pl.scan_parquet(input_path), LocationFilter(locations))
+    view = make_scenario_operator(scenario).apply(view)
+    sink_to_parquet(view, output_path)
+    return time.perf_counter() - start
+
+
 class ScenarioAggregator:
     def __init__(self, aggregation_pattern: AggregationPattern):
         self.aggregation_pattern_id = aggregation_pattern.id
-        self.scenario_operator = make_scenario_operator(aggregation_pattern.scenario)
+        self.scenario = aggregation_pattern.scenario
         self.location_filter = LocationFilter(aggregation_pattern.location_filter)
 
     def run(self, metric_view: TemporalMetricView) -> TemporalMetricView:
         new_path = metric_view.persistence_path.parent / f"{uuid4()}.parquet"
-        view = self.scenario_operator.run(metric_view)
-        view = apply_location_filter(view, self.location_filter)
-        sink_to_parquet(view, new_path)
+        aggregate_scenarios(metric_view.persistence_path, new_path, self.scenario, self.location_filter.locations)
         logging.info(f"Scenario view written to {new_path}")
         return TemporalMetricView(persistence_path=new_path, aggregation_pattern_id=self.aggregation_pattern_id)

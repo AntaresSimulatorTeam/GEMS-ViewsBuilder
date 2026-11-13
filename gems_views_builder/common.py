@@ -3,6 +3,9 @@
 
 import logging
 import sys
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
@@ -23,6 +26,28 @@ def sink_to_parquet(dataframe: LazyFrame, path: Path | PartitionBy) -> None:
         compression_level=PARQUET_COMPRESSION_LEVEL,
         row_group_size=PARQUET_ROW_GROUP_SIZE,
     )
+
+
+def peak_rss_gib() -> float:
+    """Peak resident memory of this process so far, in GiB (0 where unavailable)."""
+    try:
+        import resource
+    except ImportError:  # Windows
+        return 0.0
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    # Linux reports KiB, macOS reports bytes.
+    return peak / 2**30 if sys.platform == "darwin" else peak / 2**20
+
+
+@contextmanager
+def timed_step(label: str) -> Iterator[None]:
+    """Log the wall time of the enclosed block and the process's peak memory so far."""
+    start = time.perf_counter()
+    try:
+        yield
+    finally:
+        elapsed = time.perf_counter() - start
+        logging.info(f"TIMING {label}: {elapsed:.3f}s (peak RSS {peak_rss_gib():.2f} GiB)")
 
 
 def make_log_file(log_dir: Path | None = None) -> Path:
