@@ -41,7 +41,6 @@ def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> Metr
 def make_metric(time_operator: AggregOperatorType) -> Metric:
     return Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=time_operator)
 
-
 @pytest.mark.parametrize(
     ("time_granularity", "input_date", "expected_date"),
     [
@@ -64,7 +63,6 @@ def test_date_column_function(
 
     # Assert
     assert cast(datetime, df.select(date_col).item()) == expected_date
-
 
 @pytest.mark.parametrize(
     ("agg_operator", "values", "expected"),

@@ -3,7 +3,6 @@
 
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from enum import Enum
 
 import polars as pl
@@ -26,7 +25,6 @@ AGGREGATION_OPERATORS = [
     pl.col("metric_value").max().alias(Operator.MAX.value),
 ]
 
-@dataclass
 class ScenarioOperator(ABC):
     @abstractmethod
     def run(self, metric_view: MetricView) -> MetricView:
