@@ -16,7 +16,7 @@ from gems_views_builder.aggregators.time_aggregator import (
 )
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
-from gems_views_builder.metric_view import MetricView
+from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
 
 def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> MetricView:
@@ -34,14 +34,12 @@ def make_metric_view(rows: list[tuple[datetime, float]], tmp_path: Path) -> Metr
         },
         schema_overrides={"granular_date": pl.Datetime},
     )
-    path = tmp_path / "granular.parquet"
-    dataframe.write_parquet(path)
-    return MetricView(path)
+    save_path = tmp_path / "granular.parquet"
+    return PersistentMetricView(lazyframe=dataframe.lazy(), path=save_path)
 
 
 def make_metric(time_operator: AggregOperatorType) -> Metric:
     return Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=time_operator)
-
 
 @pytest.mark.parametrize(
     ("time_granularity", "input_date", "expected_date"),
@@ -65,7 +63,6 @@ def test_date_column_function(
 
     # Assert
     assert cast(datetime, df.select(date_col).item()) == expected_date
-
 
 @pytest.mark.parametrize(
     ("agg_operator", "values", "expected"),
@@ -96,7 +93,7 @@ def test_truncation_groups_by_window(tmp_path: Path) -> None:
     out_metric_view = aggregator.run(metric_view, metric)
 
     # Assert
-    df = pl.read_parquet(out_metric_view.persistence_path)
+    df = out_metric_view.lazy_data_frame().collect()
     assert df.shape[0] == 1
     assert df["view_date"][0] == datetime(2026, 1, 1, 0, 0)
     assert df["metric_value"][0] == approx(30.0)
@@ -114,7 +111,7 @@ def test_temporal_aggregation_avg(tmp_path: Path) -> None:
     out_metric_view = aggregator.run(metric_view, metric)
 
     # Assert
-    df = pl.read_parquet(out_metric_view.persistence_path)
+    df = out_metric_view.lazy_data_frame().collect()
     assert df.shape[0] == 1
     assert df["view_date"][0] == datetime(2026, 1, 1, 0, 0)
     assert df["metric_value"][0] == approx(15.0)  # mean(10.0, 20.0)
