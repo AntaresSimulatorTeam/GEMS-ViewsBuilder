@@ -8,6 +8,7 @@ import polars as pl
 
 from gems_views_builder.metric_view import MetricView
 
+
 class ColumnsAdditionBase(ABC):
     @abstractmethod
     def run(self, metric_view: MetricView) -> MetricView:

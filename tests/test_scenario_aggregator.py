@@ -19,6 +19,7 @@ from gems_views_builder.aggregators.scenario_aggregator import (
     ScenarioAggregator,
     make_scenario_operator,
 )
+from gems_views_builder.input.catalog import AggregOperatorType
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity
 from gems_views_builder.metric_view import MetricView, PersistentMetricView
 
@@ -132,7 +133,7 @@ def test_location_filter(
 ) -> None:
     # Arrange
     metric_view = make_metric_view(tmp_path, [("busA", 100.0), ("busB", 50.0), ("busC", 999.0)])
-    dummy_metric = Metric(id="my-metric", terms=[])
+    dummy_metric = Metric(id="my-metric", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM)
     aggregation_pattern = make_pattern(scenario=scenario, location_filter=locations)
     scenario_aggregator = ScenarioAggregator(scenario)
     columns_additioner = ColumnsAdditioner(scenario)
