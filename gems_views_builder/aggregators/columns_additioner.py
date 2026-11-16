@@ -43,9 +43,7 @@ class NoScenarioColumnsAddition(ColumnsAdditionBase):
 
 
 def make_columns_additioner(scenario: bool) -> ColumnsAdditionBase:
-    if scenario:
-        return ScenarioColumnsAddition()
-    return NoScenarioColumnsAddition()
+    return ScenarioColumnsAddition() if scenario else NoScenarioColumnsAddition()
 
 
 class ColumnsAdditioner:
