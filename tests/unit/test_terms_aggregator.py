@@ -58,7 +58,7 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
     )
 
     # Assert
-    df = pl.read_parquet(metric_view.persistence_path)
+    df = metric_view.lazy_data_frame().collect()
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(5.0)
 
@@ -77,6 +77,6 @@ def test_terms_aggregation_avg(tmp_path: Path) -> None:
     )
 
     # Assert
-    df = pl.read_parquet(metric_view.persistence_path)
+    df = metric_view.lazy_data_frame().collect()
     assert df.shape[0] == 1
     assert df["granular_metric_value"][0] == approx(2.5)
