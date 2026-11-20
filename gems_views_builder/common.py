@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
+import os
 import sys
 import time
 from collections.abc import Iterator
@@ -15,6 +16,19 @@ from polars import LazyFrame, PartitionBy
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
 PARQUET_ROW_GROUP_SIZE = 64_000
+
+# Experimental row order of the views (GVB_VIEW_ORDER):
+#   none     - hash group_by order (default)
+#   maintain - group_by(maintain_order=True) everywhere, no sort
+#   sorted   - sort each metric's terms output once, then maintain_order=True downstream, so the
+#              views come out sorted by metric, location, breakdown, scenario, date (compresses better)
+#   sort_sink - no maintain_order; sort each time / scenario-statistics output right before it is written
+#   sort_time - no maintain_order; sort only each time-aggregation output before it is written
+VIEW_ORDER = os.environ.get("GVB_VIEW_ORDER", "none")
+MAINTAIN_ORDER = VIEW_ORDER in ("maintain", "sorted")
+SORT_TERMS = VIEW_ORDER == "sorted"
+SORT_TIME_SINKS = VIEW_ORDER in ("sort_sink", "sort_time")
+SORT_SCENARIO_SINKS = VIEW_ORDER == "sort_sink"
 
 LOG_DIR = Path.cwd() / "logs"
 

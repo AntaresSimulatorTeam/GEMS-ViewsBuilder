@@ -11,7 +11,7 @@ from shutil import rmtree
 
 import polars as pl
 
-from gems_views_builder.common import sink_to_parquet
+from gems_views_builder.common import MAINTAIN_ORDER, SORT_TIME_SINKS, sink_to_parquet
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.input.view_config import TimeGranularity
 from gems_views_builder.metric_view import MetricView, TemporalMetricView
@@ -79,7 +79,8 @@ def aggregate_time(
                 "breakdown_properties",
                 "scenario_id",
                 "view_date",
-            ]
+            ],
+            maintain_order=MAINTAIN_ORDER,
         )
         .agg(aggregate_into_column(time_operator, "granular_metric_value"))
         .select(
@@ -93,6 +94,10 @@ def aggregate_time(
             ]
         )
     )
+    if SORT_TIME_SINKS:
+        view = view.sort(
+            ["metric_id", "metric_location", "breakdown_properties", "scenario_id", "view_date"], nulls_last=True
+        )
     sink_to_parquet(view, output_path)
     return time.perf_counter() - start
 

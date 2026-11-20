@@ -13,7 +13,9 @@ import polars as pl
 from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
-from gems_views_builder.pair_id import bucket_count_for, bucket_of, make_pair_lookup
+from gems_views_builder.pair_id import PAIR_BUCKETING, bucket_count_for, bucket_of, make_pair_lookup
+
+SINGLE_TABLE = PAIR_BUCKETING == "none"
 
 # Columns of the SIMULATION_TABLE:
 # block               (str)   – identifies the timeblock in the simulation
@@ -123,8 +125,18 @@ def filter_simulation_table(
     filtered = pl.concat([time_dep.select(columns), non_time_dep.select(columns)])
 
     dir_path = Path(tempfile.mkdtemp())
+    if SINGLE_TABLE:
+        # Experimental (GVB_PAIR_BUCKETING=none): one parquet file, no clustering by bucket.
+        single_file = dir_path / "filtered_simulation_table.parquet"
+        sink_to_parquet(filtered, single_file)
+        logging.info(f"Filtered simulation table written to {single_file} (single table, no buckets)")
+        _log_bucket_sizes(dir_path, bucket_count)
+        return PersistentSimulationTable(
+            dataframe=pl.scan_parquet(single_file), dir_path=dir_path, bucket_count=bucket_count
+        )
     sink_to_parquet(filtered, pl.PartitionBy(dir_path, key="pair_bucket"))
     logging.info(f"Filtered simulation table written to {dir_path}")
+    _log_bucket_sizes(dir_path, bucket_count)
 
     if any(dir_path.rglob("*.parquet")):
         dataframe = pl.scan_parquet(dir_path, hive_partitioning=True)
@@ -134,8 +146,25 @@ def filter_simulation_table(
     return PersistentSimulationTable(dataframe=dataframe, dir_path=dir_path, bucket_count=bucket_count)
 
 
+def _log_bucket_sizes(dir_path: Path, bucket_count: int) -> None:
+    """Log the on-disk size spread of the pair buckets (empty buckets count as 0 bytes)."""
+    sizes = [0] * bucket_count
+    for file in dir_path.rglob("*.parquet"):
+        bucket = int(file.parent.name.split("=", 1)[1]) if "=" in file.parent.name else 0
+        sizes[bucket] += file.stat().st_size
+    mean = sum(sizes) / bucket_count
+    std = (sum((s - mean) ** 2 for s in sizes) / bucket_count) ** 0.5
+    mib = 2**20
+    logging.info(
+        f"Pair buckets ({bucket_count}): total {sum(sizes) / mib:.1f} MiB, mean {mean / mib:.2f} MiB, "
+        f"min {min(sizes) / mib:.2f}, max {max(sizes) / mib:.2f}, std/mean {std / mean if mean else 0:.3f}"
+    )
+
+
 def join(metric_structure_table: MetricStructureTable, filtered_st: PersistentSimulationTable) -> pl.LazyFrame:
     """Join on ``pair_id``, reading only the clusters that hold this metric's pairs."""
+    if SINGLE_TABLE:
+        return filtered_st.dataframe.join(metric_structure_table.dataframe, on="pair_id", how="right")
     pair_ids = metric_structure_table.dataframe.select("pair_id").unique().collect()["pair_id"].to_list()
     buckets = sorted({bucket_of(pair_id, filtered_st.bucket_count) for pair_id in pair_ids})
     simulation_rows = filtered_st.dataframe.filter(pl.col("pair_bucket").is_in(buckets))

@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import polars as pl
 
-from gems_views_builder.common import sink_to_parquet
+from gems_views_builder.common import MAINTAIN_ORDER, SORT_SCENARIO_SINKS, sink_to_parquet
 from gems_views_builder.input.view_config import AggregationPattern
 from gems_views_builder.location_filter import LocationFilter, apply_location_filter
 from gems_views_builder.metric_view import TemporalMetricView
@@ -47,8 +47,8 @@ class ScenarioAggregation(ScenarioOperator):
     def apply(self, view: pl.LazyFrame) -> pl.LazyFrame:
         logging.info("Aggregating across scenarios (exp/std/min/max)")
         index_columns = ["metric_id", "metric_location", "breakdown_properties", "view_date"]
-        return (
-            view.group_by(index_columns)
+        aggregated = (
+            view.group_by(index_columns, maintain_order=MAINTAIN_ORDER)
             .agg(AGGREGATION_OPERATORS)
             .unpivot(
                 on=[op.value for op in Operator],
@@ -63,6 +63,13 @@ class ScenarioAggregation(ScenarioOperator):
                 ]
             )
         )
+        if SORT_SCENARIO_SINKS:
+            # Same layout as GVB_VIEW_ORDER=sorted: unpivot stacks one statistic after another.
+            aggregated = aggregated.sort(
+                ["metric_id", "scenario_stat", "metric_location", "breakdown_properties", "view_date"],
+                nulls_last=True,
+            )
+        return aggregated
 
 
 class ScenarioColumnsAddition(ScenarioOperator):

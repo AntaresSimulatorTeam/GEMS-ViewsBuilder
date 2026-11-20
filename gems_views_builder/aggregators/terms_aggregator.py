@@ -8,7 +8,7 @@ from shutil import rmtree
 
 import polars as pl
 
-from gems_views_builder.common import sink_to_parquet
+from gems_views_builder.common import MAINTAIN_ORDER, SORT_TERMS, sink_to_parquet
 from gems_views_builder.input.catalog import AggregOperatorType, Metric
 from gems_views_builder.metric_view import MetricView
 
@@ -32,7 +32,8 @@ class TermsAggregator:
                     "breakdown_properties",
                     "absolute_time_index",
                     "scenario_id",
-                ]
+                ],
+                maintain_order=MAINTAIN_ORDER,
             )
             .agg(
                 [
@@ -53,6 +54,12 @@ class TermsAggregator:
                 ]
             )
         )
+        if SORT_TERMS:
+            # Downstream group_bys keep first-appearance order, so this one sort orders every view.
+            metric_view = metric_view.sort(
+                ["metric_id", "metric_location", "breakdown_properties", "scenario_id", "absolute_time_index"],
+                nulls_last=True,
+            )
         out_path = self._metric_view_dir / f"{metric.id}.parquet"
         sink_to_parquet(metric_view, out_path)
         logging.info(f"[{metric.id}] Terms aggregation written to {out_path}")

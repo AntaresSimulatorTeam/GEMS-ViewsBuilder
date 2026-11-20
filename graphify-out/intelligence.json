@@ -1,0 +1,36 @@
+{
+  "hotspots": [
+    {
+      "label": "Component",
+      "risk": 0.697,
+      "type": "CLASS"
+    },
+    {
+      "label": "CatalogsTaxonomyValidator",
+      "risk": 0.691,
+      "type": "CLASS"
+    },
+    {
+      "label": "ViewConfig",
+      "risk": 0.592,
+      "type": "CLASS"
+    },
+    {
+      "label": "InputPathsValidator",
+      "risk": 0.582,
+      "type": "CLASS"
+    },
+    {
+      "label": "AggregationPatternList",
+      "risk": 0.579,
+      "type": "CLASS"
+    }
+  ],
+  "blast_radius": {
+    "ViewConfig": 42,
+    "Component": 39,
+    "Metric": 36,
+    "InputPathsValidator": 28,
+    "AggregationPattern": 27
+  }
+}

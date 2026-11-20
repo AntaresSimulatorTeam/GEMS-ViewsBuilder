@@ -9,7 +9,11 @@ tables can be joined on a single Int64 column instead of two string columns,
 without sharing any dictionary between them.
 """
 
+import bisect
+import hashlib
+import os
 from collections.abc import Iterable
+from functools import cache
 
 import mmh3
 import polars as pl
@@ -37,12 +41,56 @@ def make_pair_id(component: str, output: str) -> int:
 
 
 def bucket_count_for(pair_count: int) -> int:
+    if PAIR_BUCKETING == "none":  # experimental single filtered table, no buckets
+        return 1
     return max(1, min(MAX_PAIR_BUCKETS, pair_count))
 
 
 def bucket_of(pair_id: int, bucket_count: int) -> int:
+    if PAIR_BUCKET_CACHE:
+        return _cached_bucket_of(pair_id, bucket_count)
+    return _bucket_of(pair_id, bucket_count)
+
+
+def _bucket_of(pair_id: int, bucket_count: int) -> int:
+    if PAIR_BUCKETING == "ring":
+        return _ring_bucket_of(pair_id, bucket_count)
     # Python's modulo is always non-negative for a positive divisor.
     return pair_id % bucket_count
+
+
+# Experimental: GVB_PAIR_BUCKET_CACHE=1 remembers each pair's bucket, so a pair read by several
+# metrics is only located once.
+PAIR_BUCKET_CACHE = os.environ.get("GVB_PAIR_BUCKET_CACHE", "0") == "1"
+_cached_bucket_of = cache(_bucket_of)
+
+
+# Experimental alternative to the modulo: consistent-hashing ring (Karger et al. 1997, CS168 L1).
+# GVB_PAIR_BUCKETING=ring places each bucket at RING_VIRTUAL_NODES SHA3 positions on [0, 2^32 - 1];
+# a pair belongs to the first position clockwise from sha3(pair_id).
+PAIR_BUCKETING = os.environ.get("GVB_PAIR_BUCKETING", "modulo")
+RING_VIRTUAL_NODES = int(os.environ.get("GVB_RING_VIRTUAL_NODES", "1024"))
+
+
+def _ring_position(data: bytes) -> int:
+    return int.from_bytes(hashlib.sha3_256(data).digest()[:4], "big")
+
+
+@cache
+def _ring(bucket_count: int) -> tuple[list[int], list[int]]:
+    circle = {
+        _ring_position(f"bucket-{b}#{i}".encode()): b
+        for b in range(bucket_count)
+        for i in range(RING_VIRTUAL_NODES)
+    }
+    positions = sorted(circle)
+    return positions, [circle[p] for p in positions]
+
+
+def _ring_bucket_of(pair_id: int, bucket_count: int) -> int:
+    positions, owners = _ring(bucket_count)
+    i = bisect.bisect_left(positions, _ring_position(pair_id.to_bytes(8, "big", signed=True)))
+    return owners[i % len(positions)]  # past the last position, wrap around to the first
 
 
 def make_pair_lookup(pairs: Iterable[tuple[str, str]], bucket_count: int) -> pl.DataFrame:
