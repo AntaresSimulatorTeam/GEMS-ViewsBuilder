@@ -87,6 +87,10 @@ Run `gems-views-builder --help` for every option, or see the [Command line](http
 
 The output is one [View](https://gems-energy.readthedocs.io/en/latest/user-guide/outputs/views/) per view config and aggregation pattern, with one row per metric, location, date and scenario (or scenario statistic).
 
+## 📂 Example
+
+[examples/antares_legacy](examples/antares_legacy) holds a complete set of inputs, built from a small Antares legacy study, and the CLI call that builds its views.
+
 ## 🛠️ Development
 
 ```bash

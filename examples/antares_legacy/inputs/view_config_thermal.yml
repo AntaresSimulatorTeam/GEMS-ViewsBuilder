@@ -1,0 +1,23 @@
+view:
+  id: view_thermal
+
+  scope:
+    location:
+      taxonomy-category: balance  # one location per area node
+
+  taxonomy: antares_legacy_taxonomy
+
+  aggregations-patterns:
+    - id: hourly_per_scenario
+      time-granularity: hour
+      scenario: false
+    - id: daily_all_scenario
+      time-granularity: day
+      scenario: true
+
+  metrics:
+    - id: antares_legacy_thermal_cluster_catalog.GENERATION
+    - id: antares_legacy_thermal_cluster_catalog.MIN_GEN
+    - id: antares_legacy_thermal_cluster_catalog.PROFIT
+    - id: antares_legacy_thermal_cluster_catalog.NODU
+    - id: antares_legacy_thermal_cluster_catalog.NP_COST

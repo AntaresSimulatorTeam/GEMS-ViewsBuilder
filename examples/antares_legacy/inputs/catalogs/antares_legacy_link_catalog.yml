@@ -1,0 +1,85 @@
+catalog:
+  # TO DO : this catalog should be improved, correctness of the Metrics should be checked
+  # Remark for the case of CONG.FEE.ABS : We will probably need a new operator in the GEMS grammar: using ports exporting extra-outputs to other components.
+
+  id: antares_legacy_link_catalog
+
+  taxonomy: antares_legacy_taxonomy
+
+  location:
+    taxonomy-category: link
+
+  metrics-definition:
+    - id: FLOW_LIN
+      terms:
+        - taxonomy-category: link
+          output-id: flow
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+    - id: UCAP_LIN
+      terms:
+        - taxonomy-category: link
+          output-id: abs_flow
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+    - id: CONG_FEE_ABS
+      terms:
+        - taxonomy-category: link
+          output-id: abs_congestion_fee
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+    - id: CONG_FEE_ALG
+      terms:
+        - taxonomy-category: link
+          output-id: alg_congestion_fee
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+    - id: MARG_COST
+      terms:
+        - taxonomy-category: link
+          output-id: capacity_shadow_price
+          location-port: null
+      terms-operator: sum
+      time-operator: avg
+
+    - id: CONG_PROB_DIR
+      terms:
+        - taxonomy-category: link
+          output-id: is_directly_congested
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+    - id: CONG_PROB_INDIR
+      terms:
+        - taxonomy-category: link
+          output-id: is_indirectly_congested
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+    - id: HURDLE_COST
+      terms:
+        - taxonomy-category: link
+          output-id: prop_cost
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+    - id: LOOP_FLOW
+      terms:
+        - taxonomy-category: link
+          output-id: actual_loop_flow
+          location-port: null
+      terms-operator: sum
+      time-operator: sum
+
+  # - id: FLOW.QUAD # à déprécier
