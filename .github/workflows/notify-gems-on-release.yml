@@ -1,0 +1,90 @@
+# Open an issue in GEMS when a new GVB version is published on PyPI.
+# Requires the secret GEMS_REPO_PAT (fine-grained token with Issues: read and write on GEMS).
+
+name: Notify GEMS — GVB new release
+
+on:
+  workflow_run:
+    workflows: ["Publish Python distributions to PyPI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "GVB version to notify, without the leading v (e.g. 0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Create issue in GEMS
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Get release version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION="$RELEASE_TAG"
+          fi
+          VERSION="${VERSION#v}"
+          if ! echo "$VERSION" | grep -E -q '^[0-9]+\.[0-9]+\.[0-9]+([.-]?[0-9A-Za-z.]+)?$'; then
+            echo "ERROR: '$VERSION' is not a version number"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Released version: $VERSION"
+
+      - name: Notify GEMS repository
+        uses: actions/github-script@v9
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        with:
+          github-token: ${{ secrets.GEMS_REPO_PAT }}
+          script: |
+            const version = process.env.VERSION;
+            const owner = context.repo.owner;
+            const repo = 'GEMS';
+            const title = `[GEMS-VIEWSBUILDER UPDATE] New release: v${version}`;
+
+            // Look in open and closed issues, so that a closed issue is not opened again.
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: 'all', per_page: 100,
+            });
+            const duplicate = issues.find(i => !i.pull_request && i.title === title);
+            if (duplicate) {
+              console.log(`Issue already exists in GEMS: #${duplicate.number} — skipping.`);
+              return;
+            }
+
+            const body = [
+              '> This issue was automatically created by the `notify-gems-on-release` workflow in GEMS-ViewsBuilder.',
+              '',
+              '## New Version Detected',
+              '',
+              '| | |',
+              '|---|---|',
+              `| **New version** | \`${version}\` |`,
+              `| **PyPI page** | https://pypi.org/project/gems-views-builder/${version}/ |`,
+              `| **Release notes** | https://github.com/${owner}/GEMS-ViewsBuilder/releases/tag/v${version} |`,
+              '',
+              '## Triage',
+              '',
+              '> Review the GVB release notes for changes to the taxonomy, catalog, view config or Views formats.',
+              '',
+              '- [ ] GVB release notes reviewed',
+              '- [ ] Documentation issue opened (if the taxonomy, catalog, view config or Views pages are affected)',
+              '- [ ] No action needed (if the release has no impact on the GEMS documentation)',
+            ].join('\n');
+
+            const result = await github.rest.issues.create({ owner, repo, title, body });
+
+            console.log(`Issue created in GEMS: #${result.data.number} — ${result.data.html_url}`);
