@@ -12,6 +12,7 @@ import polars as pl
 from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
+
 SIMULATION_TABLE_SCHEMA: dict[str, pl.DataType] = {
     "block": pl.UInt32(),  # required
     "component": pl.String(),  # null when absent
