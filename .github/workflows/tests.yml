@@ -17,14 +17,19 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
+          version: 0.13.7
           enable-cache: true
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          check-latest: true
 
       - name: Install dependencies
+        env:
+          UV_PYTHON: python
+          UV_NO_MANAGED_PYTHON: "true"
         run: uv sync
 
       - name: Run tests
