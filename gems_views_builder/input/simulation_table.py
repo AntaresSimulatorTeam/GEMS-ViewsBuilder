@@ -12,21 +12,15 @@ import polars as pl
 from gems_views_builder.common import sink_to_parquet
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
-
-# Antares Simulator parquet schema (SimulationTable.cpp / columnToArrowAdapter.cpp):
-# block, absolute_time_index, block_time_index, scenario_index: uint32
-# component, output, basis_status: large_utf8
-# value: float64
-# component, absolute_time_index, block_time_index, value and basis_status are null when absent.
 SIMULATION_TABLE_SCHEMA: dict[str, pl.DataType] = {
-    "block": pl.UInt32(),
-    "component": pl.String(),
-    "output": pl.String(),
-    "absolute_time_index": pl.UInt32(),
-    "block_time_index": pl.UInt32(),
-    "scenario_index": pl.UInt32(),
-    "value": pl.Float64(),
-    "basis_status": pl.String(),
+    "block": pl.UInt32(),  # required
+    "component": pl.String(),  # null when absent
+    "output": pl.String(),  # required
+    "absolute_time_index": pl.UInt32(),  # null when absent
+    "block_time_index": pl.UInt32(),  # null when absent
+    "scenario_index": pl.UInt32(),  # required
+    "value": pl.Float64(),  # null when absent
+    "basis_status": pl.String(),  # null when absent
 }
 SIMULATION_TABLE_COLUMNS: frozenset[str] = frozenset(SIMULATION_TABLE_SCHEMA)
 
