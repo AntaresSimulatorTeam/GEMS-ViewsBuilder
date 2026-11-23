@@ -33,11 +33,11 @@ def paths_from_dataset(dataset_dir: Path) -> InputPaths:
     return InputPaths(
         Namespace(
             libraries_dir=dataset_dir / "libraries",
-            catalogs=str(dataset_dir / "catalogs" / "*.yml"),
+            catalogs_dir=dataset_dir / "catalogs",
             system=dataset_dir / "system.yml",
             calendar=dataset_dir / "calendar_file.csv",
             taxonomy=dataset_dir / "taxonomy.yml",
-            view_config=dataset_dir / "view_config.yml",
+            view_configs=str(dataset_dir / "view_config*.yml"),
             simulation_tables=str(dataset_dir / "simulation_table*.parquet"),
         )
     )

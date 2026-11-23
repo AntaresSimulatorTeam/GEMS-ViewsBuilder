@@ -4,84 +4,56 @@
 """Model library YAML with explicit local models"""
 
 import logging
-from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from gems_craft.model.parsing import LibrarySchema, ModelSchema, PortTypeSchema, parse_yaml_library  # type: ignore
+from gems_craft.model.parsing import LibrarySchema, parse_yaml_library  # type: ignore
 
 
-@dataclass
-class Library:
+class Library(LibrarySchema):  # type: ignore[misc]
     """
     library .yml representation with taxonomy indexes.
     Loads via GemsPy parsing types; builds taxonomy indexes for metric structure tables.
     """
 
-    id: str
-    description: str
-    port_types: list[PortTypeSchema]
-    models: dict[str, ModelSchema]
-    models_by_taxonomy_category: dict[str, list[str]]
     taxon_by_model: dict[str, str]
-
-    def get_model(self, model_id: str) -> ModelSchema:
-        try:
-            return self.models[model_id]
-        except KeyError:
-            raise ValueError(f"Model {model_id} not found in library")
-
-    def get_model_taxon(self, model_id: str) -> str:
-        model = self.get_model(model_id)
-        if model.taxonomy_category is None:
-            raise ValueError(f"Model {model_id} has no taxonomy category in library")
-        return cast(str, model.taxonomy_category)
-
-    def get_models_in_taxonomy_category(self, taxonomy_category: str) -> list[str]:
-        return self.models_by_taxonomy_category.get(taxonomy_category, [])
 
 
 def create_lib_from_yml(yml_lib: LibrarySchema) -> Library:
-    return Library(
-        id=yml_lib.id,
-        description=yml_lib.description or "",
-        port_types=yml_lib.port_types,
-        models={m.id: m for m in yml_lib.models},
-        models_by_taxonomy_category={
-            cat: [m.id for m in yml_lib.models if m.taxonomy_category == cat]
-            for cat in {m.taxonomy_category for m in yml_lib.models if m.taxonomy_category}
-        },
-        taxon_by_model={m.id: m.taxonomy_category for m in yml_lib.models if m.taxonomy_category},
+    return cast(
+        Library,
+        Library.model_validate(
+            {
+                **yml_lib.model_dump(),
+                "taxon_by_model": {
+                    model.id: model.taxonomy_category for model in yml_lib.models if model.taxonomy_category
+                },
+            }
+        ),
     )
 
 
-def load_yml_libs(library_dir: Path) -> list[LibrarySchema]:
-    logging.info(f"Loading model libraries from {library_dir}")
+def load_yml_libs(library_files: list[Path]) -> list[LibrarySchema]:
+    logging.info(f"Loading {len(library_files)} model library file(s)")
     yml_libs: list[LibrarySchema] = []
     already_loaded_libs: set[str] = set()
-    for library_file_path in collect_lib_files(library_dir):
+    for library_file_path in library_files:
         yml_lib = load_lib_file(library_file_path)
         if yml_lib.id in already_loaded_libs:
             raise ValueError(
-                f"Library id {yml_lib.id!r} defined more than once in {library_dir} (also found in a different file)"
+                f"Library id {yml_lib.id!r} defined more than once in {library_file_path.parent}"
+                " (also found in a different file)"
             )
         already_loaded_libs.add(yml_lib.id)
         yml_libs.append(yml_lib)
     return yml_libs
 
 
-def collect_lib_files(library_dir: Path) -> list[Path]:
-    collected_libs = list(library_dir.glob("*.yml"))
-    if not collected_libs:
-        raise ValueError(f"No model libraries found in {library_dir}")
-    return collected_libs
-
-
-def associate_models_with_a_taxon(libraries: dict[str, Library]) -> dict[str, str]:
+def associate_models_with_a_taxon(libraries: list[Library]) -> dict[str, str]:
     taxon_by_model: dict[str, str] = {}
-    for library_id, library in libraries.items():
+    for library in libraries:
         for model_id, taxon in library.taxon_by_model.items():
-            taxon_by_model[f"{library_id}.{model_id}"] = taxon
+            taxon_by_model[f"{library.id}.{model_id}"] = taxon
     return taxon_by_model
 
 

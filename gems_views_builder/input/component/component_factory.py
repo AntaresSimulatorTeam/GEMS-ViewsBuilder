@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING, Any, cast
 
 from gems_craft.study import Component as GemsPyComponent  # type: ignore
 
-from gems_views_builder.input.catalog import Metric
 from gems_views_builder.input.component.component import Component
 from gems_views_builder.input.component.connection import ConnectionsThroughPort
 from gems_views_builder.input.library import associate_models_with_a_taxon
+from gems_views_builder.input.view_config import ViewConfig
 
 if TYPE_CHECKING:
     from gems_views_builder.input.raw_input_data import RawInputData
@@ -109,8 +109,7 @@ def build_component_port_connections(connections: list[Any]) -> dict[str, dict[s
 
 def supply_components_with_locations(
     components_by_taxon: dict[str, list[Component]],
-    metrics: list[Metric],
-    location_taxonomy_category: str,
+    view_config: ViewConfig,
 ) -> None:
     """Precompute each component's metric locations from catalog terms.
 
@@ -130,21 +129,21 @@ def supply_components_with_locations(
     Later read via ``Component.is_located_at`` / ``Component.location``, which look up
     ``(location_port, location_taxonomy_category)`` in ``Component.locations``.
     """
-    for metric in metrics:
+    for metric in view_config.metrics:
         for term in metric.terms:
             for c in components_by_taxon[term.taxonomy_category]:
-                location_key = (term.location_port, location_taxonomy_category)
+                location_key = (term.location_port, view_config.location_taxonomy_category)
                 if location_key in c.locations:
                     continue
                 if term.location_port is None:
-                    if term.taxonomy_category != location_taxonomy_category:
+                    if term.taxonomy_category != view_config.location_taxonomy_category:
                         raise ValueError(
                             f"Component {c.id!r} has taxonomy category {c.taxonomy_category!r}, "
-                            f"expected {location_taxonomy_category!r}"
+                            f"expected {view_config.location_taxonomy_category!r}"
                         )
                     c.locations[location_key] = c
                 else:
-                    supply_component_with_location(c, term.location_port, location_taxonomy_category)
+                    supply_component_with_location(c, term.location_port, view_config.location_taxonomy_category)
 
 
 def supply_component_with_location(component: Component, location_port: str, location_taxonomy_category: str) -> None:

@@ -4,7 +4,7 @@
 import polars as pl
 
 from gems_views_builder.input.simulation_table import SimulationTable
-from gems_views_builder.input.view_building_input_data import concat_simulation_tables
+from gems_views_builder.input.view_building_input import concat_simulation_tables
 from tests.common import SIMULATION_TABLE_ROW
 
 

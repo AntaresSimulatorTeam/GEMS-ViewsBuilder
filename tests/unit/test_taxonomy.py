@@ -15,24 +15,23 @@ def test_taxonomy_loads(test_dataset_dir: Path) -> None:
 
 
 def test_taxonomy_categories_are_typed(test_dataset_dir: Path) -> None:
-    taxonomy_path = test_dataset_dir / "taxonomy.yml"
-    taxonomy = load_taxonomy(taxonomy_path)
-    for category_id, category in taxonomy.categories.items():
-        assert isinstance(category_id, str)
+    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
+    for category in taxonomy.categories:
         assert isinstance(category, TaxonomyCategory)
-        assert category.id == category_id
+        assert isinstance(category.id, str)
         assert category.parent_category is None or isinstance(category.parent_category, str)
 
 
 def test_taxonomy_items_are_typed(test_dataset_dir: Path) -> None:
-    taxonomy_path = test_dataset_dir / "taxonomy.yml"
-    taxonomy = load_taxonomy(taxonomy_path)
-    for category in taxonomy.categories.values():
+    taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
+    for category in taxonomy.categories:
         for field in (
             category.variables,
             category.parameters,
             category.ports,
+            category.port_field_definitions,
             category.constraints,
+            category.binding_constraints,
             category.extra_outputs,
             category.properties,
         ):
@@ -43,8 +42,9 @@ def test_taxonomy_items_are_typed(test_dataset_dir: Path) -> None:
 
 def test_taxonomy_known_categories(test_dataset_dir: Path) -> None:
     taxonomy = load_taxonomy(test_dataset_dir / "taxonomy.yml")
+    category_ids = {category.id for category in taxonomy.categories}
     for expected in ("balance", "production", "consumption", "storage"):
-        assert expected in taxonomy.categories
+        assert expected in category_ids
     if test_dataset_dir.name == "test_3":
-        assert "link" in taxonomy.categories
-        assert "coupling" in taxonomy.categories
+        assert "link" in category_ids
+        assert "coupling" in category_ids

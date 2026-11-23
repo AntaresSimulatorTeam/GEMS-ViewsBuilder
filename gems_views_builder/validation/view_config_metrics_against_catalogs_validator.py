@@ -16,23 +16,17 @@ class ViewConfigMetricsAgainstCatalogsValidator:
             f"Validating view config {self.view_config.id!r} metrics against {len(self.ids_to_catalogs)} catalog(s)"
         )
         for full_metric_id in self.view_config.full_metric_ids:
-            check_is_well_formed(full_metric_id)
-            catalog_id, metric_id = full_metric_id.split(".", 1)
+            catalog_id, metric_id = full_metric_id.split(".")
             self._match_catalog_id(catalog_id)
             self._match_metric_id(catalog_id, metric_id)
         logging.info("All metrics are present in the catalogs")
 
     def _match_catalog_id(self, catalog_id: str) -> None:
         if catalog_id not in self.ids_to_catalogs:
-            raise ValueError(f"Catalog {catalog_id} used in view config {self.view_config.id!r} doesn't exist!")
+            raise ValueError(f"Catalog {catalog_id!r} used in view config {self.view_config.id!r} doesn't exist!")
 
     def _match_metric_id(self, catalog_id: str, metric_id: str) -> None:
         if metric_id not in self.ids_to_catalogs[catalog_id].metrics:
             raise ValueError(
-                f"Metric {metric_id} used in view config {self.view_config.id!r} doesn't exist in catalog {catalog_id!r}"
+                f"Metric {metric_id!r} used in view config {self.view_config.id!r} doesn't exist in catalog {catalog_id!r}"
             )
-
-
-def check_is_well_formed(full_metric_id: str) -> None:
-    if full_metric_id.count(".") != 1 or full_metric_id.startswith(".") or full_metric_id.endswith("."):
-        raise ValueError(f"Invalid metric id '{full_metric_id}'. Expected format '<catalog_id>.<metric_id>'")
