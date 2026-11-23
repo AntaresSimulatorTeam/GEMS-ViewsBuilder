@@ -1,4 +1,4 @@
-# Copyright 2007-2026, RTE (https://www.rte-france.com)
+# Copyright 2026, RTE (https://www.rte-france.com)
 # SPDX-License-Identifier: MPL-2.0
 from gems_craft.model.taxonomy import Taxonomy  # type: ignore
 from gems_craft.model.validation import check_library_against_taxonomy  # type: ignore
