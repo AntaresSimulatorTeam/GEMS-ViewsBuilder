@@ -134,6 +134,7 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
     # Arrange
     granular_date = datetime(2026, 1, 1)
     calendar = make_single_row_calendar(absolute_time_index=1, block="b1", granular_date=granular_date)
+
     st_a = SimulationTable(pl.DataFrame([make_simulation_table_row(component="comp-a", block=block_a)]).lazy())
     st_b = SimulationTable(pl.DataFrame([make_simulation_table_row(component="comp-b", block=block_b)]).lazy())
     simu_table = concat_simulation_tables([st_a, st_b])
