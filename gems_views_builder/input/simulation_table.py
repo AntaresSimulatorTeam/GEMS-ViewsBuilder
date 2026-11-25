@@ -111,4 +111,3 @@ def join(
             metric_structure_table.dataframe, on=["component", "output"], how="right"
         )
     )
-

@@ -13,7 +13,6 @@ from gems_views_builder.common import (
     PARQUET_COMPRESSION_LEVEL,
     PARQUET_ROW_GROUP_SIZE,
 )
-from gems_views_builder.input.view_config import ViewConfig
 
 METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
     {

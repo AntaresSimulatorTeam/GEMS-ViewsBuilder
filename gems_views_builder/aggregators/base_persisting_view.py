@@ -19,13 +19,14 @@ class CreatePersistingView(ABC):
     Subclasses will transform a MetricView's lazy frame and persists the result as a new parquet-backed MetricView.
     Subclasses just has to implement _build_lazy_frame(...) and set _subdirectory.
     """
+
     _subdirectory: str
 
     def __init__(self) -> None:
         self._root_dir = Path(tempfile.mkdtemp())
         self._save_dir = self._root_dir / "views" / self._subdirectory
         self._save_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Deferred cleanup: outputs may be read later in the pipeline, after this aggregator
         # instance has already been garbage collected, so cleaning up in __del__ would be unsafe.
         # Removing the whole temp tree at interpreter exit is safe for every aggregator.
@@ -45,7 +46,9 @@ class CreatePersistingView(ABC):
 
         out_path = self._out_path(metric_view, metric)
         logging.info(f"[{metric.id}] {type(self).__name__} view written to {out_path}")
-        return PersistentMetricView(lazyframe=lazy_frame,
-                                    path=out_path,
-                                    view_config_id=metric_view.view_config_id,
-                                    aggregation_pattern_id=metric_view.aggregation_pattern_id)
+        return PersistentMetricView(
+            lazyframe=lazy_frame,
+            path=out_path,
+            view_config_id=metric_view.view_config_id,
+            aggregation_pattern_id=metric_view.aggregation_pattern_id,
+        )
