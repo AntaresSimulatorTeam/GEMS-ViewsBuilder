@@ -5,11 +5,10 @@ import logging
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from shutil import rmtree
 
 import polars as pl
 
-from gems_views_builder.common import sink_to_parquet
+from gems_views_builder.common import sink_by_bucket_id
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.metric_view import MetricView
@@ -36,8 +35,12 @@ SIMULATION_TABLE_COLUMNS: frozenset[str] = frozenset(
     }
 )
 
-# Filtered simulation table has all SIMULATION_TABLE columns plus granular_date from the calendar join
-FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {"granular_date"}
+# Filtered simulation table has all SIMULATION_TABLE columns plus calendar/pair columns
+FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {
+    "granular_date",
+    "pair_id",
+    "bucket_id",
+}
 
 
 @dataclass
@@ -57,8 +60,16 @@ class PersistentSimulationTable(SimulationTable):
     file_path: Path
 
     def __del__(self) -> None:
-        logging.debug(f"Cleaning filtered simulation table {self.file_path.parent}")
-        rmtree(self.file_path.parent, ignore_errors=True)
+        # Delete only this file so sibling bucket files in the same temp dir stay alive.
+        # Remove the parent dir when it becomes empty.
+        logging.debug(f"Cleaning filtered simulation table {self.file_path}")
+        self.file_path.unlink(missing_ok=True)
+        parent = self.file_path.parent
+        try:
+            if parent.exists() and not any(parent.iterdir()):
+                parent.rmdir()
+        except OSError:
+            logging.debug(f"Could not remove empty dir {parent}", exc_info=True)
 
 
 def load_simulation_tables(simulation_tables: list[Path]) -> list[SimulationTable]:
@@ -79,28 +90,41 @@ def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
     return SimulationTable(dataframe)
 
 
-def filter_simulation_table(simulation_table: pl.LazyFrame, calendar: Calendar) -> PersistentSimulationTable:
-    """Filter simulation tables by calendar, persist result to a private tempdir, and return it."""
+def filter_simulation_table(
+    simulation_table: pl.LazyFrame, calendar: Calendar, pair_lookup_table: pl.LazyFrame
+) -> list[PersistentSimulationTable]:
+    """Filter by pair lookup + calendar, partition by bucket_id, return one table per bucket."""
+    pre_filtered_st = pre_filter_simulation_table(simulation_table, pair_lookup_table)
+
     logging.info("Filtering simulation table by calendar")
     intermediates_dir = Path(tempfile.mkdtemp())
-    output_path = intermediates_dir / "filtered_simulation_table.parquet"
+
     # Time-dependent rows: keep only timesteps present in the calendar.
     time_dep = (
-        simulation_table.join(calendar.dataframe, on="absolute_time_index", how="inner")
+        pre_filtered_st.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
-        .drop("block_right")
+        .drop("block_right", "component", "output")
     )
     # Non-time-dependent rows are not tied to a timestep, keep them with a null date.
     granular_date_dtype = calendar.dataframe.collect_schema()["granular_date"]
-    non_time_dep = simulation_table.filter(pl.col("absolute_time_index").is_null()).with_columns(
-        pl.lit(None).cast(granular_date_dtype).alias("granular_date")
+    non_time_dep = (
+        pre_filtered_st.filter(pl.col("absolute_time_index").is_null())
+        .with_columns(pl.lit(None).cast(granular_date_dtype).alias("granular_date"))
+        .drop("component", "output")
     )
-    columns = time_dep.collect_schema().names()
-    sink_to_parquet(pl.concat([time_dep.select(columns), non_time_dep.select(columns)]), output_path)
-    logging.info(f"Filtered simulation table written to {output_path}")
 
-    filtered = pl.scan_parquet(output_path)
-    return PersistentSimulationTable(dataframe=filtered, file_path=output_path)
+    columns = time_dep.collect_schema().names()
+    final_st = pl.concat([time_dep.select(columns), non_time_dep.select(columns)])
+
+    sink_by_bucket_id(final_st, intermediates_dir)
+    logging.info(f"Filtered simulation table written to {intermediates_dir}")
+
+    filtered_simulation_tables = [
+        PersistentSimulationTable(dataframe=pl.scan_parquet(path), file_path=path)
+        for path in sorted(intermediates_dir.glob("filtered_simulation_table_bucket_*.parquet"))
+    ]
+    logging.info(f"Filtered simulation table has {len(filtered_simulation_tables)} bucket file(s)")
+    return filtered_simulation_tables
 
 
 def join(
@@ -111,3 +135,7 @@ def join(
             metric_structure_table.dataframe, on=["component", "output"], how="right"
         )
     )
+
+
+def pre_filter_simulation_table(simulation_table: pl.LazyFrame, pair_lookup_table: pl.LazyFrame) -> pl.LazyFrame:
+    return simulation_table.join(pair_lookup_table, on=["component", "output"], how="inner").drop("component", "output")

@@ -21,11 +21,13 @@ METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
         "metric_location": pl.Utf8,
         "breakdown_properties": pl.Utf8,
         "output": pl.Utf8,
-        "weight_output_id": pl.Int8,
+        "weight_output_id": pl.UInt8,  # In order to save data because it isn't used
         "pair_id": pl.Int64,
         "bucket_id": pl.UInt8,
     }
 )
+
+PAIR_LOOKUP_COLUMNS = ("component", "output", "pair_id", "bucket_id")
 
 
 class MetricStructureTable:
@@ -52,16 +54,18 @@ class MetricStructureTable:
         # # It's better to perform operations on lazy data frame, rather than one pl.dataframe && pl.lazyDataFrame
         self.dataframe: pl.LazyFrame = pl.scan_parquet(file_path)
 
-    def get_pair_lookup_rows(self) -> pl.DataFrame:
-        return self.rows.select(["component", "output", "pair_id", "bucket_id"]).unique(subset=["pair_id"])
+    def get_unique_pair_lookup_rows(self) -> pl.DataFrame:
+        """Distinct (component, output) pairs by pair_id, keeping already-computed ids."""
+        return self.rows.select(list(PAIR_LOOKUP_COLUMNS)).unique(subset=["pair_id"])
 
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric structure {self._tmp_root}")
         shutil.rmtree(self._tmp_root, ignore_errors=True)
 
 
-def get_unique_pair_lookup_rows(ms_table_by_view_config_metric: dict[str, MetricStructureTable]) -> pl.DataFrame:
-    rows = [ms_table.get_pair_lookup_rows() for ms_table in ms_table_by_view_config_metric.values()]
-    if not rows:
-        raise ValueError("No (component,output) pairs to join: every metric structure table is empty.")
-    return pl.concat(rows).unique(subset=["pair_id"])
+def get_pair_lookup_rows(ms_table_by_view_config_metric: dict[str, MetricStructureTable]) -> pl.DataFrame:
+    """Merge distinct pair-lookup rows across MSTs (dedupe by pair_id, no re-hash)."""
+    frames = [ms_table.get_unique_pair_lookup_rows() for ms_table in ms_table_by_view_config_metric.values()]
+    if not frames:
+        return pl.DataFrame(schema={col: METRIC_STRUCTURE_TABLE_SCHEMA[col] for col in PAIR_LOOKUP_COLUMNS})
+    return pl.concat(frames).unique(subset=["pair_id"])

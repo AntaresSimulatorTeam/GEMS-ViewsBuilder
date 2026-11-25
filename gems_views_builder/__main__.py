@@ -4,9 +4,7 @@
 import logging
 
 from gems_views_builder.cli import build_parser, check_options
-from gems_views_builder.common import (
-    configure_logging,
-)
+from gems_views_builder.common import configure_logging
 from gems_views_builder.input.component import (
     Component,
     create_components,
@@ -22,8 +20,9 @@ from gems_views_builder.input.view_building_input import (
 from gems_views_builder.input.view_config import populate_view_configs_with_metrics
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
-from gems_views_builder.metric_structure_table import get_unique_pair_lookup_rows
+from gems_views_builder.metric_structure_table import get_pair_lookup_rows
 from gems_views_builder.metrics_structure_builder import build_metric_structure_tables
+from gems_views_builder.pair_lookup_table import PersistentPairLookupTable
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.validation.input_validation import validate_input_data
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
@@ -48,12 +47,16 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
 
     supply_components_with_locations(components_by_taxon, raw_input_data.view_configs)
     ms_tables_by_view_config_metrics = build_metric_structure_tables(raw_input_data.view_configs, components_by_taxon)
-    _ = get_unique_pair_lookup_rows(
-        ms_tables_by_view_config_metrics
-    )  # (component,output) pairs which are used in the view configs
+    # Reuse pair_id/bucket_id from MSTs; distinct by pair_id (no murmur_hash recompute).
+    pair_lookup_rows = get_pair_lookup_rows(ms_tables_by_view_config_metrics)
+    pair_lookup_table = PersistentPairLookupTable(pair_lookup_rows)
+    pair_lookup_table.build()
 
-    # (component,output) pairs will be used here to filter simulation table
-    filtered_st = make_filtered_simulation_table(raw_input_data)
+    # join with simulation table on component and output
+    # drop component and output columns after joining
+
+    # component,output pairs will be used here to filter simulation table
+    filtered_st = make_filtered_simulation_table(raw_input_data, pair_lookup_table.dataframe)
 
     for view_config in raw_input_data.view_configs:
         view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)

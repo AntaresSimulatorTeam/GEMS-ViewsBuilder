@@ -8,14 +8,14 @@ from pathlib import Path
 from typing import Literal
 
 import mmh3
-from polars import LazyFrame
+import polars as pl
+from polars import DataFrame, LazyFrame
+from polars.io.partition import FileProviderArgs
 
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
 PARQUET_ROW_GROUP_SIZE = 64_000
 BUCKET_COUNT = 64
-# Currently hard coded to 64 and tested of TYND Study is successful
-# we already have issues for calculation of standard deviation based on input data.
 LOG_DIR = Path.cwd() / "logs"
 
 
@@ -35,12 +35,33 @@ def murmur_hash(component: str, output: str) -> int:
     return mmh3.hash64(f"{component}\x1f{output}", signed=True)[0]  # 64bit
 
 
-def sink_to_parquet(dataframe: LazyFrame, path: Path) -> None:
+def sink_to_parquet(dataframe: LazyFrame | DataFrame, path: Path) -> None:
     dataframe.sink_parquet(
         path,
         compression=PARQUET_COMPRESSION,
         compression_level=PARQUET_COMPRESSION_LEVEL,
         row_group_size=PARQUET_ROW_GROUP_SIZE,
+    )
+
+
+def bucket_id_file_path(args: FileProviderArgs) -> str:
+    bucket_id = args.partition_keys["bucket_id"][0]
+    return f"filtered_simulation_table_bucket_{bucket_id}.parquet"
+
+
+def sink_by_bucket_id(dataframe: LazyFrame | DataFrame, path: Path) -> None:
+    """Write one parquet file per bucket_id under ``path``."""
+    dataframe.sink_parquet(
+        pl.PartitionBy(
+            path,
+            key="bucket_id",
+            include_key=True,
+            file_path_provider=bucket_id_file_path,
+        ),
+        compression=PARQUET_COMPRESSION,
+        compression_level=PARQUET_COMPRESSION_LEVEL,
+        row_group_size=PARQUET_ROW_GROUP_SIZE,
+        mkdir=True,
     )
 
 
