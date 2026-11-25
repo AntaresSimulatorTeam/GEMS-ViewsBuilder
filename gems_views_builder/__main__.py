@@ -25,7 +25,8 @@ from gems_views_builder.loader import Loader
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.validation.input_validation import validate_input_data
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
-
+from gems_views_builder.metrics_structure_builder import build_metric_structure_tables
+from gems_views_builder.metric_structure_table import get_component_output_pairs, get_ms_tables_by_view_config
 
 def load_and_validate_input_data(input_paths: InputPaths) -> RawInputData:
     raw_input_data = Loader(input_paths).load()
@@ -44,10 +45,15 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     populate_view_configs_with_metrics(raw_input_data.view_configs, raw_input_data.catalogs)
     components_by_taxon = build_components_by_taxon(raw_input_data)
 
+
+    supply_components_with_locations(components_by_taxon, raw_input_data.view_configs)
+    ms_tables_by_view_config_metrics = build_metric_structure_tables(raw_input_data.view_configs, components_by_taxon)
+    component_output_pairs = get_component_output_pairs(ms_tables_by_view_config_metrics)
+    
+    # this step needs to be upgraded
     filtered_st = make_filtered_simulation_table(raw_input_data)
 
     for view_config in raw_input_data.view_configs:
-        supply_components_with_locations(components_by_taxon, view_config)
         view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)
         view_builder = ViewBuilder(view_building_input)
         metric_views = view_builder.build()

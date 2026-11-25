@@ -13,6 +13,7 @@ from gems_views_builder.common import (
     PARQUET_COMPRESSION_LEVEL,
     PARQUET_ROW_GROUP_SIZE,
 )
+from gems_views_builder.input.view_config import ViewConfig
 
 METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
     {
@@ -50,6 +51,16 @@ class MetricStructureTable:
         # # It's better to perform operations on lazy data frame, rather than one pl.dataframe && pl.lazyDataFrame
         self.dataframe: pl.LazyFrame = pl.scan_parquet(file_path)
 
+    def get_unique_component_output_pairs(self) -> set[tuple[str, str]]:
+        return set(zip(self.rows["component"], self.rows["output"]))
+
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric structure {self._tmp_root}")
         shutil.rmtree(self._tmp_root, ignore_errors=True)
+
+
+def get_component_output_pairs(ms_table_by_view_config_metric: dict[str, MetricStructureTable]) -> set[tuple[str, str]]:
+    component_output_pairs: set[tuple[str, str]] = set()
+    for ms_table in ms_table_by_view_config_metric.values():
+        component_output_pairs.update(ms_table.get_unique_component_output_pairs())
+    return component_output_pairs

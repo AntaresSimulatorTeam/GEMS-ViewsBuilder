@@ -48,3 +48,11 @@ def make_row(metric: Metric, term: Term, c: Component, location: str, breakdown_
         "output": term.output_id,
         "weight_output_id": 1,
     }
+
+def build_metric_structure_tables(view_configs: list[ViewConfig],components_by_taxon: dict[str, list[Component]]) -> dict[str, MetricStructureTable]:
+    ms_table_by_view_config_metric: dict[str, MetricStructureTable] = {}
+    for view_config in view_configs:
+        for metric in view_config.metrics:
+            metric_structure_table = MetricStructureTableBuilder(view_config, components_by_taxon).build(metric)
+            ms_table_by_view_config_metric[f"{view_config.id}_{metric.id}"] = metric_structure_table
+    return ms_table_by_view_config_metric
