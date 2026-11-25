@@ -1,0 +1,15 @@
+view:
+  id: area_hourly
+  taxonomy: basic_taxonomy
+  scope:
+    location:
+      taxonomy-category: balance
+  aggregations-patterns:
+    - id: hourly
+      time-granularity: hour
+      scenario: false
+  metrics:
+    - id: catalog.LOAD
+    - id: catalog.PRODUCTION
+    - id: catalog.UNSUPPLIED_ENERGY
+    - id: catalog.STORAGE_LEVEL

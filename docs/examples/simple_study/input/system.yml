@@ -1,0 +1,78 @@
+system:
+  id: simple_system
+  model-libraries: basic_models_library
+
+  components:
+    - id: area_1
+      model: basic_models_library.bus
+      parameters:
+        - id: spillage_cost
+          value: 10
+        - id: unsupplied_energy_cost
+          value: 3000
+
+    - id: load_1
+      model: basic_models_library.load
+      parameters:
+        - id: load
+          time-dependent: true
+          scenario-dependent: true
+          value: load_series
+
+    - id: gen_base
+      model: basic_models_library.generator
+      parameters:
+        - id: p_min
+          value: 0
+        - id: p_max
+          value: 350
+        - id: generation_cost
+          value: 20
+        - id: co2_emission_factor
+          value: 0
+
+    - id: gen_peak
+      model: basic_models_library.generator
+      parameters:
+        - id: p_min
+          value: 0
+        - id: p_max
+          value: 140
+        - id: generation_cost
+          value: 80
+        - id: co2_emission_factor
+          value: 0.5
+
+    - id: storage_1
+      model: basic_models_library.storage
+      parameters:
+        - id: reservoir_capacity
+          value: 400
+        - id: injection_nominal_capacity
+          value: 100
+        - id: withdrawal_nominal_capacity
+          value: 100
+        - id: efficiency_injection
+          value: 0.9
+        - id: efficiency_withdrawal
+          value: 1
+        - id: initial_level
+          value: 0.5
+
+  connections:
+    - component1: area_1
+      port1: balance_port
+      component2: load_1
+      port2: balance_port
+    - component1: area_1
+      port1: balance_port
+      component2: gen_base
+      port2: balance_port
+    - component1: area_1
+      port1: balance_port
+      component2: gen_peak
+      port2: balance_port
+    - component1: area_1
+      port1: balance_port
+      component2: storage_1
+      port2: injection_port
