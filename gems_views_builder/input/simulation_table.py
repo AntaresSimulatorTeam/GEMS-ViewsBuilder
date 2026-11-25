@@ -14,30 +14,17 @@ from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.metric_view import MetricView
 
-# Columns of the SIMULATION_TABLE:
-# block               (str)   – identifies the timeblock in the simulation
-# component           (str)   – identifies the component
-# output              (str)   – variable, port_field, or extra-output of the component
-# absolute_time_index (int | None) – None if output is not time-dependent
-# block_time_index    (int | None) – time index within the block; None if not time-dependent
-# scenario_index      (int | None) – None if output is not scenario-dependent
-# value               (float) – value of output at (absolute_time_index, scenario_index)
-# basis_status        (str)   – basis status of the output
-SIMULATION_TABLE_COLUMNS: frozenset[str] = frozenset(
-    {
-        "block",
-        "component",
-        "output",
-        "absolute_time_index",
-        "block_time_index",
-        "scenario_index",
-        "value",
-        "basis_status",
-    }
-)
-
-# Filtered simulation table has all SIMULATION_TABLE columns plus granular_date from the calendar join
-FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {"granular_date"}
+SIMULATION_TABLE_SCHEMA: dict[str, pl.DataType] = {
+    "block": pl.UInt32(),  # required
+    "component": pl.String(),  # null when absent
+    "output": pl.String(),  # required
+    "absolute_time_index": pl.UInt32(),  # null when absent
+    "block_time_index": pl.UInt32(),  # null when absent
+    "scenario_index": pl.UInt32(),  # required
+    "value": pl.Float64(),  # null when absent
+    "basis_status": pl.String(),  # null when absent
+}
+SIMULATION_TABLE_COLUMNS: frozenset[str] = frozenset(SIMULATION_TABLE_SCHEMA)
 
 
 @dataclass
@@ -70,9 +57,9 @@ def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
     suffix = simulation_table_file.suffix.lower()
     logging.info(f"Loading simulation table from {simulation_table_file}")
     if suffix == ".parquet":
-        dataframe = pl.scan_parquet(simulation_table_file)
+        dataframe = pl.scan_parquet(simulation_table_file, schema=SIMULATION_TABLE_SCHEMA)
     elif suffix == ".csv":
-        dataframe = pl.scan_csv(simulation_table_file)
+        dataframe = pl.scan_csv(simulation_table_file, schema=SIMULATION_TABLE_SCHEMA)
     else:
         raise ValueError(f"Simulation table file '{simulation_table_file}' is not a parquet or csv file")
     logging.info(f"Simulation table {simulation_table_file.stem!r} successfully loaded from {simulation_table_file}")

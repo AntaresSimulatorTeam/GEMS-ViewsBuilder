@@ -6,8 +6,11 @@ from pathlib import Path
 
 import polars as pl
 
-# Expected CSV columns (name and order)
-EXPECTED_CALENDAR_COLUMNS: set[str] = {"absolute_time_index", "block", "granular_date"}
+CALENDAR_SCHEMA = {
+    "absolute_time_index": pl.Int64,
+    "block": pl.Int64,
+    "granular_date": pl.Datetime,
+}
 
 
 @dataclass
@@ -26,7 +29,7 @@ class Calendar:
 
 def load_calendar(calendar_file_path: Path) -> Calendar:
     """Load and validate a calendar CSV file into a plain Calendar dataclass."""
-    calendar = pl.scan_csv(calendar_file_path, try_parse_dates=True)
+    calendar = pl.scan_csv(calendar_file_path, schema=CALENDAR_SCHEMA)
     try:
         _check_calendar_columns(calendar=calendar)
     except ValueError as exc:
@@ -38,22 +41,8 @@ def _check_calendar_columns(calendar: pl.LazyFrame) -> None:
     # # calendar isn't big we could perform safely streaming
     calendar_df = calendar.collect(engine="streaming").drop_nulls()
 
-    _check_for_missing_columns(actual_column_titles=set(calendar_df.schema.keys()))
-    _check_for_unexpected_columns(actual_column_titles=set(calendar_df.schema.keys()))
     _check_time_indices_conformity(calendar_df=calendar_df)
     _check_dates_conformity(calendar_df=calendar_df)
-
-
-def _check_for_missing_columns(actual_column_titles: set[str]) -> None:
-    missing_columns = EXPECTED_CALENDAR_COLUMNS - actual_column_titles
-    if missing_columns:
-        raise ValueError(f"Calendar is missing columns: {missing_columns}")
-
-
-def _check_for_unexpected_columns(actual_column_titles: set[str]) -> None:
-    unexpected_cols = actual_column_titles - EXPECTED_CALENDAR_COLUMNS
-    if unexpected_cols:
-        raise ValueError(f"Calendar has unexpected columns: {unexpected_cols}")
 
 
 def _check_time_indices_conformity(calendar_df: pl.DataFrame) -> None:
