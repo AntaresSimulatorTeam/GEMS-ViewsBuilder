@@ -19,15 +19,13 @@ from gems_views_builder.__main__ import build_components_by_taxon
 from gems_views_builder.input.catalog import AggregOperatorType, Catalog, Metric, Term
 from gems_views_builder.input.component import supply_components_with_locations
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.view_building_input import (
-    create_view_building_input,
-    make_filtered_simulation_table,
-)
+from gems_views_builder.input.view_building_input import create_view_building_input
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
 from gems_views_builder.view import ParquetViewSinker, ViewBuilder, accumulate_on_disk
 from tests.e2e.utils import (
     build_raw_input_data,
     create_results_dir,
+    filtered_simulation_tables,
     make_calendar,
     make_raw_component,
     make_raw_connection,
@@ -134,7 +132,7 @@ def test_run_view_building_leads_to_generate_one_view_per_aggregation_pattern(tm
     # Act
     for view_config in input_data.view_configs:
         supply_components_with_locations(components_by_taxon, [view_config])
-        filtered_st = make_filtered_simulation_table(input_data)
+        filtered_st = filtered_simulation_tables(input_data, components_by_taxon)
         view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)
         metric_views = ViewBuilder(view_building_input).build()
         accumulate_on_disk(metric_views, sinker)

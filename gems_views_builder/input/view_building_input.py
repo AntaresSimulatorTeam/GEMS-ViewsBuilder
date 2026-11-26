@@ -22,7 +22,7 @@ class ViewBuildingInput:
     """Inputs of the view-building algorithm for one view config."""
 
     view_config: ViewConfig
-    filtered_st: PersistentSimulationTable
+    filtered_st: list[PersistentSimulationTable]
     metric_structure_table_builder: MetricStructureTableBuilder
     aggregation_processor: AggregationProcessor
 
@@ -35,7 +35,7 @@ def make_filtered_simulation_table(
 
 
 def create_view_building_input(
-    filtered_st: PersistentSimulationTable,
+    filtered_st: list[PersistentSimulationTable],
     view_config: ViewConfig,
     components_by_taxon: dict[str, list[Component]],
 ) -> ViewBuildingInput:

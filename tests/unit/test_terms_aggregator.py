@@ -25,6 +25,7 @@ def create_filtered_st(values: list[float], tmp_path: Path) -> PersistentSimulat
             "granular_date": ["2026-01-01"] * n,
             "block": ["B"] * n,
             "basis_status": ["B"] * n,
+            "pair_id": [1] * n,
         }
     ).lazy()
     return PersistentSimulationTable(dataframe=dataframe, file_path=tmp_path / "dummy.parquet")
@@ -38,7 +39,9 @@ def create_metric_structure_table() -> MetricStructureTable:
             "metric_location": "L",
             "breakdown_properties": "",
             "output": "out",
-            "weight_output_id": "1",
+            "weight_output_id": 1,
+            "pair_id": 1,
+            "bucket_id": 1,
         }
     ]
     return MetricStructureTable(rows, "M")

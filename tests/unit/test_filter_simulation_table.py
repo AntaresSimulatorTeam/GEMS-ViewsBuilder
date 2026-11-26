@@ -8,6 +8,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder import Calendar, PersistentSimulationTable, load_calendar
+from gems_views_builder.common import BUCKET_COUNT, murmur_hash
 from gems_views_builder.input.simulation_table import (
     SimulationTable,
     filter_simulation_table,
@@ -15,6 +16,29 @@ from gems_views_builder.input.simulation_table import (
 )
 from gems_views_builder.input.view_building_input import concat_simulation_tables
 from tests.common import make_simulation_table_row
+
+
+def pair_lookup_table(simulation_table: pl.LazyFrame) -> pl.LazyFrame:
+    """One lookup row per (component, output), so calendar tests keep every simulation pair."""
+    pairs = simulation_table.select(["component", "output"]).unique().collect()
+    rows = []
+    for component, output in pairs.iter_rows():
+        pair_id = murmur_hash(str(component), str(output))
+        rows.append(
+            {
+                "component": component,
+                "output": output,
+                "pair_id": pair_id,
+                "bucket_id": pair_id % BUCKET_COUNT,
+            }
+        )
+    return pl.DataFrame(rows).lazy()
+
+
+def collect_buckets(buckets: list[PersistentSimulationTable]) -> pl.DataFrame:
+    if not buckets:
+        return pl.DataFrame()
+    return pl.concat([bucket.dataframe.collect() for bucket in buckets])
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 
@@ -25,9 +49,11 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     calendar = load_calendar(test_dataset_dir / "calendar_file.csv")
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
-    assert isinstance(filtered_table, PersistentSimulationTable)
-    filtered = pl.read_parquet(filtered_table.file_path)
+    filtered_tables = filter_simulation_table(
+        simulation_table.dataframe, calendar, pair_lookup_table(simulation_table.dataframe)
+    )
+    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables)
+    filtered = collect_buckets(filtered_tables)
 
     # Time-dependent rows must have (absolute_time_index, block) in the calendar.
     # Non-time-dependent rows (null absolute_time_index) are passed through as-is.
@@ -38,16 +64,18 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
         "Every filtered row must have (absolute_time_index, block) in the calendar"
     )
 
-    # Total count = time-dep (inner join + block match) + non-time-dep (null index)
+    # Total count = pair-matched rows that are calendar time-dep or non-time-dep.
+    # A null component cannot join the pair lookup, so that row is removed.
+    matched = simulation_table.dataframe.join(
+        pair_lookup_table(simulation_table.dataframe), on=["component", "output"], how="inner"
+    )
     time_dep_count = (
-        simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
+        matched.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
         .collect(engine="streaming")
         .height
     )
-    non_time_dep_count = (
-        simulation_table.dataframe.filter(pl.col("absolute_time_index").is_null()).collect(engine="streaming").height
-    )
+    non_time_dep_count = matched.filter(pl.col("absolute_time_index").is_null()).collect(engine="streaming").height
     expected_total = time_dep_count + non_time_dep_count
     assert filtered.height == expected_total, "Filtered count must equal calendar-matched plus non-time-dependent rows"
 
@@ -66,12 +94,18 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     duplicated.write_parquet(sim_path_block2)
     simulation_table = load_simulation_table(sim_path_block2)
 
-    filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
-    assert isinstance(filtered_table, PersistentSimulationTable)
-    filtered = pl.read_parquet(filtered_table.file_path)
+    lookup = pair_lookup_table(simulation_table.dataframe)
+    filtered_tables = filter_simulation_table(simulation_table.dataframe, calendar, lookup)
+    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables)
+    filtered = collect_buckets(filtered_tables)
     # Time-dependent rows with block=2 are all dropped; only non-time-dependent
     # rows (null absolute_time_index) are preserved regardless of block.
-    non_time_dep_count = duplicated.filter(pl.col("absolute_time_index").is_null()).height
+    # Rows with a null component are not a (component, output) pair, so they are removed.
+    non_time_dep_count = (
+        duplicated.join(lookup.collect(), on=["component", "output"], how="inner")
+        .filter(pl.col("absolute_time_index").is_null())
+        .height
+    )
     assert filtered.height == non_time_dep_count
 
 
@@ -84,21 +118,24 @@ def test_filter_simulation_table_writes_parquet(
     simulation_table_file = next(iter(sorted(test_dataset_dir.glob("simulation_table*.parquet"))))
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_table = filter_simulation_table(simulation_table.dataframe, calendar)
-    assert isinstance(filtered_table, PersistentSimulationTable)
-
-    assert filtered_table.file_path.exists(), "Output parquet should be created"
-    written = filtered_table.dataframe.collect()
+    lookup = pair_lookup_table(simulation_table.dataframe)
+    filtered_tables = filter_simulation_table(simulation_table.dataframe, calendar, lookup)
+    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables)
+    assert all(bucket.file_path.exists() for bucket in filtered_tables), "Output parquet should be created"
+    written = collect_buckets(filtered_tables)
+    pre_filtered = simulation_table.dataframe.join(lookup, on=["component", "output"], how="inner").drop(
+        "component", "output"
+    )
     expected = (
-        simulation_table.dataframe.join(calendar.dataframe, on="absolute_time_index", how="inner")
+        pre_filtered.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
         .drop("block_right")
         .collect(engine="streaming")
     )
-    sort_cols = ["block", "component", "output", "absolute_time_index", "block_time_index", "scenario_index"]
+    sort_cols = ["block", "pair_id", "absolute_time_index", "block_time_index", "scenario_index"]
     granular_date_dtype = written.schema["granular_date"]
     non_time_dep = (
-        simulation_table.dataframe.filter(pl.col("absolute_time_index").is_null())
+        pre_filtered.filter(pl.col("absolute_time_index").is_null())
         .with_columns(pl.lit(None).cast(granular_date_dtype).alias("granular_date"))
         .collect(engine="streaming")
     )
@@ -138,8 +175,10 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
     st_b = SimulationTable(pl.DataFrame([make_simulation_table_row(component="comp-b", block=block_b)]).lazy())
 
     # Act
-    filtered_table = filter_simulation_table(concat_simulation_tables([st_a, st_b]), calendar)
+    simulation_table = concat_simulation_tables([st_a, st_b])
+    lookup = pair_lookup_table(simulation_table)
+    filtered_tables = filter_simulation_table(simulation_table, calendar, lookup)
 
     # Assert
-    filtered = pl.read_parquet(filtered_table.file_path)
+    filtered = collect_buckets(filtered_tables).join(lookup.collect(), on="pair_id", how="left")
     assert set(filtered["component"].to_list()) == expected_components

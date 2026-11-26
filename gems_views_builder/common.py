@@ -49,9 +49,9 @@ def bucket_id_file_path(args: FileProviderArgs) -> str:
     return f"filtered_simulation_table_bucket_{bucket_id}.parquet"
 
 
-def sink_by_bucket_id(dataframe: LazyFrame | DataFrame, path: Path) -> None:
-    """Write one parquet file per bucket_id under ``path``."""
-    dataframe.sink_parquet(
+def sink_by_bucket_id(simulation_table: pl.LazyFrame, path: Path) -> None:
+    logging.info("Decomposing simulation table into buckets")
+    simulation_table.sink_parquet(
         pl.PartitionBy(
             path,
             key="bucket_id",
@@ -63,6 +63,7 @@ def sink_by_bucket_id(dataframe: LazyFrame | DataFrame, path: Path) -> None:
         row_group_size=PARQUET_ROW_GROUP_SIZE,
         mkdir=True,
     )
+    logging.info("Decomposed simulation table into buckets")
 
 
 def make_log_file(log_dir: Path | None = None) -> Path:

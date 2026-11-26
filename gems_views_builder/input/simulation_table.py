@@ -93,49 +93,64 @@ def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
 def filter_simulation_table(
     simulation_table: pl.LazyFrame, calendar: Calendar, pair_lookup_table: pl.LazyFrame
 ) -> list[PersistentSimulationTable]:
-    """Filter by pair lookup + calendar, partition by bucket_id, return one table per bucket."""
-    pre_filtered_st = pre_filter_simulation_table(simulation_table, pair_lookup_table)
+    """Reduce the simulation table to the rows the views need, then split it into buckets.
 
-    logging.info("Filtering simulation table by calendar")
+    1. Keep only (component, output) pairs present in the pair lookup table(pairs used over view config metrics), then drop
+       those string columns. Later joins use pair_id, and joining on an integer is much
+       faster than joining on a string.
+    2. Keep only timesteps present in the calendar.
+    3. Partition the result by bucket_id.
+    """
     intermediates_dir = Path(tempfile.mkdtemp())
-
-    # Time-dependent rows: keep only timesteps present in the calendar.
-    time_dep = (
-        pre_filtered_st.join(calendar.dataframe, on="absolute_time_index", how="inner")
-        .filter(pl.col("block") == pl.col("block_right"))
-        .drop("block_right", "component", "output")
-    )
-    # Non-time-dependent rows are not tied to a timestep, keep them with a null date.
-    granular_date_dtype = calendar.dataframe.collect_schema()["granular_date"]
-    non_time_dep = (
-        pre_filtered_st.filter(pl.col("absolute_time_index").is_null())
-        .with_columns(pl.lit(None).cast(granular_date_dtype).alias("granular_date"))
-        .drop("component", "output")
-    )
-
-    columns = time_dep.collect_schema().names()
-    final_st = pl.concat([time_dep.select(columns), non_time_dep.select(columns)])
-
-    sink_by_bucket_id(final_st, intermediates_dir)
-    logging.info(f"Filtered simulation table written to {intermediates_dir}")
-
-    filtered_simulation_tables = [
-        PersistentSimulationTable(dataframe=pl.scan_parquet(path), file_path=path)
-        for path in sorted(intermediates_dir.glob("filtered_simulation_table_bucket_*.parquet"))
-    ]
-    logging.info(f"Filtered simulation table has {len(filtered_simulation_tables)} bucket file(s)")
-    return filtered_simulation_tables
+    pre_filtered_st = pre_filter_simulation_table(simulation_table, pair_lookup_table)
+    final_st = filter_with_callendar(pre_filtered_st, calendar)
+    buckets = create_buckets(final_st, intermediates_dir)
+    return buckets
 
 
 def join(
-    metric_structure_table: MetricStructureTable, filtered_simulation_table: PersistentSimulationTable
+    metric_structure_table: MetricStructureTable,
+    filtered_simulation_table: PersistentSimulationTable | list[PersistentSimulationTable],
 ) -> MetricView:
-    return MetricView(
-        lazyframe=filtered_simulation_table.dataframe.join(
-            metric_structure_table.dataframe, on=["component", "output"], how="right"
-        )
-    )
+    """Attach metric-structure rows to the filtered simulation buckets.
+
+    ``component`` and ``output`` were dropped during pre-filtering, so the join key is ``pair_id``.
+    Buckets are concatenated first so each metric-structure row is matched once.
+    """
+    tables = filtered_simulation_table if isinstance(filtered_simulation_table, list) else [filtered_simulation_table]
+    simulation = pl.concat([table.dataframe for table in tables])
+    return MetricView(lazyframe=simulation.join(metric_structure_table.dataframe, on="pair_id", how="right"))
 
 
 def pre_filter_simulation_table(simulation_table: pl.LazyFrame, pair_lookup_table: pl.LazyFrame) -> pl.LazyFrame:
     return simulation_table.join(pair_lookup_table, on=["component", "output"], how="inner").drop("component", "output")
+
+
+def filter_with_callendar(simulation_table: pl.LazyFrame, calendar: Calendar) -> pl.LazyFrame:
+    # Time-dependent rows: keep only timesteps present in the calendar.
+    logging.info("Filtering simulation table by calendar")
+    time_dep = (
+        simulation_table.join(calendar.dataframe, on="absolute_time_index", how="inner")
+        .filter(pl.col("block") == pl.col("block_right"))
+        .drop("block_right")
+    )
+    # Non-time-dependent rows are not tied to a timestep, keep them with a null date.
+    granular_date_dtype = calendar.dataframe.collect_schema()["granular_date"]
+    non_time_dep = simulation_table.filter(pl.col("absolute_time_index").is_null()).with_columns(
+        pl.lit(None).cast(granular_date_dtype).alias("granular_date")
+    )
+
+    columns = time_dep.collect_schema().names()
+    final_st = pl.concat([time_dep.select(columns), non_time_dep.select(columns)])
+    logging.info("Filtered simulation table by calendar")
+    return final_st
+
+
+def create_buckets(final_st: pl.LazyFrame, intermediate_dir: Path) -> list[PersistentSimulationTable]:
+    sink_by_bucket_id(final_st, intermediate_dir)
+    buckets = [
+        PersistentSimulationTable(dataframe=pl.scan_parquet(path), file_path=path)
+        for path in intermediate_dir.glob("filtered_simulation_table_bucket_*.parquet")
+    ]
+    logging.info(f"Decomposed simulation table into {len(buckets)} bucket file(s)")
+    return buckets
