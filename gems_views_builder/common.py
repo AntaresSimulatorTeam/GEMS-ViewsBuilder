@@ -7,13 +7,23 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
+import mmh3
 from polars import LazyFrame
 
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
 PARQUET_ROW_GROUP_SIZE = 64_000
-
+BUCKET_COUNT = 64
+# Currently hard coded to 64 and tested of TYND Study is successful
+# we already have issues for calculation of standard deviation based on input data.
 LOG_DIR = Path.cwd() / "logs"
+
+
+def murmur_hash(component: str, output: str) -> int:
+    """
+    For 20k keys colision change ~1.1 * 10^-11
+    """
+    return mmh3.hash64(f"{component}\x1f{output}", signed=True)[0]  # 64bit
 
 
 def sink_to_parquet(dataframe: LazyFrame, path: Path) -> None:

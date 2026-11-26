@@ -3,10 +3,13 @@
 
 from types import SimpleNamespace
 
+import polars as pl
+
+from gems_views_builder.common import BUCKET_COUNT, murmur_hash
 from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
 from gems_views_builder.input.component import Component
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
-from gems_views_builder.metric_structure_table import MetricStructureTable, get_component_output_pairs
+from gems_views_builder.metric_structure_table import MetricStructureTable, get_unique_pair_lookup_rows
 from gems_views_builder.metrics_structure_builder import build_metric_structure_tables
 
 
@@ -34,22 +37,52 @@ def make_view_config(view_config_id: str, location_taxonomy_category: str, metri
     )
 
 
-def test_get_unique_component_output_pairs() -> None:
+def structure_row(component: str, output: str) -> dict[str, object]:
+    pair_id = murmur_hash(component, output)
+    return {
+        "component": component,
+        "output": output,
+        "pair_id": pair_id,
+        "bucket_id": pair_id % BUCKET_COUNT,
+    }
+
+
+# murmur_hash("component_1", "output_1") == -4265748115851316547, bucket 61
+# murmur_hash("component_2", "output_2") == -3209794214191856216, bucket 40
+EXPECTED_PAIR_LOOKUP = pl.DataFrame(
+    [
+        {
+            "component": "component_1",
+            "output": "output_1",
+            "pair_id": -4265748115851316547,
+            "bucket_id": 61,
+        },
+        {
+            "component": "component_2",
+            "output": "output_2",
+            "pair_id": -3209794214191856216,
+            "bucket_id": 40,
+        },
+    ],
+)
+
+
+def test_get_pair_lookup_rows() -> None:
     # Arrange
     ms_table = MetricStructureTable(
         rows=[
-            {"component": "component_1", "output": "output_1"},
-            {"component": "component_2", "output": "output_2"},
-            {"component": "component_1", "output": "output_1"},
+            structure_row("component_1", "output_1"),
+            structure_row("component_2", "output_2"),
+            structure_row("component_1", "output_1"),
         ],
         metric_id="metric_1",
     )
 
     # Act
-    component_output_pairs = ms_table.get_unique_component_output_pairs()
+    pair_lookup_rows = ms_table.get_pair_lookup_rows().sort("component", "output")
 
     # Assert
-    assert component_output_pairs == {("component_1", "output_1"), ("component_2", "output_2")}
+    assert pair_lookup_rows.equals(EXPECTED_PAIR_LOOKUP)
 
 
 def test_build_metric_structure_tables() -> None:
@@ -79,27 +112,28 @@ def test_build_metric_structure_tables() -> None:
     assert all(isinstance(table, MetricStructureTable) for table in metric_structure_tables.values())
 
 
-def test_get_component_output_pairs() -> None:
+def test_get_unique_pair_lookup_rows() -> None:
     # Arrange
     ms_table_by_view_config_metrics = {
         "view_config_1_metric_1": MetricStructureTable(
             rows=[
-                {"component": "component_1", "output": "output_1"},
-                {"component": "component_1", "output": "output_1"},
+                structure_row("component_1", "output_1"),
+                structure_row("component_1", "output_1"),
             ],
             metric_id="metric_1",
         ),
         "view_config_1_metric_2": MetricStructureTable(
             rows=[
-                {"component": "component_2", "output": "output_2"},
-                {"component": "component_2", "output": "output_2"},
+                structure_row("component_2", "output_2"),
+                structure_row("component_2", "output_2"),
+                structure_row("component_1", "output_1"),
             ],
             metric_id="metric_2",
         ),
     }
 
     # Act
-    component_output_pairs = get_component_output_pairs(ms_table_by_view_config_metrics)
+    pair_lookup_rows = get_unique_pair_lookup_rows(ms_table_by_view_config_metrics).sort("component", "output")
 
     # Assert
-    assert component_output_pairs == {("component_1", "output_1"), ("component_2", "output_2")}
+    assert pair_lookup_rows.equals(EXPECTED_PAIR_LOOKUP)

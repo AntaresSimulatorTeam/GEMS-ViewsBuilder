@@ -21,7 +21,9 @@ METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
         "metric_location": pl.Utf8,
         "breakdown_properties": pl.Utf8,
         "output": pl.Utf8,
-        "weight_output_id": pl.Utf8,
+        "weight_output_id": pl.Int8,
+        "pair_id": pl.Int64,
+        "bucket_id": pl.UInt8,
     }
 )
 
@@ -50,16 +52,16 @@ class MetricStructureTable:
         # # It's better to perform operations on lazy data frame, rather than one pl.dataframe && pl.lazyDataFrame
         self.dataframe: pl.LazyFrame = pl.scan_parquet(file_path)
 
-    def get_unique_component_output_pairs(self) -> set[tuple[str, str]]:
-        return set(zip(self.rows["component"], self.rows["output"]))
+    def get_pair_lookup_rows(self) -> pl.DataFrame:
+        return self.rows.select(["component", "output", "pair_id", "bucket_id"]).unique(subset=["pair_id"])
 
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric structure {self._tmp_root}")
         shutil.rmtree(self._tmp_root, ignore_errors=True)
 
 
-def get_component_output_pairs(ms_table_by_view_config_metric: dict[str, MetricStructureTable]) -> set[tuple[str, str]]:
-    component_output_pairs: set[tuple[str, str]] = set()
-    for ms_table in ms_table_by_view_config_metric.values():
-        component_output_pairs.update(ms_table.get_unique_component_output_pairs())
-    return component_output_pairs
+def get_unique_pair_lookup_rows(ms_table_by_view_config_metric: dict[str, MetricStructureTable]) -> pl.DataFrame:
+    rows = [ms_table.get_pair_lookup_rows() for ms_table in ms_table_by_view_config_metric.values()]
+    if not rows:
+        raise ValueError("No (component,output) pairs to join: every metric structure table is empty.")
+    return pl.concat(rows).unique(subset=["pair_id"])
