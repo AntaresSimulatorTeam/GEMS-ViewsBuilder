@@ -56,10 +56,12 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     # drop component and output columns after joining
 
     # component,output pairs will be used here to filter simulation table
-    filtered_st = make_filtered_simulation_table(raw_input_data, pair_lookup_table.dataframe)
+    simulation_table_buckets = make_filtered_simulation_table(raw_input_data, pair_lookup_table.dataframe)
 
     for view_config in raw_input_data.view_configs:
-        view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)
+        view_building_input = create_view_building_input(
+            simulation_table_buckets, view_config, ms_tables_by_view_config_metrics
+        )
         view_builder = ViewBuilder(view_building_input)
         metric_views = view_builder.build()
         accumulate_on_disk(metric_views, view_sinker)

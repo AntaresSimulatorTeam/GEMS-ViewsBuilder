@@ -58,6 +58,9 @@ class MetricStructureTable:
         """Distinct (component, output) pairs by pair_id, keeping already-computed ids."""
         return self.rows.select(list(PAIR_LOOKUP_COLUMNS)).unique(subset=["pair_id"])
 
+    def get_unique_bucket_ids(self) -> list[int]:
+        return [int(bucket_id) for bucket_id in self.rows.get_column("bucket_id").unique().to_list()]
+
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric structure {self._tmp_root}")
         shutil.rmtree(self._tmp_root, ignore_errors=True)

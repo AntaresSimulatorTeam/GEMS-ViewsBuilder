@@ -8,16 +8,16 @@ from gems_views_builder.metric_view import MetricView
 
 class ViewBuilder:
     def __init__(self, input_data: ViewBuildingInput) -> None:
-        self.filtered_st = input_data.filtered_st
+        self.simulation_table_buckets = input_data.simulation_table_buckets
         self.view_config = input_data.view_config
-        self.metric_structure_table_builder = input_data.metric_structure_table_builder
+        self.metric_structure_tables = input_data.metric_structure_tables
         self.aggregation_processor = input_data.aggregation_processor
 
     def build(self) -> list[MetricView]:
         metric_views: list[MetricView] = []
         for metric in self.view_config.metrics:
-            metric_structure_table = self.metric_structure_table_builder.build(metric)
-            structured_view = join(metric_structure_table, self.filtered_st)
+            metric_structure_table = self.metric_structure_tables[f"{self.view_config.id}_{metric.id}"]
+            structured_view = join(metric_structure_table, self.simulation_table_buckets)
             # Give the view a view config id (will be used by accumulation after view building).
             structured_view.view_config_id = self.view_config.id
             views = self.aggregation_processor.run(structured_view, metric)

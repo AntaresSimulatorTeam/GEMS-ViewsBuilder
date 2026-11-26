@@ -92,7 +92,7 @@ def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
 
 def filter_simulation_table(
     simulation_table: pl.LazyFrame, calendar: Calendar, pair_lookup_table: pl.LazyFrame
-) -> list[PersistentSimulationTable]:
+) -> dict[int, PersistentSimulationTable]:
     """Reduce the simulation table to the rows the views need, then split it into buckets.
 
     1. Keep only (component, output) pairs present in the pair lookup table(pairs used over view config metrics), then drop
@@ -110,16 +110,30 @@ def filter_simulation_table(
 
 def join(
     metric_structure_table: MetricStructureTable,
-    filtered_simulation_table: PersistentSimulationTable | list[PersistentSimulationTable],
+    filtered_simulation_table_buckets: dict[int, PersistentSimulationTable],
 ) -> MetricView:
-    """Attach metric-structure rows to the filtered simulation buckets.
+    """Attach this metric's simulation rows, reading only the buckets it uses.
 
-    ``component`` and ``output`` were dropped during pre-filtering, so the join key is ``pair_id``.
-    Buckets are concatenated first so each metric-structure row is matched once.
+    The selected bucket files are concatenated once. One right join then keeps every
+    metric-structure row and fills ``value`` from the matching simulation rows.
+
+    A bucket has no file when none of its pairs have simulation rows (e.g. a system component
+    without outputs in the simulation table); it is skipped and those rows get null values.
     """
-    tables = filtered_simulation_table if isinstance(filtered_simulation_table, list) else [filtered_simulation_table]
-    simulation = pl.concat([table.dataframe for table in tables])
-    return MetricView(lazyframe=simulation.join(metric_structure_table.dataframe, on="pair_id", how="right"))
+    frames = [
+        bucket.dataframe
+        for bucket_id in metric_structure_table.get_unique_bucket_ids()
+        if (bucket := filtered_simulation_table_buckets.get(bucket_id)) is not None
+    ]
+    if not frames:
+        # Metric matches no component (or none with simulation rows). Use a zero-row frame
+        # with the bucket schema (any bucket; .limit(0) reads no data) so the join yields an empty view.
+        if not filtered_simulation_table_buckets:
+            raise ValueError("No simulation table buckets available")
+        frames = [next(iter(filtered_simulation_table_buckets.values())).dataframe.limit(0)]
+    # bucket_id is also in the metric structure table; drop it here to avoid a bucket_id_right column.
+    st = pl.concat(frames).drop("bucket_id")
+    return MetricView(lazyframe=st.join(metric_structure_table.dataframe, on="pair_id", how="right"))
 
 
 def pre_filter_simulation_table(simulation_table: pl.LazyFrame, pair_lookup_table: pl.LazyFrame) -> pl.LazyFrame:
@@ -146,11 +160,13 @@ def filter_with_callendar(simulation_table: pl.LazyFrame, calendar: Calendar) ->
     return final_st
 
 
-def create_buckets(final_st: pl.LazyFrame, intermediate_dir: Path) -> list[PersistentSimulationTable]:
+def create_buckets(final_st: pl.LazyFrame, intermediate_dir: Path) -> dict[int, PersistentSimulationTable]:
     sink_by_bucket_id(final_st, intermediate_dir)
-    buckets = [
-        PersistentSimulationTable(dataframe=pl.scan_parquet(path), file_path=path)
-        for path in intermediate_dir.glob("filtered_simulation_table_bucket_*.parquet")
-    ]
+    buckets = dict[int, PersistentSimulationTable]()
+
+    for path in intermediate_dir.glob("filtered_simulation_table_bucket_*.parquet"):
+        bucket_id = int(path.stem.split("_")[-1])
+        buckets[bucket_id] = PersistentSimulationTable(dataframe=pl.scan_parquet(path), file_path=path)
+
     logging.info(f"Decomposed simulation table into {len(buckets)} bucket file(s)")
     return buckets

@@ -10,25 +10,29 @@ import polars as pl
 from gems_views_builder import Taxonomy
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.input.catalog import Catalog
+from gems_views_builder.input.component import Component
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.component import Component
 from gems_views_builder.input.simulation_table import PersistentSimulationTable, SimulationTable
 from gems_views_builder.input.view_building_input import make_filtered_simulation_table
 from gems_views_builder.input.view_config import ViewConfig
-from gems_views_builder.metric_structure_table import get_pair_lookup_rows
+from gems_views_builder.metric_structure_table import MetricStructureTable, get_pair_lookup_rows
 from gems_views_builder.metrics_structure_builder import build_metric_structure_tables
 from gems_views_builder.pair_lookup_table import PersistentPairLookupTable
 
 
 def filtered_simulation_tables(
     input_data: RawInputData, components_by_taxon: dict[str, list[Component]]
-) -> list[PersistentSimulationTable]:
-    """Filter like the pipeline: pair ids come from the metric structure tables."""
+) -> tuple[dict[int, PersistentSimulationTable], dict[str, MetricStructureTable]]:
+    """Filter like the pipeline: pair ids come from the metric structure tables.
+
+    Returns the simulation table buckets and the metric structure tables, both needed by the view builder.
+    """
     metric_structure_tables = build_metric_structure_tables(input_data.view_configs, components_by_taxon)
     pair_lookup_table = PersistentPairLookupTable(get_pair_lookup_rows(metric_structure_tables))
     pair_lookup_table.build()
-    return make_filtered_simulation_table(input_data, pair_lookup_table.dataframe)
+    buckets = make_filtered_simulation_table(input_data, pair_lookup_table.dataframe)
+    return buckets, metric_structure_tables
 
 
 def create_results_dir(tmp_path: Path) -> Path:

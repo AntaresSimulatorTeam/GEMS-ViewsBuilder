@@ -9,7 +9,7 @@ from typing import Literal
 
 import mmh3
 import polars as pl
-from polars import DataFrame, LazyFrame
+from polars import LazyFrame
 from polars.io.partition import FileProviderArgs
 
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
@@ -35,7 +35,7 @@ def murmur_hash(component: str, output: str) -> int:
     return mmh3.hash64(f"{component}\x1f{output}", signed=True)[0]  # 64bit
 
 
-def sink_to_parquet(dataframe: LazyFrame | DataFrame, path: Path) -> None:
+def sink_to_parquet(dataframe: LazyFrame, path: Path) -> None:
     dataframe.sink_parquet(
         path,
         compression=PARQUET_COMPRESSION,

@@ -35,10 +35,11 @@ def pair_lookup_table(simulation_table: pl.LazyFrame) -> pl.LazyFrame:
     return pl.DataFrame(rows).lazy()
 
 
-def collect_buckets(buckets: list[PersistentSimulationTable]) -> pl.DataFrame:
+def collect_buckets(buckets: dict[int, PersistentSimulationTable]) -> pl.DataFrame:
     if not buckets:
         return pl.DataFrame()
-    return pl.concat([bucket.dataframe.collect() for bucket in buckets])
+    return pl.concat([bucket.dataframe.collect() for bucket in buckets.values()])
+
 
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 
@@ -52,7 +53,7 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     filtered_tables = filter_simulation_table(
         simulation_table.dataframe, calendar, pair_lookup_table(simulation_table.dataframe)
     )
-    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables)
+    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables.values())
     filtered = collect_buckets(filtered_tables)
 
     # Time-dependent rows must have (absolute_time_index, block) in the calendar.
@@ -96,7 +97,7 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
 
     lookup = pair_lookup_table(simulation_table.dataframe)
     filtered_tables = filter_simulation_table(simulation_table.dataframe, calendar, lookup)
-    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables)
+    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables.values())
     filtered = collect_buckets(filtered_tables)
     # Time-dependent rows with block=2 are all dropped; only non-time-dependent
     # rows (null absolute_time_index) are preserved regardless of block.
@@ -120,8 +121,8 @@ def test_filter_simulation_table_writes_parquet(
 
     lookup = pair_lookup_table(simulation_table.dataframe)
     filtered_tables = filter_simulation_table(simulation_table.dataframe, calendar, lookup)
-    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables)
-    assert all(bucket.file_path.exists() for bucket in filtered_tables), "Output parquet should be created"
+    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables.values())
+    assert all(bucket.file_path.exists() for bucket in filtered_tables.values()), "Output parquet should be created"
     written = collect_buckets(filtered_tables)
     pre_filtered = simulation_table.dataframe.join(lookup, on=["component", "output"], how="inner").drop(
         "component", "output"
