@@ -15,7 +15,7 @@ PAIR_LOOKUP_TABLE_SCHEMA = pl.Schema(
         "component": pl.Utf8,
         "output": pl.Utf8,
         "pair_id": pl.Int64,
-        "bucket_id": pl.UInt8,
+        "chunk_id": pl.UInt8,
     }
 )
 

@@ -21,7 +21,7 @@ class ViewBuildingInput:
     """Inputs of the view-building algorithm for one view config."""
 
     view_config: ViewConfig
-    simulation_table_buckets: dict[int, PersistentSimulationTable]
+    simulation_table_chunks: dict[int, PersistentSimulationTable]
     metric_structure_tables: dict[str, MetricStructureTable]
     aggregation_processor: AggregationProcessor
 
@@ -32,13 +32,13 @@ def make_filtered_simulation_table(raw_input_data: RawInputData, pair_lookup_tab
 
 
 def create_view_building_input(
-    simulation_table_buckets: dict[int, PersistentSimulationTable],
+    simulation_table_chunks: dict[int, PersistentSimulationTable],
     view_config: ViewConfig,
     metric_structure_tables: dict[str, MetricStructureTable],
 ) -> ViewBuildingInput:
     return ViewBuildingInput(
         view_config=view_config,
-        simulation_table_buckets=simulation_table_buckets,
+        simulation_table_chunks=simulation_table_chunks,
         metric_structure_tables=metric_structure_tables,
         aggregation_processor=AggregationProcessor(view_config),
     )

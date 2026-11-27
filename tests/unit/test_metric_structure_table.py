@@ -3,7 +3,7 @@
 
 from types import SimpleNamespace
 
-from gems_views_builder.common import BUCKET_COUNT, murmur_hash
+from gems_views_builder.common import CHUNK_COUNT, murmur_hash
 from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
 from gems_views_builder.input.component import Component
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
@@ -45,7 +45,7 @@ def make_pair_row(component: str, output: str) -> dict[str, object]:
         "output": output,
         "weight_output_id": 1,
         "pair_id": pair_id,
-        "bucket_id": pair_id % BUCKET_COUNT,
+        "chunk_id": pair_id % CHUNK_COUNT,
     }
 
 

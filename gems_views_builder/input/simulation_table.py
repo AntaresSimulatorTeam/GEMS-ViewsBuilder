@@ -7,7 +7,7 @@ from pathlib import Path
 
 import polars as pl
 
-from gems_views_builder.common import sink_by_bucket_id
+from gems_views_builder.common import sink_by_chunk_id
 from gems_views_builder.input.calendar import Calendar
 from gems_views_builder.metric_structure_table import MetricStructureTable
 from gems_views_builder.metric_view import MetricView
@@ -38,7 +38,7 @@ SIMULATION_TABLE_COLUMNS: frozenset[str] = frozenset(
 FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = SIMULATION_TABLE_COLUMNS | {
     "granular_date",
     "pair_id",
-    "bucket_id",
+    "chunk_id",
 }
 
 
@@ -59,7 +59,7 @@ class PersistentSimulationTable(SimulationTable):
     file_path: Path
 
     def __del__(self) -> None:
-        # Delete only this file so sibling bucket files in the same temp dir stay alive.
+        # Delete only this file so sibling chunk files in the same temp dir stay alive.
         # Remove the parent dir when it becomes empty.
         logging.debug(f"Cleaning filtered simulation table {self.file_path}")
         self.file_path.unlink(missing_ok=True)
@@ -105,28 +105,28 @@ def filter_simulation_table(
 
 def join(
     metric_structure_table: MetricStructureTable,
-    filtered_simulation_table_buckets: dict[int, PersistentSimulationTable],
+    filtered_simulation_table_chunks: dict[int, PersistentSimulationTable],
 ) -> MetricView:
-    """Attach this metric's simulation rows, reading only the buckets it uses.
+    """Attach this metric's simulation rows, reading only the chunks it uses.
 
-    The selected bucket files are concatenated once. One right join then keeps every
+    The selected chunk files are concatenated once. One right join then keeps every
     metric-structure row and fills ``value`` from the matching simulation rows.
 
-    A bucket has no file when none of its pairs have simulation rows (e.g. a system component
+    A chunk has no file when none of its pairs have simulation rows (e.g. a system component
     without outputs in the simulation table); it is skipped and those rows get null values.
     """
     frames = [
-        bucket.dataframe
-        for bucket_id in metric_structure_table.get_unique_bucket_ids()
-        if (bucket := filtered_simulation_table_buckets.get(bucket_id)) is not None
+        chunk.dataframe
+        for chunk_id in metric_structure_table.get_unique_chunk_ids()
+        if (chunk := filtered_simulation_table_chunks.get(chunk_id)) is not None
     ]
     if not frames:
         # Metric matches no component (or none with simulation rows). Use a zero-row frame
-        # with the bucket schema (any bucket; .limit(0) reads no data) so the join yields an empty view.
-        if not filtered_simulation_table_buckets:
-            raise ValueError("No simulation table buckets available")
-        frames = [next(iter(filtered_simulation_table_buckets.values())).dataframe.limit(0)]
-    # bucket_id is kept in the file name, not in the parquet, so the metric structure table's copy is the only one.
+        # with the chunk schema (any chunk; .limit(0) reads no data) so the join yields an empty view.
+        if not filtered_simulation_table_chunks:
+            raise ValueError("No simulation table chunks available")
+        frames = [next(iter(filtered_simulation_table_chunks.values())).dataframe.limit(0)]
+    # chunk_id is kept in the file name, not in the parquet, so the metric structure table's copy is the only one.
     st = pl.concat(frames)
     return MetricView(lazyframe=st.join(metric_structure_table.dataframe, on="pair_id", how="right"))
 
@@ -159,11 +159,11 @@ def attach_granular_dates(simulation_table: pl.LazyFrame, calendar: Calendar) ->
 def create_simulation_table_chunks(
     final_st: pl.LazyFrame, intermediate_dir: Path
 ) -> dict[int, PersistentSimulationTable]:
-    sink_by_bucket_id(final_st, intermediate_dir)
+    sink_by_chunk_id(final_st, intermediate_dir)
     simulation_table_chunks = dict[int, PersistentSimulationTable]()
 
-    for path in intermediate_dir.glob("filtered_simulation_table_bucket_*.parquet"):
-        bucket_id = int(path.stem.split("_")[-1])
-        simulation_table_chunks[bucket_id] = PersistentSimulationTable(dataframe=pl.scan_parquet(path), file_path=path)
+    for path in intermediate_dir.glob("filtered_simulation_table_chunk_*.parquet"):
+        chunk_id = int(path.stem.split("_")[-1])
+        simulation_table_chunks[chunk_id] = PersistentSimulationTable(dataframe=pl.scan_parquet(path), file_path=path)
 
     return simulation_table_chunks

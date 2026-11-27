@@ -9,7 +9,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder import Calendar, PersistentSimulationTable, load_calendar
-from gems_views_builder.common import BUCKET_COUNT, murmur_hash
+from gems_views_builder.common import CHUNK_COUNT, murmur_hash
 from gems_views_builder.input.simulation_table import (
     SimulationTable,
     create_simulation_table_chunks,
@@ -31,19 +31,19 @@ def pair_lookup_table(simulation_table: pl.LazyFrame) -> pl.LazyFrame:
                 "component": component,
                 "output": output,
                 "pair_id": pair_id,
-                "bucket_id": pair_id % BUCKET_COUNT,
+                "chunk_id": pair_id % CHUNK_COUNT,
             }
         )
     return pl.DataFrame(rows).lazy()
 
 
-def collect_buckets(buckets: dict[int, PersistentSimulationTable]) -> pl.DataFrame:
-    if not buckets:
+def collect_chunks(chunks: dict[int, PersistentSimulationTable]) -> pl.DataFrame:
+    if not chunks:
         return pl.DataFrame()
-    return pl.concat([bucket.dataframe.collect() for bucket in buckets.values()])
+    return pl.concat([chunk.dataframe.collect() for chunk in chunks.values()])
 
 
-def filtered_buckets(
+def filtered_chunks(
     simulation_table: pl.LazyFrame, calendar: Calendar, lookup: pl.LazyFrame
 ) -> dict[int, PersistentSimulationTable]:
     filtered = filter_simulation_table(simulation_table, calendar, lookup)
@@ -59,11 +59,11 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     calendar = load_calendar(test_dataset_dir / "calendar_file.csv")
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_tables = filtered_buckets(
+    filtered_tables = filtered_chunks(
         simulation_table.dataframe, calendar, pair_lookup_table(simulation_table.dataframe)
     )
-    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables.values())
-    filtered = collect_buckets(filtered_tables)
+    assert all(isinstance(chunk, PersistentSimulationTable) for chunk in filtered_tables.values())
+    filtered = collect_chunks(filtered_tables)
 
     # Time-dependent rows must have (absolute_time_index, block) in the calendar.
     # Non-time-dependent rows (null absolute_time_index) are passed through as-is.
@@ -105,9 +105,9 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     simulation_table = load_simulation_table(sim_path_block2)
 
     lookup = pair_lookup_table(simulation_table.dataframe)
-    filtered_tables = filtered_buckets(simulation_table.dataframe, calendar, lookup)
-    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables.values())
-    filtered = collect_buckets(filtered_tables)
+    filtered_tables = filtered_chunks(simulation_table.dataframe, calendar, lookup)
+    assert all(isinstance(chunk, PersistentSimulationTable) for chunk in filtered_tables.values())
+    filtered = collect_chunks(filtered_tables)
     # Time-dependent rows with block=2 are all dropped; only non-time-dependent
     # rows (null absolute_time_index) are preserved regardless of block.
     # Rows with a null component are not a (component, output) pair, so they are removed.
@@ -129,10 +129,10 @@ def test_filter_simulation_table_writes_parquet(
     simulation_table = load_simulation_table(simulation_table_file)
 
     lookup = pair_lookup_table(simulation_table.dataframe)
-    filtered_tables = filtered_buckets(simulation_table.dataframe, calendar, lookup)
-    assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables.values())
-    assert all(bucket.file_path.exists() for bucket in filtered_tables.values()), "Output parquet should be created"
-    written = collect_buckets(filtered_tables)
+    filtered_tables = filtered_chunks(simulation_table.dataframe, calendar, lookup)
+    assert all(isinstance(chunk, PersistentSimulationTable) for chunk in filtered_tables.values())
+    assert all(chunk.file_path.exists() for chunk in filtered_tables.values()), "Output parquet should be created"
+    written = collect_chunks(filtered_tables)
     pre_filtered = simulation_table.dataframe.join(lookup, on=["component", "output"], how="inner").drop(
         "component", "output"
     )
@@ -149,7 +149,7 @@ def test_filter_simulation_table_writes_parquet(
         .with_columns(pl.lit(None).cast(granular_date_dtype).alias("granular_date"))
         .collect(engine="streaming")
     )
-    expected = pl.concat([expected, non_time_dep]).drop("bucket_id")
+    expected = pl.concat([expected, non_time_dep]).drop("chunk_id")
     written_sorted = written.select(expected.columns).sort(sort_cols)
     expected_sorted = expected.sort(sort_cols)
     assert written_sorted.equals(expected_sorted), "Written parquet sim-table columns should match expected"
@@ -187,8 +187,8 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
     # Act
     simulation_table = concat_simulation_tables([st_a, st_b])
     lookup = pair_lookup_table(simulation_table)
-    filtered_tables = filtered_buckets(simulation_table, calendar, lookup)
+    filtered_tables = filtered_chunks(simulation_table, calendar, lookup)
 
     # Assert
-    filtered = collect_buckets(filtered_tables).join(lookup.collect(), on="pair_id", how="left")
+    filtered = collect_chunks(filtered_tables).join(lookup.collect(), on="pair_id", how="left")
     assert set(filtered["component"].to_list()) == expected_components
