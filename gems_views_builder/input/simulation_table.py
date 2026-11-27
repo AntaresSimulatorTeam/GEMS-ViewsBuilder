@@ -103,11 +103,15 @@ def join(
         filtered_simulation_table_chunks[chunk_id].dataframe
         for chunk_id in metric_structure_table.get_unique_chunk_ids()
     ]
-    st = pl.concat(simulation_table_chunks)
-    return MetricView(lazyframe=st.join(metric_structure_table.dataframe, on="pair_id", how="right"))
+    simulation_table = pl.concat(simulation_table_chunks)
+    return MetricView(lazyframe=simulation_table.join(metric_structure_table.dataframe, on="pair_id", how="right"))
 
 
 def select_needed_pairs(simulation_table: pl.LazyFrame, pair_lookup_table: pl.LazyFrame) -> pl.LazyFrame:
+    """
+    After this join, the simulation table has only the pairs used by the metric structure table.
+    Component and output columns are dropped because metric structure table has it.
+    """
     return simulation_table.join(pair_lookup_table, on=["component", "output"], how="inner").drop("component", "output")
 
 
