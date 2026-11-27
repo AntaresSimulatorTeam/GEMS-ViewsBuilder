@@ -102,10 +102,10 @@ def filter_simulation_table(
     3. Partition the result by bucket_id.
     """
     intermediates_dir = Path(tempfile.mkdtemp())
-    pre_filtered_st = pre_filter_simulation_table(simulation_table, pair_lookup_table)
-    final_st = filter_with_callendar(pre_filtered_st, calendar)
-    buckets = create_buckets(final_st, intermediates_dir)
-    return buckets
+    needed_pairs = select_needed_pairs(simulation_table, pair_lookup_table)
+    calendar_aligned_simulation_table = attach_granular_dates(needed_pairs, calendar)
+    simulation_table_chunks = create_simulation_table_chunks(calendar_aligned_simulation_table, intermediates_dir)
+    return simulation_table_chunks
 
 
 def join(
@@ -136,31 +136,34 @@ def join(
     return MetricView(lazyframe=st.join(metric_structure_table.dataframe, on="pair_id", how="right"))
 
 
-def pre_filter_simulation_table(simulation_table: pl.LazyFrame, pair_lookup_table: pl.LazyFrame) -> pl.LazyFrame:
+def select_needed_pairs(simulation_table: pl.LazyFrame, pair_lookup_table: pl.LazyFrame) -> pl.LazyFrame:
     return simulation_table.join(pair_lookup_table, on=["component", "output"], how="inner").drop("component", "output")
 
 
-def filter_with_callendar(simulation_table: pl.LazyFrame, calendar: Calendar) -> pl.LazyFrame:
+def attach_granular_dates(simulation_table: pl.LazyFrame, calendar: Calendar) -> pl.LazyFrame:
+    """
+    Purpose of this function is to attach granular dates to the simulation table.
+    """
     # Time-dependent rows: keep only timesteps present in the calendar.
-    logging.info("Filtering simulation table by calendar")
     time_dep = (
         simulation_table.join(calendar.dataframe, on="absolute_time_index", how="inner")
         .filter(pl.col("block") == pl.col("block_right"))
         .drop("block_right")
     )
     # Non-time-dependent rows are not tied to a timestep, keep them with a null date.
+    # This could be improved once we merge PR213 into main
     granular_date_dtype = calendar.dataframe.collect_schema()["granular_date"]
     non_time_dep = simulation_table.filter(pl.col("absolute_time_index").is_null()).with_columns(
         pl.lit(None).cast(granular_date_dtype).alias("granular_date")
     )
 
     columns = time_dep.collect_schema().names()
-    final_st = pl.concat([time_dep.select(columns), non_time_dep.select(columns)])
-    logging.info("Filtered simulation table by calendar")
-    return final_st
+    return pl.concat([time_dep.select(columns), non_time_dep.select(columns)])
 
 
-def create_buckets(final_st: pl.LazyFrame, intermediate_dir: Path) -> dict[int, PersistentSimulationTable]:
+def create_simulation_table_chunks(
+    final_st: pl.LazyFrame, intermediate_dir: Path
+) -> dict[int, PersistentSimulationTable]:
     sink_by_bucket_id(final_st, intermediate_dir)
     buckets = dict[int, PersistentSimulationTable]()
 
