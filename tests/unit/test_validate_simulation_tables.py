@@ -6,7 +6,7 @@ from polars import DataFrame
 
 from gems_views_builder.input.simulation_table import SIMULATION_TABLE_COLUMNS, SimulationTable
 from gems_views_builder.validation.simulation_tables import validate_columns, validate_simulation_tables
-from tests.common import SIMULATION_TABLE_ROW, make_simulation_table_row
+from tests.common import SIMULATION_TABLE_ROW, make_filtered_simulation_table_row, make_simulation_table_row
 
 # Columns of a filtered simulation table chunk file. component and output are replaced by pair_id,
 # and chunk_id is only in the file name.
@@ -37,8 +37,7 @@ def test_validate_simulation_tables_consistency_fails_when_there_are_missing_col
 
 def test_validate_filter_simulation_table_consistency_pass() -> None:
     # Arrange
-    row = make_simulation_table_row(pair_id=1, granular_date="2026-01-01")
-    del row["component"], row["output"]
+    row = make_filtered_simulation_table_row()
     dataframe = DataFrame([row]).lazy()
 
     # Act + Assert
@@ -47,8 +46,8 @@ def test_validate_filter_simulation_table_consistency_pass() -> None:
 
 def test_validate_filter_simulation_table_consistency_fails_when_there_are_missing_columns() -> None:
     # Arrange
-    row = make_simulation_table_row(pair_id=1)
-    del row["component"], row["output"]
+    row = make_filtered_simulation_table_row()
+    del row["granular_date"]
     dataframe = DataFrame([row]).lazy()
 
     # Act + Assert

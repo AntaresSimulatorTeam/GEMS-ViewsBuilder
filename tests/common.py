@@ -12,6 +12,22 @@ SIMULATION_TABLE_ROW: dict[str, object] = {
     "basis_status": "ok",
 }
 
+# A filtered chunk file identifies the pair by pair_id. chunk_id is the file name, not a column.
+FILTERED_SIMULATION_TABLE_ROW: dict[str, object] = {
+    "block": "b1",
+    "absolute_time_index": 1,
+    "block_time_index": 1,
+    "scenario_index": 1,
+    "value": 1.0,
+    "basis_status": "ok",
+    "pair_id": 1,
+    "granular_date": "2026-01-01",
+}
+
 
 def make_simulation_table_row(**overrides: object) -> dict[str, object]:
     return {**SIMULATION_TABLE_ROW, **overrides}
+
+
+def make_filtered_simulation_table_row(**overrides: object) -> dict[str, object]:
+    return {**FILTERED_SIMULATION_TABLE_ROW, **overrides}

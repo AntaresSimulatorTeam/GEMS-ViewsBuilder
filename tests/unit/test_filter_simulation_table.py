@@ -43,13 +43,6 @@ def collect_chunks(chunks: dict[int, PersistentSimulationTable]) -> pl.DataFrame
     return pl.concat([chunk.dataframe.collect() for chunk in chunks.values()])
 
 
-def filtered_chunks(
-    simulation_table: pl.LazyFrame, calendar: Calendar, lookup: pl.LazyFrame
-) -> dict[int, PersistentSimulationTable]:
-    filtered = filter_simulation_table(simulation_table, calendar, lookup)
-    return create_simulation_table_chunks(filtered, Path(mkdtemp()))
-
-
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 
 
@@ -59,8 +52,9 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     calendar = load_calendar(test_dataset_dir / "calendar_file.csv")
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_tables = filtered_chunks(
-        simulation_table.dataframe, calendar, pair_lookup_table(simulation_table.dataframe)
+    filtered_tables = create_simulation_table_chunks(
+        filter_simulation_table(simulation_table.dataframe, calendar, pair_lookup_table(simulation_table.dataframe)),
+        Path(mkdtemp()),
     )
     assert all(isinstance(chunk, PersistentSimulationTable) for chunk in filtered_tables.values())
     filtered = collect_chunks(filtered_tables)
@@ -105,7 +99,10 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     simulation_table = load_simulation_table(sim_path_block2)
 
     lookup = pair_lookup_table(simulation_table.dataframe)
-    filtered_tables = filtered_chunks(simulation_table.dataframe, calendar, lookup)
+    filtered_tables = create_simulation_table_chunks(
+        filter_simulation_table(simulation_table.dataframe, calendar, lookup),
+        Path(mkdtemp()),
+    )
     assert all(isinstance(chunk, PersistentSimulationTable) for chunk in filtered_tables.values())
     filtered = collect_chunks(filtered_tables)
     # Time-dependent rows with block=2 are all dropped; only non-time-dependent
@@ -129,7 +126,10 @@ def test_filter_simulation_table_writes_parquet(
     simulation_table = load_simulation_table(simulation_table_file)
 
     lookup = pair_lookup_table(simulation_table.dataframe)
-    filtered_tables = filtered_chunks(simulation_table.dataframe, calendar, lookup)
+    filtered_tables = create_simulation_table_chunks(
+        filter_simulation_table(simulation_table.dataframe, calendar, lookup),
+        Path(mkdtemp()),
+    )
     assert all(isinstance(chunk, PersistentSimulationTable) for chunk in filtered_tables.values())
     assert all(chunk.file_path.exists() for chunk in filtered_tables.values()), "Output parquet should be created"
     written = collect_chunks(filtered_tables)
@@ -187,7 +187,10 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
     # Act
     simulation_table = concat_simulation_tables([st_a, st_b])
     lookup = pair_lookup_table(simulation_table)
-    filtered_tables = filtered_chunks(simulation_table, calendar, lookup)
+    filtered_tables = create_simulation_table_chunks(
+        filter_simulation_table(simulation_table, calendar, lookup),
+        Path(mkdtemp()),
+    )
 
     # Assert
     filtered = collect_chunks(filtered_tables).join(lookup.collect(), on="pair_id", how="left")
@@ -195,20 +198,23 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
 
 
 def test_pair_without_simulation_rows_has_no_chunk_file() -> None:
-    """A lookup pair with no simulation rows is dropped by the filter, so its chunk gets no file."""
     calendar = make_single_row_calendar(absolute_time_index=1, block="b1", granular_date=datetime(2026, 1, 1))
     simulation_table = pl.DataFrame([make_simulation_table_row(component="comp-a")]).lazy()
     lookup = pair_lookup_table(simulation_table).collect()
-    missing_chunk_id = next(chunk_id for chunk_id in range(CHUNK_NUMBER) if chunk_id not in set(lookup["chunk_id"]))
+
+    pair_id = murmur_hash("missing", "out")
     missing_pair = pl.DataFrame(
         {
             "component": ["missing"],
             "output": ["out"],
-            "pair_id": [murmur_hash("missing", "out")],
-            "chunk_id": [missing_chunk_id],
+            "pair_id": [pair_id],
+            "chunk_id": [pair_id % CHUNK_NUMBER],
         }
     ).cast(lookup.schema)
-    chunks = filtered_chunks(simulation_table, calendar, pl.concat([lookup, missing_pair]).lazy())
+    chunks = create_simulation_table_chunks(
+        filter_simulation_table(simulation_table, calendar, pl.concat([lookup, missing_pair]).lazy()),
+        Path(mkdtemp()),
+    )
 
-    assert missing_chunk_id not in chunks
+    assert pair_id % CHUNK_NUMBER not in chunks
     assert set(chunks) == set(lookup["chunk_id"].to_list())
