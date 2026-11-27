@@ -21,7 +21,7 @@ METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
         "metric_location": pl.Utf8,
         "breakdown_properties": pl.Utf8,
         "output": pl.Utf8,
-        "weight_output_id": pl.UInt8,  # In order to save data because it isn't used
+        "weight_output_id": pl.Int8,
         "pair_id": pl.Int64,
         "chunk_id": pl.UInt8,
     }
