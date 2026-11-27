@@ -57,7 +57,8 @@ class MetricStructureTable:
         return self.dataframe.select(["component", "output", "pair_id", "chunk_id"]).unique(subset=["pair_id"])
 
     def get_unique_chunk_ids(self) -> list[int]:
-        return [int(chunk_id) for chunk_id in self.rows.get_column("chunk_id").unique().to_list()]
+        chunk_ids = self.dataframe.select("chunk_id").unique().collect().get_column("chunk_id")
+        return [int(chunk_id) for chunk_id in chunk_ids]
 
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric structure {self._tmp_root}")
