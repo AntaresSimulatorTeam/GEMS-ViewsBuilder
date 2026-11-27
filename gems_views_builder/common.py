@@ -21,7 +21,16 @@ LOG_DIR = Path.cwd() / "logs"
 
 def murmur_hash(component: str, output: str) -> int:
     """
-    For 20k keys colision change ~1.1 * 10^-11
+    Chance of at least one collision among n distinct pairs is about n(n-1)/2^65,
+    or 100 * n(n-1)/2^65 percent.
+    It grows with the square of n:
+    1000 ~ 2.7e-12%,
+    10 000 ~ 2.7e-10%,
+    20 000 ~ 1.1e-9%,
+    50 000 ~ 6.8e-9%,
+    100 000 ~ 2.7e-8%,
+    1 000 000 ~ 2.7e-6%.
+    Important this computation is based on TYND2040 input data.
     """
     return mmh3.hash64(f"{component}\x1f{output}", signed=True)[0]  # 64bit
 
