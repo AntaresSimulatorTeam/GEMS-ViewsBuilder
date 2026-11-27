@@ -22,7 +22,7 @@ class ViewBuildingInput:
 
     view_config: ViewConfig
     simulation_table_chunks: dict[int, PersistentSimulationTable]
-    metric_structure_tables: dict[str, MetricStructureTable]
+    metric_structure_tables: dict[str, MetricStructureTable]  # metric id -> table, for this view config only
     aggregation_processor: AggregationProcessor
 
 

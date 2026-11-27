@@ -181,7 +181,7 @@ def test_extra_locations_values_in_final_metric_views() -> None:
     for view_config in input_data.view_configs:
         supply_components_with_locations(components_by_taxon, [view_config])
         chunks, metric_structure_tables = filtered_simulation_tables(input_data, components_by_taxon)
-        view_building_input = create_view_building_input(chunks, view_config, metric_structure_tables)
+        view_building_input = create_view_building_input(chunks, view_config, metric_structure_tables[view_config.id])
         views.extend(ViewBuilder(view_building_input).build())
     views_by_metric = views_grouped_by_metric_id(views)
 

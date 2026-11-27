@@ -133,7 +133,7 @@ def test_run_view_building_leads_to_generate_one_view_per_aggregation_pattern(tm
     for view_config in input_data.view_configs:
         supply_components_with_locations(components_by_taxon, [view_config])
         chunks, metric_structure_tables = filtered_simulation_tables(input_data, components_by_taxon)
-        view_building_input = create_view_building_input(chunks, view_config, metric_structure_tables)
+        view_building_input = create_view_building_input(chunks, view_config, metric_structure_tables[view_config.id])
         metric_views = ViewBuilder(view_building_input).build()
         accumulate_on_disk(metric_views, sinker)
         del metric_views

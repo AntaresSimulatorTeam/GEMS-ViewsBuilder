@@ -64,9 +64,13 @@ class MetricStructureTable:
         shutil.rmtree(self._tmp_root, ignore_errors=True)
 
 
-def get_pair_lookup_rows(ms_table_by_view_config_metric: dict[str, MetricStructureTable]) -> pl.LazyFrame:
+def get_pair_lookup_rows(ms_tables_by_view_config: dict[str, dict[str, MetricStructureTable]]) -> pl.LazyFrame:
     """Merge distinct pair-lookup rows across MSTs (dedupe by pair_id, no re-hash)."""
-    frames = [ms_table.get_unique_pair_lookup_rows() for ms_table in ms_table_by_view_config_metric.values()]
+    frames = [
+        ms_table.get_unique_pair_lookup_rows()
+        for ms_tables_by_metric in ms_tables_by_view_config.values()
+        for ms_table in ms_tables_by_metric.values()
+    ]
     if not frames:
         raise ValueError("No metric structure tables provided")
     return pl.concat(frames).unique(subset=["pair_id"])

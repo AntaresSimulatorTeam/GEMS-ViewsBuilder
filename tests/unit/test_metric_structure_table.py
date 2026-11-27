@@ -89,31 +89,29 @@ def test_build_metric_structure_tables() -> None:
         components_by_taxon,
     )
 
-    assert set(metric_structure_tables) == {
-        "view_a_metric_a1",
-        "view_a_metric_b1",
-        "view_b_metric_a2",
-    }
-    assert all(isinstance(table, MetricStructureTable) for table in metric_structure_tables.values())
+    assert set(metric_structure_tables) == {"view_a", "view_b"}
+    assert set(metric_structure_tables["view_a"]) == {"metric_a1", "metric_b1"}
+    assert set(metric_structure_tables["view_b"]) == {"metric_a2"}
+    assert all(
+        isinstance(table, MetricStructureTable)
+        for tables_by_metric in metric_structure_tables.values()
+        for table in tables_by_metric.values()
+    )
 
 
 def test_get_pair_lookup_rows() -> None:
     # Arrange
     row_1 = make_pair_row("component_1", "output_1")
     row_2 = make_pair_row("component_2", "output_2")
-    ms_table_by_view_config_metrics = {
-        "view_config_1_metric_1": MetricStructureTable(
-            rows=[row_1, row_1],
-            metric_id="metric_1",
-        ),
-        "view_config_1_metric_2": MetricStructureTable(
-            rows=[row_2, row_2],
-            metric_id="metric_2",
-        ),
+    ms_tables_by_view_config = {
+        "view_config_1": {
+            "metric_1": MetricStructureTable(rows=[row_1, row_1], metric_id="metric_1"),
+            "metric_2": MetricStructureTable(rows=[row_2, row_2], metric_id="metric_2"),
+        },
     }
 
     # Act
-    pair_lookup_rows = get_pair_lookup_rows(ms_table_by_view_config_metrics).collect()
+    pair_lookup_rows = get_pair_lookup_rows(ms_tables_by_view_config).collect()
 
     # Assert
     assert pair_lookup_rows.height == 2

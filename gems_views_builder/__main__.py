@@ -49,9 +49,9 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     components_by_taxon = build_components_by_taxon(raw_input_data)
 
     supply_components_with_locations(components_by_taxon, raw_input_data.view_configs)
-    ms_tables_by_view_config_metrics = build_metric_structure_tables(raw_input_data.view_configs, components_by_taxon)
+    ms_tables_by_view_config = build_metric_structure_tables(raw_input_data.view_configs, components_by_taxon)
     # Reuse pair_id/chunk_id from MSTs; distinct by pair_id (no murmur_hash recompute).
-    pair_lookup_rows = get_pair_lookup_rows(ms_tables_by_view_config_metrics)
+    pair_lookup_rows = get_pair_lookup_rows(ms_tables_by_view_config)
     pair_lookup_table = PersistentPairLookupTable(pair_lookup_rows)
 
     filtered_simulation_table = make_filtered_simulation_table(raw_input_data, pair_lookup_table.dataframe)
@@ -59,7 +59,7 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
 
     for view_config in raw_input_data.view_configs:
         view_building_input = create_view_building_input(
-            simulation_table_chunks, view_config, ms_tables_by_view_config_metrics
+            simulation_table_chunks, view_config, ms_tables_by_view_config[view_config.id]
         )
         metric_views = ViewBuilder(view_building_input).build()
         accumulate_on_disk(metric_views, view_sinker)

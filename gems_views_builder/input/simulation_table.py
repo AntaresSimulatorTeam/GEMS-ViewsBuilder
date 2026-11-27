@@ -59,16 +59,8 @@ class PersistentSimulationTable(SimulationTable):
     file_path: Path
 
     def __del__(self) -> None:
-        # Delete only this file so sibling chunk files in the same temp dir stay alive.
-        # Remove the parent dir when it becomes empty.
         logging.debug(f"Cleaning filtered simulation table {self.file_path}")
         self.file_path.unlink(missing_ok=True)
-        parent = self.file_path.parent
-        try:
-            if parent.exists() and not any(parent.iterdir()):
-                parent.rmdir()
-        except OSError:
-            logging.debug(f"Could not remove empty dir {parent}", exc_info=True)
 
 
 def load_simulation_tables(simulation_tables: list[Path]) -> list[SimulationTable]:

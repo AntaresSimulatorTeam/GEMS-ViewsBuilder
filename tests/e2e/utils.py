@@ -28,7 +28,7 @@ from gems_views_builder.pair_lookup_table import PersistentPairLookupTable
 
 def filtered_simulation_tables(
     input_data: RawInputData, components_by_taxon: dict[str, list[Component]]
-) -> tuple[dict[int, PersistentSimulationTable], dict[str, MetricStructureTable]]:
+) -> tuple[dict[int, PersistentSimulationTable], dict[str, dict[str, MetricStructureTable]]]:
     """Filter like the pipeline: pair ids come from the metric structure tables.
 
     Returns the simulation table chunks and the metric structure tables, both needed by the view builder.
