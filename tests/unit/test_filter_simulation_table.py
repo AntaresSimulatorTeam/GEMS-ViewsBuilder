@@ -140,7 +140,7 @@ def test_filter_simulation_table_writes_parquet(
         .with_columns(pl.lit(None).cast(granular_date_dtype).alias("granular_date"))
         .collect(engine="streaming")
     )
-    expected = pl.concat([expected, non_time_dep])
+    expected = pl.concat([expected, non_time_dep]).drop("bucket_id")
     written_sorted = written.select(expected.columns).sort(sort_cols)
     expected_sorted = expected.sort(sort_cols)
     assert written_sorted.equals(expected_sorted), "Written parquet sim-table columns should match expected"

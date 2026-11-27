@@ -55,7 +55,7 @@ def sink_by_bucket_id(simulation_table: pl.LazyFrame, path: Path) -> None:
         pl.PartitionBy(
             path,
             key="bucket_id",
-            include_key=True,
+            include_key=False,
             file_path_provider=bucket_id_file_path,
         ),
         compression=PARQUET_COMPRESSION,

@@ -131,8 +131,8 @@ def join(
         if not filtered_simulation_table_buckets:
             raise ValueError("No simulation table buckets available")
         frames = [next(iter(filtered_simulation_table_buckets.values())).dataframe.limit(0)]
-    # bucket_id is also in the metric structure table; drop it here to avoid a bucket_id_right column.
-    st = pl.concat(frames).drop("bucket_id")
+    # bucket_id is kept in the file name, not in the parquet, so the metric structure table's copy is the only one.
+    st = pl.concat(frames)
     return MetricView(lazyframe=st.join(metric_structure_table.dataframe, on="pair_id", how="right"))
 
 
