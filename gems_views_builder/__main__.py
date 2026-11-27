@@ -50,7 +50,6 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
 
     supply_components_with_locations(components_by_taxon, raw_input_data.view_configs)
     ms_tables_by_view_config = build_metric_structure_tables(raw_input_data.view_configs, components_by_taxon)
-    # Reuse pair_id/chunk_id from MSTs; distinct by pair_id (no murmur_hash recompute).
     pair_lookup_rows = get_pair_lookup_rows(ms_tables_by_view_config)
     pair_lookup_table = PersistentPairLookupTable(pair_lookup_rows)
 
