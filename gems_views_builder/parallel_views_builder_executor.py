@@ -27,4 +27,4 @@ class ParallelViewsBuilderExecutor:
                 self.view_building_inputs,
                 repeat(self.view_sinker),
             ):
-                pass
+                ...
