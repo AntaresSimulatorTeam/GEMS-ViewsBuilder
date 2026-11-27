@@ -26,9 +26,7 @@ class ViewBuildingInput:
     aggregation_processor: AggregationProcessor
 
 
-def make_filtered_simulation_table(
-    raw_input_data: RawInputData, pair_lookup_table: pl.LazyFrame
-) -> dict[int, PersistentSimulationTable]:
+def make_filtered_simulation_table(raw_input_data: RawInputData, pair_lookup_table: pl.LazyFrame) -> pl.LazyFrame:
     concatenated_st = concat_simulation_tables(raw_input_data.simulation_tables)
     return filter_simulation_table(concatenated_st, raw_input_data.calendar, pair_lookup_table)
 

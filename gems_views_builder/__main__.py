@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
+import tempfile
+from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
 from gems_views_builder.common import configure_logging
@@ -13,6 +15,7 @@ from gems_views_builder.input.component import (
     supply_components_with_locations,
 )
 from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.simulation_table import create_simulation_table_chunks
 from gems_views_builder.input.view_building_input import (
     create_view_building_input,
     make_filtered_simulation_table,
@@ -47,20 +50,16 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
 
     supply_components_with_locations(components_by_taxon, raw_input_data.view_configs)
     ms_tables_by_view_config_metrics = build_metric_structure_tables(raw_input_data.view_configs, components_by_taxon)
-    # Reuse pair_id/bucket_id from MSTs; distinct by pair_id (no murmur_hash recompute).
+    # Reuse pair_id/chunk_id from MSTs; distinct by pair_id (no murmur_hash recompute).
     pair_lookup_rows = get_pair_lookup_rows(ms_tables_by_view_config_metrics)
     pair_lookup_table = PersistentPairLookupTable(pair_lookup_rows)
-    pair_lookup_table.build()
 
-    # join with simulation table on component and output
-    # drop component and output columns after joining
-
-    # component,output pairs will be used here to filter simulation table
-    simulation_table_buckets = make_filtered_simulation_table(raw_input_data, pair_lookup_table.dataframe)
+    filtered_simulation_table = make_filtered_simulation_table(raw_input_data, pair_lookup_table.dataframe)
+    simulation_table_chunks = create_simulation_table_chunks(filtered_simulation_table, Path(tempfile.mkdtemp()))
 
     for view_config in raw_input_data.view_configs:
         view_building_input = create_view_building_input(
-            simulation_table_buckets, view_config, ms_tables_by_view_config_metrics
+            simulation_table_chunks, view_config, ms_tables_by_view_config_metrics
         )
         view_builder = ViewBuilder(view_building_input)
         metric_views = view_builder.build()

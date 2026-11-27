@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 from datetime import datetime
 from pathlib import Path
+from tempfile import mkdtemp
 from types import SimpleNamespace
 from typing import Any
 
@@ -13,7 +14,11 @@ from gems_views_builder.input.catalog import Catalog
 from gems_views_builder.input.component import Component
 from gems_views_builder.input.library import Library
 from gems_views_builder.input.raw_input_data import RawInputData
-from gems_views_builder.input.simulation_table import PersistentSimulationTable, SimulationTable
+from gems_views_builder.input.simulation_table import (
+    PersistentSimulationTable,
+    SimulationTable,
+    create_simulation_table_chunks,
+)
 from gems_views_builder.input.view_building_input import make_filtered_simulation_table
 from gems_views_builder.input.view_config import ViewConfig
 from gems_views_builder.metric_structure_table import MetricStructureTable, get_pair_lookup_rows
@@ -30,8 +35,8 @@ def filtered_simulation_tables(
     """
     metric_structure_tables = build_metric_structure_tables(input_data.view_configs, components_by_taxon)
     pair_lookup_table = PersistentPairLookupTable(get_pair_lookup_rows(metric_structure_tables))
-    pair_lookup_table.build()
-    buckets = make_filtered_simulation_table(input_data, pair_lookup_table.dataframe)
+    filtered_simulation_table = make_filtered_simulation_table(input_data, pair_lookup_table.dataframe)
+    buckets = create_simulation_table_chunks(filtered_simulation_table, Path(mkdtemp()))
     return buckets, metric_structure_tables
 
 

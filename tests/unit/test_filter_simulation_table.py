@@ -3,6 +3,7 @@
 
 from datetime import datetime
 from pathlib import Path
+from tempfile import mkdtemp
 
 import polars as pl
 import pytest
@@ -11,6 +12,7 @@ from gems_views_builder import Calendar, PersistentSimulationTable, load_calenda
 from gems_views_builder.common import BUCKET_COUNT, murmur_hash
 from gems_views_builder.input.simulation_table import (
     SimulationTable,
+    create_simulation_table_chunks,
     filter_simulation_table,
     load_simulation_table,
 )
@@ -41,6 +43,13 @@ def collect_buckets(buckets: dict[int, PersistentSimulationTable]) -> pl.DataFra
     return pl.concat([bucket.dataframe.collect() for bucket in buckets.values()])
 
 
+def filtered_buckets(
+    simulation_table: pl.LazyFrame, calendar: Calendar, lookup: pl.LazyFrame
+) -> dict[int, PersistentSimulationTable]:
+    filtered = filter_simulation_table(simulation_table, calendar, lookup)
+    return create_simulation_table_chunks(filtered, Path(mkdtemp()))
+
+
 # ---- Parametrized integration test: logical assertions (no golden overwrite) ----
 
 
@@ -50,7 +59,7 @@ def test_filter_simulation_table_logical(tmp_path: Path, test_dataset_dir: Path)
     calendar = load_calendar(test_dataset_dir / "calendar_file.csv")
     simulation_table = load_simulation_table(simulation_table_file)
 
-    filtered_tables = filter_simulation_table(
+    filtered_tables = filtered_buckets(
         simulation_table.dataframe, calendar, pair_lookup_table(simulation_table.dataframe)
     )
     assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables.values())
@@ -96,7 +105,7 @@ def test_filter_simulation_table_drops_mismatched_block(tmp_path: Path, test_dat
     simulation_table = load_simulation_table(sim_path_block2)
 
     lookup = pair_lookup_table(simulation_table.dataframe)
-    filtered_tables = filter_simulation_table(simulation_table.dataframe, calendar, lookup)
+    filtered_tables = filtered_buckets(simulation_table.dataframe, calendar, lookup)
     assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables.values())
     filtered = collect_buckets(filtered_tables)
     # Time-dependent rows with block=2 are all dropped; only non-time-dependent
@@ -120,7 +129,7 @@ def test_filter_simulation_table_writes_parquet(
     simulation_table = load_simulation_table(simulation_table_file)
 
     lookup = pair_lookup_table(simulation_table.dataframe)
-    filtered_tables = filter_simulation_table(simulation_table.dataframe, calendar, lookup)
+    filtered_tables = filtered_buckets(simulation_table.dataframe, calendar, lookup)
     assert all(isinstance(bucket, PersistentSimulationTable) for bucket in filtered_tables.values())
     assert all(bucket.file_path.exists() for bucket in filtered_tables.values()), "Output parquet should be created"
     written = collect_buckets(filtered_tables)
@@ -178,7 +187,7 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
     # Act
     simulation_table = concat_simulation_tables([st_a, st_b])
     lookup = pair_lookup_table(simulation_table)
-    filtered_tables = filter_simulation_table(simulation_table, calendar, lookup)
+    filtered_tables = filtered_buckets(simulation_table, calendar, lookup)
 
     # Assert
     filtered = collect_buckets(filtered_tables).join(lookup.collect(), on="pair_id", how="left")

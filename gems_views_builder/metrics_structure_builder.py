@@ -4,7 +4,7 @@
 import logging
 from dataclasses import dataclass
 
-from gems_views_builder.common import BUCKET_COUNT, murmur_hash
+from gems_views_builder.common import CHUNK_NUMBER, murmur_hash
 from gems_views_builder.input.catalog import Metric, Term
 from gems_views_builder.input.component import Component
 from gems_views_builder.input.view_config import ViewConfig
@@ -50,7 +50,7 @@ def make_row(metric: Metric, term: Term, c: Component, location: str, breakdown_
         "output": term.output_id,
         "weight_output_id": 1,
         "pair_id": pair_id,
-        "bucket_id": pair_id % BUCKET_COUNT,
+        "chunk_id": pair_id % CHUNK_NUMBER,
     }
 
 

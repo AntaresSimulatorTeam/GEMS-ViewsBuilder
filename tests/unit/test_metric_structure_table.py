@@ -59,7 +59,7 @@ def test_get_unique_pair_lookup_rows() -> None:
     )
 
     # Act
-    pair_lookup_rows = ms_table.get_unique_pair_lookup_rows()
+    pair_lookup_rows = ms_table.get_unique_pair_lookup_rows().collect()
 
     # Assert
     assert pair_lookup_rows.height == 2
@@ -113,7 +113,7 @@ def test_get_pair_lookup_rows() -> None:
     }
 
     # Act
-    pair_lookup_rows = get_pair_lookup_rows(ms_table_by_view_config_metrics)
+    pair_lookup_rows = get_pair_lookup_rows(ms_table_by_view_config_metrics).collect()
 
     # Assert
     assert pair_lookup_rows.height == 2

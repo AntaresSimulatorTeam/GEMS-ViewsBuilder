@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -92,20 +91,16 @@ def load_simulation_table(simulation_table_file: Path) -> SimulationTable:
 
 def filter_simulation_table(
     simulation_table: pl.LazyFrame, calendar: Calendar, pair_lookup_table: pl.LazyFrame
-) -> dict[int, PersistentSimulationTable]:
-    """Reduce the simulation table to the rows the views need, then split it into buckets.
+) -> pl.LazyFrame:
+    """Reduce the simulation table to the rows the views need.
 
     1. Keep only (component, output) pairs present in the pair lookup table(pairs used over view config metrics), then drop
        those string columns. Later joins use pair_id, and joining on an integer is much
        faster than joining on a string.
     2. Keep only timesteps present in the calendar.
-    3. Partition the result by bucket_id.
     """
-    intermediate_dir = Path(tempfile.mkdtemp())
     needed_pairs = select_needed_pairs(simulation_table, pair_lookup_table)
-    calendar_aligned_simulation_table = attach_granular_dates(needed_pairs, calendar)
-    simulation_table_chunks = create_simulation_table_chunks(calendar_aligned_simulation_table, intermediate_dir)
-    return simulation_table_chunks
+    return attach_granular_dates(needed_pairs, calendar)
 
 
 def join(
@@ -165,11 +160,10 @@ def create_simulation_table_chunks(
     final_st: pl.LazyFrame, intermediate_dir: Path
 ) -> dict[int, PersistentSimulationTable]:
     sink_by_bucket_id(final_st, intermediate_dir)
-    buckets = dict[int, PersistentSimulationTable]()
+    simulation_table_chunks = dict[int, PersistentSimulationTable]()
 
     for path in intermediate_dir.glob("filtered_simulation_table_bucket_*.parquet"):
         bucket_id = int(path.stem.split("_")[-1])
-        buckets[bucket_id] = PersistentSimulationTable(dataframe=pl.scan_parquet(path), file_path=path)
+        simulation_table_chunks[bucket_id] = PersistentSimulationTable(dataframe=pl.scan_parquet(path), file_path=path)
 
-    logging.info(f"Decomposed simulation table into {len(buckets)} bucket file(s)")
-    return buckets
+    return simulation_table_chunks

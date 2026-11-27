@@ -23,11 +23,9 @@ METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
         "output": pl.Utf8,
         "weight_output_id": pl.UInt8,  # In order to save data because it isn't used
         "pair_id": pl.Int64,
-        "bucket_id": pl.UInt8,
+        "chunk_id": pl.UInt8,
     }
 )
-
-PAIR_LOOKUP_COLUMNS = ("component", "output", "pair_id", "bucket_id")
 
 
 class MetricStructureTable:
@@ -54,21 +52,21 @@ class MetricStructureTable:
         # # It's better to perform operations on lazy data frame, rather than one pl.dataframe && pl.lazyDataFrame
         self.dataframe: pl.LazyFrame = pl.scan_parquet(file_path)
 
-    def get_unique_pair_lookup_rows(self) -> pl.DataFrame:
+    def get_unique_pair_lookup_rows(self) -> pl.LazyFrame:
         """Distinct (component, output) pairs by pair_id, keeping already-computed ids."""
-        return self.rows.select(list(PAIR_LOOKUP_COLUMNS)).unique(subset=["pair_id"])
+        return self.dataframe.select(["component", "output", "pair_id", "chunk_id"]).unique(subset=["pair_id"])
 
-    def get_unique_bucket_ids(self) -> list[int]:
-        return [int(bucket_id) for bucket_id in self.rows.get_column("bucket_id").unique().to_list()]
+    def get_unique_chunk_ids(self) -> list[int]:
+        return [int(chunk_id) for chunk_id in self.rows.get_column("chunk_id").unique().to_list()]
 
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric structure {self._tmp_root}")
         shutil.rmtree(self._tmp_root, ignore_errors=True)
 
 
-def get_pair_lookup_rows(ms_table_by_view_config_metric: dict[str, MetricStructureTable]) -> pl.DataFrame:
+def get_pair_lookup_rows(ms_table_by_view_config_metric: dict[str, MetricStructureTable]) -> pl.LazyFrame:
     """Merge distinct pair-lookup rows across MSTs (dedupe by pair_id, no re-hash)."""
     frames = [ms_table.get_unique_pair_lookup_rows() for ms_table in ms_table_by_view_config_metric.values()]
     if not frames:
-        return pl.DataFrame(schema={col: METRIC_STRUCTURE_TABLE_SCHEMA[col] for col in PAIR_LOOKUP_COLUMNS})
+        raise ValueError("No metric structure tables provided")
     return pl.concat(frames).unique(subset=["pair_id"])

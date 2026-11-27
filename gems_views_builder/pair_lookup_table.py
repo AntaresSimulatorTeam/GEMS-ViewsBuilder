@@ -21,15 +21,10 @@ PAIR_LOOKUP_TABLE_SCHEMA = pl.Schema(
 
 
 class PersistentPairLookupTable:
-    def __init__(self, pair_lookup_rows: pl.DataFrame) -> None:
+    def __init__(self, pair_lookup_rows: pl.LazyFrame) -> None:
         self._tmp_root = Path(tempfile.mkdtemp())
         self.path = self._tmp_root / "pair_lookup_table.parquet"
-        self.pair_lookup_rows = pair_lookup_rows
-
-    def build(self) -> None:
-        logging.info(f"Pair lookup table has {self.pair_lookup_rows.height} row(s)")
-        sink_to_parquet(self.pair_lookup_rows.cast(PAIR_LOOKUP_TABLE_SCHEMA).lazy(), self.path)
-        logging.info(f"Pair lookup table written to {self.path}")
+        sink_to_parquet(pair_lookup_rows.cast(PAIR_LOOKUP_TABLE_SCHEMA).lazy(), self.path)
         self.dataframe = pl.scan_parquet(self.path)
 
     def __del__(self) -> None:

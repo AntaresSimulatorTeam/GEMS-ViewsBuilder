@@ -15,7 +15,7 @@ from polars.io.partition import FileProviderArgs
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
 PARQUET_ROW_GROUP_SIZE = 64_000
-BUCKET_COUNT = 64
+CHUNK_NUMBER = 64
 LOG_DIR = Path.cwd() / "logs"
 
 
@@ -44,26 +44,26 @@ def sink_to_parquet(dataframe: LazyFrame, path: Path) -> None:
     )
 
 
-def bucket_id_file_path(args: FileProviderArgs) -> str:
-    bucket_id = args.partition_keys["bucket_id"][0]
-    return f"filtered_simulation_table_bucket_{bucket_id}.parquet"
+def chunk_id_file_path(args: FileProviderArgs) -> str:
+    chunk_id = args.partition_keys["chunk_id"][0]
+    return f"filtered_simulation_table_chunk_{chunk_id}.parquet"
 
 
-def sink_by_bucket_id(simulation_table: pl.LazyFrame, path: Path) -> None:
-    logging.info("Decomposing simulation table into buckets")
+def sink_by_chunk_id(simulation_table: pl.LazyFrame, path: Path) -> None:
+    logging.info("Decomposing simulation table into chunks")
     simulation_table.sink_parquet(
         pl.PartitionBy(
             path,
-            key="bucket_id",
+            key="chunk_id",
             include_key=False,
-            file_path_provider=bucket_id_file_path,
+            file_path_provider=chunk_id_file_path,
         ),
         compression=PARQUET_COMPRESSION,
         compression_level=PARQUET_COMPRESSION_LEVEL,
         row_group_size=PARQUET_ROW_GROUP_SIZE,
         mkdir=True,
     )
-    logging.info("Decomposed simulation table into buckets")
+    logging.info("Decomposed simulation table into chunks")
 
 
 def make_log_file(log_dir: Path | None = None) -> Path:
