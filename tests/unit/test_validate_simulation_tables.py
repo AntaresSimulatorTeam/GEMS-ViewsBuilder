@@ -8,8 +8,6 @@ from gems_views_builder.input.simulation_table import SIMULATION_TABLE_COLUMNS, 
 from gems_views_builder.validation.simulation_tables import validate_columns, validate_simulation_tables
 from tests.common import SIMULATION_TABLE_ROW, make_filtered_simulation_table_row, make_simulation_table_row
 
-# Columns of a filtered simulation table chunk file. component and output are replaced by pair_id,
-# and chunk_id is only in the file name.
 FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = (SIMULATION_TABLE_COLUMNS - {"component", "output"}) | {
     "pair_id",
     "granular_date",
