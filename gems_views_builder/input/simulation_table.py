@@ -101,10 +101,10 @@ def filter_simulation_table(
     2. Keep only timesteps present in the calendar.
     3. Partition the result by bucket_id.
     """
-    intermediates_dir = Path(tempfile.mkdtemp())
+    intermediate_dir = Path(tempfile.mkdtemp())
     needed_pairs = select_needed_pairs(simulation_table, pair_lookup_table)
     calendar_aligned_simulation_table = attach_granular_dates(needed_pairs, calendar)
-    simulation_table_chunks = create_simulation_table_chunks(calendar_aligned_simulation_table, intermediates_dir)
+    simulation_table_chunks = create_simulation_table_chunks(calendar_aligned_simulation_table, intermediate_dir)
     return simulation_table_chunks
 
 
