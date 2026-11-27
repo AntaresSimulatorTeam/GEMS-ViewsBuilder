@@ -4,9 +4,16 @@
 import pytest
 from polars import DataFrame
 
-from gems_views_builder.input.simulation_table import FILTERED_SIMULATION_TABLE_COLUMNS, SimulationTable
+from gems_views_builder.input.simulation_table import SIMULATION_TABLE_COLUMNS, SimulationTable
 from gems_views_builder.validation.simulation_tables import validate_columns, validate_simulation_tables
 from tests.common import SIMULATION_TABLE_ROW, make_simulation_table_row
+
+# Columns of a filtered simulation table chunk file. component and output are replaced by pair_id,
+# and chunk_id is only in the file name.
+FILTERED_SIMULATION_TABLE_COLUMNS: frozenset[str] = (SIMULATION_TABLE_COLUMNS - {"component", "output"}) | {
+    "pair_id",
+    "granular_date",
+}
 
 
 def test_validate_simulation_tables_consistency_pass() -> None:
@@ -30,7 +37,9 @@ def test_validate_simulation_tables_consistency_fails_when_there_are_missing_col
 
 def test_validate_filter_simulation_table_consistency_pass() -> None:
     # Arrange
-    dataframe = DataFrame([make_simulation_table_row(granular_date="2026-01-01", pair_id=1, chunk_id=1)]).lazy()
+    row = make_simulation_table_row(pair_id=1, granular_date="2026-01-01")
+    del row["component"], row["output"]
+    dataframe = DataFrame([row]).lazy()
 
     # Act + Assert
     validate_columns(dataframe, FILTERED_SIMULATION_TABLE_COLUMNS, "Filtered simulation table")
@@ -38,7 +47,9 @@ def test_validate_filter_simulation_table_consistency_pass() -> None:
 
 def test_validate_filter_simulation_table_consistency_fails_when_there_are_missing_columns() -> None:
     # Arrange
-    dataframe = DataFrame([SIMULATION_TABLE_ROW]).lazy()
+    row = make_simulation_table_row(pair_id=1)
+    del row["component"], row["output"]
+    dataframe = DataFrame([row]).lazy()
 
     # Act + Assert
     with pytest.raises(
