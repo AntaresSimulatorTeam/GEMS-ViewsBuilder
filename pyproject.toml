@@ -13,7 +13,8 @@ dependencies = [
     "pyyaml>=6.0.2",
     "pydantic>=2.11.7",
     "gemspy==0.4.0",
-    "mmh3>=5.3.1"
+    "mmh3>=5.3.1",
+    "psutil>=7.0",
 ]
 authors = [
     { name = "Antoine Oustry" },
@@ -60,6 +61,7 @@ dev = [
     "pytest-xdist>=3.8.0",
     "mypy>=1.15.0",
     "types-PyYAML>=6.0.0",
+    "types-psutil>=7.0.0",
     "ruff>=0.9.6",
     "pre-commit>=4.1.0",
     "build>=1.2.0",
