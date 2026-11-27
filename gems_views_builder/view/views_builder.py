@@ -16,8 +16,7 @@ class ViewBuilder:
     def build(self) -> list[MetricView]:
         metric_views: list[MetricView] = []
         for metric in self.view_config.metrics:
-            metric_structure_table = self.metric_structure_tables[metric.id]
-            structured_view = join(metric_structure_table, self.simulation_table_chunks)
+            structured_view = join(self.metric_structure_tables[metric.id], self.simulation_table_chunks)
             # Give the view a view config id (will be used by accumulation after view building).
             structured_view.view_config_id = self.view_config.id
             views = self.aggregation_processor.run(structured_view, metric)
