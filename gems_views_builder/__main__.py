@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import logging
+import tempfile
+from pathlib import Path
 
 from gems_views_builder.cli import build_parser, check_options
-from gems_views_builder.common import (
-    configure_logging,
-)
+from gems_views_builder.common import configure_logging
 from gems_views_builder.input.component import (
     Component,
     create_components,
@@ -15,6 +15,7 @@ from gems_views_builder.input.component import (
     supply_components_with_locations,
 )
 from gems_views_builder.input.raw_input_data import RawInputData
+from gems_views_builder.input.simulation_table import create_simulation_table_chunks
 from gems_views_builder.input.view_building_input import (
     create_view_building_input,
     make_filtered_simulation_table,
@@ -22,8 +23,9 @@ from gems_views_builder.input.view_building_input import (
 from gems_views_builder.input.view_config import populate_view_configs_with_metrics
 from gems_views_builder.input_paths import InputPaths
 from gems_views_builder.loader import Loader
-from gems_views_builder.metric_structure_table import get_unique_pair_lookup_rows
+from gems_views_builder.metric_structure_table import get_pair_lookup_rows
 from gems_views_builder.metrics_structure_builder import build_metric_structure_tables
+from gems_views_builder.pair_lookup_table import PersistentPairLookupTable
 from gems_views_builder.validation.input_paths_validator import InputPathsValidator
 from gems_views_builder.validation.input_validation import validate_input_data
 from gems_views_builder.view import ViewBuilder, ViewSinker, ViewSinkerFactory, accumulate_on_disk
@@ -47,18 +49,18 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
     components_by_taxon = build_components_by_taxon(raw_input_data)
 
     supply_components_with_locations(components_by_taxon, raw_input_data.view_configs)
-    ms_tables_by_view_config_metrics = build_metric_structure_tables(raw_input_data.view_configs, components_by_taxon)
-    _ = get_unique_pair_lookup_rows(
-        ms_tables_by_view_config_metrics
-    )  # (component,output) pairs which are used in the view configs
+    ms_tables_by_view_config = build_metric_structure_tables(raw_input_data.view_configs, components_by_taxon)
+    pair_lookup_rows = get_pair_lookup_rows(ms_tables_by_view_config)
+    pair_lookup_table = PersistentPairLookupTable(pair_lookup_rows)
 
-    # (component,output) pairs will be used here to filter simulation table
-    filtered_st = make_filtered_simulation_table(raw_input_data)
+    filtered_simulation_table = make_filtered_simulation_table(raw_input_data, pair_lookup_table.dataframe)
+    simulation_table_chunks = create_simulation_table_chunks(filtered_simulation_table, Path(tempfile.mkdtemp()))
 
     for view_config in raw_input_data.view_configs:
-        view_building_input = create_view_building_input(filtered_st, view_config, components_by_taxon)
-        view_builder = ViewBuilder(view_building_input)
-        metric_views = view_builder.build()
+        view_building_input = create_view_building_input(
+            simulation_table_chunks, view_config, ms_tables_by_view_config[view_config.id]
+        )
+        metric_views = ViewBuilder(view_building_input).build()
         accumulate_on_disk(metric_views, view_sinker)
         # Drop this config's intermediate parquet files before the next config is built.
         del metric_views

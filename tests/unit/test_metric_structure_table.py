@@ -3,13 +3,11 @@
 
 from types import SimpleNamespace
 
-import polars as pl
-
-from gems_views_builder.common import BUCKET_COUNT, murmur_hash
+from gems_views_builder.common import CHUNK_NUMBER, murmur_hash
 from gems_views_builder.input.catalog import AggregOperatorType, Metric, Term
 from gems_views_builder.input.component import Component
 from gems_views_builder.input.view_config import AggregationPattern, TimeGranularity, ViewConfig
-from gems_views_builder.metric_structure_table import MetricStructureTable, get_unique_pair_lookup_rows
+from gems_views_builder.metric_structure_table import MetricStructureTable, get_pair_lookup_rows
 from gems_views_builder.metrics_structure_builder import build_metric_structure_tables
 
 
@@ -37,52 +35,39 @@ def make_view_config(view_config_id: str, location_taxonomy_category: str, metri
     )
 
 
-def structure_row(component: str, output: str) -> dict[str, object]:
+def make_pair_row(component: str, output: str) -> dict[str, object]:
     pair_id = murmur_hash(component, output)
     return {
+        "metric_id": "metric_1",
         "component": component,
+        "metric_location": "loc",
+        "breakdown_properties": "",
         "output": output,
+        "weight_output_id": 1,
         "pair_id": pair_id,
-        "bucket_id": pair_id % BUCKET_COUNT,
+        "chunk_id": pair_id % CHUNK_NUMBER,
     }
 
 
-# murmur_hash("component_1", "output_1") == -4265748115851316547, bucket 61
-# murmur_hash("component_2", "output_2") == -3209794214191856216, bucket 40
-EXPECTED_PAIR_LOOKUP = pl.DataFrame(
-    [
-        {
-            "component": "component_1",
-            "output": "output_1",
-            "pair_id": -4265748115851316547,
-            "bucket_id": 61,
-        },
-        {
-            "component": "component_2",
-            "output": "output_2",
-            "pair_id": -3209794214191856216,
-            "bucket_id": 40,
-        },
-    ],
-)
-
-
-def test_get_pair_lookup_rows() -> None:
+def test_get_unique_pair_lookup_rows() -> None:
     # Arrange
+    row_1 = make_pair_row("component_1", "output_1")
+    row_2 = make_pair_row("component_2", "output_2")
     ms_table = MetricStructureTable(
-        rows=[
-            structure_row("component_1", "output_1"),
-            structure_row("component_2", "output_2"),
-            structure_row("component_1", "output_1"),
-        ],
+        rows=[row_1, row_2, row_1],
         metric_id="metric_1",
     )
 
     # Act
-    pair_lookup_rows = ms_table.get_pair_lookup_rows().sort("component", "output")
+    pair_lookup_rows = ms_table.get_unique_pair_lookup_rows().collect()
 
     # Assert
-    assert pair_lookup_rows.equals(EXPECTED_PAIR_LOOKUP)
+    assert pair_lookup_rows.height == 2
+    assert set(pair_lookup_rows["pair_id"].to_list()) == {row_1["pair_id"], row_2["pair_id"]}
+    assert set(pair_lookup_rows.select(["component", "output"]).iter_rows()) == {
+        ("component_1", "output_1"),
+        ("component_2", "output_2"),
+    }
 
 
 def test_build_metric_structure_tables() -> None:
@@ -104,36 +89,30 @@ def test_build_metric_structure_tables() -> None:
         components_by_taxon,
     )
 
-    assert set(metric_structure_tables) == {
-        "view_a_metric_a1",
-        "view_a_metric_b1",
-        "view_b_metric_a2",
-    }
-    assert all(isinstance(table, MetricStructureTable) for table in metric_structure_tables.values())
+    assert set(metric_structure_tables) == {"view_a", "view_b"}
+    assert set(metric_structure_tables["view_a"]) == {"metric_a1", "metric_b1"}
+    assert set(metric_structure_tables["view_b"]) == {"metric_a2"}
+    assert all(
+        isinstance(table, MetricStructureTable)
+        for tables_by_metric in metric_structure_tables.values()
+        for table in tables_by_metric.values()
+    )
 
 
-def test_get_unique_pair_lookup_rows() -> None:
+def test_get_pair_lookup_rows() -> None:
     # Arrange
-    ms_table_by_view_config_metrics = {
-        "view_config_1_metric_1": MetricStructureTable(
-            rows=[
-                structure_row("component_1", "output_1"),
-                structure_row("component_1", "output_1"),
-            ],
-            metric_id="metric_1",
-        ),
-        "view_config_1_metric_2": MetricStructureTable(
-            rows=[
-                structure_row("component_2", "output_2"),
-                structure_row("component_2", "output_2"),
-                structure_row("component_1", "output_1"),
-            ],
-            metric_id="metric_2",
-        ),
+    row_1 = make_pair_row("component_1", "output_1")
+    row_2 = make_pair_row("component_2", "output_2")
+    ms_tables_by_view_config = {
+        "view_config_1": {
+            "metric_1": MetricStructureTable(rows=[row_1, row_1], metric_id="metric_1"),
+            "metric_2": MetricStructureTable(rows=[row_2, row_2], metric_id="metric_2"),
+        },
     }
 
     # Act
-    pair_lookup_rows = get_unique_pair_lookup_rows(ms_table_by_view_config_metrics).sort("component", "output")
+    pair_lookup_rows = get_pair_lookup_rows(ms_tables_by_view_config).collect()
 
     # Assert
-    assert pair_lookup_rows.equals(EXPECTED_PAIR_LOOKUP)
+    assert pair_lookup_rows.height == 2
+    assert set(pair_lookup_rows["pair_id"].to_list()) == {row_1["pair_id"], row_2["pair_id"]}

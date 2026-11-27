@@ -4,7 +4,7 @@
 import logging
 from dataclasses import dataclass
 
-from gems_views_builder.common import BUCKET_COUNT, murmur_hash
+from gems_views_builder.common import CHUNK_NUMBER, murmur_hash
 from gems_views_builder.input.catalog import Metric, Term
 from gems_views_builder.input.component import Component
 from gems_views_builder.input.view_config import ViewConfig
@@ -50,16 +50,16 @@ def make_row(metric: Metric, term: Term, c: Component, location: str, breakdown_
         "output": term.output_id,
         "weight_output_id": 1,
         "pair_id": pair_id,
-        "bucket_id": pair_id % BUCKET_COUNT,
+        "chunk_id": pair_id % CHUNK_NUMBER,
     }
 
 
 def build_metric_structure_tables(
     view_configs: list[ViewConfig], components_by_taxon: dict[str, list[Component]]
-) -> dict[str, MetricStructureTable]:
-    ms_table_by_view_config_metric: dict[str, MetricStructureTable] = {}
+) -> dict[str, dict[str, MetricStructureTable]]:
+    """Metric structure tables keyed by view config id, then by metric id."""
+    ms_tables_by_view_config: dict[str, dict[str, MetricStructureTable]] = {}
     for view_config in view_configs:
-        for metric in view_config.metrics:
-            metric_structure_table = MetricStructureTableBuilder(view_config, components_by_taxon).build(metric)
-            ms_table_by_view_config_metric[f"{view_config.id}_{metric.id}"] = metric_structure_table
-    return ms_table_by_view_config_metric
+        builder = MetricStructureTableBuilder(view_config, components_by_taxon)
+        ms_tables_by_view_config[view_config.id] = {metric.id: builder.build(metric) for metric in view_config.metrics}
+    return ms_tables_by_view_config
