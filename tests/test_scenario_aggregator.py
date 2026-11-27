@@ -70,7 +70,6 @@ def test_make_scenario_operator_returns_aggregation_when_enabled() -> None:
     assert isinstance(make_scenario_operator(True), ScenarioAggregation)
 
 
-
 def test_to_scenario_view_with_columns_addition_preserves_rows(tmp_path: Path) -> None:
     # Arrange
     values = [10.0, 20.0, 30.0]
@@ -133,7 +132,9 @@ def test_location_filter(
 ) -> None:
     # Arrange
     metric_view = make_metric_view(tmp_path, [("busA", 100.0), ("busB", 50.0), ("busC", 999.0)])
-    dummy_metric = Metric(id="my-metric", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM)
+    dummy_metric = Metric(
+        id="my-metric", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM
+    )
     aggregation_pattern = make_pattern(scenario=scenario, location_filter=locations)
     scenario_aggregator = ScenarioAggregator(scenario)
     columns_additioner = ColumnsAdditioner(scenario)

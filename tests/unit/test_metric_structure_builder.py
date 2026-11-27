@@ -58,7 +58,7 @@ def build_components_by_taxonomy_category(
     component_port_connections = build_component_port_connections(system.connections)
     supply_components_with_port_connections(components, component_port_connections)
     if view_config is not None:
-        supply_components_with_locations(components_by_taxon, view_config)
+        supply_components_with_locations(components_by_taxon, [view_config])
     return components_by_taxon
 
 
@@ -283,7 +283,7 @@ def test_supply_components_with_locations_raises_on_genuine_ambiguity() -> None:
 
     # Act / Assert
     with pytest.raises(ValueError, match="p0_port"):
-        supply_components_with_locations(components_by_taxon, make_view_config([metric], "cat"))
+        supply_components_with_locations(components_by_taxon, [make_view_config([metric], "cat")])
 
 
 def test_location_returns_peer_component(test_3_components: dict[str, Any]) -> None:
@@ -320,7 +320,7 @@ def test_none_location_port_resolves_to_the_component_itself(test_3_components: 
     )
     supply_components_with_locations(
         test_3_components["components_by_taxon"],
-        make_view_config([metric], location_taxonomy_category),
+        [make_view_config([metric], location_taxonomy_category)],
     )
     builder = MetricStructureTableBuilder(
         test_3_components["view_config"],

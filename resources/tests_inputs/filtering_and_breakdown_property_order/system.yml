@@ -17,6 +17,40 @@ system:
           scenario-dependent: false
           value: 1000
 
+    - id: nuclear_1
+      model: basic_lib.generator_basic
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 250
+        - id: cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 5
+      properties:
+        - id: technology
+          value: nuclear
+        - id: company
+          value: rhonepower
+
+    - id: nuclear_2
+      model: basic_lib.generator_basic
+      parameters:
+        - id: p_max
+          time-dependent: false
+          scenario-dependent: false
+          value: 250
+        - id: cost
+          time-dependent: false
+          scenario-dependent: false
+          value: 10
+      properties:
+        - id: technology
+          value: nuclear
+        - id: company
+          value: britishnuke
+
     # Same technology + company; YAML lists properties in opposite order.
     - id: gas_1
       model: basic_lib.generator_basic
@@ -77,6 +111,14 @@ system:
           value: load_data
 
   connections:
+    - component1: area
+      port1: balance_port
+      component2: nuclear_1
+      port2: balance_port
+    - component1: area
+      port1: balance_port
+      component2: nuclear_2
+      port2: balance_port
     - component1: area
       port1: balance_port
       component2: gas_1

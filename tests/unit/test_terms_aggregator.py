@@ -25,6 +25,8 @@ def create_filtered_st(values: list[float], tmp_path: Path) -> PersistentSimulat
             "granular_date": ["2026-01-01"] * n,
             "block": ["B"] * n,
             "basis_status": ["B"] * n,
+            "pair_id": [1] * n,
+            "chunk_id": pl.Series([1] * n, dtype=pl.UInt8),
         }
     ).lazy()
     return PersistentSimulationTable(dataframe=dataframe, file_path=tmp_path / "dummy.parquet")
@@ -38,7 +40,9 @@ def create_metric_structure_table() -> MetricStructureTable:
             "metric_location": "L",
             "breakdown_properties": "",
             "output": "out",
-            "weight_output_id": "1",
+            "weight_output_id": 1,
+            "pair_id": 1,
+            "chunk_id": 1,
         }
     ]
     return MetricStructureTable(rows, "M")
@@ -51,7 +55,7 @@ def test_terms_aggregation_sum(tmp_path: Path) -> None:
     aggregator = TermsAggregator()
 
     # Act
-    structured_simulation_table = join(metric_structure_table, filtered_st)
+    structured_simulation_table = join(metric_structure_table, {1: filtered_st})
     metric_view = aggregator.run(
         structured_simulation_table,
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.SUM, time_operator=AggregOperatorType.SUM),
@@ -70,7 +74,7 @@ def test_terms_aggregation_avg(tmp_path: Path) -> None:
     aggregator = TermsAggregator()
 
     # Act
-    structured_simulation_table = join(metric_structure_table, filtered_st)
+    structured_simulation_table = join(metric_structure_table, {1: filtered_st})
     metric_view = aggregator.run(
         structured_simulation_table,
         Metric(id="M", terms=[], terms_operator=AggregOperatorType.AVG, time_operator=AggregOperatorType.SUM),

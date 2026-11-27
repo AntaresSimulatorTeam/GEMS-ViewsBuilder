@@ -25,6 +25,7 @@ AGGREGATION_OPERATORS = [
     pl.col("metric_value").max().alias(Operator.MAX.value),
 ]
 
+
 class ScenarioOperator(ABC):
     @abstractmethod
     def run(self, metric_view: MetricView) -> MetricView:
@@ -46,9 +47,11 @@ class ScenarioAggregation(ScenarioOperator):
                 value_name="metric_value",
             )
         )
-        return MetricView(lazyframe=lazyframe,
-                          view_config_id=metric_view.view_config_id,
-                          aggregation_pattern_id=metric_view.aggregation_pattern_id)
+        return MetricView(
+            lazyframe=lazyframe,
+            view_config_id=metric_view.view_config_id,
+            aggregation_pattern_id=metric_view.aggregation_pattern_id,
+        )
 
 
 class NullScenarioAggregation(ScenarioOperator):

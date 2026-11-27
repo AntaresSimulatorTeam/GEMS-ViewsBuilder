@@ -21,7 +21,9 @@ METRIC_STRUCTURE_TABLE_SCHEMA = pl.Schema(
         "metric_location": pl.Utf8,
         "breakdown_properties": pl.Utf8,
         "output": pl.Utf8,
-        "weight_output_id": pl.Utf8,
+        "weight_output_id": pl.Int8,
+        "pair_id": pl.Int64,
+        "chunk_id": pl.UInt8,
     }
 )
 
@@ -50,6 +52,26 @@ class MetricStructureTable:
         # # It's better to perform operations on lazy data frame, rather than one pl.dataframe && pl.lazyDataFrame
         self.dataframe: pl.LazyFrame = pl.scan_parquet(file_path)
 
+    def get_unique_pair_lookup_rows(self) -> pl.LazyFrame:
+        """Distinct (component, output) pairs by pair_id, keeping already-computed ids."""
+        return self.dataframe.select(["component", "output", "pair_id", "chunk_id"]).unique(subset=["pair_id"])
+
+    def get_unique_chunk_ids(self) -> list[int]:
+        chunk_ids = self.dataframe.select("chunk_id").unique().collect().get_column("chunk_id")
+        return [int(chunk_id) for chunk_id in chunk_ids]
+
     def __del__(self) -> None:
         logging.debug(f"Cleaning metric structure {self._tmp_root}")
         shutil.rmtree(self._tmp_root, ignore_errors=True)
+
+
+def get_pair_lookup_rows(ms_tables_by_view_config: dict[str, dict[str, MetricStructureTable]]) -> pl.LazyFrame:
+    """Merge distinct pair-lookup rows across MSTs (dedupe by pair_id, no re-hash)."""
+    frames = [
+        ms_table.get_unique_pair_lookup_rows()
+        for ms_tables_by_metric in ms_tables_by_view_config.values()
+        for ms_table in ms_tables_by_metric.values()
+    ]
+    if not frames:
+        raise ValueError("No metric structure tables provided")
+    return pl.concat(frames).unique(subset=["pair_id"])

@@ -7,13 +7,32 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
+import mmh3
+import polars as pl
 from polars import LazyFrame
+from polars.io.partition import FileProviderArgs
 
 PARQUET_COMPRESSION: Literal["zstd"] = "zstd"
 PARQUET_COMPRESSION_LEVEL = 3
 PARQUET_ROW_GROUP_SIZE = 64_000
-
+CHUNK_NUMBER = 64
 LOG_DIR = Path.cwd() / "logs"
+
+
+def murmur_hash(component: str, output: str) -> int:
+    """
+    Chance of at least one collision among n distinct pairs is about n(n-1)/2^65,
+    or 100 * n(n-1)/2^65 percent.
+    It grows with the square of n:
+    1000 ~ 2.7e-12%,
+    10 000 ~ 2.7e-10%,
+    20 000 ~ 1.1e-9%,
+    50 000 ~ 6.8e-9%,
+    100 000 ~ 2.7e-8%,
+    1 000 000 ~ 2.7e-6%.
+    Important this computation is based on TYND2040 input data.
+    """
+    return mmh3.hash64(f"{component}\x1f{output}", signed=True)[0]  # 64bit
 
 
 def sink_to_parquet(dataframe: LazyFrame, path: Path) -> None:
@@ -23,6 +42,28 @@ def sink_to_parquet(dataframe: LazyFrame, path: Path) -> None:
         compression_level=PARQUET_COMPRESSION_LEVEL,
         row_group_size=PARQUET_ROW_GROUP_SIZE,
     )
+
+
+def chunk_id_file_path(args: FileProviderArgs) -> str:
+    chunk_id = args.partition_keys["chunk_id"][0]
+    return f"filtered_simulation_table_chunk_{chunk_id}.parquet"
+
+
+def sink_by_chunk_id(simulation_table: pl.LazyFrame, path: Path) -> None:
+    logging.info("Decomposing simulation table into chunks")
+    simulation_table.sink_parquet(
+        pl.PartitionBy(
+            path,
+            key="chunk_id",
+            include_key=False,
+            file_path_provider=chunk_id_file_path,
+        ),
+        compression=PARQUET_COMPRESSION,
+        compression_level=PARQUET_COMPRESSION_LEVEL,
+        row_group_size=PARQUET_ROW_GROUP_SIZE,
+        mkdir=True,
+    )
+    logging.info("Decomposed simulation table into chunks")
 
 
 def make_log_file(log_dir: Path | None = None) -> Path:

@@ -24,9 +24,11 @@ class ScenarioColumnsAddition(ColumnsAdditionBase):
                 pl.lit(True, dtype=pl.Boolean).alias("scenario_aggregation"),
             ]
         )
-        return MetricView(lazyframe=lazyframe,
-                          view_config_id=metric_view.view_config_id,
-                          aggregation_pattern_id=metric_view.aggregation_pattern_id)
+        return MetricView(
+            lazyframe=lazyframe,
+            view_config_id=metric_view.view_config_id,
+            aggregation_pattern_id=metric_view.aggregation_pattern_id,
+        )
 
 
 class NoScenarioColumnsAddition(ColumnsAdditionBase):
@@ -37,9 +39,11 @@ class NoScenarioColumnsAddition(ColumnsAdditionBase):
                 pl.lit(None, dtype=pl.Utf8).alias("scenario_stat"),
             ]
         )
-        return MetricView(lazyframe=lazyframe,
-                          view_config_id=metric_view.view_config_id,
-                          aggregation_pattern_id=metric_view.aggregation_pattern_id)
+        return MetricView(
+            lazyframe=lazyframe,
+            view_config_id=metric_view.view_config_id,
+            aggregation_pattern_id=metric_view.aggregation_pattern_id,
+        )
 
 
 def make_columns_additioner(scenario: bool) -> ColumnsAdditionBase:
