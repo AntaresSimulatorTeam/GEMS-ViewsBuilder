@@ -107,27 +107,11 @@ def join(
     metric_structure_table: MetricStructureTable,
     filtered_simulation_table_chunks: dict[int, PersistentSimulationTable],
 ) -> MetricView:
-    """Attach this metric's simulation rows, reading only the chunks it uses.
-
-    The selected chunk files are concatenated once. One right join then keeps every
-    metric-structure row and fills ``value`` from the matching simulation rows.
-
-    A chunk has no file when none of its pairs have simulation rows (e.g. a system component
-    without outputs in the simulation table); it is skipped and those rows get null values.
-    """
-    frames = [
-        chunk.dataframe
+    simulation_table_chunks = [
+        filtered_simulation_table_chunks[chunk_id].dataframe
         for chunk_id in metric_structure_table.get_unique_chunk_ids()
-        if (chunk := filtered_simulation_table_chunks.get(chunk_id)) is not None
     ]
-    if not frames:
-        # Metric matches no component (or none with simulation rows). Use a zero-row frame
-        # with the chunk schema (any chunk; .limit(0) reads no data) so the join yields an empty view.
-        if not filtered_simulation_table_chunks:
-            raise ValueError("No simulation table chunks available")
-        frames = [next(iter(filtered_simulation_table_chunks.values())).dataframe.limit(0)]
-    # chunk_id is kept in the file name, not in the parquet, so the metric structure table's copy is the only one.
-    st = pl.concat(frames)
+    st = pl.concat(simulation_table_chunks)
     return MetricView(lazyframe=st.join(metric_structure_table.dataframe, on="pair_id", how="right"))
 
 

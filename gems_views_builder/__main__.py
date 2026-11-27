@@ -61,8 +61,7 @@ def run_view_building_process(input_paths: InputPaths, view_sinker: ViewSinker) 
         view_building_input = create_view_building_input(
             simulation_table_chunks, view_config, ms_tables_by_view_config_metrics
         )
-        view_builder = ViewBuilder(view_building_input)
-        metric_views = view_builder.build()
+        metric_views = ViewBuilder(view_building_input).build()
         accumulate_on_disk(metric_views, view_sinker)
         # Drop this config's intermediate parquet files before the next config is built.
         del metric_views

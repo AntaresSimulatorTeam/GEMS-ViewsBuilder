@@ -192,3 +192,23 @@ def test_filter_simulation_table_keeps_calendar_matching_rows_from_every_table(
     # Assert
     filtered = collect_chunks(filtered_tables).join(lookup.collect(), on="pair_id", how="left")
     assert set(filtered["component"].to_list()) == expected_components
+
+
+def test_pair_without_simulation_rows_has_no_chunk_file() -> None:
+    """A lookup pair with no simulation rows is dropped by the filter, so its chunk gets no file."""
+    calendar = make_single_row_calendar(absolute_time_index=1, block="b1", granular_date=datetime(2026, 1, 1))
+    simulation_table = pl.DataFrame([make_simulation_table_row(component="comp-a")]).lazy()
+    lookup = pair_lookup_table(simulation_table).collect()
+    missing_chunk_id = next(chunk_id for chunk_id in range(CHUNK_NUMBER) if chunk_id not in set(lookup["chunk_id"]))
+    missing_pair = pl.DataFrame(
+        {
+            "component": ["missing"],
+            "output": ["out"],
+            "pair_id": [murmur_hash("missing", "out")],
+            "chunk_id": [missing_chunk_id],
+        }
+    ).cast(lookup.schema)
+    chunks = filtered_chunks(simulation_table, calendar, pl.concat([lookup, missing_pair]).lazy())
+
+    assert missing_chunk_id not in chunks
+    assert set(chunks) == set(lookup["chunk_id"].to_list())
