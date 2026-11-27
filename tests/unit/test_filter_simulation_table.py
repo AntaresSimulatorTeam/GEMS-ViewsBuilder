@@ -9,7 +9,7 @@ import polars as pl
 import pytest
 
 from gems_views_builder import Calendar, PersistentSimulationTable, load_calendar
-from gems_views_builder.common import CHUNK_COUNT, murmur_hash
+from gems_views_builder.common import CHUNK_NUMBER, murmur_hash
 from gems_views_builder.input.simulation_table import (
     SimulationTable,
     create_simulation_table_chunks,
@@ -31,7 +31,7 @@ def pair_lookup_table(simulation_table: pl.LazyFrame) -> pl.LazyFrame:
                 "component": component,
                 "output": output,
                 "pair_id": pair_id,
-                "chunk_id": pair_id % CHUNK_COUNT,
+                "chunk_id": pair_id % CHUNK_NUMBER,
             }
         )
     return pl.DataFrame(rows).lazy()
